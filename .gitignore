@@ -112,3 +112,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Secrets
+client_secrets.json
+token.pickle
