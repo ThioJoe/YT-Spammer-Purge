@@ -16,6 +16,10 @@ YouTube offers a functionality to ban a user, but it does NOT delete previous co
 3. I suck at programming so if something doesn't work I'll try to fix it but might not
    even know how, so don't expect too much.
 
+## Screenshots
+<img width="545" alt="Screenshot 1" src="https://user-images.githubusercontent.com/12518330/139163806-9cc7aa50-0bce-4113-afeb-707ee6689b5e.png">
+<img width="722" alt="Screenshot 2" src="https://user-images.githubusercontent.com/12518330/139163816-18efe73e-1304-4187-b5da-b6d4b096e46d.png">
+
 
 ## Installation
 
