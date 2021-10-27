@@ -16,7 +16,7 @@
 ###           Therefore I created this script to allow you to instantly purge their spam replies.
 ###
 ### NOTES:    1. Because of its limited purpose, the script ONLY deletes replies, not top-level comments.
-###              That functinality may be added later if needed.
+###              That functionality may be added later if needed.
 ###
 ###           2. To use this script, you will need to obtain your own API credentials file by making
 ###				       a project via the Google Developers Console (aka 'Google Cloud Platform').
@@ -30,6 +30,10 @@
 ###
 ### Author:   ThioJoe - YouTube.com/ThioJoe
 ###                     Twitter.com/ThioJoe
+###
+### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
+###             I tested it on my own and implemented some failsafes as best as I could,
+###             but there could always be some kind of bug. You should inspect the code yourself.
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 
