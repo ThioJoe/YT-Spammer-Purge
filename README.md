@@ -1,6 +1,6 @@
 # YouTube Spammer Purge
 
-Allows you to purge all reply comments left by a user left on a YouTube channel or video.
+Allows you to purge all reply comments left by a user on a YouTube channel or video.
 
 ## Purpose
 Recently, there has been a massive infestation of spam on YouTube where fake impersonator accounts leave spam/scam replies to hundreds of users on a creator's videos. For some god-forsaken reason, YouTube offers no way to delete all comments by a specific user at once, meaning you must delete them one by one BY HAND.
