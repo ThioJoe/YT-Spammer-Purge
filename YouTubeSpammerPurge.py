@@ -37,15 +37,10 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 
-import httplib2
 import urllib
 import os
-import sys
 
-import google.oauth2.credentials
-import google_auth_oauthlib.flow
 from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.oauth2.credentials import Credentials
 from google.auth.transport import Request
@@ -314,6 +309,7 @@ def print_count_stats(final):
 def validate_video_id(video_id):
   if len(video_id) != 11:
     print("Invalid Video ID! Video IDs are 11 characters long.")
+    input("\n Press Enter to Exit...")
     exit()
   else:
     title = get_video_title(video_id)
@@ -326,6 +322,7 @@ def validate_channel_id(channel_id):
     return True
   else:
     print("Invalid Channel ID! Channel IDs are 24 characters long and begin with 'UC'.")
+    input("\n Press Enter to Exit...")
     exit()
   
 ############################### Confirmation to continue #################################
@@ -338,10 +335,10 @@ def confirm_continue(message=None):
     print("Ok, Continuing... \n")
     return True
   elif response == "N" or response == "n":
-    print("Ok, Exiting...")
+    input("\n Ok, Press Enter to Exit...")
     exit()
   else:
-    print("Invalid Input - Exiting...")
+    input("\n Invalid Input - Press Enter to Exit...")
     exit()  
 
 ##########################################################################################
@@ -382,10 +379,10 @@ if __name__ == "__main__":
       userChannelID = check_channel_id
       maxScanNumber = int(input("Enter the maximum number of comments to scan: "))
     else:
-      print("Invalid Channel ID - Exiting...")
+      input("\n Invalid Channel ID - Press Enter to Exit...")
       exit()
   else:
-    print("Invalid choice, exiting...")
+    input("\n Invalid choice - Press Enter to Exit...")
     exit()
 
   # User inputs channel ID of the spammer
@@ -432,7 +429,7 @@ if __name__ == "__main__":
     spam_count = len(spamCommentsID)
     if spam_count == 0: # If no spam comments found, exits
       print("No spam comments found!\n")
-      input("Press Enter to exit...")
+      input("\n Press Enter to exit...")
       exit()
     print("Number of Spammer Replies Found: " + str(len(spamCommentsID)))
     print("IDs of Spammer Replies: " + str(spamCommentsID))
@@ -451,15 +448,15 @@ if __name__ == "__main__":
     if deletionEnabled == "HalfTrue": # Check if deletion functionality is elegible to be enabled
       confirmDelete = input("Do you want to delete ALL of the above comments? Type 'YES' exactly! \n") 
       if confirmDelete != "YES":  # Deletion functionality enabled via confirmation, or not
-        print("Deletion CANCELLED. Press Enter to exit...")
+        input("\n Deletion CANCELLED. Press Enter to exit...")
         exit()
       elif confirmDelete == "YES":
         deletionEnabled = "True"
     elif deletionEnabled == "False" and spammer_channel_id == userChannelID and mode == "2":
-      input("Deletion functionality disabled for this mode because you scanned your own channel. Press Enter to exit...")
+      input("\n Deletion functionality disabled for this mode because you scanned your own channel. Press Enter to exit...")
       exit()
     else:
-      input("FAILSAFE: For an unknown reason, the deletion functionality was not enabled. Cannot delete comments. Press Enter to exit...")
+      input("\n FAILSAFE: For an unknown reason, the deletion functionality was not enabled. Cannot delete comments. Press Enter to exit...")
       exit()
       
 
@@ -472,9 +469,9 @@ if __name__ == "__main__":
           print("Deleted Comment ID: " + str(key) + " |  Check Here: " + "https://www.youtube.com/watch?v=" + str(value) + "&lc=" + str(key)) # If searching whole channel
         if check_video_id is not None:
           print("Deleted Comment ID: " + str(key) + " |  Check Here: " + "https://www.youtube.com/watch?v=" + str(check_video_id) + "&lc=" + str(key)) # If searching specific video
-      print("Deletion Complete")
+      input("\n Deletion Complete. Press Enter to Exit...")
     else:
-      input("Deletion Cancelled. Press Enter to exit...")
+      input("\n Deletion Cancelled. Press Enter to exit...")
       exit()
 
   #except HttpError, e:
