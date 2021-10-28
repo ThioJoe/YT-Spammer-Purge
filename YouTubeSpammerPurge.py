@@ -83,6 +83,15 @@ scannedCommentsCount = 0
 CLIENT_SECRETS_FILE = "client_secrets.json"
 TOKEN_FILE = 'token.pickle'
 
+# Check if client_secrets.json file exists, if not give error
+if not os.path.exists(CLIENT_SECRETS_FILE):
+  print("\n ------------- ERROR: client_secrets.json file not found! ------------- \n")
+  print(" -------- Did you create a Google Cloud Platform Project to access the API? -------- ")
+  print(" ------ See section with instructions on obtaining an API Key at this page: ------- ")
+  print(" ---------- https://github.com/ThioJoe/YouTube-Spammer-Purge/ ---------- ")
+  input("\n Press Enter to Exit...")
+  exit()
+
 # This OAuth 2.0 access scope allows for full read/write access to the
 # authenticated user's account and requires requests to use an SSL connection.
 YOUTUBE_READ_WRITE_SSL_SCOPE = "https://www.googleapis.com/auth/youtube.force-ssl"
