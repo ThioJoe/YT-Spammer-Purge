@@ -126,7 +126,8 @@ def get_authenticated_service():
   if not creds or not creds.valid:
     if creds and creds.expired and creds.refresh_token:
       if creds.expired:
-        print("\n ------------- Credentials Expired! Delete token.pickle file, and run again to re-authenticate ------------- \n")
+        print("\n ------------- TOKEN EXPIRED! Delete token.pickle file, and run again to re-authenticate ------------- \n")
+        input("Press Enter to Exit...")
       creds.refresh(Request())
       
     else:
