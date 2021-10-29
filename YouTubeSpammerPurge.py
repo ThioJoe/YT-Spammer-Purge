@@ -34,8 +34,8 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
+version = "1.0.2"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-
 
 import urllib
 import os
@@ -374,8 +374,11 @@ if __name__ == "__main__":
   youtube = get_authenticated_service()
   
   # Intro message
-  print("====== YOUTUBE SPAMMER MASS-DELETER ======")
-  print("Lets you scan and mass delete all comment replies (and ONLY replies) by a specific user at once \n")
+  print("============ YOUTUBE SPAMMER PURGE v" + version + " ============")
+  print("== https://github.com/ThioJoe/YouTube-Spammer-Purge ==")
+  print("======== Author: ThioJoe - YouTube.com/ThioJoe ======= \n")
+
+  print("Purpose: Lets you scan and mass delete all comment replies (and only replies) from a specific user at once \n")
   print("NOTE: It's probably better to scan a single video, because you can scan all those comments,")
   print("      but scanning your entire channel must be limited and might miss older spam comments.")
   print("You WILL be shown the comments to confirm before they are deleted. \n")
