@@ -116,3 +116,10 @@ dmypy.json
 # Secrets
 client_secrets.json
 token.pickle
+
+# VS Code and PyCharm Temp files
+.idea
+.vscode
+
+# Misc temp files
+.dccache
