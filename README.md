@@ -23,7 +23,18 @@ YouTube offers a functionality to ban a user, but it does NOT delete previous co
 
 ## Installation
 
-The script file is standalone, but you DO need to acquire your own API credentials file to access the YouTube API - See instructions below.
+There is a requirements.txt with necessary modules. Or just use the executable version.
+You DO need to acquire your own API credentials file to access the YouTube API - See instructions below.
+
+## Download & Windows Warning
+
+Because I haven't published software before, web browsers and Windows might block the exe from downloading / running as "unrecognized" until it builds a reputation as being safe. In the meantime, you can simply unblock the program by Right Clicking > Properties > Check 'Unblock' > Click Apply. You can confirm the download by selecting "keep". (If you see these warnings at all)
+
+![Download Warnings](https://user-images.githubusercontent.com/12518330/139365793-75df4170-24d9-4724-b54a-43eddb64dd53.png)
+
+<img width="814" alt="Unblock Warning" src="https://user-images.githubusercontent.com/12518330/139364886-f1ad4d80-f7f3-459c-a826-16379d5cf004.png">
+
+
 
 ## Instructions - Obtaining YouTube API Key
 
