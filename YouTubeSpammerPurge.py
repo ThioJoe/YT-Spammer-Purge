@@ -181,8 +181,20 @@ def get_replies(parent_id, video_id):
 ############################### PRINT SPECIFIC COMMENTS ##################################
 ##########################################################################################
 
+def comments_print_preparer(comments):
+  j = 0 # Index when going through comments all comment groups
+  if len(comments) > 50:
+    remainder = len(comments) % 50
+    numDivisions = int((len(comments)-remainder)/50)
+    for i in range(numDivisions):
+      j = print_specific_comments(comments[i*50:i*50+50], j)
+    if remainder > 0:
+      j = print_specific_comments(comments[numDivisions*50:len(comments)],j)
+  else:
+    j = print_specific_comments(comments, j)
+
 # Uses comments.list YouTube API Request to get text and author of specific set of comments, based on comment ID
-def print_specific_comments(comments):
+def print_specific_comments(comments, j):
   global check_video_id
 
   results = youtube.comments().list(
@@ -194,7 +206,6 @@ def print_specific_comments(comments):
   ).execute()
 
   # Prints author and comment text for each comment
-  print("\n")
   i = 0 # Index when going through comments
   for item in results["items"]:
     text = item["snippet"]["textDisplay"]
@@ -205,13 +216,14 @@ def print_specific_comments(comments):
 
     # Get video title
     title = get_video_title(videoID)
-    print(str(i+1) + ". " + author + ":  " + text)
+    print(str(j+1) + ". " + author + ":  " + text)
     if check_video_id is None:  # Only print video title if searching entire channel
       print("     > Video: " + title)
     print("     > Direct Link: " + "https://www.youtube.com/watch?v=" + videoID + "&lc=" + comments[i] + "\n")
     i += 1
+    j +=1
 
-  return None
+  return j
 
 
 ##########################################################################################
@@ -447,8 +459,8 @@ if __name__ == "__main__":
     print("\n")
 
     # Prints list of spam comments
-    print("Reply Comments by the selected user:")
-    print_specific_comments(spamCommentsID)
+    print("Reply Comments by the selected user: \n")
+    comments_print_preparer(spamCommentsID)
 
 
     # Get confirmation to delete spam comments
