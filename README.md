@@ -1,6 +1,6 @@
 # YouTube Spammer Purge
 
-Allows you to purge all reply comments left by a user on a YouTube channel or video.
+Allows you to purge all comments left by a user on a specific video or across the entire channel.
 
 ## Purpose
 Recently, there has been a massive infestation of spam on YouTube where fake impersonator accounts leave spam/scam replies to hundreds of users on a creator's videos. For some god-forsaken reason, YouTube offers no way to delete all comments by a specific user at once, meaning you must delete them one by one BY HAND.
@@ -9,11 +9,9 @@ YouTube offers a functionality to ban a user, but it does NOT delete previous co
 
 ## Usage Notes
 
-1. Because of its limited purpose, the script ONLY deletes replies, not top-level comments. That functionality may be added later if needed.
+1. To use this script, you will need to obtain your own API credentials file by making a project via the Google Developers Console (aka 'Google Cloud Platform'). The credential file should be re-named 'client_secret.json' and be placed in the same directory as this script. See Instructions below.
 
-2. To use this script, you will need to obtain your own API credentials file by making a project via the Google Developers Console (aka 'Google Cloud Platform'). The credential file should be re-named 'client_secret.json' and be placed in the same directory as this script. See Instructions below.
-
-3. I suck at programming so if something doesn't work I'll try to fix it but might not
+2. I suck at programming so if something doesn't work I'll try to fix it but might not
    even know how, so don't expect too much.
 
 ## Screenshots
