@@ -1,6 +1,6 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #######################################################################################################
-############################## YOUTUBE REPLY-SPAM COMMENT DELETER #####################################
+################################# YOUTUBE SPAM COMMENT DELETER ########################################
 #######################################################################################################
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 ###
@@ -13,10 +13,9 @@
 ###           user at once, meaning you must delete them one by one BY HAND.
 ###
 ###           YouTube offers a functionality to ban a user, but it does NOT delete previous comments.
-###           Therefore I created this script to allow you to instantly purge their spam replies.
+###           Therefore I created this script to allow you to instantly purge their spam comments.
 ###
-### NOTES:    1. Because of its limited purpose, the script ONLY deletes replies, not top-level comments.
-###              That functionality may be added later if needed.
+### NOTES:    1. The script also scans top level comments from the spammer
 ###
 ###           2. To use this script, you will need to obtain your own API credentials file by making
 ###				       a project via the Google Developers Console (aka 'Google Cloud Platform').
@@ -34,7 +33,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "1.0.2"
+version = "1.1.0"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 import urllib
@@ -156,16 +155,13 @@ def get_replies(parent_id, video_id):
     fields="items/snippet/authorDisplayName,items/snippet/authorChannelId/value,items/snippet/textDisplay,items/id",
     textFormat="plainText"
   ).execute()
-
-  index = 0 # Index to use for object attributes
-
+ 
   # Iterates through items in results
   for item in results["items"]:  
     author = item["snippet"]["authorDisplayName"]
     authorChannelID = item["snippet"]["authorChannelId"]["value"]
     text = item["snippet"]["textDisplay"]
     replyID = item["id"]
-
     scannedRepliesCount += 1  # Count number of comment threads scanned, add to global count
 
     # If the comment is from the spammer channel, add to list of spam comment IDs
@@ -173,7 +169,6 @@ def get_replies(parent_id, video_id):
     if authorChannelID == spammer_channel_id:
       spamCommentsID += [replyID]
       vidIdDict[replyID] = video_id
-      index+=1
 
   return results["items"]
 
@@ -234,7 +229,8 @@ def print_specific_comments(comments, j):
 def get_comments(youtube, check_video_id=None, check_channel_id=None, nextPageToken=None):
   global scannedThreadsCount
   global scannedCommentsCount
-  fieldsToFetch = "nextPageToken,items/id,items/snippet/topLevelComment/id,items/snippet/totalReplyCount,items/snippet/topLevelComment/snippet/authorDisplayName,items/snippet/topLevelComment/snippet/textDisplay,items/snippet/topLevelComment/snippet/videoId"
+  global spamCommentsID
+  fieldsToFetch = "nextPageToken,items/id,items/snippet/topLevelComment/id,items/snippet/totalReplyCount,items/snippet/topLevelComment/snippet/authorDisplayName,items/snippet/topLevelComment/snippet/authorChannelId/value,items/snippet/topLevelComment/snippet/textDisplay,items/snippet/topLevelComment/snippet/videoId"
 
   # Gets comment threads for a specific video
   if check_channel_id is None and check_video_id is not None:
@@ -267,12 +263,17 @@ def get_comments(youtube, check_video_id=None, check_channel_id=None, nextPageTo
   # After getting comments threads for page, goes through each thread and gets replies
   for item in results["items"]:
     comment = item["snippet"]["topLevelComment"]
-    #author = comment["snippet"]["authorDisplayName"]  # If need to retrieve author name
+    author = comment["snippet"]["authorDisplayName"]  # If need to retrieve author name
+    authorChannelID = item["snippet"]["topLevelComment"]["snippet"]["authorChannelId"]["value"]
     #text = comment["snippet"]["textDisplay"]  # If need to retrieve comment text
     videoID = comment["snippet"]["videoId"] # Only enable if NOT checking specific video
     parent_id = item["snippet"]["topLevelComment"]["id"]
     numReplies = item["snippet"]["totalReplyCount"]
     scannedCommentsCount += 1  # Counts number of comments scanned, add to global count
+
+    if authorChannelID == spammer_channel_id:
+      spamCommentsID += [parent_id]
+      vidIdDict[parent_id] = videoID
 
     if numReplies > 0:
       reply_results = get_replies(parent_id=parent_id, video_id=videoID)
@@ -280,6 +281,64 @@ def get_comments(youtube, check_video_id=None, check_channel_id=None, nextPageTo
   
   return RetrievedNextPageToken
 
+
+##########################################################################################
+################################ DELETE COMMENTS #########################################
+########################################################################################## 
+
+# Takes in dictionary of comment IDs to delete, breaks them into 50-comment chunks, and deletes them in groups
+def delete_found_comments(commentsDictionary):
+
+    # Deletes specified comment IDs
+    def delete(commentIDs):
+        youtube.comments().setModerationStatus(id=commentIDs, moderationStatus="rejected").execute()
+
+    print("Deleting Comments. Please Wait...")
+    commentsList = list(commentsDictionary.keys()) # Takes comment IDs out of dictionary and into list
+    if len(commentsList) > 50:
+        remainder = len(commentsList) % 50
+        numDivisions = int((len(commentsList)-remainder)/50)
+        for i in range(numDivisions):
+            delete(commentsList[i*50:i*50+50])
+        if remainder > 0:
+            delete(commentsList[numDivisions*50:len(commentsList)])
+    else:
+        delete(commentsList)
+    print("Comments Deleted! Will now verify each is gone.\n")
+
+# Takes in dictionary of comment IDs and video IDs, and checks if comments still exist individually
+def check_deleted_comments(commentsDictionary):
+    i = 0 # Count number of remaining comments
+    j = 1 # Count number of checked
+    for key, value in commentsDictionary.items():
+        results = youtube.comments().list(
+            part="snippet",
+            id=key,  
+            maxResults=1,
+            fields="items",
+            textFormat="plainText"
+        ).execute()
+        print("Verifying Comments Deleted..." + "."*j, end="\r")
+        j += 1
+
+        if results["items"]:  # Check if the items result is empty
+            print("Possible Issue Deleting Comment: " + str(key) + " |  Check Here: " + "https://www.youtube.com/watch?v=" + str(value) + "&lc=" + str(key))
+            i += 1
+
+    if i == 0:
+        print("\n\nSuccess: All spam comments should be gone.")
+    elif i > 0:
+        print("\n\nWarning: " + str(i) + " spam comments may remain. Check links above or try running the program again.")
+    else:
+        print("\n\nSomething strange happened... The comments may or may have not been deleted.")
+
+    return None
+
+
+
+##########################################################################################
+############################### LESSER FUNCTIONS #########################################
+########################################################################################## 
 
 ################################### GET VIDEO TITLE ###############################################
 # Get video title from video ID using YouTube API request
@@ -321,9 +380,9 @@ def convert_comment_id_to_video_id(comment_id):
 # Prints Scanning Statistics, can be version that overwrites itself or one that finalizes and moves to next line
 def print_count_stats(final):
   if final == True:
-    print("Top Level Comments Scanned: " + str(scannedCommentsCount) + " | Comment Threads Scanned: " + str(scannedThreadsCount) + " | Replies Scanned: " + str(scannedRepliesCount) + "\n")
+    print("Top Level Comments Scanned: " + str(scannedCommentsCount) + " | Replies Scanned: " + str(scannedRepliesCount) + " | Spam Found So Far: " +  str(len(spamCommentsID)) + "\n")
   else:
-    print("Top Level Comments Scanned: " + str(scannedCommentsCount) + " | Comment Threads Scanned: " + str(scannedThreadsCount) + " | Replies Scanned: " + str(scannedRepliesCount), end = "\r")
+    print("Top Level Comments Scanned: " + str(scannedCommentsCount) + " | Replies Scanned: " + str(scannedRepliesCount) + " | Spam Found So Far: " +  str(len(spamCommentsID)), end = "\r")
   
   return None
 
@@ -378,7 +437,7 @@ if __name__ == "__main__":
   print("== https://github.com/ThioJoe/YouTube-Spammer-Purge ==")
   print("======== Author: ThioJoe - YouTube.com/ThioJoe ======= \n")
 
-  print("Purpose: Lets you scan and mass delete all comment replies (and only replies) from a specific user at once \n")
+  print("Purpose: Lets you scan and mass delete all comments from a specific user at once \n")
   print("NOTE: It's probably better to scan a single video, because you can scan all those comments,")
   print("      but scanning your entire channel must be limited and might miss older spam comments.")
   print("You WILL be shown the comments to confirm before they are deleted. \n")
@@ -426,7 +485,7 @@ if __name__ == "__main__":
     print("If you want to delete your own comments for testing purposes, you can instead scan an individual video (Mode 1).")
     confirmation = confirm_continue("Continue?")
   elif spammer_channel_id == userChannelID and mode == "1":
-    print("WARNING: You are scanning for your own channel ID! This would delete all of your reply comments on the video!")
+    print("WARNING: You are scanning for your own channel ID! This would delete all of your comments on the video!")
     print("     (You WILL still be asked to confirm before actually deleting anything)")
     print("If you are testing and want to scan and/or delete your own comments, enter 'Y' to continue, otherwise enter 'N' to exit.")
     confirmation = confirm_continue("Continue?")
@@ -457,12 +516,12 @@ if __name__ == "__main__":
       print("No spam comments found!\n")
       input("\n Press Enter to exit...")
       exit()
-    print("Number of Spammer Replies Found: " + str(len(spamCommentsID)))
-    print("IDs of Spammer Replies: " + str(spamCommentsID))
+    print("Number of Spammer Comments Found: " + str(len(spamCommentsID)))
+    print("IDs of Spammer Comments: " + str(spamCommentsID))
     print("\n")
 
     # Prints list of spam comments
-    print("Reply Comments by the selected user: \n")
+    print("Comments by the selected user: \n")
     comments_print_preparer(spamCommentsID)
 
 
@@ -488,13 +547,8 @@ if __name__ == "__main__":
 
     if confirmDelete == "YES" and deletionEnabled == "True":  # Only proceed if deletion functionality is enabled, and user has confirmed deletion
       print("\n")
-      # Deletes spam comment replies
-      for key, value in vidIdDict.items():  # Iterates through dictionary vidIdDict, to ensure comments deleted are same as those displayed to user
-        youtube.comments().delete(id=key).execute()
-        if check_channel_id is not None:
-          print("Deleted Comment ID: " + str(key) + " |  Check Here: " + "https://www.youtube.com/watch?v=" + str(value) + "&lc=" + str(key)) # If searching whole channel
-        if check_video_id is not None:
-          print("Deleted Comment ID: " + str(key) + " |  Check Here: " + "https://www.youtube.com/watch?v=" + str(check_video_id) + "&lc=" + str(key)) # If searching specific video
+      delete_found_comments(vidIdDict) # Deletes spam comments
+      check_deleted_comments(vidIdDict) #Verifies if comments were deleted
       input("\n Deletion Complete. Press Enter to Exit...")
     else:
       input("\n Deletion Cancelled. Press Enter to exit...")
