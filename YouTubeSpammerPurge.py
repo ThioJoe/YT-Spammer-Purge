@@ -152,15 +152,14 @@ def get_replies(parent_id, video_id):
     part="snippet",
     parentId=parent_id,
     maxResults=100, # 100 is the max per page, but multiple pages will be scanned
-    fields="items/snippet/authorDisplayName,items/snippet/authorChannelId/value,items/snippet/textDisplay,items/id",
+    #fields="items/snippet/authorDisplayName,items/snippet/authorChannelId/value,items/snippet/textDisplay,items/id", # If want to get author name and comment text
+    fields="items/snippet/authorChannelId/value,items/id",
     textFormat="plainText"
   ).execute()
  
   # Iterates through items in results
   for item in results["items"]:  
-    author = item["snippet"]["authorDisplayName"]
     authorChannelID = item["snippet"]["authorChannelId"]["value"]
-    text = item["snippet"]["textDisplay"]
     replyID = item["id"]
     scannedRepliesCount += 1  # Count number of comment threads scanned, add to global count
 
@@ -170,7 +169,9 @@ def get_replies(parent_id, video_id):
       spamCommentsID += [replyID]
       vidIdDict[replyID] = video_id
 
-  return results["items"]
+    print_count_stats(final=False) # Prints out current count stats
+
+  return True
 
 ##########################################################################################
 ############################### PRINT SPECIFIC COMMENTS ##################################
@@ -212,12 +213,11 @@ def print_prepared_comments(comments, j, logMode):
     # Retrieve video ID from object using comment ID
     videoID = convert_comment_id_to_video_id(comments[i])
 
-    # Get video title
-    title = get_video_title(videoID)
-
     # Prints comment info to console
     print(str(j+1) + ". " + author + ":  " + text)
+
     if check_video_id is None:  # Only print video title if searching entire channel
+      title = get_video_title(videoID) # Get Video Title
       print("     > Video: " + title)
     print("     > Direct Link: " + "https://www.youtube.com/watch?v=" + videoID + "&lc=" + comments[i] + "\n")
 
@@ -225,6 +225,7 @@ def print_prepared_comments(comments, j, logMode):
     if logMode == True:
       logFile.write(str(j+1) + ". " + author + ":  " + text + "\n")
       if check_video_id is None:  # Only print video title if searching entire channel
+        title = get_video_title(videoID) # Get Video Title
         logFile.write("     > Video: " + title + "\n")
       logFile.write("     > Direct Link: " + "https://www.youtube.com/watch?v=" + videoID + "&lc=" + comments[i] + "\n\n")
 
@@ -243,7 +244,8 @@ def get_comments(youtube, check_video_id=None, check_channel_id=None, nextPageTo
   global scannedThreadsCount
   global scannedCommentsCount
   global spamCommentsID
-  fieldsToFetch = "nextPageToken,items/id,items/snippet/topLevelComment/id,items/snippet/totalReplyCount,items/snippet/topLevelComment/snippet/authorDisplayName,items/snippet/topLevelComment/snippet/authorChannelId/value,items/snippet/topLevelComment/snippet/textDisplay,items/snippet/topLevelComment/snippet/videoId"
+  #fieldsToFetch = "nextPageToken,items/id,items/snippet/topLevelComment/id,items/snippet/totalReplyCount,items/snippet/topLevelComment/snippet/authorDisplayName,items/snippet/topLevelComment/snippet/authorChannelId/value,items/snippet/topLevelComment/snippet/textDisplay,items/snippet/topLevelComment/snippet/videoId"
+  fieldsToFetch = "nextPageToken,items/snippet/topLevelComment/id,items/snippet/totalReplyCount,items/snippet/topLevelComment/snippet/authorChannelId/value,items/snippet/topLevelComment/snippet/videoId"
 
   # Gets comment threads for a specific video
   if check_channel_id is None and check_video_id is not None:
@@ -276,7 +278,7 @@ def get_comments(youtube, check_video_id=None, check_channel_id=None, nextPageTo
   # After getting comments threads for page, goes through each thread and gets replies
   for item in results["items"]:
     comment = item["snippet"]["topLevelComment"]
-    author = comment["snippet"]["authorDisplayName"]  # If need to retrieve author name
+    #author = comment["snippet"]["authorDisplayName"]  # If need to retrieve author name
     authorChannelID = item["snippet"]["topLevelComment"]["snippet"]["authorChannelId"]["value"]
     #text = comment["snippet"]["textDisplay"]  # If need to retrieve comment text
     videoID = comment["snippet"]["videoId"] # Only enable if NOT checking specific video
@@ -289,8 +291,10 @@ def get_comments(youtube, check_video_id=None, check_channel_id=None, nextPageTo
       vidIdDict[parent_id] = videoID
 
     if numReplies > 0:
-      reply_results = get_replies(parent_id=parent_id, video_id=videoID)
+      get_replies(parent_id=parent_id, video_id=videoID)
       scannedThreadsCount += 1  # Counts number of comment threads with at least one reply, adds to counter
+    else:
+      print_count_stats(final=False)  # Updates displayed stats if no replies
   
   return RetrievedNextPageToken
 
@@ -548,7 +552,6 @@ if __name__ == "__main__":
     # After getting first page, if there are more pages, goes to get comments for next page
     while nextPageToken != "End" and scannedCommentsCount < maxScanNumber:
       nextPageToken = get_comments(youtube, check_video_id=check_video_id, check_channel_id=check_channel_id, nextPageToken=nextPageToken)
-      print_count_stats(final=False)  # Prints comment scan stats, updates on same line
 
     print_count_stats(final=True)  # Prints comment scan stats, finalizes
 
@@ -614,8 +617,19 @@ if __name__ == "__main__":
       input("\nDeletion Cancelled. Press Enter to exit...")
       exit()
 
-  except HttpError as err:
-    print(err)
+  # Catches exception errors and prints error info
+  # If possible transient error, tells user to try again
+  except HttpError as e:
+    print("------------------------------------------------")
+    print("Full Error Message: ")
+    print(e)
+    print("\nError Info:")
+    print("    Code: "+ str(e.status_code))
+    reason = str(e.error_details[0]["reason"])
+    print("    Reason: " + reason)
+    if reason == "processingFailure":
+      print("\n !! Processing Error - Sometimes this error fixes itself. Try just running the program again. !!")
+    input("\n Press Enter to Exit...")
 
   else:
     print("\nFinished Executing.")
