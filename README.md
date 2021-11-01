@@ -78,7 +78,7 @@ To use this script, you will need an "Oauth2" credential to access the scanning 
 <p align="center"><img width="462" alt="13" src="https://user-images.githubusercontent.com/12518330/139734114-95ce0476-fcf2-4618-8966-525734b2a3bb.png">
    <img width="354" alt="13 2" src="https://user-images.githubusercontent.com/12518330/139736335-ee5f3b95-2ed4-4f8e-971c-06d659018d4e.png"></p>
 
-14. When trying to log in you may get a "503 Access Denied" error. If so, you need to add yourself as an authorized user. On the left menu, go to APIs & Services > Oauth Consent Screen > Under Test Users, Click "Add Users". On the pop out window, type in your same Google/channel account emai into the box and hit Save.
+14. When trying to log in you may get a "403 Access_Denied" error. If so, you need to add yourself as an authorized user. On the left menu, go to APIs & Services > Oauth Consent Screen > Under Test Users, Click "Add Users". On the pop out window, type in your same Google/channel account emai into the box and hit Save.
 <p align="center"><img width="595" alt="14 2" src="https://user-images.githubusercontent.com/12518330/139734814-26d04eed-76b6-4b4f-9689-e6960f781faa.png"></p>
 
 15. Now you should be able to run the python script, and it will ask you to log in.
