@@ -7,11 +7,15 @@ Recently, there has been a massive infestation of spam on YouTube where fake imp
 
 YouTube offers a functionality to ban a user, but it does NOT delete previous comments. Therefore I created this script to allow you to instantly purge their spam replies.
 
-## Usage Notes
+## Usage Notes - IMPORTANT!
 
 1. To use this script, you will need to obtain your own API credentials file by making a project via the Google Developers Console (aka 'Google Cloud Platform'). The credential file should be re-named 'client_secret.json' and be placed in the same directory as this script. See Instructions below.
 
-2. I'm a total amateur, so if something doesn't work I'll try to fix it but might not even know how, so don't expect too much. Therefore I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK. I tested it on my own and implemented some failsafes as best as I could, but there could always be some kind of unexpected bug. You should inspect the code yourself.
+2. **IF IT FREEZES** while scanning, it is probably because you clicked within the command prompt window and entered "selection mode" which pauses everything. **To unfreeze it, simply right click within the window, or press the Escape key.**
+
+3. At the moment, this program doesn't ban the user, so do that yourself before deleting their comments. I'll add that function in the next version.
+
+3. I'm a total amateur, so if something doesn't work I'll try to fix it but might not even know how, so don't expect too much. Therefore I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK. I tested it on my own and implemented some failsafes as best as I could, but there could always be some kind of unexpected bug. You should inspect the code yourself.
 
 ## Screenshots
 <img width="640" alt="Screenshot 1" src="https://user-images.githubusercontent.com/12518330/139733769-e0eb6410-3f52-4e51-8643-ef44bd6d5dc5.png">
