@@ -25,12 +25,6 @@ YouTube offers a functionality to ban a user, but it does NOT delete previous co
 [![Explanation Video Screenshot Link](https://user-images.githubusercontent.com/12518330/140164510-7c886cd9-b9d4-4d6d-a466-fb58dd42ab48.jpg)](https://www.youtube.com/watch?v=-vOakOgYLUI)
 (Takes you to YouTube, not embedded. See timestamps in video description.)
 
-## Video: Project Explanation, Demonstration, and Setup Walkthrough
-<p align="center">Regular Link: https://www.youtube.com/watch?v=-vOakOgYLUI</p>
-
-[![Explanation Video Screenshot Link](https://user-images.githubusercontent.com/12518330/140164510-7c886cd9-b9d4-4d6d-a466-fb58dd42ab48.jpg)](https://www.youtube.com/watch?v=-vOakOgYLUI)
-(Takes you to YouTube, not embedded. See timestamps in video description.)
-
 ## Screenshots
 <img width="640" alt="Screenshot 1" src="https://user-images.githubusercontent.com/12518330/139733769-e0eb6410-3f52-4e51-8643-ef44bd6d5dc5.png">
 <img width="861" alt="Screenshot 2" src="https://user-images.githubusercontent.com/12518330/139733786-8385c16b-fdba-4346-a454-957b52f5ad91.png">
