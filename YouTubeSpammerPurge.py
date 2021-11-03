@@ -467,7 +467,7 @@ if __name__ == "__main__":
   print("      2. Scan Entire Channel")
 
   validMode = False
-  while validMode == False:
+  while not validMode:
     mode = str(input("Choice: "))
     # If chooses to scan single video - Validate Video ID, get title, and confirm with user - otherwise exits
     if mode == "1":
@@ -476,7 +476,7 @@ if __name__ == "__main__":
       #While loop to get video ID and if invalid ask again
       validVideoID = False
       confirm = False
-      while validVideoID == False or confirm == False:
+      while not validVideoID or not confirm:
         check_video_id = input("Enter Video ID to scan: ")
         validVideoID = validate_video_id(check_video_id)
         title = get_video_title(check_video_id)
@@ -489,9 +489,9 @@ if __name__ == "__main__":
       validMode = True
       # While loop to get channel ID, if invalid, asks again
       validChannelID = False
-      while validChannelID == False:
+      while not validChannelID:
         check_channel_id = input("Enter YOUR Channel ID: ")
-        if validate_channel_id(check_channel_id) == True:
+        if validate_channel_id(check_channel_id):
           validChannelID = True
           userChannelID = check_channel_id
           print("\n")
@@ -512,7 +512,7 @@ if __name__ == "__main__":
 
   # User inputs channel ID of the spammer, while loop repeats until valid input
   validChannelID = False
-  while validChannelID == False:
+  while not validChannelID:
     spammer_channel_id = input("Enter the Channel ID of the spammer: ")
     validChannelID = validate_channel_id(spammer_channel_id)
   print("\n")
@@ -532,9 +532,9 @@ if __name__ == "__main__":
     print("     (You WILL still be asked to confirm before actually deleting anything)")
     print("If you are testing and want to scan and/or delete your own comments, enter 'Y' to continue, otherwise enter 'N' to exit.")
     confirmation = confirm_continue("Continue?")
-    if confirmation == True:  # After confirmation, deletion functionality is elegible to be enabled later
+    if confirmation:  # After confirmation, deletion functionality is elegible to be enabled later
       deletionEnabled = "HalfTrue"
-    elif confirmation == False:
+    elif not confirmation:
       input("Ok, Cancelled. Press Enter to Exit...")
       exit()
   else: 
