@@ -30,9 +30,6 @@
 ### Author:   ThioJoe - YouTube.com/ThioJoe
 ###                     Twitter.com/ThioJoe
 ###
-### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
-###             I tested it on my own and implemented some failsafes as best as I could,
-###             but there could always be some kind of bug. You should inspect the code yourself.
 version = "1.2.0"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -458,6 +455,9 @@ if __name__ == "__main__":
   print("NOTE: It's probably better to scan a single video, because you can scan all those comments,")
   print("      but scanning your entire channel must be limited and might miss older spam comments.")
   print("You WILL be shown the comments to confirm before they are deleted. \n")
+  print("""IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
+I tested it on my own and implemented some failsafes as best as I could, 
+but there could always be some kind of bug. You should inspect the code yourself.""")
 
  
   
