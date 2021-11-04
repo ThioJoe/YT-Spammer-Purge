@@ -38,6 +38,7 @@ version = "1.2.0"
 
 import os
 from datetime import datetime
+from colorama import Fore, init
 
 from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
@@ -51,6 +52,9 @@ check_channel_id = None
 maxScanNumber = 999999999
 deletionEnabled = "False" # Disables deletion functionality, which is default until later - String is used instead of boolean to prevent flipped bits
 
+# Initialize colorama
+init()
+
 ########################
 spamCommentsID = []
 spamVidID = []
@@ -61,6 +65,18 @@ scannedRepliesCount = 0
 scannedCommentsCount = 0
 logMode = False
 ########################
+
+########################
+red = Fore.RED
+green = Fore.GREEN
+white = Fore.WHITE
+yellow = Fore.YELLOW
+lblue = Fore.LIGHTBLUE_EX
+reset = Fore.RESET
+########################
+
+# remove any pre-set colors
+print(reset)
 
 ##########################################################################################
 ################################## AUTHORIZATION #########################################
@@ -86,11 +102,11 @@ TOKEN_FILE = 'token.pickle'
 
 # Check if client_secrets.json file exists, if not give error
 if not os.path.exists(CLIENT_SECRETS_FILE):
-  print("\n ------------- ERROR: client_secrets.json file not found! ------------- ")
+  print(f"\n ------------- {red}ERROR{reset}: client_secrets.json file not found! ------------- ")
   print(" Make sure it is placed in the same folder as the program, and is spelled as above \n")
   print(" ----- Or: Did you create a Google Cloud Platform Project to access the API? ----- ")
   print(" ------ See section with instructions on obtaining an API Key at this page: ------- ")
-  print(" ---------- https://github.com/ThioJoe/YouTube-Spammer-Purge/ ---------- ")
+  print(f" ---------- {lblue}https://github.com/ThioJoe/YouTube-Spammer-Purge/{reset} ---------- ")
   input("\n Press Enter to Exit...")
   exit()
 
@@ -102,19 +118,18 @@ API_VERSION = "v3"
 
 # This variable defines a message to display if the CLIENT_SECRETS_FILE is
 # missing.
-MISSING_CLIENT_SECRETS_MESSAGE = """
-WARNING: Please configure OAuth 2.0
+MISSING_CLIENT_SECRETS_MESSAGE = f"""
+{yellow}WARNING{reset}: Please configure OAuth 2.0
 
 To make this sample run you will need to populate the client_secrets.json file
 found at:
-   %s
+   {os.path.abspath(os.path.join(os.path.dirname(__file__), CLIENT_SECRETS_FILE))}
 with information from the APIs Console
-https://console.developers.google.com
+{lblue}https://console.developers.google.com{reset}
 
 For more information about the client_secrets.json file format, please visit:
-https://developers.google.com/api-client-library/python/guide/aaa_client_secrets
-""" % os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                   CLIENT_SECRETS_FILE))
+{lblue}https://developers.google.com/api-client-library/python/guide/aaa_client_secrets{reset}
+"""
 
 # Authorize the request and store authorization credentials.
 def get_authenticated_service():
@@ -180,14 +195,15 @@ def get_replies(parent_id, video_id):
 # First prepared comments into groups of 50 to be submitted to API simultaneously
 # Then uses print_prepared_comments() to print / log the comments
 def print_comments(comments, logMode):
+
   j = 0 # Index when going through comments all comment groups
   if len(comments) > 50:
     remainder = len(comments) % 50
     numDivisions = int((len(comments)-remainder)/50)
-    for i in range(numDivisions):
-      j = print_prepared_comments(comments[i*50:i*50+50], j, logMode)
-    if remainder > 0:
-      j = print_prepared_comments(comments[numDivisions*50:len(comments)],j, logMode)
+
+    for i in range(numDivisions): j = print_prepared_comments(comments[i*50:i*50+50], j, logMode)
+
+    if remainder > 0: j = print_prepared_comments(comments[numDivisions*50:len(comments)],j, logMode)
   else:
     j = print_prepared_comments(comments, j, logMode)
 
@@ -214,23 +230,26 @@ def print_prepared_comments(comments, j, logMode):
     videoID = convert_comment_id_to_video_id(comments[i])
 
     # Prints comment info to console
-    print(str(j+1) + ". " + author + ":  " + text)
+    print(f"{str(j+1)}. {author}:  {text}")
 
     if check_video_id is None:  # Only print video title if searching entire channel
-      title = get_video_title(videoID) # Get Video Title
-      print("     > Video: " + title)
-    print("     > Direct Link: " + "https://www.youtube.com/watch?v=" + videoID + "&lc=" + comments[i] + "\n")
+      title = MISC.get_video_title(videoID) # Get Video Title
+      print(f"     {white}>{reset} Video: {title}")
+
+    print(f"     {white}>{reset} Direct Link: https://www.youtube.com/watch?v={videoID}&lc={comments[i]}\n")
 
     # If logging enabled, also prints to log file
     if logMode == True:
       logFile.write(str(j+1) + ". " + author + ":  " + text + "\n")
+
       if check_video_id is None:  # Only print video title if searching entire channel
-        title = get_video_title(videoID) # Get Video Title
-        logFile.write("     > Video: " + title + "\n")
-      logFile.write("     > Direct Link: " + "https://www.youtube.com/watch?v=" + videoID + "&lc=" + comments[i] + "\n\n")
+        title = MISC.get_video_title(videoID) # Get Video Title
+        logFile.write(f"     {white}>{reset} Video: {title}\n")
+
+      logFile.write(f"     {white}>{reset} Direct Link: https://www.youtube.com/watch?v={videoID}&lc={comments[i]}\n\n")
 
     i += 1
-    j +=1
+    j += 1
 
   return j
 
@@ -244,6 +263,7 @@ def get_comments(youtube, check_video_id=None, check_channel_id=None, nextPageTo
   global scannedThreadsCount
   global scannedCommentsCount
   global spamCommentsID
+
   #fieldsToFetch = "nextPageToken,items/id,items/snippet/topLevelComment/id,items/snippet/totalReplyCount,items/snippet/topLevelComment/snippet/authorDisplayName,items/snippet/topLevelComment/snippet/authorChannelId/value,items/snippet/topLevelComment/snippet/textDisplay,items/snippet/topLevelComment/snippet/videoId"
   fieldsToFetch = "nextPageToken,items/snippet/topLevelComment/id,items/snippet/totalReplyCount,items/snippet/topLevelComment/snippet/authorChannelId/value,items/snippet/topLevelComment/snippet/videoId"
 
@@ -270,10 +290,8 @@ def get_comments(youtube, check_video_id=None, check_channel_id=None, nextPageTo
     ).execute()  
 
   # Get token for next page
-  try:
-    RetrievedNextPageToken = results["nextPageToken"]
-  except KeyError:
-    RetrievedNextPageToken = "End"  
+  try: RetrievedNextPageToken = results["nextPageToken"]
+  except KeyError: RetrievedNextPageToken = "End"  
  
   # After getting comments threads for page, goes through each thread and gets replies
   for item in results["items"]:
@@ -312,15 +330,15 @@ def delete_found_comments(commentsDictionary):
 
     print("Deleting Comments. Please Wait...")
     commentsList = list(commentsDictionary.keys()) # Takes comment IDs out of dictionary and into list
+
     if len(commentsList) > 50:
         remainder = len(commentsList) % 50
         numDivisions = int((len(commentsList)-remainder)/50)
-        for i in range(numDivisions):
-            delete(commentsList[i*50:i*50+50])
-        if remainder > 0:
-            delete(commentsList[numDivisions*50:len(commentsList)])
+        for i in range(numDivisions): delete(commentsList[i*50:i*50+50])
+        if remainder > 0: delete(commentsList[numDivisions*50:len(commentsList)])
     else:
         delete(commentsList)
+
     print("Comments Deleted! Will now verify each is gone.\n")
 
 # Takes in dictionary of comment IDs and video IDs, and checks if comments still exist individually
@@ -339,13 +357,13 @@ def check_deleted_comments(commentsDictionary):
         j += 1
 
         if results["items"]:  # Check if the items result is empty
-            print("Possible Issue Deleting Comment: " + str(key) + " |  Check Here: " + "https://www.youtube.com/watch?v=" + str(value) + "&lc=" + str(key))
+            print(f"Possible Issue Deleting Comment: {str(key)} |  Check Here: https://www.youtube.com/watch?v={str(value)}&lc={str(key)}")
             i += 1
 
     if i == 0:
-        print("\n\nSuccess: All spam comments should be gone.")
+        print(f"\n\n{green}Success{reset}: All spam comments should be gone.")
     elif i > 0:
-        print("\n\nWarning: " + str(i) + " spam comments may remain. Check links above or try running the program again.")
+        print(f"\n\n{yellow}Warning{reset}: {str(i)} spam comments may remain. Check links above or try running the program again.")
     else:
         print("\n\nSomething strange happened... The comments may or may have not been deleted.")
 
@@ -353,90 +371,75 @@ def check_deleted_comments(commentsDictionary):
 
 
 
-##########################################################################################
-############################### LESSER FUNCTIONS #########################################
-########################################################################################## 
+''' Class for misc functions '''
+class MISC:
 
-################################### GET VIDEO TITLE ###############################################
-# Get video title from video ID using YouTube API request
-def get_video_title(video_id):
-  results = youtube.videos().list(
-    part="snippet",
-    id=video_id,
-    fields="items/snippet/title",
-    maxResults=1
-  ).execute()
-  
-  title = results["items"][0]["snippet"]["title"]
+  def get_video_title(video_id):
+    ''' Get video title from video ID using YouTube API request '''
 
-  return title
+    results = youtube.videos().list(
+      part="snippet",
+      id=video_id,
+      fields="items/snippet/title",
+      maxResults=1
+    ).execute()
 
-############################# GET CHANNEL ID FROM VIDEO ID #####################################
-# Get channel ID from video ID using YouTube API request
-def get_channel_id(video_id):
-  results = youtube.videos().list(
-    part="snippet",
-    id=video_id,
-    fields="items/snippet/channelId",
-    maxResults=1
-  ).execute()
-  
-  channel_id = results["items"][0]["snippet"]["channelId"]
+    return results["items"][0]["snippet"]["title"]
 
-  return channel_id
+  def get_channel_id(video_id):
+    ''' Get channel ID from video ID using YouTube API request '''
 
+    results = youtube.videos().list(
+      part="snippet",
+      id=video_id,
+      fields="items/snippet/channelId",
+      maxResults=1
+    ).execute()
 
-################################# VIDEO ID LOOKUP ##############################################
-# Using comment ID, get corresponding video ID from dictionary variable
-def convert_comment_id_to_video_id(comment_id):
-  video_id = vidIdDict[comment_id]
-  return video_id
+    return results["items"][0]["snippet"]["channelId"]
 
-##################################### PRINT STATS ##########################################
+  def convert_comment_id_to_video_id(comment_id):
+    ''' Using comment ID, get corresponding video ID from dictionary variable '''
 
-# Prints Scanning Statistics, can be version that overwrites itself or one that finalizes and moves to next line
-def print_count_stats(final):
-  if final == True:
-    print("Top Level Comments Scanned: " + str(scannedCommentsCount) + " | Replies Scanned: " + str(scannedRepliesCount) + " | Spam Found So Far: " +  str(len(spamCommentsID)) + "\n")
-  else:
-    print("Top Level Comments Scanned: " + str(scannedCommentsCount) + " | Replies Scanned: " + str(scannedRepliesCount) + " | Spam Found So Far: " +  str(len(spamCommentsID)), end = "\r")
-  
-  return None
+    return vidIdDict[comment_id]
 
-##################################### VALIDATE VIDEO ID #####################################
-# Checks if video ID is correct length, and if so, gets the title of the video
-def validate_video_id(video_id):
-  if len(video_id) != 11:
-    print("\nInvalid Video ID! Video IDs are 11 characters long.")
-    return False
-  else:
-    return True
+  def print_count_stats(final):
+    ''' Prints Scanning Statistics, can be version that overwrites itself or one that finalizes and moves to next line '''
 
-##################################### VALIDATE CHANNEL ID ##################################
-# Checks if channel ID is correct length and in correct format - if so returns True
-def validate_channel_id(channel_id):
-  if len(channel_id) == 24 and channel_id[0:2] == "UC":
-    return True
-  else:
-    print("\nInvalid Channel ID! Channel IDs are 24 characters long and begin with 'UC'.")
-    return False
-  
-############################### Confirmation to continue #################################
-# User inputs Y/N confirmation to continue, and exits if not yes
-# Takes in message to display
+    if final: print(f"Top Level Comments Scanned: {str(scannedCommentsCount)} | Replies Scanned: {str(scannedRepliesCount)} | Spam Found So Far: {str(len(spamCommentsID))}\n")
+    else: print(f"Top Level Comments Scanned: {str(scannedCommentsCount)} | Replies Scanned: {str(scannedRepliesCount)} | Spam Found So Far: {str(len(spamCommentsID))}", end = "\r")
+    
+    return None
 
-def confirm_continue(message=""):
-  # While loop until valid input
-  valid = False
-  while valid == False:
-    response = input("\n" + message + " (Y/N): ")
-    if response == "Y" or response == "y":
-      return True
-    elif response == "N" or response == "n":
+  def validate_video_id(video_id):
+    ''' Checks if video ID is correct length, and if so, gets the title of the video '''
+
+    if len(video_id) != 11:
+      print("\nInvalid Video ID! Video IDs are 11 characters long.")
       return False
     else:
-      print("\nInvalid Input. Enter Y or N")
+      return True
 
+  def validate_channel_id(channel_id):
+    ''' Checks if channel ID is correct length and in correct format - if so returns True '''
+
+    if len(channel_id) == 24 and channel_id[0:2] == "UC":
+      return True
+    else:
+      print("\nInvalid Channel ID! Channel IDs are 24 characters long and begin with 'UC'.")
+      return False
+
+  def confirm_continue(message=""):
+    ''' User inputs Y/N confirmation to continue, and exits if not yes '''
+    # While loop until valid input
+    valid = False
+
+    while not valid:
+      response = input(f"\n{message} (Y/N): ").upper()
+      
+      if response in ['Y', 'YES']: return True
+      elif response in ['N', 'NO']: return False
+      else: print("\nInvalid Input. Enter Y or N")
 
 ##########################################################################################
 ##########################################################################################
@@ -444,13 +447,13 @@ def confirm_continue(message=""):
 ##########################################################################################
 ##########################################################################################
 
-if __name__ == "__main__":
+def main():
   # Authenticate with the Google API
   # If get error about instantiation or creds expired, just delete token.pickle and run again
   youtube = get_authenticated_service()
   
   # Intro message
-  print("============ YOUTUBE SPAMMER PURGE v" + version + " ============")
+  print(f"============ YOUTUBE SPAMMER PURGE v{version} ============")
   print("== https://github.com/ThioJoe/YouTube-Spammer-Purge ==")
   print("======== Author: ThioJoe - YouTube.com/ThioJoe ======= \n")
 
@@ -467,7 +470,7 @@ if __name__ == "__main__":
   print("      2. Scan Entire Channel")
 
   validMode = False
-  while validMode == False:
+  while not validMode:
     mode = str(input("Choice: "))
     # If chooses to scan single video - Validate Video ID, get title, and confirm with user - otherwise exits
     if mode == "1":
@@ -476,67 +479,77 @@ if __name__ == "__main__":
       #While loop to get video ID and if invalid ask again
       validVideoID = False
       confirm = False
-      while validVideoID == False or confirm == False:
+
+      while not validVideoID or not confirm: # "while not confirm" is the same as "while confirm == False"
         check_video_id = input("Enter Video ID to scan: ")
-        validVideoID = validate_video_id(check_video_id)
-        title = get_video_title(check_video_id)
+        
+        validVideoID = MISC.validate_video_id(check_video_id)
+        title = MISC.get_video_title(check_video_id)
+
         print("Chosen Video:  " + title)
-        confirm = confirm_continue("Is this correct?")
-      userChannelID = get_channel_id(check_video_id)
+        confirm = MISC.confirm_continue("Is this correct?")
+      userChannelID = MISC.get_channel_id(check_video_id)
 
     # If chooses to scan entire channel - Validate Channel ID, otherwise exit
     elif mode == "2":
       validMode = True
       # While loop to get channel ID, if invalid, asks again
       validChannelID = False
-      while validChannelID == False:
+
+      while not validChannelID:
         check_channel_id = input("Enter YOUR Channel ID: ")
-        if validate_channel_id(check_channel_id) == True:
+        if MISC.validate_channel_id(check_channel_id):
           validChannelID = True
           userChannelID = check_channel_id
           print("\n")
+
           # While loop to get max scan number, not an integer, asks again
           validInteger = False
-          while validInteger == False:
+          while not validInteger:
             try:
               maxScanNumber = int(input("Enter the maximum number of comments to scan: "))
-              if maxScanNumber > 0:
-                validInteger = True # If it gets here, it's an integer, otherwise goes to exception
-              else:
-                print("\nInvalid Input! Number must be greater than zero.")
-            except:
-              print("\nInvalid Input! - Must be a whole number.")
+              
+              if maxScanNumber > 0: validInteger = True # If it gets here, it's an integer, otherwise goes to exception
+              else: print("\nInvalid Input! Number must be greater than zero.")
+            
+            except: print("\nInvalid Input! - Must be a whole number.")
           
     else:
       print("\nInvalid choice! - Enter either 1 or 2. ")
 
   # User inputs channel ID of the spammer, while loop repeats until valid input
   validChannelID = False
-  while validChannelID == False:
+  while not validChannelID:
     spammer_channel_id = input("Enter the Channel ID of the spammer: ")
-    validChannelID = validate_channel_id(spammer_channel_id)
+    validChannelID = MISC.validate_channel_id(spammer_channel_id)
+  
   print("\n")
 
   # Check if spammer ID and user's channel ID are the same, and warn
   # If using channel-wide scanning mode, program will not run for safety purposes
   if spammer_channel_id == userChannelID and mode == "2":
-    print("WARNING - You are scanning for your own channel ID!")
+    print(f"{yellow}WARNING{reset} - You are scanning for your own channel ID!")
     print("For safety purposes, this program's delete functionality is disabled when scanning for yourself across your entire channel (Mode 2).")
     print("If you want to delete your own comments for testing purposes, you can instead scan an individual video (Mode 1).")
-    confirmation = confirm_continue("Continue?")
-    if confirmation == False:
+    
+    confirmation = MISC.confirm_continue("Continue?")
+    if not confirmation:
       input("Ok, Cancelled. Press Enter to Exit...")
       exit()
+  
   elif spammer_channel_id == userChannelID and mode == "1":
-    print("WARNING: You are scanning for your own channel ID! This would delete all of your comments on the video!")
+    print(f"{yellow}WARNING{reset}: You are scanning for your own channel ID! This would delete all of your comments on the video!")
     print("     (You WILL still be asked to confirm before actually deleting anything)")
     print("If you are testing and want to scan and/or delete your own comments, enter 'Y' to continue, otherwise enter 'N' to exit.")
-    confirmation = confirm_continue("Continue?")
-    if confirmation == True:  # After confirmation, deletion functionality is elegible to be enabled later
+    
+    confirmation = MISC.confirm_continue("Continue?")
+    if confirmation:  # After confirmation, deletion functionality is elegible to be enabled later
       deletionEnabled = "HalfTrue"
-    elif confirmation == False:
+
+    elif not confirmation:
       input("Ok, Cancelled. Press Enter to Exit...")
       exit()
+
   else: 
     deletionEnabled = "HalfTrue" # If no matching problem found, deletion functionality is elegible to be enabled later
 
@@ -561,21 +574,22 @@ if __name__ == "__main__":
       print("No spam comments found!\n")
       input("\nPress Enter to exit...")
       exit()
-    print("Number of Spammer Comments Found: " + str(len(spamCommentsID)))
+
+    print(f"Number of Spammer Comments Found: {str(len(spamCommentsID))}")
 
     # Asks user if they want to save list of spam comments to a file
-    if confirm_continue("Spam comments ready to display. Also save the list to a text file?") == True:
+    if MISC.confirm_continue("Spam comments ready to display. Also save the list to a text file?"):
       logMode = True
-      logFileName = "Spam_Log_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S" + ".txt")
+      logFileName = f"Spam_Log_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.txt"
       logFile = open(logFileName, "w") # Opens log file in write mode
-      print("Log file will be called " + logFileName + "\n")
+      print(f"Log file will be called {logFileName}\n")
       input("Press Enter to display comments...")
 
       # Write heading info to log file
       logFile.write("----------- YouTube Spammer Purge Log File ----------- \n\n")
-      logFile.write("Channel ID spammer searched: " + spammer_channel_id + "\n\n")
-      logFile.write("Number of Spammer Comments Found: " + str(len(spamCommentsID)) + "\n\n")
-      logFile.write("IDs of Spammer Comments: " + "\n" + str(spamCommentsID) + "\n\n\n")
+      logFile.write(f"Channel ID spammer searched: {spammer_channel_id}\n\n")
+      logFile.write(f"Number of Spammer Comments Found: {str(len(spamCommentsID))} \n\n")
+      logFile.write(f"IDs of Spammer Comments: \n{str(spamCommentsID)} \n\n\n")
 
     else:
       print("Ok, continuing... \n")
@@ -583,10 +597,7 @@ if __name__ == "__main__":
     # Prints list of spam comments
     print("\n\nComments by the selected user: \n")
     print_comments(spamCommentsID, logMode)
-    if logMode == True:
-      logFile.close()
-
-
+    if logMode:logFile.close()
 
     # Get confirmation to delete spam comments
     confirmDelete = None
@@ -594,15 +605,18 @@ if __name__ == "__main__":
     print("Check that all comments listed above are indeed spam.")
 
     if deletionEnabled == "HalfTrue": # Check if deletion functionality is elegible to be enabled
+
       confirmDelete = input("Do you want to delete ALL of the above comments? Type 'YES' exactly! \n") 
       if confirmDelete != "YES":  # Deletion functionality enabled via confirmation, or not
         input("\nDeletion CANCELLED. Press Enter to exit...")
         exit()
       elif confirmDelete == "YES":
         deletionEnabled = "True"
+
     elif deletionEnabled == "False" and spammer_channel_id == userChannelID and mode == "2":
       input("\nDeletion functionality disabled for this mode because you scanned your own channel. Press Enter to exit...")
       exit()
+
     else:
       input("\nFAILSAFE: For an unknown reason, the deletion functionality was not enabled. Cannot delete comments. Press Enter to exit...")
       exit()
@@ -613,6 +627,7 @@ if __name__ == "__main__":
       delete_found_comments(vidIdDict) # Deletes spam comments
       check_deleted_comments(vidIdDict) #Verifies if comments were deleted
       input("\nDeletion Complete. Press Enter to Exit...")
+    
     else:
       input("\nDeletion Cancelled. Press Enter to exit...")
       exit()
@@ -624,12 +639,17 @@ if __name__ == "__main__":
     print("Full Error Message: ")
     print(e)
     print("\nError Info:")
-    print("    Code: "+ str(e.status_code))
+    print(f"    Code: {str(e.status_code)}"
     reason = str(e.error_details[0]["reason"])
     print("    Reason: " + reason)
-    if reason == "processingFailure":
-      print("\n !! Processing Error - Sometimes this error fixes itself. Try just running the program again. !!")
+          
+    if reason == "processingFailure": print("\n !! Processing Error - Sometimes this error fixes itself. Try just running the program again. !!")
+          
     input("\n Press Enter to Exit...")
-
   else:
     print("\nFinished Executing.")
+
+if __name__ == "__main__":
+  main()
+
+print(reset) # Remove any left over colors
