@@ -86,7 +86,7 @@ TOKEN_FILE = 'token.pickle'
 
 # Check if client_secrets.json file exists, if not give error
 if not os.path.exists(CLIENT_SECRETS_FILE):
-  print("\n ------------- ERROR: client_secrets.json file not found! ------------- ")
+  print("\n ------------- ERROR: "+CLIENT_SECRETS_FILE+" file not found! ------------- ")
   print(" Make sure it is placed in the same folder as the program, and is spelled as above \n")
   print(" ----- Or: Did you create a Google Cloud Platform Project to access the API? ----- ")
   print(" ------ See section with instructions on obtaining an API Key at this page: ------- ")
