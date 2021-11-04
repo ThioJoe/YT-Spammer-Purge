@@ -407,7 +407,7 @@ def print_count_stats(final):
 # Checks if video ID is correct length, and if so, gets the title of the video
 def validate_video_id(video_id):
   if len(video_id) != 11:
-    print("\nInvalid Video ID! Video IDs are 11 characters long.")
+    print("\nInvalid Video link or ID! Video IDs are 11 characters long.")
     return False
   else:
     return True
@@ -418,7 +418,7 @@ def validate_channel_id(channel_id):
   if len(channel_id) == 24 and channel_id[0:2] == "UC":
     return True
   else:
-    print("\nInvalid Channel ID! Channel IDs are 24 characters long and begin with 'UC'.")
+    print("\nInvalid Channel link or ID! Channel IDs are 24 characters long and begin with 'UC'.")
     return False
   
 ############################### Confirmation to continue #################################
@@ -477,11 +477,43 @@ if __name__ == "__main__":
       validVideoID = False
       confirm = False
       while validVideoID == False or confirm == False:
-        check_video_id = input("Enter Video ID to scan: ")
+        check_video_id = input("Enter Video link or ID to scan: ")
+
+        # Get id from long video link
+        if "/watch?" in check_video_id:
+          startIndex = 0
+          endIndex = 0
+          
+          if "?v=" in check_video_id:
+            startIndex = check_video_id.index("?v=") + 3
+          elif "&v=" in check_video_id:
+            startIndex = check_video_id.index("&v=") + 3
+
+          if "&" in check_video_id:
+            endIndex = check_video_id.index("&")
+          else:
+            endIndex = len(check_video_id)
+        
+          if startIndex != 0 and endIndex != 0 and startIndex < endIndex and endIndex <= len(check_video_id):
+            check_video_id = check_video_id[startIndex:endIndex]
+
+        # Get id from short video link
+        if "/youtu.be/" in check_video_id:
+          startIndex = check_video_id.index(".be/") + 4
+          endIndex = len(check_video_id)
+
+          if "?" in check_video_id:
+            endIndex = check_video_id.index("?")
+
+          if endIndex != 0 and startIndex < endIndex and endIndex <= len(check_video_id):
+            check_video_id = check_video_id[startIndex:endIndex]
+        
         validVideoID = validate_video_id(check_video_id)
-        title = get_video_title(check_video_id)
-        print("Chosen Video:  " + title)
-        confirm = confirm_continue("Is this correct?")
+        if validVideoID:
+          title = get_video_title(check_video_id)
+          print("Chosen Video:  " + title)
+          confirm = confirm_continue("Is this correct?")
+          
       userChannelID = get_channel_id(check_video_id)
 
     # If chooses to scan entire channel - Validate Channel ID, otherwise exit
@@ -513,7 +545,35 @@ if __name__ == "__main__":
   # User inputs channel ID of the spammer, while loop repeats until valid input
   validChannelID = False
   while validChannelID == False:
-    spammer_channel_id = input("Enter the Channel ID of the spammer: ")
+    spammer_channel_id = input("Enter the Channel link or ID of the spammer: ")
+
+    # Get id from channel link
+    if "/channel/" in spammer_channel_id:
+      startIndex = spammer_channel_id.rindex("/") + 1
+      endIndex = len(spammer_channel_id)
+      
+      if "?" in spammer_channel_id:
+        endIndex = spammer_channel_id.rindex("?")
+
+      if startIndex < endIndex and endIndex <= len(spammer_channel_id):
+        spammer_channel_id = spammer_channel_id[startIndex:endIndex]
+
+    if "/c/" in spammer_channel_id:
+      startIndex = spammer_channel_id.rindex("/c/") + 3
+      endIndex = len(spammer_channel_id)
+
+      # If there is a / after the username scoot the endIndex over
+      if startIndex != spammer_channel_id.rindex("/") + 1:
+        endIndex = spammer_channel_id.rindex("/")
+
+      if startIndex < endIndex and endIndex <= len(spammer_channel_id):
+        channelURL = spammer_channel_id[startIndex:endIndex]
+
+        response = youtube.search().list(part="snippet",q=channelURL, maxResults=1).execute()
+        
+        if response.get("items"):
+            spammer_channel_id = response.get("items")[0]["snippet"]["channelId"]
+    
     validChannelID = validate_channel_id(spammer_channel_id)
   print("\n")
 
