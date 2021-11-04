@@ -594,11 +594,12 @@ if __name__ == "__main__":
     print("Check that all comments listed above are indeed spam.")
 
     if deletionEnabled == "HalfTrue": # Check if deletion functionality is elegible to be enabled
-      confirmDelete = input("Do you want to delete ALL of the above comments? Type 'YES' exactly! \n") 
-      if confirmDelete != "YES":  # Deletion functionality enabled via confirmation, or not
+      confirmDelete = input("Do you want to delete ALL of the above comments? Type yes to confirm. \n") 
+      confirmDelete = confirmDelete.lower()
+      if confirmDelete != "yes":  # Deletion functionality enabled via confirmation, or not
         input("\nDeletion CANCELLED. Press Enter to exit...")
         exit()
-      elif confirmDelete == "YES":
+      elif confirmDelete == "yes":
         deletionEnabled = "True"
     elif deletionEnabled == "False" and spammer_channel_id == userChannelID and mode == "2":
       input("\nDeletion functionality disabled for this mode because you scanned your own channel. Press Enter to exit...")
@@ -608,7 +609,7 @@ if __name__ == "__main__":
       exit()
       
 
-    if confirmDelete == "YES" and deletionEnabled == "True":  # Only proceed if deletion functionality is enabled, and user has confirmed deletion
+    if confirmDelete == "yes" and deletionEnabled == "True":  # Only proceed if deletion functionality is enabled, and user has confirmed deletion
       print("\n")
       delete_found_comments(vidIdDict) # Deletes spam comments
       check_deleted_comments(vidIdDict) #Verifies if comments were deleted
