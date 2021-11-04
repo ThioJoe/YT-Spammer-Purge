@@ -222,7 +222,7 @@ def print_prepared_comments(comments, j, logMode):
     print("     > Direct Link: " + "https://www.youtube.com/watch?v=" + videoID + "&lc=" + comments[i] + "\n")
 
     # If logging enabled, also prints to log file
-    if logMode == True:
+    if logMode:
       logFile.write(str(j+1) + ". " + author + ":  " + text + "\n")
       if check_video_id is None:  # Only print video title if searching entire channel
         title = get_video_title(videoID) # Get Video Title
@@ -396,7 +396,7 @@ def convert_comment_id_to_video_id(comment_id):
 
 # Prints Scanning Statistics, can be version that overwrites itself or one that finalizes and moves to next line
 def print_count_stats(final):
-  if final == True:
+  if final:
     print("Top Level Comments Scanned: " + str(scannedCommentsCount) + " | Replies Scanned: " + str(scannedRepliesCount) + " | Spam Found So Far: " +  str(len(spamCommentsID)) + "\n")
   else:
     print("Top Level Comments Scanned: " + str(scannedCommentsCount) + " | Replies Scanned: " + str(scannedRepliesCount) + " | Spam Found So Far: " +  str(len(spamCommentsID)), end = "\r")
@@ -409,17 +409,14 @@ def validate_video_id(video_id):
   if len(video_id) != 11:
     print("\nInvalid Video ID! Video IDs are 11 characters long.")
     return False
-  else:
-    return True
-
+  return True
 ##################################### VALIDATE CHANNEL ID ##################################
 # Checks if channel ID is correct length and in correct format - if so returns True
 def validate_channel_id(channel_id):
   if len(channel_id) == 24 and channel_id[0:2] == "UC":
     return True
-  else:
-    print("\nInvalid Channel ID! Channel IDs are 24 characters long and begin with 'UC'.")
-    return False
+  print("\nInvalid Channel ID! Channel IDs are 24 characters long and begin with 'UC'.")
+  return False
   
 ############################### Confirmation to continue #################################
 # User inputs Y/N confirmation to continue, and exits if not yes
@@ -564,7 +561,7 @@ if __name__ == "__main__":
     print("Number of Spammer Comments Found: " + str(len(spamCommentsID)))
 
     # Asks user if they want to save list of spam comments to a file
-    if confirm_continue("Spam comments ready to display. Also save the list to a text file?") == True:
+    if confirm_continue("Spam comments ready to display. Also save the list to a text file?"):
       logMode = True
       logFileName = "Spam_Log_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S" + ".txt")
       logFile = open(logFileName, "w") # Opens log file in write mode
@@ -583,7 +580,7 @@ if __name__ == "__main__":
     # Prints list of spam comments
     print("\n\nComments by the selected user: \n")
     print_comments(spamCommentsID, logMode)
-    if logMode == True:
+    if logMode:
       logFile.close()
 
 
