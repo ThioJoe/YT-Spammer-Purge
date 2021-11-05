@@ -34,7 +34,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "1.3.2"
+version = "1.3.3"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 import os
@@ -674,7 +674,7 @@ if __name__ == "__main__":
     if confirm_continue("Spam comments ready to display. Also save the list to a text file?") == True:
       logMode = True
       logFileName = "Spam_Log_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S" + ".txt")
-      logFile = open(logFileName, "w") # Opens log file in write mode
+      logFile = open(logFileName, "w", encoding="utf-8") # Opens log file in write mode
       print("Log file will be called " + logFileName + "\n")
       input("Press Enter to display comments...")
 
