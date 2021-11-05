@@ -239,7 +239,7 @@ def print_prepared_comments(comments, j, logMode):
 ##########################################################################################
 
 # Call the API's commentThreads.list method to list the existing comments.
-def get_comments(youtube, check_video_id=None, check_channel_id=None, nextPageToken=None):
+def get_comments(youtube, check_video_id=None, check_channel_id=None, nextPageToken=None): # None are set as default if no parameters passed into function
   global scannedThreadsCount
   global scannedCommentsCount
   global spamCommentsID
