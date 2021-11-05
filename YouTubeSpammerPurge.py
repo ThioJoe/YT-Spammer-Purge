@@ -34,7 +34,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "1.3.1"
+version = "1.3.2"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 import os
@@ -562,7 +562,8 @@ if __name__ == "__main__":
   if confirm_continue("       Continue as this user?") == True:
     check_channel_id = currentUser[0]
   else:
-    print("To change users, delete the 'token.pickle' file and run the program again.")
+    print("\nTo change users, delete the 'token.pickle' file and run the program again.")
+    input("Press Enter to Exit...")
     print("\nExiting...")
     exit()
 
@@ -638,13 +639,13 @@ if __name__ == "__main__":
     print("     (You WILL still be asked to confirm before actually deleting anything)")
     print("If you are testing and want to scan and/or delete your own comments, enter 'Y' to continue, otherwise enter 'N' to exit.")
     confirmation = confirm_continue("Continue?")
-    if confirmation == True:  # After confirmation, deletion functionality is elegible to be enabled later
+    if confirmation == True:  # After confirmation, deletion functionality is eligible to be enabled later
       deletionEnabled = "HalfTrue"
     elif confirmation == False:
       input("Ok, Cancelled. Press Enter to Exit...")
       exit()
   else: 
-    deletionEnabled = "HalfTrue" # If no matching problem found, deletion functionality is elegible to be enabled later
+    deletionEnabled = "HalfTrue" # If no matching problem found, deletion functionality is eligible to be enabled later
 
   ##################### START SCANNING #####################
   try:
@@ -699,7 +700,7 @@ if __name__ == "__main__":
     print("\n")
     print("Check that all comments listed above are indeed spam.")
 
-    if deletionEnabled == "HalfTrue": # Check if deletion functionality is elegible to be enabled
+    if deletionEnabled == "HalfTrue": # Check if deletion functionality is eligible to be enabled
       confirmDelete = input("Do you want to delete ALL of the above comments? Type 'YES' exactly! \n") 
       if confirmDelete != "YES":  # Deletion functionality enabled via confirmation, or not
         input("\nDeletion CANCELLED. Press Enter to exit...")
