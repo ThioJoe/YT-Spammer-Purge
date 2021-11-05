@@ -165,7 +165,7 @@ def get_replies(parent_id, video_id):
 
     # If the comment is from the spammer channel, add to list of spam comment IDs
     # Also add key-value pair of comment ID and video ID to dictionary
-    if authorChannelID == spammer_channel_id:
+    if authorChannelID == spammer_channels_id:
       spamCommentsID += [replyID]
       vidIdDict[replyID] = video_id
 
@@ -247,54 +247,56 @@ def get_comments(youtube, check_video_id=None, check_channel_id=None, nextPageTo
   #fieldsToFetch = "nextPageToken,items/id,items/snippet/topLevelComment/id,items/snippet/totalReplyCount,items/snippet/topLevelComment/snippet/authorDisplayName,items/snippet/topLevelComment/snippet/authorChannelId/value,items/snippet/topLevelComment/snippet/textDisplay,items/snippet/topLevelComment/snippet/videoId"
   fieldsToFetch = "nextPageToken,items/snippet/topLevelComment/id,items/snippet/totalReplyCount,items/snippet/topLevelComment/snippet/authorChannelId/value,items/snippet/topLevelComment/snippet/videoId"
 
-  # Gets comment threads for a specific video
-  if check_channel_id is None and check_video_id is not None:
-    results = youtube.commentThreads().list(
-      part="snippet",
-      videoId=check_video_id, 
-      maxResults=100, # 100 is the max per page allowed by YouTube, but multiple pages will be scanned
-      pageToken=nextPageToken,
-      fields=fieldsToFetch,
-      textFormat="plainText"
-    ).execute()
+  for spammer in spammer_channels_id:
+    # Gets comment threads for a specific video
+    if check_channel_id is None and check_video_id is not None:
+      results = youtube.commentThreads().list(
+        part="snippet",
+        videoId=check_video_id, 
+        maxResults=100, # 100 is the max per page allowed by YouTube, but multiple pages will be scanned
+        pageToken=nextPageToken,
+        fields=fieldsToFetch,
+        textFormat="plainText"
+      ).execute()
+    
+    # Get comment threads across the whole channel
+    if check_channel_id is not None and check_video_id is None:
+      results = youtube.commentThreads().list(
+        part="snippet",
+        allThreadsRelatedToChannelId=check_channel_id,
+        maxResults=100, # 100 is the max per page allowed by YouTube, but multiple pages will be scanned
+        pageToken=nextPageToken,
+        fields=fieldsToFetch,
+        textFormat="plainText"
+        
+      ).execute()  
+
+    # Get token for next page
+    try:
+      RetrievedNextPageToken = results["nextPageToken"]
+    except KeyError:
+      RetrievedNextPageToken = "End"  
   
-  # Get comment threads across the whole channel
-  if check_channel_id is not None and check_video_id is None:
-    results = youtube.commentThreads().list(
-      part="snippet",
-      allThreadsRelatedToChannelId=check_channel_id,
-      maxResults=100, # 100 is the max per page allowed by YouTube, but multiple pages will be scanned
-      pageToken=nextPageToken,
-      fields=fieldsToFetch,
-      textFormat="plainText"
-    ).execute()  
+    # After getting comments threads for page, goes through each thread and gets replies
+    for item in results["items"]:
+      comment = item["snippet"]["topLevelComment"]
+      #author = comment["snippet"]["authorDisplayName"]  # If need to retrieve author name
+      authorChannelID = item["snippet"]["topLevelComment"]["snippet"]["authorChannelId"]["value"]
+      #text = comment["snippet"]["textDisplay"]  # If need to retrieve comment text
+      videoID = comment["snippet"]["videoId"] # Only enable if NOT checking specific video
+      parent_id = item["snippet"]["topLevelComment"]["id"]
+      numReplies = item["snippet"]["totalReplyCount"]
+      scannedCommentsCount += 1  # Counts number of comments scanned, add to global count
 
-  # Get token for next page
-  try:
-    RetrievedNextPageToken = results["nextPageToken"]
-  except KeyError:
-    RetrievedNextPageToken = "End"  
- 
-  # After getting comments threads for page, goes through each thread and gets replies
-  for item in results["items"]:
-    comment = item["snippet"]["topLevelComment"]
-    #author = comment["snippet"]["authorDisplayName"]  # If need to retrieve author name
-    authorChannelID = item["snippet"]["topLevelComment"]["snippet"]["authorChannelId"]["value"]
-    #text = comment["snippet"]["textDisplay"]  # If need to retrieve comment text
-    videoID = comment["snippet"]["videoId"] # Only enable if NOT checking specific video
-    parent_id = item["snippet"]["topLevelComment"]["id"]
-    numReplies = item["snippet"]["totalReplyCount"]
-    scannedCommentsCount += 1  # Counts number of comments scanned, add to global count
+      if authorChannelID == spammer:
+        spamCommentsID += [parent_id]
+        vidIdDict[parent_id] = videoID
 
-    if authorChannelID == spammer_channel_id:
-      spamCommentsID += [parent_id]
-      vidIdDict[parent_id] = videoID
-
-    if numReplies > 0:
-      get_replies(parent_id=parent_id, video_id=videoID)
-      scannedThreadsCount += 1  # Counts number of comment threads with at least one reply, adds to counter
-    else:
-      print_count_stats(final=False)  # Updates displayed stats if no replies
+      if numReplies > 0:
+        get_replies(parent_id=parent_id, video_id=videoID)
+        scannedThreadsCount += 1  # Counts number of comment threads with at least one reply, adds to counter
+      else:
+        print_count_stats(final=False)  # Updates displayed stats if no replies
   
   return RetrievedNextPageToken
 
@@ -513,13 +515,21 @@ if __name__ == "__main__":
   # User inputs channel ID of the spammer, while loop repeats until valid input
   validChannelID = False
   while validChannelID == False:
-    spammer_channel_id = input("Enter the Channel ID of the spammer: ")
-    validChannelID = validate_channel_id(spammer_channel_id)
+    spammer_channels_quantity = int(input("Enter how many channels are you going to delete their comments: "))
+    
+    # Array of channels that will get bulk deleted
+    spammer_channels_id = []
+    for channel in range(spammer_channels_quantity):
+      spammer_channels_id.append(input("Enter Channel ID of the spammer: "))
+      validChannelID = validate_channel_id(spammer_channels_id[channel])
+      if validChannelID == False:
+        print("\nInvalid Channel ID! Channel IDs are 24 characters long and begin with 'UC'.")
+        print("\n")
   print("\n")
 
   # Check if spammer ID and user's channel ID are the same, and warn
   # If using channel-wide scanning mode, program will not run for safety purposes
-  if spammer_channel_id == userChannelID and mode == "2":
+  if spammer_channels_id == userChannelID and mode == "2":
     print("WARNING - You are scanning for your own channel ID!")
     print("For safety purposes, this program's delete functionality is disabled when scanning for yourself across your entire channel (Mode 2).")
     print("If you want to delete your own comments for testing purposes, you can instead scan an individual video (Mode 1).")
@@ -527,7 +537,7 @@ if __name__ == "__main__":
     if confirmation == False:
       input("Ok, Cancelled. Press Enter to Exit...")
       exit()
-  elif spammer_channel_id == userChannelID and mode == "1":
+  elif spammer_channels_id == userChannelID and mode == "1":
     print("WARNING: You are scanning for your own channel ID! This would delete all of your comments on the video!")
     print("     (You WILL still be asked to confirm before actually deleting anything)")
     print("If you are testing and want to scan and/or delete your own comments, enter 'Y' to continue, otherwise enter 'N' to exit.")
@@ -573,7 +583,7 @@ if __name__ == "__main__":
 
       # Write heading info to log file
       logFile.write("----------- YouTube Spammer Purge Log File ----------- \n\n")
-      logFile.write("Channel ID spammer searched: " + spammer_channel_id + "\n\n")
+      logFile.write("Channel ID spammer searched: " + spammer_channels_id + "\n\n")
       logFile.write("Number of Spammer Comments Found: " + str(len(spamCommentsID)) + "\n\n")
       logFile.write("IDs of Spammer Comments: " + "\n" + str(spamCommentsID) + "\n\n\n")
 
@@ -600,7 +610,7 @@ if __name__ == "__main__":
         exit()
       elif confirmDelete == "YES":
         deletionEnabled = "True"
-    elif deletionEnabled == "False" and spammer_channel_id == userChannelID and mode == "2":
+    elif deletionEnabled == "False" and spammer_channels_id == userChannelID and mode == "2":
       input("\nDeletion functionality disabled for this mode because you scanned your own channel. Press Enter to exit...")
       exit()
     else:
