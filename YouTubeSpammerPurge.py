@@ -274,7 +274,7 @@ def get_comments(youtube, check_video_id=None, check_channel_id=None, nextPageTo
       RetrievedNextPageToken = results["nextPageToken"]
     except KeyError:
       RetrievedNextPageToken = "End"  
-    
+ 
     # After getting comments threads for page, goes through each thread and gets replies
     for item in results["items"]:
       comment = item["snippet"]["topLevelComment"]
