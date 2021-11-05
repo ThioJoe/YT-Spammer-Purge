@@ -314,42 +314,45 @@ def delete_found_comments(commentsDictionary):
 
     print("Deleting Comments. Please Wait...")
     commentsList = list(commentsDictionary.keys()) # Takes comment IDs out of dictionary and into list
-    if len(commentsList) > 50:
-        remainder = len(commentsList) % 50
-        numDivisions = int((len(commentsList)-remainder)/50)
-        for i in range(numDivisions):
-            delete(commentsList[i*50:i*50+50])
-        if remainder > 0:
-            delete(commentsList[numDivisions*50:len(commentsList)])
-    else:
-        delete(commentsList)
+    for spammer in spammer_channels_id:
+      if len(commentsList) > 50:
+          remainder = len(commentsList) % 50
+          numDivisions = int((len(commentsList)-remainder)/50)
+          for i in range(numDivisions):
+              delete(commentsList[i*50:i*50+50])
+          if remainder > 0:
+              delete(commentsList[numDivisions*50:len(commentsList)])
+      else:
+          delete(commentsList)
     print("Comments Deleted! Will now verify each is gone.\n")
 
 # Takes in dictionary of comment IDs and video IDs, and checks if comments still exist individually
 def check_deleted_comments(commentsDictionary):
-    i = 0 # Count number of remaining comments
-    j = 1 # Count number of checked
-    for key, value in commentsDictionary.items():
-        results = youtube.comments().list(
-            part="snippet",
-            id=key,  
-            maxResults=1,
-            fields="items",
-            textFormat="plainText"
-        ).execute()
-        print("Verifying Comments Deleted..." + "."*j, end="\r")
-        j += 1
+    for spammer in spammer_channels_id:
 
-        if results["items"]:  # Check if the items result is empty
-            print("Possible Issue Deleting Comment: " + str(key) + " |  Check Here: " + "https://www.youtube.com/watch?v=" + str(value) + "&lc=" + str(key))
-            i += 1
+      i = 0 # Count number of remaining comments
+      j = 1 # Count number of checked
+      for key, value in commentsDictionary.items():
+          results = youtube.comments().list(
+              part="snippet",
+              id=key,  
+              maxResults=1,
+              fields="items",
+              textFormat="plainText"
+          ).execute()
+          print("Verifying Comments Deleted..." + "."*j, end="\r")
+          j += 1
 
-    if i == 0:
-        print("\n\nSuccess: All spam comments should be gone.")
-    elif i > 0:
-        print("\n\nWarning: " + str(i) + " spam comments may remain. Check links above or try running the program again.")
-    else:
-        print("\n\nSomething strange happened... The comments may or may have not been deleted.")
+          if results["items"]:  # Check if the items result is empty
+              print("Possible Issue Deleting Comment: " + str(key) + " |  Check Here: " + "https://www.youtube.com/watch?v=" + str(value) + "&lc=" + str(key))
+              i += 1
+
+      if i == 0:
+          print("\n\nSuccess: All spam comments should be gone.")
+      elif i > 0:
+          print("\n\nWarning: " + str(i) + " spam comments may remain. Check links above or try running the program again.")
+      else:
+          print("\n\nSomething strange happened... The comments may or may have not been deleted.")
 
     return None
 
@@ -516,15 +519,26 @@ if __name__ == "__main__":
   validChannelID = False
   while validChannelID == False:
     spammer_channels_quantity = int(input("Enter how many channels are you going to delete their comments: "))
-    
-    # Array of channels that will get bulk deleted
+    quantity = 0
+
     spammer_channels_id = []
-    for channel in range(spammer_channels_quantity):
-      spammer_channels_id.append(input("Enter Channel ID of the spammer: "))
+    def send_input_channels():
+      enter_id_message = "Enter Channel ID of the spammer " + str(quantity + 1) + ": "
+      spammer_channels_id.append(input(enter_id_message))
       validChannelID = validate_channel_id(spammer_channels_id[channel])
+      return validChannelID
+
+    # Array of channels that will get bulk deleted
+    for channel in range(spammer_channels_quantity):
+      validChannelID = send_input_channels()
       if validChannelID == False:
         print("\nInvalid Channel ID! Channel IDs are 24 characters long and begin with 'UC'.")
         print("\n")
+        send_input_channels()
+      else:
+        quantity =+ 1
+
+
   print("\n")
 
   # Check if spammer ID and user's channel ID are the same, and warn
@@ -581,11 +595,13 @@ if __name__ == "__main__":
       print("Log file will be called " + logFileName + "\n")
       input("Press Enter to display comments...")
 
-      # Write heading info to log file
       logFile.write("----------- YouTube Spammer Purge Log File ----------- \n\n")
-      logFile.write("Channel ID spammer searched: " + spammer_channels_id + "\n\n")
-      logFile.write("Number of Spammer Comments Found: " + str(len(spamCommentsID)) + "\n\n")
-      logFile.write("IDs of Spammer Comments: " + "\n" + str(spamCommentsID) + "\n\n\n")
+
+      for spammer in spammer_channels_id:
+        # Write heading info to log file
+        logFile.write("Channel ID spammer searched: " + spammer + "\n\n")
+        logFile.write("Number of Spammer Comments Found: " + str(len(spamCommentsID)) + "\n\n")
+        logFile.write("IDs of Spammer Comments: " + "\n" + str(spamCommentsID) + "\n\n\n")
 
     else:
       print("Ok, continuing... \n")
