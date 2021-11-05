@@ -34,7 +34,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "1.2.0"
+version = "1.3.0"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 import os
@@ -406,21 +406,103 @@ def print_count_stats(final):
 
 ##################################### VALIDATE VIDEO ID #####################################
 # Checks if video ID is correct length, and if so, gets the title of the video
-def validate_video_id(video_id):
-  if len(video_id) != 11:
-    print("\nInvalid Video ID! Video IDs are 11 characters long.")
-    return False
+def validate_video_id(inputted_video):
+# Get id from long video link
+  if "/watch?" in inputted_video:
+    startIndex = 0
+    endIndex = 0
+    
+    if "?v=" in inputted_video:
+      startIndex = inputted_video.index("?v=") + 3
+    elif "&v=" in inputted_video:
+      startIndex = inputted_video.index("&v=") + 3
+    else:
+      isolatedVideoID = "invalid"
+
+    if "&" in inputted_video:
+      endIndex = inputted_video.index("&")
+    else:
+      endIndex = len(inputted_video)
+  
+    if startIndex != 0 and endIndex != 0 and startIndex < endIndex and endIndex <= len(inputted_video):
+      isolatedVideoID = inputted_video[startIndex:endIndex]
+
+  # Get id from short video link
+  elif "/youtu.be/" in inputted_video:
+    startIndex = inputted_video.index(".be/") + 4
+    endIndex = len(inputted_video)
+
+    if "?" in inputted_video:
+      endIndex = inputted_video.index("?")
+
+    if endIndex != 0 and startIndex < endIndex and endIndex <= len(inputted_video):
+      isolatedVideoID = inputted_video[startIndex:endIndex]
+    else:
+      isolatedVideoID = "invalid"
+
+  else: 
+    isolatedVideoID = inputted_video
+
+  if len(isolatedVideoID) != 11:
+    print("\nInvalid Video link or ID! Video IDs are 11 characters long.")
+    return False, None
+
   else:
-    return True
+    return True, isolatedVideoID
 
 ##################################### VALIDATE CHANNEL ID ##################################
 # Checks if channel ID is correct length and in correct format - if so returns True
-def validate_channel_id(channel_id):
-  if len(channel_id) == 24 and channel_id[0:2] == "UC":
-    return True
+def validate_channel_id(inputted_channel):
+  # Get id from channel link
+  if "/channel/" in inputted_channel:
+    startIndex = inputted_channel.rindex("/") + 1
+    endIndex = len(inputted_channel)
+    
+    if "?" in inputted_channel:
+      endIndex = inputted_channel.rindex("?")
+
+    if startIndex < endIndex and endIndex <= len(inputted_channel):
+      isolatedChannelID = inputted_channel[startIndex:endIndex]
+    else:
+      isolatedChannelID = "Invalid"
+
+  elif "/c/" in inputted_channel:
+    startIndex = inputted_channel.rindex("/c/") + 3 #Start index at at character after /c/
+    endIndex = len(inputted_channel)
+
+    # If there is a / after the username scoot the endIndex over
+    if startIndex != inputted_channel.rindex("/") + 1:
+      endIndex = inputted_channel.rindex("/") # endIndex is now at the last /
+
+    if startIndex < endIndex and endIndex <= len(inputted_channel):
+      customURL = inputted_channel[startIndex:endIndex]
+      response = youtube.search().list(part="snippet",q=customURL, maxResults=1).execute()
+      if response.get("items"):
+          isolatedChannelID = response.get("items")[0]["snippet"]["channelId"] # Get channel ID from custom channel URL username
+    else:
+      isolatedChannelID = "Invalid"
+  
+  # Handle legacy style custom URL (no /c/ for custom URL)
+  elif ("youtube.com" in inputted_channel) and ("/c/" and "/channel/" not in inputted_channel):
+    startIndex = inputted_channel.rindex("/") + 1
+    endIndex = len(inputted_channel)
+
+    if startIndex < endIndex and endIndex <= len(inputted_channel):
+      customURL = inputted_channel[startIndex:endIndex]
+      response = youtube.search().list(part="snippet",q=customURL, maxResults=1).execute()
+      if response.get("items"):
+          isolatedChannelID = response.get("items")[0]["snippet"]["channelId"] # Get channel ID from custom channel URL username
+    else:
+      isolatedChannelID = "Invalid"
+
   else:
-    print("\nInvalid Channel ID! Channel IDs are 24 characters long and begin with 'UC'.")
-    return False
+    isolatedChannelID = inputted_channel
+
+  if len(isolatedChannelID) == 24 and isolatedChannelID[0:2] == "UC":
+    return True, isolatedChannelID
+  else:
+    print("\nInvalid Channel link or ID! Channel IDs are 24 characters long and begin with 'UC'.")
+    return False, None
   
 ############################### Confirmation to continue #################################
 # User inputs Y/N confirmation to continue, and exits if not yes
@@ -475,25 +557,29 @@ if __name__ == "__main__":
       validMode = True
       
       #While loop to get video ID and if invalid ask again
-      validVideoID = False
+      validVideoID = (False, None) # Tuple, first element is status of validity of video ID, second element is video ID
       confirm = False
-      while validVideoID == False or confirm == False:
-        check_video_id = input("Enter Video ID to scan: ")
-        validVideoID = validate_video_id(check_video_id)
-        title = get_video_title(check_video_id)
-        print("Chosen Video:  " + title)
-        confirm = confirm_continue("Is this correct?")
-      userChannelID = get_channel_id(check_video_id)
+      while validVideoID[0] == False or confirm == False:
+        check_video_id = input("Enter Video link or ID to scan: ")
+        validVideoID = validate_video_id(check_video_id) # Sends link or video ID for isolation and validation
+        
+        if validVideoID[0] == True:  #validVideoID now contains True/False and video ID
+          check_video_id = str(validVideoID[1])
+          title = get_video_title(check_video_id)
+          print("Chosen Video:  " + title)
+          confirm = confirm_continue("Is this correct?")
+          userChannelID = get_channel_id(check_video_id)
 
-    # If chooses to scan entire channel - Validate Channel ID, otherwise exit
+    # If chooses to scan entire channel - Validate Channel ID
     elif mode == "2":
       validMode = True
       # While loop to get channel ID, if invalid, asks again
-      validChannelID = False
-      while validChannelID == False:
-        check_channel_id = input("Enter YOUR Channel ID: ")
-        if validate_channel_id(check_channel_id) == True:
-          validChannelID = True
+      validChannelID = (False, None)
+      while validChannelID[0] == False:
+        check_channel_id = input("Enter YOUR Channel Link or ID: ")
+        validChannelID = validate_channel_id(check_channel_id)
+        if validChannelID[0] == True:
+          check_channel_id = str(validChannelID[1])
           userChannelID = check_channel_id
           print("\n")
           # While loop to get max scan number, not an integer, asks again
@@ -512,10 +598,12 @@ if __name__ == "__main__":
       print("\nInvalid choice! - Enter either 1 or 2. ")
 
   # User inputs channel ID of the spammer, while loop repeats until valid input
-  validChannelID = False
-  while validChannelID == False:
-    spammer_channel_id = input("Enter the Channel ID of the spammer: ")
+  validChannelID = (False, None) #Tuple, first element is status of validity of channel ID, second element is channel ID
+  while validChannelID[0] == False:
+    spammer_channel_id = input("Enter the Channel link or ID of the spammer: ")   
     validChannelID = validate_channel_id(spammer_channel_id)
+    if validChannelID[0] == True:
+      spammer_channel_id = str(validChannelID[1])
   print("\n")
 
   # Check if spammer ID and user's channel ID are the same, and warn
