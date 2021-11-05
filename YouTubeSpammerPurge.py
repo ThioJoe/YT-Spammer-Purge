@@ -257,7 +257,7 @@ def get_comments(youtube, check_video_id=None, check_channel_id=None, nextPageTo
         fields=fieldsToFetch,
         textFormat="plainText"
         ).execute()
-    
+  
     # Get comment threads across the whole channel
     if check_video_id is None:
         results = youtube.commentThreads().list(
