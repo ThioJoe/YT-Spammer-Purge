@@ -34,7 +34,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "1.3.0"
+version = "1.3.0-Testing"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 import os
@@ -386,6 +386,20 @@ def get_channel_id(video_id):
 
   return channel_id
 
+############################# GET CURRENTLY LOGGED IN USER #####################################
+# Get channel ID and channel title of the currently authorized user
+def get_current_user():
+  results = youtube.channels().list(
+    part="snippet", #Can also add "contentDetails" or "statistics"
+    mine=True,
+    fields="items/id,items/snippet/title"
+  ).execute() 
+
+  # Fetch the channel ID and title from the API response
+  channelID = results["items"][0]["id"]
+  channelTitle = results["items"][0]["snippet"]["title"]
+
+  return channelID, channelTitle
 
 ################################# VIDEO ID LOOKUP ##############################################
 # Using comment ID, get corresponding video ID from dictionary variable
@@ -512,7 +526,7 @@ def confirm_continue(message=""):
   # While loop until valid input
   valid = False
   while valid == False:
-    response = input("\n" + message + " (Y/N): ")
+    response = input("\n" + message + " (y/n): ")
     if response == "Y" or response == "y":
       return True
     elif response == "N" or response == "n":
@@ -542,9 +556,19 @@ if __name__ == "__main__":
   print("      but scanning your entire channel must be limited and might miss older spam comments.")
   print("You WILL be shown the comments to confirm before they are deleted. \n")
 
- 
+  # Get channel ID and title of current user, confirm with user
+  currentUser = get_current_user() # Returns [channelID, channelTitle]
+  print("    >  Currently logged in user: " + currentUser[1] + " (Channel ID: " + currentUser[0] + " )")
+  if confirm_continue("       Continue as this user?") == True:
+    check_channel_id = currentUser[0]
+  else:
+    print("To change users, delete the 'token.pickle' file and run the program again.")
+    print("\nExiting...")
+    exit()
+
   
   # User selects scanning mode,  while Loop to get scanning mode, so if invalid input, it will keep asking until valid input
+  print("\n-----------------------------------------------------------------")
   print("~~ Do you want to scan a single video, or your entire channel? ~~")
   print("      1. Scan Single Video")
   print("      2. Scan Entire Channel")
@@ -568,31 +592,24 @@ if __name__ == "__main__":
           title = get_video_title(check_video_id)
           print("Chosen Video:  " + title)
           confirm = confirm_continue("Is this correct?")
-          userChannelID = get_channel_id(check_video_id)
+          if currentUser[0] != get_channel_id(check_video_id):
+            print("\n   >>> WARNING It is not possible to delete comments on someone elses video! Who do you think you are!? <<<")
+            input("\n   Press Enter to continue for testing purposes...  (But you will get an error when trying to delete!)\n")
 
     # If chooses to scan entire channel - Validate Channel ID
     elif mode == "2":
       validMode = True
-      # While loop to get channel ID, if invalid, asks again
-      validChannelID = (False, None)
-      while validChannelID[0] == False:
-        check_channel_id = input("Enter YOUR Channel Link or ID: ")
-        validChannelID = validate_channel_id(check_channel_id)
-        if validChannelID[0] == True:
-          check_channel_id = str(validChannelID[1])
-          userChannelID = check_channel_id
-          print("\n")
-          # While loop to get max scan number, not an integer, asks again
-          validInteger = False
-          while validInteger == False:
-            try:
-              maxScanNumber = int(input("Enter the maximum number of comments to scan: "))
-              if maxScanNumber > 0:
-                validInteger = True # If it gets here, it's an integer, otherwise goes to exception
-              else:
-                print("\nInvalid Input! Number must be greater than zero.")
-            except:
-              print("\nInvalid Input! - Must be a whole number.")
+      # While loop to get max scan number, not an integer, asks again
+      validInteger = False
+      while validInteger == False:
+        try:
+          maxScanNumber = int(input("Enter the maximum number of comments to scan: "))
+          if maxScanNumber > 0:
+            validInteger = True # If it gets here, it's an integer, otherwise goes to exception
+          else:
+            print("\nInvalid Input! Number must be greater than zero.")
+        except:
+          print("\nInvalid Input! - Must be a whole number.")
           
     else:
       print("\nInvalid choice! - Enter either 1 or 2. ")
@@ -608,7 +625,7 @@ if __name__ == "__main__":
 
   # Check if spammer ID and user's channel ID are the same, and warn
   # If using channel-wide scanning mode, program will not run for safety purposes
-  if spammer_channel_id == userChannelID and mode == "2":
+  if spammer_channel_id == currentUser[0] and mode == "2":
     print("WARNING - You are scanning for your own channel ID!")
     print("For safety purposes, this program's delete functionality is disabled when scanning for yourself across your entire channel (Mode 2).")
     print("If you want to delete your own comments for testing purposes, you can instead scan an individual video (Mode 1).")
@@ -616,7 +633,7 @@ if __name__ == "__main__":
     if confirmation == False:
       input("Ok, Cancelled. Press Enter to Exit...")
       exit()
-  elif spammer_channel_id == userChannelID and mode == "1":
+  elif spammer_channel_id == currentUser[0] and mode == "1":
     print("WARNING: You are scanning for your own channel ID! This would delete all of your comments on the video!")
     print("     (You WILL still be asked to confirm before actually deleting anything)")
     print("If you are testing and want to scan and/or delete your own comments, enter 'Y' to continue, otherwise enter 'N' to exit.")
@@ -689,7 +706,7 @@ if __name__ == "__main__":
         exit()
       elif confirmDelete == "YES":
         deletionEnabled = "True"
-    elif deletionEnabled == "False" and spammer_channel_id == userChannelID and mode == "2":
+    elif deletionEnabled == "False" and spammer_channel_id == currentUser[0] and mode == "2":
       input("\nDeletion functionality disabled for this mode because you scanned your own channel. Press Enter to exit...")
       exit()
     else:
@@ -718,7 +735,9 @@ if __name__ == "__main__":
     print("    Reason: " + reason)
     if reason == "processingFailure":
       print("\n !! Processing Error - Sometimes this error fixes itself. Try just running the program again. !!")
+      print("(This also occurs if you try deleting comments on someone elses video, which is not possible.)")
     input("\n Press Enter to Exit...")
 
   else:
     print("\nFinished Executing.")
+
