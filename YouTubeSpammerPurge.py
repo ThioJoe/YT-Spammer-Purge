@@ -249,25 +249,25 @@ def get_comments(youtube, check_video_id=None, check_channel_id=None, nextPageTo
   # Gets comment threads for a specific video
   for spammer in spammer_channels_id:
     if check_video_id is not None:
-        results = youtube.commentThreads().list(
-            part="snippet",
-            videoId=check_video_id, 
-            maxResults=100, # 100 is the max per page allowed by YouTube, but multiple pages will be scanned
-            pageToken=nextPageToken,
-            fields=fieldsToFetch,
-            textFormat="plainText"
-        ).execute()
+      results = youtube.commentThreads().list(
+        part="snippet",
+        videoId=check_video_id, 
+        maxResults=100, # 100 is the max per page allowed by YouTube, but multiple pages will be scanned
+        pageToken=nextPageToken,
+        fields=fieldsToFetch,
+        textFormat="plainText"
+      ).execute()
   
     # Get comment threads across the whole channel
     if check_video_id is None:
-        results = youtube.commentThreads().list(
-            part="snippet",
-            allThreadsRelatedToChannelId=check_channel_id,
-            maxResults=100, # 100 is the max per page allowed by YouTube, but multiple pages will be scanned
-            pageToken=nextPageToken,
-            fields=fieldsToFetch,
-            textFormat="plainText"
-        ).execute()  
+      results = youtube.commentThreads().list(
+        part="snippet",
+        allThreadsRelatedToChannelId=check_channel_id,
+        maxResults=100, # 100 is the max per page allowed by YouTube, but multiple pages will be scanned
+        pageToken=nextPageToken,
+        fields=fieldsToFetch,
+        textFormat="plainText"
+      ).execute()  
 
     # Get token for next page
     try:
