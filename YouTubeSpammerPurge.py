@@ -601,7 +601,8 @@ if __name__ == "__main__":
   while validChannelID[0] == False:
     spammer_channel_id = input("Enter the Channel link or ID of the spammer: ")   
     validChannelID = validate_channel_id(spammer_channel_id)
-    spammer_channel_id = str(validChannelID[1])
+    if validChannelID[0] == True:
+      spammer_channel_id = str(validChannelID[1])
   print("\n")
 
   # Check if spammer ID and user's channel ID are the same, and warn
