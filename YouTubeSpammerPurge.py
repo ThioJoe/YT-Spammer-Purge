@@ -34,7 +34,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "1.3.0"
+version = "1.4.0"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 import os
@@ -45,6 +45,8 @@ from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
+
+import click
 
 #### DEFAULT VARIABLES ####
 check_video_id = None
@@ -660,11 +662,7 @@ if __name__ == "__main__":
       print("Log file will be called " + logFileName + "\n")
       input("Press Enter to display comments...")
 
-      # Write heading info to log file
-      logFile.write("----------- YouTube Spammer Purge Log File ----------- \n\n")
-      logFile.write("Channel ID spammer searched: " + spammer_channel_id + "\n\n")
-      logFile.write("Number of Spammer Comments Found: " + str(len(spamCommentsID)) + "\n\n")
-      logFile.write("IDs of Spammer Comments: " + "\n" + str(spamCommentsID) + "\n\n\n")
+      click.echo_with_pager(logFile.read())
 
     else:
       print("Ok, continuing... \n")
