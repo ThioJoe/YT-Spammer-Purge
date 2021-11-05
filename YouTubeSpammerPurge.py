@@ -241,7 +241,7 @@ def print_prepared_comments(comments, j, logMode):
 ##########################################################################################
 
 # Call the API's commentThreads.list method to list the existing comments.
-def get_comments(youtube, check_video_id=None, check_channel_id=None, nextPageToken=None):
+def get_comments(youtube, check_video_id=None, check_channel_id=None, nextPageToken=None):  # None are set as default if no parameters passed into function
   global scannedThreadsCount
   global scannedCommentsCount
   global spamCommentsID
@@ -249,7 +249,7 @@ def get_comments(youtube, check_video_id=None, check_channel_id=None, nextPageTo
   fieldsToFetch = "nextPageToken,items/snippet/topLevelComment/id,items/snippet/totalReplyCount,items/snippet/topLevelComment/snippet/authorChannelId/value,items/snippet/topLevelComment/snippet/videoId"
 
   # Gets comment threads for a specific video
-  if check_channel_id is None and check_video_id is not None:
+  if check_video_id is not None:
     results = youtube.commentThreads().list(
       part="snippet",
       videoId=check_video_id, 
@@ -260,7 +260,7 @@ def get_comments(youtube, check_video_id=None, check_channel_id=None, nextPageTo
     ).execute()
   
   # Get comment threads across the whole channel
-  if check_channel_id is not None and check_video_id is None:
+  if check_video_id is None:
     results = youtube.commentThreads().list(
       part="snippet",
       allThreadsRelatedToChannelId=check_channel_id,
