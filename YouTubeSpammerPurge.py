@@ -271,30 +271,30 @@ def get_comments(youtube, check_video_id=None, check_channel_id=None, nextPageTo
 
     # Get token for next page
     try:
-        RetrievedNextPageToken = results["nextPageToken"]
+      RetrievedNextPageToken = results["nextPageToken"]
     except KeyError:
-        RetrievedNextPageToken = "End"  
+      RetrievedNextPageToken = "End"  
     
     # After getting comments threads for page, goes through each thread and gets replies
     for item in results["items"]:
-        comment = item["snippet"]["topLevelComment"]
-        #author = comment["snippet"]["authorDisplayName"]  # If need to retrieve author name
-        authorChannelID = item["snippet"]["topLevelComment"]["snippet"]["authorChannelId"]["value"]
-        #text = comment["snippet"]["textDisplay"]  # If need to retrieve comment text
-        videoID = comment["snippet"]["videoId"] # Only enable if NOT checking specific video
-        parent_id = item["snippet"]["topLevelComment"]["id"]
-        numReplies = item["snippet"]["totalReplyCount"]
-        scannedCommentsCount += 1  # Counts number of comments scanned, add to global count
+      comment = item["snippet"]["topLevelComment"]
+      #author = comment["snippet"]["authorDisplayName"]  # If need to retrieve author name
+      authorChannelID = item["snippet"]["topLevelComment"]["snippet"]["authorChannelId"]["value"]
+      #text = comment["snippet"]["textDisplay"]  # If need to retrieve comment text
+      videoID = comment["snippet"]["videoId"] # Only enable if NOT checking specific video
+      parent_id = item["snippet"]["topLevelComment"]["id"]
+      numReplies = item["snippet"]["totalReplyCount"]
+      scannedCommentsCount += 1  # Counts number of comments scanned, add to global count
 
-        if authorChannelID == spammer:
-            spamCommentsID += [parent_id]
-            vidIdDict[parent_id] = videoID
+      if authorChannelID == spammer:
+        spamCommentsID += [parent_id]
+        vidIdDict[parent_id] = videoID
 
-        if numReplies > 0:
-            get_replies(parent_id=parent_id, video_id=videoID)
-            scannedThreadsCount += 1  # Counts number of comment threads with at least one reply, adds to counter
-        else:
-            print_count_stats(final=False)  # Updates displayed stats if no replies
+      if numReplies > 0:
+        get_replies(parent_id=parent_id, video_id=videoID)
+        scannedThreadsCount += 1  # Counts number of comment threads with at least one reply, adds to counter
+      else:
+        print_count_stats(final=False)  # Updates displayed stats if no replies
   
   return RetrievedNextPageToken
 
