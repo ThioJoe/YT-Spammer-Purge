@@ -246,8 +246,8 @@ def get_comments(youtube, check_video_id=None, check_channel_id=None, nextPageTo
   #fieldsToFetch = "nextPageToken,items/id,items/snippet/topLevelComment/id,items/snippet/totalReplyCount,items/snippet/topLevelComment/snippet/authorDisplayName,items/snippet/topLevelComment/snippet/authorChannelId/value,items/snippet/topLevelComment/snippet/textDisplay,items/snippet/topLevelComment/snippet/videoId"
   fieldsToFetch = "nextPageToken,items/snippet/topLevelComment/id,items/snippet/totalReplyCount,items/snippet/topLevelComment/snippet/authorChannelId/value,items/snippet/topLevelComment/snippet/videoId"
 
-  # Gets comment threads for a specific video
   for spammer in spammer_channels_id:
+    # Gets comment threads for a specific video
     if check_video_id is not None:
       results = youtube.commentThreads().list(
         part="snippet",
