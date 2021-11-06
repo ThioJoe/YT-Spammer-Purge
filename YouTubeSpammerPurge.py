@@ -49,7 +49,7 @@ from google.auth.transport.requests import Request
 #### DEFAULT VARIABLES ####
 check_video_id = None
 check_channel_id = None
-maxScanNumber = 999999999
+maxScanNumber = 99999999999
 deletionEnabled = "False" # Disables deletion functionality, which is default until later - String is used instead of boolean to prevent flipped bits
 
 ########################
@@ -182,9 +182,9 @@ def get_replies(parent_id, video_id):
 # Then uses print_prepared_comments() to print / log the comments
 def print_comments(comments, logMode):
   j = 0 # Index when going through comments all comment groups
-  if len(comments) > 50:
-    remainder = len(comments) % 50
-    numDivisions = int((len(comments)-remainder)/50)
+  if len(comments) > 1000:
+    remainder = len(comments) % 1000
+    numDivisions = int((len(comments)-remainder)/1000)
     for i in range(numDivisions):
       j = print_prepared_comments(comments[i*50:i*50+50], j, logMode)
     if remainder > 0:
