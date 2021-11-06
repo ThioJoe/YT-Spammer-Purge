@@ -147,28 +147,30 @@ def get_replies(parent_id, video_id):
   global spamCommentsID
   global scannedRepliesCount
 
-  results = youtube.comments().list(
-    part="snippet",
-    parentId=parent_id,
-    maxResults=100, # 100 is the max per page, but multiple pages will be scanned
-    #fields="items/snippet/authorDisplayName,items/snippet/authorChannelId/value,items/snippet/textDisplay,items/id", # If want to get author name and comment text
-    fields="items/snippet/authorChannelId/value,items/id",
-    textFormat="plainText"
-  ).execute()
- 
-  # Iterates through items in results
-  for item in results["items"]:  
-    authorChannelID = item["snippet"]["authorChannelId"]["value"]
-    replyID = item["id"]
-    scannedRepliesCount += 1  # Count number of comment threads scanned, add to global count
+  for spammer in spammer_channels_id:
 
-    # If the comment is from the spammer channel, add to list of spam comment IDs
-    # Also add key-value pair of comment ID and video ID to dictionary
-    if authorChannelID == spammer_channel_id:
-      spamCommentsID += [replyID]
-      vidIdDict[replyID] = video_id
+    results = youtube.comments().list(
+      part="snippet",
+      parentId=parent_id,
+      maxResults=100, # 100 is the max per page, but multiple pages will be scanned
+      #fields="items/snippet/authorDisplayName,items/snippet/authorChannelId/value,items/snippet/textDisplay,items/id", # If want to get author name and comment text
+      fields="items/snippet/authorChannelId/value,items/id",
+      textFormat="plainText"
+    ).execute()
+  
+    # Iterates through items in results
+    for item in results["items"]:  
+      authorChannelID = item["snippet"]["authorChannelId"]["value"]
+      replyID = item["id"]
+      scannedRepliesCount += 1  # Count number of comment threads scanned, add to global count
 
-    print_count_stats(final=False) # Prints out current count stats
+      # If the comment is from the spammer channel, add to list of spam comment IDs
+      # Also add key-value pair of comment ID and video ID to dictionary
+      if authorChannelID == spammer:
+        spamCommentsID += [replyID]
+        vidIdDict[replyID] = video_id
+
+      print_count_stats(final=False) # Prints out current count stats
 
   return True
 
@@ -277,23 +279,23 @@ def get_comments(youtube, check_video_id=None, check_channel_id=None, nextPageTo
     
     # After getting comments threads for page, goes through each thread and gets replies
     for item in results["items"]:
-        comment = item["snippet"]["topLevelComment"]
-        #author = comment["snippet"]["authorDisplayName"]  # If need to retrieve author name
-        authorChannelID = item["snippet"]["topLevelComment"]["snippet"]["authorChannelId"]["value"]
-        #text = comment["snippet"]["textDisplay"]  # If need to retrieve comment text
-        videoID = comment["snippet"]["videoId"] # Only enable if NOT checking specific video
-        parent_id = item["snippet"]["topLevelComment"]["id"]
-        numReplies = item["snippet"]["totalReplyCount"]
-        scannedCommentsCount += 1  # Counts number of comments scanned, add to global count
+      comment = item["snippet"]["topLevelComment"]
+      #author = comment["snippet"]["authorDisplayName"]  # If need to retrieve author name
+      authorChannelID = item["snippet"]["topLevelComment"]["snippet"]["authorChannelId"]["value"]
+      #text = comment["snippet"]["textDisplay"]  # If need to retrieve comment text
+      videoID = comment["snippet"]["videoId"] # Only enable if NOT checking specific video
+      parent_id = item["snippet"]["topLevelComment"]["id"]
+      numReplies = item["snippet"]["totalReplyCount"]
+      scannedCommentsCount += 1  # Counts number of comments scanned, add to global count
     
-        if authorChannelID == spammer_channel_id:
+      if authorChannelID == spammer:
         spamCommentsID += [parent_id]
         vidIdDict[parent_id] = videoID
     
-        if numReplies > 0:
+      if numReplies > 0:
         get_replies(parent_id=parent_id, video_id=videoID)
         scannedThreadsCount += 1  # Counts number of comment threads with at least one reply, adds to counter
-        else:
+      else:
         print_count_stats(final=False)  # Updates displayed stats if no replies
   
   return RetrievedNextPageToken
@@ -643,26 +645,27 @@ if __name__ == "__main__":
 
   # Check if spammer ID and user's channel ID are the same, and warn
   # If using channel-wide scanning mode, program will not run for safety purposes
-  if spammer_channel_id == currentUser[0] and mode == "2":
-    print("WARNING - You are scanning for your own channel ID!")
-    print("For safety purposes, this program's delete functionality is disabled when scanning for yourself across your entire channel (Mode 2).")
-    print("If you want to delete your own comments for testing purposes, you can instead scan an individual video (Mode 1).")
-    confirmation = confirm_continue("Continue?")
-    if confirmation == False:
-      input("Ok, Cancelled. Press Enter to Exit...")
-      exit()
-  elif spammer_channel_id == currentUser[0] and mode == "1":
-    print("WARNING: You are scanning for your own channel ID! This would delete all of your comments on the video!")
-    print("     (You WILL still be asked to confirm before actually deleting anything)")
-    print("If you are testing and want to scan and/or delete your own comments, enter 'Y' to continue, otherwise enter 'N' to exit.")
-    confirmation = confirm_continue("Continue?")
-    if confirmation == True:  # After confirmation, deletion functionality is eligible to be enabled later
-      deletionEnabled = "HalfTrue"
-    elif confirmation == False:
-      input("Ok, Cancelled. Press Enter to Exit...")
-      exit()
-  else: 
-    deletionEnabled = "HalfTrue" # If no matching problem found, deletion functionality is eligible to be enabled later
+  for spammer in spammer_channels_id:
+    if spammer == currentUser[0] and mode == "2":
+      print("WARNING - You are scanning for your own channel ID!")
+      print("For safety purposes, this program's delete functionality is disabled when scanning for yourself across your entire channel (Mode 2).")
+      print("If you want to delete your own comments for testing purposes, you can instead scan an individual video (Mode 1).")
+      confirmation = confirm_continue("Continue?")
+      if confirmation == False:
+        input("Ok, Cancelled. Press Enter to Exit...")
+        exit()
+    elif spammer == currentUser[0] and mode == "1":
+      print("WARNING: You are scanning for your own channel ID! This would delete all of your comments on the video!")
+      print("     (You WILL still be asked to confirm before actually deleting anything)")
+      print("If you are testing and want to scan and/or delete your own comments, enter 'Y' to continue, otherwise enter 'N' to exit.")
+      confirmation = confirm_continue("Continue?")
+      if confirmation == True:  # After confirmation, deletion functionality is eligible to be enabled later
+        deletionEnabled = "HalfTrue"
+      elif confirmation == False:
+        input("Ok, Cancelled. Press Enter to Exit...")
+        exit()
+    else: 
+      deletionEnabled = "HalfTrue" # If no matching problem found, deletion functionality is eligible to be enabled later
 
   ##################### START SCANNING #####################
   try:
@@ -699,7 +702,7 @@ if __name__ == "__main__":
       logFile.write("----------- YouTube Spammer Purge Log File ----------- \n\n")
 
       for spammer in spammer_channels_id:
-        logFile.write("Channel ID spammer searched: " + spammer_channel_id + "\n\n")
+        logFile.write("Channel ID spammer searched: " + spammer + "\n\n")
         logFile.write("Number of Spammer Comments Found: " + str(len(spamCommentsID)) + "\n\n")
         logFile.write("IDs of Spammer Comments: " + "\n" + str(spamCommentsID) + "\n\n\n")
 
@@ -719,6 +722,7 @@ if __name__ == "__main__":
     print("\n")
     print("Check that all comments listed above are indeed spam.")
 
+
     if deletionEnabled == "HalfTrue": # Check if deletion functionality is eligible to be enabled
       confirmDelete = input("Do you want to delete ALL of the above comments? Type 'YES' exactly! \n") 
       if confirmDelete != "YES":  # Deletion functionality enabled via confirmation, or not
@@ -726,7 +730,7 @@ if __name__ == "__main__":
         exit()
       elif confirmDelete == "YES":
         deletionEnabled = "True"
-    elif deletionEnabled == "False" and spammer_channel_id == currentUser[0] and mode == "2":
+    elif deletionEnabled == "False" and spammer_channels_id[currentUser[0]] == currentUser[0] and mode == "2":
       input("\nDeletion functionality disabled for this mode because you scanned your own channel. Press Enter to exit...")
       exit()
     else:
