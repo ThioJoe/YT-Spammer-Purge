@@ -34,7 +34,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "1.3.3"
+version = "1.4.0-Testing"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 import os
@@ -554,19 +554,20 @@ if __name__ == "__main__":
   print("Purpose: Lets you scan and mass delete all comments from a specific user at once \n")
   print("NOTE: It's probably better to scan a single video, because you can scan all those comments,")
   print("      but scanning your entire channel must be limited and might miss older spam comments.")
-  print("You WILL be shown the comments to confirm before they are deleted. \n")
+  print("You WILL be shown the comments to confirm before they are deleted.")
 
-  # Get channel ID and title of current user, confirm with user
-  currentUser = get_current_user() # Returns [channelID, channelTitle]
-  print("    >  Currently logged in user: " + currentUser[1] + " (Channel ID: " + currentUser[0] + " )")
-  if confirm_continue("       Continue as this user?") == True:
-    check_channel_id = currentUser[0]
-  else:
-    print("\nTo change users, delete the 'token.pickle' file and run the program again.")
-    input("Press Enter to Exit...")
-    print("\nExiting...")
-    exit()
-
+  # While loop until user confirms they are logged into the correct account
+  confirmedCorrectLogin = False
+  while confirmedCorrectLogin == False:
+    # Get channel ID and title of current user, confirm with user
+    currentUser = get_current_user() # Returns [channelID, channelTitle]
+    print("\n    >  Currently logged in user: " + currentUser[1] + " (Channel ID: " + currentUser[0] + " )")
+    if confirm_continue("       Continue as this user?") == True:
+      check_channel_id = currentUser[0]
+      confirmedCorrectLogin = True
+    else:
+      os.remove(TOKEN_FILE)
+      get_authenticated_service()
   
   # User selects scanning mode,  while Loop to get scanning mode, so if invalid input, it will keep asking until valid input
   print("\n-----------------------------------------------------------------")
