@@ -63,8 +63,9 @@ from google.auth.transport.requests import Request
 
 # Authorize the request and store authorization credentials.
 def get_authenticated_service():
+  global TOKEN_FILE_NAME
+  TOKEN_FILE_NAME = "token.pickle"
   CLIENT_SECRETS_FILE = "client_secrets.json"
-  TOKEN_FILE = 'token.pickle'
   YOUTUBE_READ_WRITE_SSL_SCOPE = ['https://www.googleapis.com/auth/youtube.force-ssl']
   API_SERVICE_NAME = "youtube"
   API_VERSION = "v3"
@@ -82,8 +83,8 @@ def get_authenticated_service():
   creds = None
   # The file token.pickle stores the user's access and refresh tokens, and is
   # created automatically when the authorization flow completes for the first time.
-  if os.path.exists(TOKEN_FILE):
-    creds = Credentials.from_authorized_user_file(TOKEN_FILE, scopes=YOUTUBE_READ_WRITE_SSL_SCOPE)
+  if os.path.exists(TOKEN_FILE_NAME):
+    creds = Credentials.from_authorized_user_file(TOKEN_FILE_NAME, scopes=YOUTUBE_READ_WRITE_SSL_SCOPE)
 
   # If there are no (valid) credentials available, make the user log in.
   if not creds or not creds.valid:
@@ -93,7 +94,7 @@ def get_authenticated_service():
       flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRETS_FILE, scopes=YOUTUBE_READ_WRITE_SSL_SCOPE)
       creds = flow.run_local_server(port=0)
     # Save the credentials for the next run
-    with open(TOKEN_FILE, 'w') as token:
+    with open(TOKEN_FILE_NAME, 'w') as token:
       token.write(creds.to_json())
 
   return build(API_SERVICE_NAME, API_VERSION, credentials=creds)
@@ -573,7 +574,7 @@ def main():
       check_channel_id = currentUser[0]
       confirmedCorrectLogin = True
     else:
-      os.remove(TOKEN_FILE)
+      os.remove(TOKEN_FILE_NAME)
       get_authenticated_service()
   
   # User selects scanning mode,  while Loop to get scanning mode, so if invalid input, it will keep asking until valid input
