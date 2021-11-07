@@ -703,15 +703,17 @@ def main():
     
     # Get confirmation to delete spam comments
     confirmDelete = None
+    possibleConfirmations = {"yes","y","ye","yas","oui","yez","si"}
     print("\n")
     print("Check that all comments listed above are indeed spam.")
 
     if deletionEnabled == "HalfTrue": # Check if deletion functionality is eligible to be enabled
-      confirmDelete = input("Do you want to delete ALL of the above comments? Type 'YES' exactly, in all caps! \n") 
-      if confirmDelete != "YES":  # Deletion functionality enabled via confirmation, or not
+      confirmDelete = input("Do you want to delete ALL of the above comments? Type yes! \n") 
+      confirmDelete=confirmDelete.lower()
+      if confirmDelete not in possibleConfirmations:  # Deletion functionality enabled via confirmation, or not
         input("\nDeletion CANCELLED. Press Enter to exit...")
         exit()
-      elif confirmDelete == "YES":
+      elif confirmDelete in possibleConfirmations:
         deletionEnabled = "True"
     elif deletionEnabled == "False" and spammer_channel_id == currentUser[0] and mode == "2":
       input("\nDeletion functionality disabled for this mode because you scanned your own channel. Press Enter to exit...")
@@ -721,7 +723,7 @@ def main():
       exit()
       
 
-    if confirmDelete == "YES" and deletionEnabled == "True":  # Only proceed if deletion functionality is enabled, and user has confirmed deletion
+    if confirmDelete in possibleConfirmations and deletionEnabled == "True":  # Only proceed if deletion functionality is enabled, and user has confirmed deletion
       # Ask if they want to also ban spammer
       banChoice = choice("Also ban the spammer(s) ?")
       if logMode == True:
