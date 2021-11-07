@@ -123,3 +123,7 @@ token.pickle
 
 # Misc temp files
 .dccache
+
+# Ignore log files
+Spam_*.txt
+
