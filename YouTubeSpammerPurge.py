@@ -38,6 +38,7 @@ version = "1.4.0-Testing"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 import os
+import logging as log # Importing the logging dependence as log 
 from datetime import datetime
 
 from googleapiclient.errors import HttpError
@@ -63,6 +64,26 @@ scannedCommentsCount = 0
 logMode = False
 ########################
 
+##################################### SET UP THE LOG ###########################################
+# Note: I'm putting this here for it to cover all functions, from the error that the client_secrets.json file is not found, to the end of the program 
+
+def set_up_log(logName="Spam_Log_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S" + ".txt")):
+  
+  ######## Note: if you want to debug, change the "level" to "log.DEBUG" 
+  log.basicConfig(filename=logName + ".log", level=log.INFO, format='%(asctime)s %(levelname)s: %(message)s') # "format" attribute is for formatting the log message to: "(now's date) (level: like CRITICAL or INFO): (message of the log)"
+  print("Log file will be called " + logName + "\n")
+  log.info("Logging started")
+  log.info("----------- YouTube Spammer Purge Log File -----------")
+
+# Ask if the user want to keep the log
+keepLog = input("Do you want to log the activities? (Y/N) ")
+if keepLog == "Y" or keepLog == "y":
+  logName = input("\nEnter the name of the log file (Nothing to auto generate the name): ")
+  if logName == "":
+    set_up_log()
+  else:
+    set_up_log(logName) # If the user didn't enter a name, the script will generate one for you
+
 ##########################################################################################
 ################################## AUTHORIZATION #########################################
 ##########################################################################################
@@ -87,6 +108,7 @@ TOKEN_FILE = 'token.pickle'
 
 # Check if client_secrets.json file exists, if not give error
 if not os.path.exists(CLIENT_SECRETS_FILE):
+  log.critical(""+CLIENT_SECRETS_FILE+" file not found!")
   print("\n ------------- ERROR: "+CLIENT_SECRETS_FILE+" file not found! ------------- ")
   print(" Make sure it is placed in the same folder as the program, and is spelled as above \n")
   print(" ----- Or: Did you create a Google Cloud Platform Project to access the API? ----- ")
@@ -119,11 +141,14 @@ https://developers.google.com/api-client-library/python/guide/aaa_client_secrets
 
 # Authorize the request and store authorization credentials.
 def get_authenticated_service():
+  log.debug("Authorizing...")
   creds = None
   # The file token.pickle stores the user's access and refresh tokens, and is
   # created automatically when the authorization flow completes for the first time.
   if os.path.exists(TOKEN_FILE):
     creds = Credentials.from_authorized_user_file(TOKEN_FILE, scopes=YOUTUBE_READ_WRITE_SSL_SCOPE)
+    log.info("Successfully authorized")
+
 
   # If there are no (valid) credentials available, make the user log in.
   if not creds or not creds.valid:
@@ -135,6 +160,7 @@ def get_authenticated_service():
     # Save the credentials for the next run
     with open(TOKEN_FILE, 'w') as token:
       token.write(creds.to_json())
+      log.info("Successfully authorized")
 
   return build(API_SERVICE_NAME, API_VERSION, credentials=creds)
 
@@ -149,6 +175,9 @@ def get_replies(parent_id, video_id):
   global spamCommentsID
   global scannedRepliesCount
 
+  log.info("Getting replies...")
+
+  log.debug("Fetching replies...")
   results = youtube.comments().list(
     part="snippet",
     parentId=parent_id,
@@ -157,9 +186,11 @@ def get_replies(parent_id, video_id):
     fields="items/snippet/authorChannelId/value,items/id",
     textFormat="plainText"
   ).execute()
- 
+
+  log.debug("Analyzing replies information...") 
   # Iterates through items in results
   for item in results["items"]:  
+    log.debug("Analyzing reply " + item["id"] +"'s information...")
     authorChannelID = item["snippet"]["authorChannelId"]["value"]
     replyID = item["id"]
     scannedRepliesCount += 1  # Count number of comment threads scanned, add to global count
@@ -181,6 +212,8 @@ def get_replies(parent_id, video_id):
 # First prepared comments into groups of 50 to be submitted to API simultaneously
 # Then uses print_prepared_comments() to print / log the comments
 def print_comments(comments, logMode):
+  log.debug("Printing comments...")
+
   j = 0 # Index when going through comments all comment groups
   if len(comments) > 50:
     remainder = len(comments) % 50
@@ -197,6 +230,7 @@ def print_prepared_comments(comments, j, logMode):
   global check_video_id
   global logFile
 
+  log.debug("Printing prepared comments...")
   results = youtube.comments().list(
     part="snippet",
     id=comments,  # The API request can take an entire comma separated list of comment IDs (in "id" field) to return info about
@@ -210,7 +244,9 @@ def print_prepared_comments(comments, j, logMode):
   for item in results["items"]:
     text = item["snippet"]["textDisplay"]
     author = item["snippet"]["authorDisplayName"]
+    log.debug("Printing comment from " + author + " ("+text+") ...")
 
+    log.debug("Retriving video ID from object using comment ID")
     # Retrieve video ID from object using comment ID
     videoID = convert_comment_id_to_video_id(comments[i])
 
@@ -224,7 +260,8 @@ def print_prepared_comments(comments, j, logMode):
 
     # If logging enabled, also prints to log file
     if logMode == True:
-      logFile.write(str(j+1) + ". " + author + ":  " + text + "\n")
+      log.debug("Logging comment")
+      log.info(str(j+1) + ". " + author + ":  " + text + "\n")
       if check_video_id is None:  # Only print video title if searching entire channel
         title = get_video_title(videoID) # Get Video Title
         logFile.write("     > Video: " + title + "\n")
@@ -242,6 +279,7 @@ def print_prepared_comments(comments, j, logMode):
 
 # Call the API's commentThreads.list method to list the existing comments.
 def get_comments(youtube, check_video_id=None, check_channel_id=None, nextPageToken=None):  # None are set as default if no parameters passed into function
+  log.info("Getting comments...")
   global scannedThreadsCount
   global scannedCommentsCount
   global spamCommentsID
@@ -250,6 +288,8 @@ def get_comments(youtube, check_video_id=None, check_channel_id=None, nextPageTo
 
   # Gets comment threads for a specific video
   if check_video_id is not None:
+    log.debug("Fetching comment threads for video " + check_video_id + "...")
+
     results = youtube.commentThreads().list(
       part="snippet",
       videoId=check_video_id, 
@@ -261,6 +301,8 @@ def get_comments(youtube, check_video_id=None, check_channel_id=None, nextPageTo
   
   # Get comment threads across the whole channel
   if check_video_id is None:
+    log.debug("Fetching comment threads across the whole channel...")
+
     results = youtube.commentThreads().list(
       part="snippet",
       allThreadsRelatedToChannelId=check_channel_id,
@@ -270,12 +312,14 @@ def get_comments(youtube, check_video_id=None, check_channel_id=None, nextPageTo
       textFormat="plainText"
     ).execute()  
 
+  log.debug("Getting the token for the next page...")
   # Get token for next page
   try:
     RetrievedNextPageToken = results["nextPageToken"]
   except KeyError:
     RetrievedNextPageToken = "End"  
  
+  log.debug("Analyzing thread's replies information...") 
   # After getting comments threads for page, goes through each thread and gets replies
   for item in results["items"]:
     comment = item["snippet"]["topLevelComment"]
@@ -283,23 +327,32 @@ def get_comments(youtube, check_video_id=None, check_channel_id=None, nextPageTo
     videoID = comment["snippet"]["videoId"] # Only enable if NOT checking specific video
     parent_id = item["snippet"]["topLevelComment"]["id"]
     numReplies = item["snippet"]["totalReplyCount"]
+    log.debug("Getting thread from "+ parent_id+"...")
 
+    log.debug("Seeing if channel exists...")
     # Need to be able to catch exceptions because sometimes the API will return a comment from non-existent / deleted channel
     try:
+      log.debug("The channel exists")
       authorChannelID = item["snippet"]["topLevelComment"]["snippet"]["authorChannelId"]["value"]
       #author = comment["snippet"]["authorDisplayName"]  # If need to retrieve author name
     except KeyError:
+      log.debug("The channel NOT exists... Marking it as '[Deleted channel]'")
       authorChannelID = "[Deleted Channel]"
     scannedCommentsCount += 1  # Counts number of comments scanned, add to global count
+    log.debug("Added 1 to scannedCommentsCount. Total: " + str(scannedCommentsCount))
 
     if any(authorChannelID == x for x in spammer_channel_id):
+      log.debug("Comment from spammer channel")
       spamCommentsID += [parent_id]
       vidIdDict[parent_id] = videoID
 
     if numReplies > 0:
+      log.debug("Found " + numReplies + "reply(es) in " + parent_id + "...")
       get_replies(parent_id=parent_id, video_id=videoID)
       scannedThreadsCount += 1  # Counts number of comment threads with at least one reply, adds to counter
+      log.debug("Added 1 to scannedThreadsCount. Total: " + str(scannedThreadsCount))
     else:
+      log.debug("No replies found in " + parent_id)
       print_count_stats(final=False)  # Updates displayed stats if no replies
   
   return RetrievedNextPageToken
@@ -573,6 +626,8 @@ if __name__ == "__main__":
   # If get error about instantiation or creds expired, just delete token.pickle and run again
   youtube = get_authenticated_service()
   
+  log.debug("WARNING: You are using debug mode. The output file could be a mess")
+
   # Intro message
   print("============ YOUTUBE SPAMMER PURGE v" + version + " ============")
   print("== https://github.com/ThioJoe/YouTube-Spammer-Purge ==")
