@@ -46,33 +46,11 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 
-#### DEFAULT VARIABLES ####
-check_video_id = None
-check_channel_id = None
-maxScanNumber = 999999999
-deletionEnabled = "False" # Disables deletion functionality, which is default until later - String is used instead of boolean to prevent flipped bits
-
-########################
-spamCommentsID = []
-spamVidID = []
-vidIdDict = {}
-nextPageToken = "start"
-scannedThreadsCount = 0
-scannedRepliesCount = 0
-scannedCommentsCount = 0
-logMode = False
-########################
 
 ##########################################################################################
 ################################## AUTHORIZATION #########################################
 ##########################################################################################
-# Note: Most of everything in this section was copy-pasted from Google's API examples
-# I don't fully understand how it works so it might be wonky
-# If the credentials expire, just delete token.pickle and run the program again
-
-
 # The CLIENT_SECRETS_FILE variable specifies the name of a file that contains
-
 # the OAuth 2.0 information for this application, including its client_id and
 # client_secret. You can acquire an OAuth 2.0 client ID and client secret from
 # the {{ Google Cloud Console }} at
@@ -82,43 +60,25 @@ logMode = False
 #   https://developers.google.com/youtube/v3/guides/authentication
 # For more information about the client_secrets.json file format, see:
 #   https://developers.google.com/api-client-library/python/guide/aaa_client_secrets
-CLIENT_SECRETS_FILE = "client_secrets.json"
-TOKEN_FILE = 'token.pickle'
-
-# Check if client_secrets.json file exists, if not give error
-if not os.path.exists(CLIENT_SECRETS_FILE):
-  print("\n ------------- ERROR: "+CLIENT_SECRETS_FILE+" file not found! ------------- ")
-  print(" Make sure it is placed in the same folder as the program, and is spelled as above \n")
-  print(" ----- Or: Did you create a Google Cloud Platform Project to access the API? ----- ")
-  print(" ------ See section with instructions on obtaining an API Key at this page: ------- ")
-  print(" ---------- https://github.com/ThioJoe/YouTube-Spammer-Purge/ ---------- ")
-  input("\n Press Enter to Exit...")
-  exit()
-
-# This OAuth 2.0 access scope allows for full read/write access to the
-# authenticated user's account and requires requests to use an SSL connection.
-YOUTUBE_READ_WRITE_SSL_SCOPE = ['https://www.googleapis.com/auth/youtube.force-ssl']
-API_SERVICE_NAME = "youtube"
-API_VERSION = "v3"
-
-# This variable defines a message to display if the CLIENT_SECRETS_FILE is
-# missing.
-MISSING_CLIENT_SECRETS_MESSAGE = """
-WARNING: Please configure OAuth 2.0
-
-To make this sample run you will need to populate the client_secrets.json file
-found at:
-   %s
-with information from the APIs Console
-https://console.developers.google.com
-
-For more information about the client_secrets.json file format, please visit:
-https://developers.google.com/api-client-library/python/guide/aaa_client_secrets
-""" % os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                   CLIENT_SECRETS_FILE))
 
 # Authorize the request and store authorization credentials.
 def get_authenticated_service():
+  CLIENT_SECRETS_FILE = "client_secrets.json"
+  TOKEN_FILE = 'token.pickle'
+  YOUTUBE_READ_WRITE_SSL_SCOPE = ['https://www.googleapis.com/auth/youtube.force-ssl']
+  API_SERVICE_NAME = "youtube"
+  API_VERSION = "v3"
+
+  # Check if client_secrets.json file exists, if not give error
+  if not os.path.exists(CLIENT_SECRETS_FILE):
+    print("\n ------------- ERROR: "+CLIENT_SECRETS_FILE+" file not found! ------------- ")
+    print(" Make sure it is placed in the same folder as the program, and is spelled as above \n")
+    print(" ----- Or: Did you create a Google Cloud Platform Project to access the API? ----- ")
+    print(" ------ See section with instructions on obtaining an API Key at this page: ------- ")
+    print(" ---------- https://github.com/ThioJoe/YouTube-Spammer-Purge/ ---------- ")
+    input("\n Press Enter to Exit...")
+    exit()
+
   creds = None
   # The file token.pickle stores the user's access and refresh tokens, and is
   # created automatically when the authorization flow completes for the first time.
@@ -180,23 +140,20 @@ def get_replies(parent_id, video_id):
 
 # First prepared comments into groups of 50 to be submitted to API simultaneously
 # Then uses print_prepared_comments() to print / log the comments
-def print_comments(comments, logMode):
+def print_comments(check_video_id_localprint, comments, logMode):
   j = 0 # Index when going through comments all comment groups
   if len(comments) > 50:
     remainder = len(comments) % 50
     numDivisions = int((len(comments)-remainder)/50)
     for i in range(numDivisions):
-      j = print_prepared_comments(comments[i*50:i*50+50], j, logMode)
+      j = print_prepared_comments(check_video_id_localprint,comments[i*50:i*50+50], j, logMode)
     if remainder > 0:
-      j = print_prepared_comments(comments[numDivisions*50:len(comments)],j, logMode)
+      j = print_prepared_comments(check_video_id_localprint,comments[numDivisions*50:len(comments)],j, logMode)
   else:
-    j = print_prepared_comments(comments, j, logMode)
+    j = print_prepared_comments(check_video_id_localprint,comments, j, logMode)
 
 # Uses comments.list YouTube API Request to get text and author of specific set of comments, based on comment ID
-def print_prepared_comments(comments, j, logMode):
-  global check_video_id
-  global logFile
-
+def print_prepared_comments(check_video_id_localprep, comments, j, logMode):
   results = youtube.comments().list(
     part="snippet",
     id=comments,  # The API request can take an entire comma separated list of comment IDs (in "id" field) to return info about
@@ -217,7 +174,7 @@ def print_prepared_comments(comments, j, logMode):
     # Prints comment info to console
     print(str(j+1) + ". " + author + ":  " + text)
 
-    if check_video_id is None:  # Only print video title if searching entire channel
+    if check_video_id_localprep is None:  # Only print video title if searching entire channel
       title = get_video_title(videoID) # Get Video Title
       print("     > Video: " + title)
     print("     > Direct Link: " + "https://www.youtube.com/watch?v=" + videoID + "&lc=" + comments[i] + "\n")
@@ -225,7 +182,7 @@ def print_prepared_comments(comments, j, logMode):
     # If logging enabled, also prints to log file
     if logMode == True:
       logFile.write(str(j+1) + ". " + author + ":  " + text + "\n")
-      if check_video_id is None:  # Only print video title if searching entire channel
+      if check_video_id_localprep is None:  # Only print video title if searching entire channel
         title = get_video_title(videoID) # Get Video Title
         logFile.write("     > Video: " + title + "\n")
       logFile.write("     > Direct Link: " + "https://www.youtube.com/watch?v=" + videoID + "&lc=" + comments[i] + "\n\n")
@@ -568,9 +525,32 @@ def open_log_file(name):
 ##########################################################################################
 ##########################################################################################
 
-if __name__ == "__main__":
+def main():
+  # Declare Global Variables
+  global youtube  
+  global spammer_channel_id
+  global spamCommentsID
+  global vidIdDict
+  global scannedThreadsCount
+  global scannedRepliesCount
+  global scannedCommentsCount
+
+  # Default values for global variables
+  # Spammer_channel_id doesn't need to be initialized because gets assigned in this function
+  spamCommentsID = []
+  vidIdDict = {}
+  scannedThreadsCount = 0
+  scannedRepliesCount = 0
+  scannedCommentsCount = 0
+  
+  # Declare Default Variables
+  maxScanNumber = 999999999
+  deletionEnabled = "False" # Disables deletion functionality, which is default until later - String is used instead of boolean to prevent flipped bits
+  check_video_id = None
+  nextPageToken = "start"
+  logMode = False
+  
   # Authenticate with the Google API
-  # If get error about instantiation or creds expired, just delete token.pickle and run again
   youtube = get_authenticated_service()
   
   # Intro message
@@ -716,7 +696,7 @@ if __name__ == "__main__":
 
     # Prints list of spam comments
     print("\n\nComments by the selected user: \n")
-    print_comments(spamCommentsID, logMode)
+    print_comments(check_video_id,spamCommentsID, logMode)
     if logMode == True: logFile.close()
       
     
@@ -772,4 +752,8 @@ if __name__ == "__main__":
 
   else:
     print("\nFinished Executing.")
+
+# Runs the program
+if __name__ == "__main__":
+  main()
 
