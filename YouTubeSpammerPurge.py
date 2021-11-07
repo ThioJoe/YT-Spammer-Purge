@@ -34,7 +34,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "1.3.3"
+version = "1.4.0-Testing"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 import os
@@ -166,7 +166,7 @@ def get_replies(parent_id, video_id):
 
     # If the comment is from the spammer channel, add to list of spam comment IDs
     # Also add key-value pair of comment ID and video ID to dictionary
-    if authorChannelID == spammer_channel_id:
+    if any(authorChannelID == x for x in spammer_channel_id):
       spamCommentsID += [replyID]
       vidIdDict[replyID] = video_id
 
@@ -279,15 +279,20 @@ def get_comments(youtube, check_video_id=None, check_channel_id=None, nextPageTo
   # After getting comments threads for page, goes through each thread and gets replies
   for item in results["items"]:
     comment = item["snippet"]["topLevelComment"]
-    #author = comment["snippet"]["authorDisplayName"]  # If need to retrieve author name
-    authorChannelID = item["snippet"]["topLevelComment"]["snippet"]["authorChannelId"]["value"]
     #text = comment["snippet"]["textDisplay"]  # If need to retrieve comment text
     videoID = comment["snippet"]["videoId"] # Only enable if NOT checking specific video
     parent_id = item["snippet"]["topLevelComment"]["id"]
     numReplies = item["snippet"]["totalReplyCount"]
+
+    # Need to be able to catch exceptions because sometimes the API will return a comment from non-existent / deleted channel
+    try:
+      authorChannelID = item["snippet"]["topLevelComment"]["snippet"]["authorChannelId"]["value"]
+      #author = comment["snippet"]["authorDisplayName"]  # If need to retrieve author name
+    except KeyError:
+      authorChannelID = "[Deleted Channel]"
     scannedCommentsCount += 1  # Counts number of comments scanned, add to global count
 
-    if authorChannelID == spammer_channel_id:
+    if any(authorChannelID == x for x in spammer_channel_id):
       spamCommentsID += [parent_id]
       vidIdDict[parent_id] = videoID
 
@@ -305,11 +310,11 @@ def get_comments(youtube, check_video_id=None, check_channel_id=None, nextPageTo
 ########################################################################################## 
 
 # Takes in dictionary of comment IDs to delete, breaks them into 50-comment chunks, and deletes them in groups
-def delete_found_comments(commentsDictionary):
+def delete_found_comments(commentsDictionary,banChoice):
 
     # Deletes specified comment IDs
     def delete(commentIDs):
-        youtube.comments().setModerationStatus(id=commentIDs, moderationStatus="rejected").execute()
+        youtube.comments().setModerationStatus(id=commentIDs, moderationStatus="rejected", banAuthor=banChoice).execute()
 
     print("Deleting Comments. Please Wait...")
     commentsList = list(commentsDictionary.keys()) # Takes comment IDs out of dictionary and into list
@@ -421,7 +426,8 @@ def print_count_stats(final):
 ##################################### VALIDATE VIDEO ID #####################################
 # Checks if video ID is correct length, and if so, gets the title of the video
 def validate_video_id(inputted_video):
-# Get id from long video link
+  isolatedVideoID = "Invalid" # Default value
+  # Get id from long video link
   if "/watch?" in inputted_video:
     startIndex = 0
     endIndex = 0
@@ -430,8 +436,6 @@ def validate_video_id(inputted_video):
       startIndex = inputted_video.index("?v=") + 3
     elif "&v=" in inputted_video:
       startIndex = inputted_video.index("&v=") + 3
-    else:
-      isolatedVideoID = "invalid"
 
     if "&" in inputted_video:
       endIndex = inputted_video.index("&")
@@ -451,8 +455,6 @@ def validate_video_id(inputted_video):
 
     if endIndex != 0 and startIndex < endIndex and endIndex <= len(inputted_video):
       isolatedVideoID = inputted_video[startIndex:endIndex]
-    else:
-      isolatedVideoID = "invalid"
 
   else: 
     isolatedVideoID = inputted_video
@@ -467,6 +469,8 @@ def validate_video_id(inputted_video):
 ##################################### VALIDATE CHANNEL ID ##################################
 # Checks if channel ID is correct length and in correct format - if so returns True
 def validate_channel_id(inputted_channel):
+  isolatedChannelID = "Invalid" # Default value
+
   # Get id from channel link
   if "/channel/" in inputted_channel:
     startIndex = inputted_channel.rindex("/") + 1
@@ -477,8 +481,6 @@ def validate_channel_id(inputted_channel):
 
     if startIndex < endIndex and endIndex <= len(inputted_channel):
       isolatedChannelID = inputted_channel[startIndex:endIndex]
-    else:
-      isolatedChannelID = "Invalid"
 
   elif "/c/" in inputted_channel:
     startIndex = inputted_channel.rindex("/c/") + 3 #Start index at at character after /c/
@@ -493,8 +495,6 @@ def validate_channel_id(inputted_channel):
       response = youtube.search().list(part="snippet",q=customURL, maxResults=1).execute()
       if response.get("items"):
           isolatedChannelID = response.get("items")[0]["snippet"]["channelId"] # Get channel ID from custom channel URL username
-    else:
-      isolatedChannelID = "Invalid"
   
   # Handle legacy style custom URL (no /c/ for custom URL)
   elif ("youtube.com" in inputted_channel) and ("/c/" and "/channel/" not in inputted_channel):
@@ -506,8 +506,6 @@ def validate_channel_id(inputted_channel):
       response = youtube.search().list(part="snippet",q=customURL, maxResults=1).execute()
       if response.get("items"):
           isolatedChannelID = response.get("items")[0]["snippet"]["channelId"] # Get channel ID from custom channel URL username
-    else:
-      isolatedChannelID = "Invalid"
 
   else:
     isolatedChannelID = inputted_channel
@@ -518,11 +516,11 @@ def validate_channel_id(inputted_channel):
     print("\nInvalid Channel link or ID! Channel IDs are 24 characters long and begin with 'UC'.")
     return False, None
   
-############################### Confirmation to continue #################################
-# User inputs Y/N confirmation to continue, and exits if not yes
+############################### User Choice #################################
+# User inputs Y/N for choice, returns True or False
 # Takes in message to display
 
-def confirm_continue(message=""):
+def choice(message=""):
   # While loop until valid input
   valid = False
   while valid == False:
@@ -533,6 +531,35 @@ def confirm_continue(message=""):
       return False
     else:
       print("\nInvalid Input. Enter Y or N")
+
+
+############################ Process Input Spammer IDs ###############################
+# Takes single or list of spammer IDs, splits and sanitizes each, converts to list of channel IDs
+# Returns list of channel IDs
+def process_spammer_ids(rawString):
+  inputList = [] # For list of unvalidated inputted items
+  IDList = [] # For list of validated channel IDs, converted from inputList of spammer IDs - Separate to allow printing original invalid input if necessary
+  inputList = rawString.split(",") # Split spammer IDs / Links by commas
+
+  # Remove whitespace from each list item
+  for i in range(len(inputList)):
+     inputList[i] =  inputList[i].strip()
+  IDList = list(inputList)  # Need to use list() so each list is separately affected, otherwise same pointer
+
+  # Validate each ID in list
+  for i in range(len(inputList)):
+    valid, IDList[i] = validate_channel_id(inputList[i])
+    if valid == False:
+      print("Invalid Channel ID or Link: " + str(inputList[i]) + "\n")
+      return False, None
+  
+  return True, IDList
+      
+############################ Process Input Spammer IDs ###############################
+# Opens log file to be able to be written
+def open_log_file(name):
+  global logFile
+  logFile = open(name, "a", encoding="utf-8") # Opens log file in write mode
 
 
 ##########################################################################################
@@ -554,19 +581,20 @@ def main():
   print("Purpose: Lets you scan and mass delete all comments from a specific user at once \n")
   print("NOTE: It's probably better to scan a single video, because you can scan all those comments,")
   print("      but scanning your entire channel must be limited and might miss older spam comments.")
-  print("You WILL be shown the comments to confirm before they are deleted. \n")
+  print("You WILL be shown the comments to confirm before they are deleted.")
 
-  # Get channel ID and title of current user, confirm with user
-  currentUser = get_current_user() # Returns [channelID, channelTitle]
-  print("    >  Currently logged in user: " + currentUser[1] + " (Channel ID: " + currentUser[0] + " )")
-  if confirm_continue("       Continue as this user?") == True:
-    check_channel_id = currentUser[0]
-  else:
-    print("\nTo change users, delete the 'token.pickle' file and run the program again.")
-    input("Press Enter to Exit...")
-    print("\nExiting...")
-    exit()
-
+  # While loop until user confirms they are logged into the correct account
+  confirmedCorrectLogin = False
+  while confirmedCorrectLogin == False:
+    # Get channel ID and title of current user, confirm with user
+    currentUser = get_current_user() # Returns [channelID, channelTitle]
+    print("\n    >  Currently logged in user: " + currentUser[1] + " (Channel ID: " + currentUser[0] + " )")
+    if choice("       Continue as this user?") == True:
+      check_channel_id = currentUser[0]
+      confirmedCorrectLogin = True
+    else:
+      os.remove(TOKEN_FILE)
+      get_authenticated_service()
   
   # User selects scanning mode,  while Loop to get scanning mode, so if invalid input, it will keep asking until valid input
   print("\n-----------------------------------------------------------------")
@@ -592,7 +620,7 @@ def main():
           check_video_id = str(validVideoID[1])
           title = get_video_title(check_video_id)
           print("Chosen Video:  " + title)
-          confirm = confirm_continue("Is this correct?")
+          confirm = choice("Is this correct?")
           if currentUser[0] != get_channel_id(check_video_id):
             print("\n   >>> WARNING It is not possible to delete comments on someone elses video! Who do you think you are!? <<<")
             input("\n   Press Enter to continue for testing purposes...  (But you will get an error when trying to delete!)\n")
@@ -616,29 +644,29 @@ def main():
       print("\nInvalid choice! - Enter either 1 or 2. ")
 
   # User inputs channel ID of the spammer, while loop repeats until valid input
-  validChannelID = (False, None) #Tuple, first element is status of validity of channel ID, second element is channel ID
-  while validChannelID[0] == False:
-    spammer_channel_id = input("Enter the Channel link or ID of the spammer: ")   
-    validChannelID = validate_channel_id(spammer_channel_id)
-    if validChannelID[0] == True:
-      spammer_channel_id = str(validChannelID[1])
+  processResult = (False, None) #Tuple, first element is status of validity of channel ID, second element is channel ID
+  while processResult[0] == False:
+    spammer_channel_id = input("Enter the Channel link(s) or ID(s) of the spammer (comma separated): ")
+    processResult = process_spammer_ids(spammer_channel_id)
+    if processResult[0] == True:
+      spammer_channel_id = processResult[1] # After processing, if valid, spammer_channel_id is a list of channel IDs
   print("\n")
 
   # Check if spammer ID and user's channel ID are the same, and warn
   # If using channel-wide scanning mode, program will not run for safety purposes
-  if spammer_channel_id == currentUser[0] and mode == "2":
+  if any(currentUser[0] == i for i in spammer_channel_id) and mode == "2":
     print("WARNING - You are scanning for your own channel ID!")
     print("For safety purposes, this program's delete functionality is disabled when scanning for yourself across your entire channel (Mode 2).")
     print("If you want to delete your own comments for testing purposes, you can instead scan an individual video (Mode 1).")
-    confirmation = confirm_continue("Continue?")
+    confirmation = choice("Continue?")
     if confirmation == False:
       input("Ok, Cancelled. Press Enter to Exit...")
       exit()
-  elif spammer_channel_id == currentUser[0] and mode == "1":
+  elif any(currentUser[0] == i for i in spammer_channel_id) and mode == "1":
     print("WARNING: You are scanning for your own channel ID! This would delete all of your comments on the video!")
     print("     (You WILL still be asked to confirm before actually deleting anything)")
     print("If you are testing and want to scan and/or delete your own comments, enter 'Y' to continue, otherwise enter 'N' to exit.")
-    confirmation = confirm_continue("Continue?")
+    confirmation = choice("Continue?")
     if confirmation == True:  # After confirmation, deletion functionality is eligible to be enabled later
       deletionEnabled = "HalfTrue"
     elif confirmation == False:
@@ -655,7 +683,6 @@ def main():
       nextPageToken = get_comments(youtube, check_video_id=check_video_id, check_channel_id=check_channel_id)
       print_count_stats(final=False)  # Prints comment scan stats, updates on same line
 
-
     # After getting first page, if there are more pages, goes to get comments for next page
     while nextPageToken != "End" and scannedCommentsCount < maxScanNumber:
       nextPageToken = get_comments(youtube, check_video_id=check_video_id, check_channel_id=check_channel_id, nextPageToken=nextPageToken)
@@ -671,37 +698,35 @@ def main():
     print("Number of Spammer Comments Found: " + str(len(spamCommentsID)))
 
     # Asks user if they want to save list of spam comments to a file
-    if confirm_continue("Spam comments ready to display. Also save the list to a text file?") == True:
+    if choice("Spam comments ready to display. Also save the list to a text file?") == True:
       logMode = True
       logFileName = "Spam_Log_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S" + ".txt")
-      logFile = open(logFileName, "w", encoding="utf-8") # Opens log file in write mode
       print("Log file will be called " + logFileName + "\n")
       input("Press Enter to display comments...")
 
       # Write heading info to log file
+      open_log_file(logFileName)
       logFile.write("----------- YouTube Spammer Purge Log File ----------- \n\n")
-      logFile.write("Channel ID spammer searched: " + spammer_channel_id + "\n\n")
+      logFile.write("Channel IDs of spammer searched: " + str(spammer_channel_id) + "\n\n")
       logFile.write("Number of Spammer Comments Found: " + str(len(spamCommentsID)) + "\n\n")
       logFile.write("IDs of Spammer Comments: " + "\n" + str(spamCommentsID) + "\n\n\n")
-
+      
     else:
       print("Ok, continuing... \n")
 
     # Prints list of spam comments
     print("\n\nComments by the selected user: \n")
     print_comments(spamCommentsID, logMode)
-    if logMode == True:
-      logFile.close()
-
-
-
+    if logMode == True: logFile.close()
+      
+    
     # Get confirmation to delete spam comments
     confirmDelete = None
     print("\n")
     print("Check that all comments listed above are indeed spam.")
 
     if deletionEnabled == "HalfTrue": # Check if deletion functionality is eligible to be enabled
-      confirmDelete = input("Do you want to delete ALL of the above comments? Type 'YES' exactly! \n") 
+      confirmDelete = input("Do you want to delete ALL of the above comments? Type 'YES' exactly, in all caps! \n") 
       if confirmDelete != "YES":  # Deletion functionality enabled via confirmation, or not
         input("\nDeletion CANCELLED. Press Enter to exit...")
         exit()
@@ -716,8 +741,14 @@ def main():
       
 
     if confirmDelete == "YES" and deletionEnabled == "True":  # Only proceed if deletion functionality is enabled, and user has confirmed deletion
+      # Ask if they want to also ban spammer
+      banChoice = choice("Also ban the spammer(s) ?")
+      if logMode == True:
+        open_log_file(logFileName)
+        logFile.write("\n\nSpammers Banned: " + str(banChoice)) # Write whether or not spammer is banned to log file
+        logFile.close()
       print("\n")
-      delete_found_comments(vidIdDict) # Deletes spam comments
+      delete_found_comments(vidIdDict,banChoice) # Deletes spam comments
       check_deleted_comments(vidIdDict) #Verifies if comments were deleted
       input("\nDeletion Complete. Press Enter to Exit...")
     else:
