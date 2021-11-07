@@ -64,11 +64,12 @@ from google.auth.transport.requests import Request
 # Authorize the request and store authorization credentials.
 def get_authenticated_service():
   global TOKEN_FILE_NAME
-  TOKEN_FILE_NAME = "token.pickle"
-  CLIENT_SECRETS_FILE = "client_secrets.json"
+  TOKEN_FILE_NAME = 'token.pickle'
+  CLIENT_SECRETS_FILE = 'client_secrets.json'
   YOUTUBE_READ_WRITE_SSL_SCOPE = ['https://www.googleapis.com/auth/youtube.force-ssl']
-  API_SERVICE_NAME = "youtube"
-  API_VERSION = "v3"
+  API_SERVICE_NAME = 'youtube'
+  API_VERSION = 'v3'
+  DISCOVERY_SERVICE_URL = 'https://youtube.googleapis.com/$discovery/rest' # If don't specify discovery URL for build, works in python but fails when running as EXE
 
   # Check if client_secrets.json file exists, if not give error
   if not os.path.exists(CLIENT_SECRETS_FILE):
@@ -96,8 +97,7 @@ def get_authenticated_service():
     # Save the credentials for the next run
     with open(TOKEN_FILE_NAME, 'w') as token:
       token.write(creds.to_json())
-
-  return build(API_SERVICE_NAME, API_VERSION, credentials=creds)
+  return build(API_SERVICE_NAME, API_VERSION, credentials=creds, discoveryServiceUrl=DISCOVERY_SERVICE_URL)
 
   
 
@@ -551,11 +551,21 @@ def main():
   nextPageToken = "start"
   logMode = False
   
-  # Authenticate with the Google API
-  youtube = get_authenticated_service()
+  # Authenticate with the Google API - If token expired and invalid, deletes and re-authenticates
+  try:
+    get_authenticated_service()
+  except Exception as e:
+    if "invalid_grant" in str(e):
+      print("Invalid token - Requires Re-Authentication")
+      os.remove(TOKEN_FILE_NAME)
+      get_authenticated_service()
+    else:
+      print("\nError: " + str(e))
+      input("\nSomething went wrong during authentication. Try deleting token.pickle file. Press Enter to exit...")
+  youtube = get_authenticated_service() # Set easier name for API function
   
   # Intro message
-  print("============ YOUTUBE SPAMMER PURGE v" + version + " ============")
+  print("\n============ YOUTUBE SPAMMER PURGE v" + version + " ============")
   print("== https://github.com/ThioJoe/YouTube-Spammer-Purge ==")
   print("======== Author: ThioJoe - YouTube.com/ThioJoe ======= \n")
 
@@ -750,7 +760,6 @@ def main():
       print("\n !! Processing Error - Sometimes this error fixes itself. Try just running the program again. !!")
       print("(This also occurs if you try deleting comments on someone elses video, which is not possible.)")
     input("\n Press Enter to Exit...")
-
   else:
     print("\nFinished Executing.")
 
