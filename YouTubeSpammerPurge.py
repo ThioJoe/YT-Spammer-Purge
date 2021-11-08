@@ -34,11 +34,12 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "1.4.0"
+version = "1.4.1"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 import os
 from datetime import datetime
+import traceback
 
 from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
@@ -69,7 +70,7 @@ def get_authenticated_service():
   YOUTUBE_READ_WRITE_SSL_SCOPE = ['https://www.googleapis.com/auth/youtube.force-ssl']
   API_SERVICE_NAME = 'youtube'
   API_VERSION = 'v3'
-  DISCOVERY_SERVICE_URL = 'https://youtube.googleapis.com/$discovery/rest' # If don't specify discovery URL for build, works in python but fails when running as EXE
+  DISCOVERY_SERVICE_URL = "https://youtube.googleapis.com/$discovery/rest?version=v3" # If don't specify discovery URL for build, works in python but fails when running as EXE
 
   # Check if client_secrets.json file exists, if not give error
   if not os.path.exists(CLIENT_SECRETS_FILE):
@@ -352,15 +353,42 @@ def get_channel_id(video_id):
 ############################# GET CURRENTLY LOGGED IN USER #####################################
 # Get channel ID and channel title of the currently authorized user
 def get_current_user():
-  results = youtube.channels().list(
-    part="snippet", #Can also add "contentDetails" or "statistics"
-    mine=True,
-    fields="items/id,items/snippet/title"
-  ).execute() 
+  global youtube
+
+  #Define fetch function so it can be re-used if issue and need to re-run it
+  def fetch():
+    results = youtube.channels().list(
+      part="snippet", #Can also add "contentDetails" or "statistics"
+      mine=True,
+      fields="items/id,items/snippet/title"
+    ).execute()
+    return results
+  results = fetch()  
 
   # Fetch the channel ID and title from the API response
-  channelID = results["items"][0]["id"]
-  channelTitle = results["items"][0]["snippet"]["title"]
+  # Catch exceptions if problems getting info
+  if len(results) == 0: # Check if results are empty
+    print("\nError Getting Current User: Channel ID was not retrieved. Sometimes this happens if client_secrets file does not match user authorized with token.pickle file.")
+    input("\nPress Enter to try logging in again...")
+    os.remove(TOKEN_FILE_NAME)
+    youtube = get_authenticated_service()
+    results = fetch() # Try again
+
+  try:
+    channelID = results["items"][0]["id"]
+    try:
+      channelTitle = results["items"][0]["snippet"]["title"] # If channel ID was found, but not channel title/name
+    except KeyError:
+      print("Error Getting Current User: Channel ID was found, but channel title was not retrieved. If this occurs again, try deleting 'token.pickle' file and re-running. If that doesn't work, consider filing a bug report on the GitHub project 'issues' page.")
+      print("    > NOTE: The program may still work - You can try continuing. Just check the channel ID is correct: " + str(channelID))
+      channelTitle = ""
+      input("Press Enter to Continue...")
+      pass
+  except KeyError:
+    traceback.print_exc()
+    print("\nError: Still unable to get channel info. Big Bruh Moment. Try deleting token.pickle. The info above might help if you want to report a bug.")
+    input("\nPress Enter to Exit...")
+    
 
   return channelID, channelTitle
 
@@ -550,19 +578,21 @@ def main():
   check_video_id = None
   nextPageToken = "start"
   logMode = False
-  
+
   # Authenticate with the Google API - If token expired and invalid, deletes and re-authenticates
   try:
-    get_authenticated_service()
+    youtube = get_authenticated_service() # Set easier name for API function
   except Exception as e:
     if "invalid_grant" in str(e):
       print("Invalid token - Requires Re-Authentication")
       os.remove(TOKEN_FILE_NAME)
-      get_authenticated_service()
+      youtube = get_authenticated_service()
     else:
+      traceback.print_exc() # Prints traceback
+      print("----------------")
       print("\nError: " + str(e))
       input("\nSomething went wrong during authentication. Try deleting token.pickle file. Press Enter to exit...")
-  youtube = get_authenticated_service() # Set easier name for API function
+      exit()
   
   # Intro message
   print("\n============ YOUTUBE SPAMMER PURGE v" + version + " ============")
@@ -579,13 +609,13 @@ def main():
   while confirmedCorrectLogin == False:
     # Get channel ID and title of current user, confirm with user
     currentUser = get_current_user() # Returns [channelID, channelTitle]
-    print("\n    >  Currently logged in user: " + currentUser[1] + " (Channel ID: " + currentUser[0] + " )")
+    print("\n    >  Currently logged in user: " + str(currentUser[1]) + " (Channel ID: " + str(currentUser[0]) + " )")
     if choice("       Continue as this user?") == True:
       check_channel_id = currentUser[0]
       confirmedCorrectLogin = True
     else:
       os.remove(TOKEN_FILE_NAME)
-      get_authenticated_service()
+      youtube = get_authenticated_service()
   
   # User selects scanning mode,  while Loop to get scanning mode, so if invalid input, it will keep asking until valid input
   print("\n-----------------------------------------------------------------")
@@ -749,17 +779,23 @@ def main():
   # Catches exception errors and prints error info
   # If possible transient error, tells user to try again
   except HttpError as e:
+    traceback.print_exc()
     print("------------------------------------------------")
-    print("Full Error Message: ")
+    print("Error Message: ")
     print(e)
-    print("\nError Info:")
-    print("    Code: "+ str(e.status_code))
-    reason = str(e.error_details[0]["reason"])
-    print("    Reason: " + reason)
-    if reason == "processingFailure":
-      print("\n !! Processing Error - Sometimes this error fixes itself. Try just running the program again. !!")
-      print("(This also occurs if you try deleting comments on someone elses video, which is not possible.)")
-    input("\n Press Enter to Exit...")
+    if e.status_code: # If error code is available, print it
+      print("\nError Info:")
+      print("    Code: "+ str(e.status_code))
+      if e.error_details[0]["reason"]: # If error reason is available, print it
+        reason = str(e.error_details[0]["reason"])
+        print("    Reason: " + reason)
+        if reason == "processingFailure":
+          print("\n !! Processing Error - Sometimes this error fixes itself. Try just running the program again. !!")
+          print("(This also occurs if you try deleting comments on someone elses video, which is not possible.)")
+      input("\n Press Enter to Exit...")
+    else:
+      print("Unknown Error occurred. If this keeps happening, consider posting a bug report on the GitHub issues page, and include the above error info.")
+      input("\n Press Enter to Exit...")
   else:
     print("\nFinished Executing.")
 
