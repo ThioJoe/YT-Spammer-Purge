@@ -691,7 +691,7 @@ def process_spammer_ids(rawString):
   IDList = list(inputList)  # Need to use list() so each list is separately affected, otherwise same pointer
   log.debug("Updating IDList to " + str(IDList))
 
-  log.debug("Validating spammer IDs...")
+  log.debcug("Validating spammer IDs...")
   # Validate each ID in list
   for i in range(len(inputList)):
     log.debug("Validating spammer ID " + str(i) + ": " + str(inputList[i]))
