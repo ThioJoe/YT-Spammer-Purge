@@ -34,7 +34,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "1.4.0"
+version = "1.5.0-Testing"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 import os
@@ -274,23 +274,33 @@ def delete_found_comments(commentsDictionary,banChoice):
     def delete(commentIDs):
         youtube.comments().setModerationStatus(id=commentIDs, moderationStatus="rejected", banAuthor=banChoice).execute()
 
-    print("Deleting Comments. Please Wait...")
-    commentsList = list(commentsDictionary.keys()) # Takes comment IDs out of dictionary and into list
-    if len(commentsList) > 50:
-        remainder = len(commentsList) % 50
-        numDivisions = int((len(commentsList)-remainder)/50)
-        for i in range(numDivisions):
+    commentsList = list(commentsDictionary.keys())  # Takes comment IDs out of dictionary and into list
+    total = len(commentsList)
+    deletedCounter = 0  
+    def print_progress(d, t): print("Deleting Comments... - Progress: [" + str(d) + " / " + str(t) + "] (In Groups of 50)", end="\r") # Prints progress of deletion
+    print_progress(deletedCounter, total)
+
+    if total > 50:                                  # If more than 50 comments, break into chunks of 50
+        remainder = total % 50                      # Gets how many left over after dividing into chunks of 50
+        numDivisions = int((total-remainder)/50)    # Gets how many full chunks of 50 there are
+        for i in range(numDivisions):               # Loops through each full chunk of 50
             delete(commentsList[i*50:i*50+50])
+            deletedCounter += 50
+            print_progress(deletedCounter, total)
         if remainder > 0:
-            delete(commentsList[numDivisions*50:len(commentsList)])
+            delete(commentsList[numDivisions*50:total]) # Deletes any leftover comments range after last full chunk
+            deletedCounter += remainder
+            print_progress(deletedCounter, total)
     else:
         delete(commentsList)
-    print("Comments Deleted! Will now verify each is gone.\n")
+        print_progress(deletedCounter, total)
+    print("Comments Deleted! Will now verify each is gone.                          \n")
 
 # Takes in dictionary of comment IDs and video IDs, and checks if comments still exist individually
 def check_deleted_comments(commentsDictionary):
     i = 0 # Count number of remaining comments
     j = 1 # Count number of checked
+    total = len(commentsDictionary)
     for key, value in commentsDictionary.items():
         results = youtube.comments().list(
             part="snippet",
@@ -299,7 +309,7 @@ def check_deleted_comments(commentsDictionary):
             fields="items",
             textFormat="plainText"
         ).execute()
-        print("Verifying Comments Deleted..." + "."*j, end="\r")
+        print("Verifying Deleted Comments: [" + str(j) + " / " + str(total) + "]", end="\r")
         j += 1
 
         if results["items"]:  # Check if the items result is empty
