@@ -413,10 +413,10 @@ def print_count_stats(final):
 ##################################### VALIDATE VIDEO ID #####################################
 # Checks if video ID is correct length, and if so, gets the title of the video
 def validate_video_id(video_url):
-    youtube_video_link_regex = r"^\s*(?:(?:https?:)?\/\/)?(?:(?:www|m)\.)?(?:youtube\.com|youtu.be)(?:\/(?:[\w\-]+\?v=|embed\/|v\/)?)(?P<video_id>[\w\-]{11})(?:\S+)?\s*$"
+    youtube_video_link_regex = r"^\s*(?P<video_url>(?:(?:https?:)?\/\/)?(?:(?:www|m)\.)?(?:youtube\.com|youtu.be)(?:\/(?:[\w\-]+\?v=|embed\/|v\/)?))?(?P<video_id>[\w\-]{11})(?:(?(video_url)\S+|$))?\s*$"
     match = re.match(youtube_video_link_regex, video_url)
     if match == None:
-        return False, "Invalid"
+        return False, None
     return True, match.group('video_id')
 
 ##################################### VALIDATE CHANNEL ID ##################################
