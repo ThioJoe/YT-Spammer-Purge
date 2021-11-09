@@ -83,7 +83,7 @@ def get_authenticated_service():
     input("\n Press Enter to Exit...")
     exit()
 
-  log.debug("Authorizing...")
+  log.info("Authorizing...")
   creds = None
   # The file token.pickle stores the user's access and refresh tokens, and is
   # created automatically when the authorization flow completes for the first time.
@@ -95,7 +95,7 @@ def get_authenticated_service():
     if creds and creds.expired and creds.refresh_token:
       creds.refresh(Request())    
     else:
-      log.debug("No valid " + TOKEN_FILE_NAME + " found. Requesting user consent...")
+      log.info("No valid " + TOKEN_FILE_NAME + " found. Requesting user consent...")
       flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRETS_FILE, scopes=YOUTUBE_READ_WRITE_SSL_SCOPE)
       creds = flow.run_local_server(port=0)
     # Save the credentials for the next run
@@ -117,7 +117,7 @@ def get_replies(parent_id, video_id):
 
   log.info("Getting replies...")
 
-  log.debug("Fetching replies...")
+  log.info("Fetching replies...")
   results = youtube.comments().list(
     part="snippet",
     parentId=parent_id,
@@ -127,10 +127,10 @@ def get_replies(parent_id, video_id):
     textFormat="plainText"
   ).execute()
  
-  log.debug("Analyzing replies information...") 
+  log.info("Analyzing replies information...") 
   # Iterates through items in results
   for item in results["items"]:  
-    log.debug("Analyzing reply " + item["id"] +"'s information...")
+    log.info("Analyzing reply " + item["id"] +"'s information...")
     authorChannelID = item["snippet"]["authorChannelId"]["value"]
     replyID = item["id"]
     scannedRepliesCount += 1  # Count number of comment threads scanned, add to global count
@@ -167,7 +167,7 @@ def print_comments(check_video_id_localprint, comments, logMode):
 
 # Uses comments.list YouTube API Request to get text and author of specific set of comments, based on comment ID
 def print_prepared_comments(check_video_id_localprep, comments, j, logMode):
-  log.debug("Printing prepared comments...")
+  log.info("Printing prepared comments...")
   results = youtube.comments().list(
     part="snippet",
     id=comments,  # The API request can take an entire comma separated list of comment IDs (in "id" field) to return info about
@@ -181,9 +181,9 @@ def print_prepared_comments(check_video_id_localprep, comments, j, logMode):
   for item in results["items"]:
     text = item["snippet"]["textDisplay"]
     author = item["snippet"]["authorDisplayName"]
-    log.debug("Printing comment from " + author + " ("+text+") ...")
+    log.info("Printing comment from " + author + " ("+text+") ...")
     
-    log.debug("Retriving video ID from object using comment ID")
+    log.info("Retriving video ID from object using comment ID")
     # Retrieve video ID from object using comment ID
     videoID = convert_comment_id_to_video_id(comments[i])
 
@@ -197,7 +197,7 @@ def print_prepared_comments(check_video_id_localprep, comments, j, logMode):
 
     # If logging enabled, also prints to log file
     if logMode == True:
-      log.debug("Logging comments")
+      log.info("Logging comments")
       logFile.write(str(j+1) + ". " + author + ":  " + text + "\n")
       log.info(str(j+1) + ". " + author + ":  " + text + "\n")
       if check_video_id_localprep is None:  # Only print video title if searching entire channel
@@ -228,7 +228,7 @@ def get_comments(youtube, check_video_id=None, check_channel_id=None, nextPageTo
 
   # Gets comment threads for a specific video
   if check_video_id is not None:
-    log.debug("Fetching comment threads for video " + check_video_id + "...")
+    log.info("Fetching comment threads for video " + check_video_id + "...")
     
     results = youtube.commentThreads().list(
       part="snippet",
@@ -241,7 +241,7 @@ def get_comments(youtube, check_video_id=None, check_channel_id=None, nextPageTo
   
   # Get comment threads across the whole channel
   if check_video_id is None:
-    log.debug("Fetching comment threads across the whole channel...")
+    log.info("Fetching comment threads across the whole channel...")
     
     results = youtube.commentThreads().list(
       part="snippet",
@@ -252,7 +252,7 @@ def get_comments(youtube, check_video_id=None, check_channel_id=None, nextPageTo
       textFormat="plainText"
     ).execute()  
 
-  log.debug("Getting the token for the next page...")
+  log.info("Getting the token for the next page...")
   # Get token for next page
   try:
     RetrievedNextPageToken = results["nextPageToken"]
@@ -266,32 +266,32 @@ def get_comments(youtube, check_video_id=None, check_channel_id=None, nextPageTo
     videoID = comment["snippet"]["videoId"] # Only enable if NOT checking specific video
     parent_id = item["snippet"]["topLevelComment"]["id"]
     numReplies = item["snippet"]["totalReplyCount"]
-    log.debug("Getting thread from "+ parent_id+"...")
+    log.info("Getting thread from "+ parent_id+"...")
 
-    log.debug("Analyzing thread's replies information...") 
+    log.info("Analyzing thread's replies information...") 
     # Need to be able to catch exceptions because sometimes the API will return a comment from non-existent / deleted channel
     try:
-      log.debug("The channel exists")
+      log.info("The channel exists")
       authorChannelID = item["snippet"]["topLevelComment"]["snippet"]["authorChannelId"]["value"]
       #author = comment["snippet"]["authorDisplayName"]  # If need to retrieve author name
     except KeyError:
-      log.debug("The channel NOT exists... Marking it as '[Deleted channel]'")
+      log.info("The channel NOT exists... Marking it as '[Deleted channel]'")
       authorChannelID = "[Deleted Channel]"
     scannedCommentsCount += 1  # Counts number of comments scanned, add to global count
-    log.debug("Added 1 to scannedCommentsCount. Total: " + str(scannedCommentsCount))
+    log.info("Added 1 to scannedCommentsCount. Total: " + str(scannedCommentsCount))
 
     if any(authorChannelID == x for x in spammer_channel_id):
-      log.debug("Comment from spammer channel")
+      log.info("Comment from spammer channel")
       spamCommentsID += [parent_id]
       vidIdDict[parent_id] = videoID
 
     if numReplies > 0:
-      log.debug("Found " + numReplies + "reply(es) in " + parent_id + "...")
+      log.info("Found " + numReplies + "reply(es) in " + parent_id + "...")
       get_replies(parent_id=parent_id, video_id=videoID)
       scannedThreadsCount += 1  # Counts number of comment threads with at least one reply, adds to counter
-      log.debug("Added 1 to scannedThreadsCount. Total: " + str(scannedThreadsCount))
+      log.info("Added 1 to scannedThreadsCount. Total: " + str(scannedThreadsCount))
     else:
-      log.debug("No replies found in " + parent_id)
+      log.info("No replies found in " + parent_id)
       print_count_stats(final=False)  # Updates displayed stats if no replies
   
   return RetrievedNextPageToken
@@ -308,13 +308,13 @@ def delete_found_comments(commentsDictionary,banChoice):
 
     # Deletes specified comment IDs
     def delete(commentIDs):
-        log.debug("Because of user's choices, the script deleting comments and banning the authors" if banChoice == True else "Deleting comments, but not banning authors")
+        log.info("Because of user's choices, the script deleting comments and banning the authors" if banChoice == True else "Deleting comments, but not banning authors")
         youtube.comments().setModerationStatus(id=commentIDs, moderationStatus="rejected", banAuthor=banChoice).execute()
 
     print("Deleting Comments. Please Wait...")
     commentsList = list(commentsDictionary.keys()) # Takes comment IDs out of dictionary and into list
     if len(commentsList) > 50:
-        log.debug("The list of comments is longer than 50 comments. Deleting in groups of 50")
+        log.info("The list of comments is longer than 50 comments. Deleting in groups of 50")
         remainder = len(commentsList) % 50
         numDivisions = int((len(commentsList)-remainder)/50)
         for i in range(numDivisions):
@@ -322,7 +322,7 @@ def delete_found_comments(commentsDictionary,banChoice):
         if remainder > 0:
             delete(commentsList[numDivisions*50:len(commentsList)])
     else:
-        log.debug("The list of comments is less than 50 comments. Deleting all in one")
+        log.info("The list of comments is less than 50 comments. Deleting all in one")
         delete(commentsList)
     log.info("The comments have been deleted.")
     print("Comments Deleted! Will now verify each is gone.\n")
@@ -332,9 +332,9 @@ def check_deleted_comments(commentsDictionary):
     i = 0 # Count number of remaining comments
     j = 1 # Count number of checked
     log.info("Verifying if all of them were deleted.")
-    log.debug("Starting verification of comments deleted.")
+    log.info("Starting verification of comments deleted.")
     for key, value in commentsDictionary.items():
-        log.debug("Fetching comment " + key + "...")
+        log.info("Fetching comment " + key + "...")
         results = youtube.comments().list(
             part="snippet",
             id=key,  
@@ -344,9 +344,9 @@ def check_deleted_comments(commentsDictionary):
         ).execute()
         print("Verifying Comments Deleted..." + "."*j, end="\r")
         j += 1
-        log.debug("Increased 1 to j variable. j's value is " + str(j))
+        log.info("Increased 1 to j variable. j's value is " + str(j))
 
-        log.debug("Checking if comment " + key + " still exists...")
+        log.info("Checking if comment " + key + " still exists...")
         if results["items"]:  # Check if the items result is empty
             log.warning("Possible Issue Deleting Comment: " + str(key) + " |  Check Here: " + "https://www.youtube.com/watch?v=" + str(value) + "&lc=" + str(key))
             print("Possible Issue Deleting Comment: " + str(key) + " |  Check Here: " + "https://www.youtube.com/watch?v=" + str(value) + "&lc=" + str(key))
@@ -373,7 +373,7 @@ def check_deleted_comments(commentsDictionary):
 ################################### GET VIDEO TITLE ###############################################
 # Get video title from video ID using YouTube API request
 def get_video_title(video_id):
-  log.debug("Getting video title from video ID...")
+  log.info("Getting video title from video ID...")
   results = youtube.videos().list(
     part="snippet",
     id=video_id,
@@ -382,14 +382,14 @@ def get_video_title(video_id):
   ).execute()
   
   title = results["items"][0]["snippet"]["title"]
-  log.debug("Retrieved video title ( " + title + " ) from video ID.")
+  log.info("Retrieved video title ( " + title + " ) from video ID.")
 
   return title
 
 ############################# GET CHANNEL ID FROM VIDEO ID #####################################
 # Get channel ID from video ID using YouTube API request
 def get_channel_id(video_id):
-  log.debug("Getting channel ID from video ID (" + video_id + ")...")
+  log.info("Getting channel ID from video ID (" + video_id + ")...")
   results = youtube.videos().list(
     part="snippet",
     id=video_id,
@@ -398,7 +398,7 @@ def get_channel_id(video_id):
   ).execute()
   
   channel_id = results["items"][0]["snippet"]["channelId"]
-  log.debug("Retrieved channel ID ( " + channel_id + " ) from video ID ( " + video_id + " ).")
+  log.info("Retrieved channel ID ( " + channel_id + " ) from video ID ( " + video_id + " ).")
 
   return channel_id
 
@@ -407,7 +407,7 @@ def get_channel_id(video_id):
 def get_current_user():
   global youtube
 
-  log.debug("Getting current user's channel ID and title...")
+  log.info("Getting current user's channel ID and title...")
   #Define fetch function so it can be re-used if issue and need to re-run it
   def fetch():
     results = youtube.channels().list(
@@ -448,21 +448,21 @@ def get_current_user():
 ################################# VIDEO ID LOOKUP ##############################################
 # Using comment ID, get corresponding video ID from dictionary variable
 def convert_comment_id_to_video_id(comment_id):
-  log.debug("Converting comment ID to video ID...")
+  log.info("Converting comment ID to video ID...")
   video_id = vidIdDict[comment_id]
-  log.debug("Retrieved video ID ( " + video_id + " ) from comment ID ( " + comment_id + " ).")
+  log.info("Retrieved video ID ( " + video_id + " ) from comment ID ( " + comment_id + " ).")
   return video_id
 
 ##################################### PRINT STATS ##########################################
 
 # Prints Scanning Statistics, can be version that overwrites itself or one that finalizes and moves to next line
 def print_count_stats(final):
-  log.debug("Printing status of the scanning")
+  log.info("Printing status of the scanning")
   if final == True:
-    log.debug("Top Level Comments Scanned: " + str(scannedCommentsCount) + " | Replies Scanned: " + str(scannedRepliesCount) + " | Spam Found So Far: " +  str(len(spamCommentsID)))
+    log.info("Top Level Comments Scanned: " + str(scannedCommentsCount) + " | Replies Scanned: " + str(scannedRepliesCount) + " | Spam Found So Far: " +  str(len(spamCommentsID)))
     print("Top Level Comments Scanned: " + str(scannedCommentsCount) + " | Replies Scanned: " + str(scannedRepliesCount) + " | Spam Found So Far: " +  str(len(spamCommentsID)) + "\n")
   else:
-    log.debug("Top Level Comments Scanned: " + str(scannedCommentsCount) + " | Replies Scanned: " + str(scannedRepliesCount) + " | Spam Found So Far: " +  str(len(spamCommentsID)))
+    log.info("Top Level Comments Scanned: " + str(scannedCommentsCount) + " | Replies Scanned: " + str(scannedRepliesCount) + " | Spam Found So Far: " +  str(len(spamCommentsID)))
     print("Top Level Comments Scanned: " + str(scannedCommentsCount) + " | Replies Scanned: " + str(scannedRepliesCount) + " | Spam Found So Far: " +  str(len(spamCommentsID)), end = "\r")
   
   return None
@@ -470,11 +470,11 @@ def print_count_stats(final):
 ##################################### VALIDATE VIDEO ID #####################################
 # Checks if video ID is correct length, and if so, gets the title of the video
 def validate_video_id(inputted_video):
-  log.debug("Validating video ID...")
+  log.info("Validating video ID...")
   isolatedVideoID = "Invalid" # Default value
   # Get id from long video link
   if "/watch?" in inputted_video:
-    log.debug("Video link is in the long format. Retriving video ID from it...")
+    log.info("Video link is in the long format. Retriving video ID from it...")
     startIndex = 0
     endIndex = 0
     
@@ -490,11 +490,11 @@ def validate_video_id(inputted_video):
   
     if startIndex != 0 and endIndex != 0 and startIndex < endIndex and endIndex <= len(inputted_video):
       isolatedVideoID = inputted_video[startIndex:endIndex]
-      log.debug("Video ID is "+ isolatedVideoID)
+      log.info("Video ID is "+ isolatedVideoID)
 
   # Get id from short video link
   elif "/youtu.be/" in inputted_video:
-    log.debug("Video link is in the short format. Retriving video ID from it...")
+    log.info("Video link is in the short format. Retriving video ID from it...")
     startIndex = inputted_video.index(".be/") + 4
     endIndex = len(inputted_video)
 
@@ -503,11 +503,11 @@ def validate_video_id(inputted_video):
 
     if endIndex != 0 and startIndex < endIndex and endIndex <= len(inputted_video):
       isolatedVideoID = inputted_video[startIndex:endIndex]
-      log.debug("Video ID is "+ isolatedVideoID)
+      log.info("Video ID is "+ isolatedVideoID)
 
   else: 
     isolatedVideoID = inputted_video
-    log.debug("Video ID is "+ isolatedVideoID)
+    log.info("Video ID is "+ isolatedVideoID)
 
   if len(isolatedVideoID) != 11:
     print("\nInvalid Video link or ID! Video IDs are 11 characters long.")
@@ -515,18 +515,18 @@ def validate_video_id(inputted_video):
     return False, None
 
   else:
-    log.debug("Video ID is valid. Returning it")
+    log.info("Video ID is valid. Returning it")
     return True, isolatedVideoID
 
 ##################################### VALIDATE CHANNEL ID ##################################
 # Checks if channel ID is correct length and in correct format - if so returns True
 def validate_channel_id(inputted_channel):
-  log.debug("Validating channel ID...")
+  log.info("Validating channel ID...")
   isolatedChannelID = "Invalid" # Default value
 
   # Get id from channel link
   if "/channel/" in inputted_channel:
-    log.debug("Channel link is in the long format. Retriving channel ID from it...")
+    log.info("Channel link is in the long format. Retriving channel ID from it...")
     startIndex = inputted_channel.rindex("/") + 1
     endIndex = len(inputted_channel)
     
@@ -535,10 +535,10 @@ def validate_channel_id(inputted_channel):
 
     if startIndex < endIndex and endIndex <= len(inputted_channel):
       isolatedChannelID = inputted_channel[startIndex:endIndex]
-      log.debug("Channel ID is "+ isolatedChannelID)
+      log.info("Channel ID is "+ isolatedChannelID)
 
   elif "/c/" in inputted_channel:
-    log.debug("Channel link is in the short format. Retriving channel ID from it...")
+    log.info("Channel link is in the short format. Retriving channel ID from it...")
     startIndex = inputted_channel.rindex("/c/") + 3 #Start index at at character after /c/
     endIndex = len(inputted_channel)
 
@@ -548,32 +548,32 @@ def validate_channel_id(inputted_channel):
 
     if startIndex < endIndex and endIndex <= len(inputted_channel):
       customURL = inputted_channel[startIndex:endIndex]
-      log.debug("Because this is a short link, the channel ID is not explicit, so retriving it form YouTube's API")
+      log.info("Because this is a short link, the channel ID is not explicit, so retriving it form YouTube's API")
       response = youtube.search().list(part="snippet",q=customURL, maxResults=1).execute()
       if response.get("items"):
           isolatedChannelID = response.get("items")[0]["snippet"]["channelId"] # Get channel ID from custom channel URL username
-          log.debug("Channel ID is "+ isolatedChannelID)
+          log.info("Channel ID is "+ isolatedChannelID)
   
   # Handle legacy style custom URL (no /c/ for custom URL)
   elif ("youtube.com" in inputted_channel) and ("/c/" and "/channel/" not in inputted_channel):
-    log.debug("Channel link is in the legacy format. Retriving channel ID from it...")
+    log.info("Channel link is in the legacy format. Retriving channel ID from it...")
     startIndex = inputted_channel.rindex("/") + 1
     endIndex = len(inputted_channel)
 
     if startIndex < endIndex and endIndex <= len(inputted_channel):
       customURL = inputted_channel[startIndex:endIndex]
-      log.debug("Because this is a legacy link, the channel ID is not explicit, so retriving it form YouTube's API")
+      log.info("Because this is a legacy link, the channel ID is not explicit, so retriving it form YouTube's API")
       response = youtube.search().list(part="snippet",q=customURL, maxResults=1).execute()
       if response.get("items"):
           isolatedChannelID = response.get("items")[0]["snippet"]["channelId"] # Get channel ID from custom channel URL username
-          log.debug("Channel ID is "+ isolatedChannelID)
+          log.info("Channel ID is "+ isolatedChannelID)
 
   else:
     isolatedChannelID = inputted_channel
-    log.debug("Channel ID is "+ isolatedChannelID)
+    log.info("Channel ID is "+ isolatedChannelID)
 
   if len(isolatedChannelID) == 24 and isolatedChannelID[0:2] == "UC":
-    log.debug("Channel ID is valid. Returning it")
+    log.info("Channel ID is valid. Returning it")
     return True, isolatedChannelID
   else:
     log.error("Invalid Channel link or ID! Channel IDs are 24 characters long and start with 'UC'.")
@@ -585,16 +585,16 @@ def validate_channel_id(inputted_channel):
 # Takes in message to display
 
 def choice(message=""):
-  log.debug("Waiting for user's choice")
+  log.info("Waiting for user's choice")
   # While loop until valid input
   valid = False
   while valid == False:
     response = input("\n" + message + " (y/n): ")
     if response == "Y" or response == "y":
-      log.debug("User chose 'yes'. Returning True")
+      log.info("User chose 'yes'. Returning True")
       return True
     elif response == "N" or response == "n":
-      log.debug("User chose 'no'. Returning False")
+      log.info("User chose 'no'. Returning False")
       return False
     else:
       log.warning("Incorrect input by user")
@@ -605,45 +605,46 @@ def choice(message=""):
 # Takes single or list of spammer IDs, splits and sanitizes each, converts to list of channel IDs
 # Returns list of channel IDs
 def process_spammer_ids(rawString):
-  log.debug("Processing spammer IDs...")
+  log.info("Processing spammer IDs...")
   inputList = [] # For list of unvalidated inputted items
   IDList = [] # For list of validated channel IDs, converted from inputList of spammer IDs - Separate to allow printing original invalid input if necessary
   inputList = rawString.split(",") # Split spammer IDs / Links by commas
   
-  log.debug("Variables: inputList=" + str(inputList) + " IDList=" + str(IDList) + " rawString=" + str(rawString))
+  log.info("Variables: inputList=" + str(inputList) + " IDList=" + str(IDList) + " rawString=" + str(rawString))
 
   # Remove whitespace from each list item
   for i in range(len(inputList)):
      inputList[i] =  inputList[i].strip()
-  log.debug("Final result: " + str(inputList))
+  log.info("Final result: " + str(inputList))
   
   IDList = list(inputList)  # Need to use list() so each list is separately affected, otherwise same pointer
   
-  log.debug("Updating IDList to " + str(IDList))
+  log.info("Updating IDList to " + str(IDList))
 
-  log.debug("Updating IDList to " + str(IDList))
+  log.info("Updating IDList to " + str(IDList))
   # Validate each ID in list
   for i in range(len(inputList)):
-    log.debug("Validating spammer ID " + str(i) + ": " + str(inputList[i]))
+    log.info("Validating spammer ID " + str(i) + ": " + str(inputList[i]))
     valid, IDList[i] = validate_channel_id(inputList[i])
     if valid == False:
       log.warn("Invalid spammer ID: " + str(inputList[i]))
-      log.debug("Validated (as False) spammer ID " + str(i) + ": " + str(inputList[i]))
+      log.info("Validated (as False) spammer ID " + str(i) + ": " + str(inputList[i]))
       print("Invalid Channel ID or Link: " + str(inputList[i]) + "\n")
       return False, None
   
-  log.debug("All spammer's IDs should be right. Returning validated spammer IDs: " + str(IDList))
+  log.info("All spammer's IDs should be right. Returning validated spammer IDs: " + str(IDList))
   return True, IDList
       
 ############################ Process Input Spammer IDs ###############################
 # Opens log file to be able to be written
 def open_log_file(name):
-  log.debug("Opening log file...")
+  log.info("Opening log file...")
   global logFile
   logFile = open(name, "a", encoding="utf-8") # Opens log file in write mode
 
 ##################################### SET UP THE LOG ###########################################
 # Note: I'm putting this here for it to cover all functions, from the error that the client_secrets.json file is not found, to the end of the program 
+# Note 2: I'm putting log.info and not log.debug, because confidential information can be shown and, if the user report a bug and it put the final file, he could shows the token to everyone.
 
 already_setted_up = False
 
@@ -652,19 +653,19 @@ def logVariables(youtube,  spamCommentsID, vidIdDict, scannedThreadsCount, scann
   variablesNames = ["youtube", "spamCommentsID", "vidIdDict", "scannedThreadsCount", "scannedRepliesCount", "scannedCommentsCount", "maxScanNumber", "deletionEnabled", "check_video_id", "nextPageToken", "logMode"] # List of variables names to log
   variablesValues = [youtube,  spamCommentsID, vidIdDict, scannedThreadsCount, scannedRepliesCount, scannedCommentsCount, maxScanNumber, deletionEnabled, check_video_id, nextPageToken, logMode] # List of variables values to log
   for i in range(len(variablesNames)):
-    log.debug("Variable "+variablesNames[i] + ": " + str(variablesValues[i]))
+    log.info("Variable "+variablesNames[i] + ": " + str(variablesValues[i]))
 
 def set_up_log(logName="Spam_Log_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S" + ".txt")):
   if logName == "": # If the script don't want to log, do nothing
     return False
-  ######## Note: if you want to debug, change the "level" to "log.DEBUG", or name the file "debug"
-  level = log.INFO # Default log level
+  ######## Note: if you want to debug, change the "level" to "log.info", or name the file "debug"
+  level = log.WARN # Default log level
   if logName == "debug": # If the user want to log in debug mode, set log level to DEBUG
-    level = log.DEBUG
+    level = log.INFO
   log.basicConfig(filename=logName + ".log", level=level, filemode="w" , format='%(asctime)s %(levelname)s: %(message)s') # Setting up the logging config. "format" attribute is for formatting the log message to: "(now's date) (level: like CRITICAL or INFO): (message of the log)"
   print("Log file will be called " + logName + ".log \n") # Informing the user what is the file name
   log.info("Logging started") # Log 'Logging started'
-  log.info("============ YOUTUBE SPAMMER PURGE v" + version + " ============") # Log intro
+  log.log(msg="============ YOUTUBE SPAMMER PURGE v" + version + " ============", level=110000) # Log intro ###### Level is that high to show up for every log level
   return True
 
 
@@ -759,24 +760,24 @@ def main():
   print("You WILL be shown the comments to confirm before they are deleted.")
 
   # While loop until user confirms they are logged into the correct account
-  log.debug("Waiting for user to confirm the logged  in account...")
+  log.info("Waiting for user to confirm the logged  in account...")
 
   confirmedCorrectLogin = False
-  log.debug("Variable confirmedCorrect: " + str(confirmedCorrectLogin))
+  log.info("Variable confirmedCorrect: " + str(confirmedCorrectLogin))
   while confirmedCorrectLogin == False:
     # Get channel ID and title of current user, confirm with user
-    log.debug("Getting current user")
+    log.info("Getting current user")
     currentUser = get_current_user() # Returns [channelID, channelTitle]
-    log.debug("Current user: "+ str(currentUser))
+    log.info("Current user: "+ str(currentUser))
     print("\n    >  Currently logged in user: " + str(currentUser[1]) + " (Channel ID: " + str(currentUser[0]) + " )")
     if choice("       Continue as this user?") == True:
-      log.debug("User accepted current user logged in. Continuing the program...")
+      log.info("User accepted current user logged in. Continuing the program...")
       check_channel_id = currentUser[0]
       confirmedCorrectLogin = True
     else:
-      log.debug("User declined current user logged in. Asking for log in again...")
+      log.info("User declined current user logged in. Asking for log in again...")
       os.remove(TOKEN_FILE_NAME)
-      log.debug("Token file removed.")
+      log.info("Token file removed.")
       youtube = get_authenticated_service()
   
   # User selects scanning mode,  while Loop to get scanning mode, so if invalid input, it will keep asking until valid input
@@ -785,31 +786,31 @@ def main():
   print("      1. Scan Single Video")
   print("      2. Scan Entire Channel")
 
-  log.debug("Getting scanning mode")
+  log.info("Getting scanning mode")
   validMode = False
   while validMode == False:
     mode = str(input("Choice: "))
-    log.debug("The user input was " + mode)
+    log.info("The user input was " + mode)
     # If chooses to scan single video - Validate Video ID, get title, and confirm with user - otherwise exits
     if mode == "1":
       validMode = True
       #While loop to get video ID and if invalid ask again
       validVideoID = (False, None) # Tuple, first element is status of validity of video ID, second element is video ID
-      log.debug("User chose to scan a single video. Waiting for video link/ID")
+      log.info("User chose to scan a single video. Waiting for video link/ID")
       confirm = False
       while validVideoID[0] == False or confirm == False:
         check_video_id = input("Enter Video link or ID to scan: ")
         validVideoID = validate_video_id(check_video_id) # Sends link or video ID for isolation and validation
         
         if validVideoID[0] == True:  #validVideoID now contains True/False and video ID
-          log.debug("Video ID is valid. Continuing...")
+          log.info("Video ID is valid. Continuing...")
           check_video_id = str(validVideoID[1])
-          log.debug("Video ID is " + check_video_id)
+          log.info("Video ID is " + check_video_id)
           title = get_video_title(check_video_id)
-          log.debug("Video title is " + title)
+          log.info("Video title is " + title)
           print("Chosen Video:  " + title)
           confirm = choice("Is this correct?")
-          log.debug("User confirmed video title. Continuing...")
+          log.info("User confirmed video title. Continuing...")
           if currentUser[0] != get_channel_id(check_video_id):
             log.warning(">>> It is not possible to delete comments on someone elses video! Who do you think you are!? <<<")
             print("\n   >>> WARNING It is not possible to delete comments on someone elses video! Who do you think you are!? <<<")
@@ -818,7 +819,7 @@ def main():
 
     # If chooses to scan entire channel - Validate Channel ID
     elif mode == "2":
-      log.debug("User chose to scan the entire channel. Waiting for max scan number")
+      log.info("User chose to scan the entire channel. Waiting for max scan number")
       validMode = True
       # While loop to get max scan number, not an integer, asks again
       validInteger = False
@@ -839,10 +840,10 @@ def main():
   # User inputs channel ID of the spammer, while loop repeats until valid input
   processResult = (False, None) #Tuple, first element is status of validity of channel ID, second element is channel ID
   while processResult[0] == False:
-    log.debug("Waiting for channel link(s)/ID(s)")
+    log.info("Waiting for channel link(s)/ID(s)")
     spammer_channel_id = input("Enter the Channel link(s) or ID(s) of the spammer (comma separated): ")
     processResult = process_spammer_ids(spammer_channel_id)
-    log.debug("Processed spammer channel ID(s): " + str(processResult[1]) + " (Array of link(s)/ID(s): " + str(spammer_channel_id) + ")")
+    log.info("Processed spammer channel ID(s): " + str(processResult[1]) + " (Array of link(s)/ID(s): " + str(spammer_channel_id) + ")")
     if processResult[0] == True:
       spammer_channel_id = processResult[1] # After processing, if valid, spammer_channel_id is a list of channel IDs
   print("\n")
@@ -873,30 +874,30 @@ def main():
       exit()
   else: 
     deletionEnabled = "HalfTrue" # If no matching problem found, deletion functionality is eligible to be enabled later
-    log.debug("No matching problem found. Continuing with variable 'deletionEnabled' as " + str(deletionEnabled))
+    log.info("No matching problem found. Continuing with variable 'deletionEnabled' as " + str(deletionEnabled))
 
   ##################### START SCANNING #####################
   try:
     # Goes to get comments for first page
     if nextPageToken == "start":
       log.info("\nScanning...")
-      log.debug("Getting comments for first page")
+      log.info("Getting comments for first page")
       print("Scanning... \n")
       nextPageToken = get_comments(youtube, check_video_id=check_video_id, check_channel_id=check_channel_id)
-      log.debug("Comments for the first page: " + str(nextPageToken))
+      log.info("Comments for the first page: " + str(nextPageToken))
       print_count_stats(final=False)  # Prints comment scan stats, updates on same line
 
     # After getting first page, if there are more pages, goes to get comments for next page
     while nextPageToken != "End" and scannedCommentsCount < maxScanNumber:
       nextPageToken = get_comments(youtube, check_video_id=check_video_id, check_channel_id=check_channel_id, nextPageToken=nextPageToken)
-      log.debug("Comments for the next page: " + str(nextPageToken))
+      log.info("Comments for the next page: " + str(nextPageToken))
 
     print_count_stats(final=True)  # Prints comment scan stats, finalizes
     log.info("\nScanning complete!")
 
     # Counts number of spam comments and prints list
     spam_count = len(spamCommentsID)
-    log.debug("Spammers: " + str(spam_count))
+    log.info("Spammers: " + str(spam_count))
     if spam_count == 0: # If no spam comments found, exits
       print("No spam comments found!\n")
       log.info("No spam comments found!")
@@ -929,10 +930,10 @@ def main():
       print("Ok, continuing... \n")
 
     # Prints list of spam comments
-    log.debug("Showing comments...")
+    log.info("Showing comments...")
     print("\n\nComments by the selected user: \n")
     print_comments(check_video_id,spamCommentsID, logMode)
-    if logMode == True: logFile.close() and log.debug("Closed log file")
+    if logMode == True: logFile.close() and log.info("Closed log file")
       
     
     # Get confirmation to delete spam comments
@@ -951,7 +952,7 @@ def main():
       elif confirmDelete == "YES":
         log.info("User accepted deleting comments")
         deletionEnabled = "True"
-        log.debug("Because the user accepted delete the comments, 'deletionEnabled' is now " + deletionEnabled)
+        log.info("Because the user accepted delete the comments, 'deletionEnabled' is now " + deletionEnabled)
     elif deletionEnabled == "False" and spammer_channel_id == currentUser[0] and mode == "2":
       log.info("Because user is running on mode " + mode + ", the script will NOT delete the comments.")
       input("\nDeletion functionality disabled for this mode because you scanned your own channel. Press Enter to exit...")
@@ -970,7 +971,7 @@ def main():
       banChoice = choice("Also ban the spammer(s) ?")
       if logMode == True:
         open_log_file(logFileName)
-        log.debug("Because logMode is " + str(logMode) + ", writing user's choice.")
+        log.info("Because logMode is " + str(logMode) + ", writing user's choice.")
         logFile.write("\n\nSpammers Banned: " + str(banChoice)) # Write whether or not spammer is banned to log file
         log.info("\n\nSpammers Banned: " + str(banChoice)) # Write whether or not spammer is banned to log file
         logFile.close()
@@ -1018,8 +1019,6 @@ def main():
       input("\n Press Enter to Exit...")
   else:
     print("\nFinished Executing.")
-    log.info("Program finished successfully. Exiting program... \n End of the log")
-
 # Runs the program
 if __name__ == "__main__":
   main()
