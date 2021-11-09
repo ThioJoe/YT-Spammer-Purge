@@ -3,6 +3,9 @@
 Allows you to purge all comments left by a user on a specific video or across the entire channel.
 
 **How to Download:** Click the "[Releases](https://github.com/ThioJoe/YouTube-Spammer-Purge/releases)" link on the right, then on the latest release, under 'Assets' click to download "YouTubeSpammerPurge.exe". NOTE: You may get a warning - See "[Download & Windows Warning](#download--windows-warning)" section below for details.
+* [Linux Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/Linux-Installation-Instructions) 
+* [MacOS Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/MacOS-Instructions)
+* (Windows installation not necessary if using exe file. But read below for how to set up required API key)
 
 ## Purpose
 Recently, there has been a massive infestation of spam on YouTube where fake impersonator accounts leave spam/scam replies to hundreds of users on a creator's videos. For some god-forsaken reason, YouTube offers no way to delete all comments by a specific user at once, meaning you must delete them one by one BY HAND.
@@ -37,7 +40,8 @@ If using the python script version (not the exe), there is a requirements.txt wi
 Either way, you DO need to acquire your own API credentials file to access the YouTube API - [See instructions below](instructions---obtaining-youtube-api-key).
 
 **Operating System Specific Instructions:** 
-* [Linux Installation Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/Linux-Installation-Instructions) 
+* [Linux Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/Linux-Installation-Instructions) 
+* [MacOS Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/MacOS-Instructions)
 
 ## Download & Windows Warning
 
