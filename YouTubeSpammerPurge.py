@@ -416,6 +416,7 @@ def validate_video_id(video_url):
     youtube_video_link_regex = r"^\s*(?P<video_url>(?:(?:https?:)?\/\/)?(?:(?:www|m)\.)?(?:youtube\.com|youtu.be)(?:\/(?:[\w\-]+\?v=|embed\/|v\/)?))?(?P<video_id>[\w\-]{11})(?:(?(video_url)\S+|$))?\s*$"
     match = re.match(youtube_video_link_regex, video_url)
     if match == None:
+        print("\nInvalid Video link or ID! Video IDs are 11 characters long.")
         return False, None
     return True, match.group('video_id')
 
