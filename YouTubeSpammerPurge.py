@@ -74,7 +74,7 @@ def get_authenticated_service():
 
   # Check if client_secrets.json file exists, if not give error
   if not os.path.exists(CLIENT_SECRETS_FILE):
-    log.critical(CLIENT_SECRETS_FILE  + " file not found!")
+    log.critical("Client secrets file not found!")
     print("\n ------------- ERROR: "+CLIENT_SECRETS_FILE+" file not found! ------------- ")
     print(" Make sure it is placed in the same folder as the program, and is spelled as above \n")
     print(" ----- Or: Did you create a Google Cloud Platform Project to access the API? ----- ")
@@ -555,7 +555,7 @@ def validate_channel_id(inputted_channel):
           log.info("Channel ID is "+ isolatedChannelID)
   
   # Handle legacy style custom URL (no /c/ for custom URL)
-  elif ("youtube.com" in inputted_channel) and ("/c/" and "/channel/" not in inputted_channel):
+  elif ("youtube.com/" in inputted_channel) and ("/c/" and "/channel/" not in inputted_channel):
     log.info("Channel link is in the legacy format. Retriving channel ID from it...")
     startIndex = inputted_channel.rindex("/") + 1
     endIndex = len(inputted_channel)
