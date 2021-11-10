@@ -199,13 +199,13 @@ def print_prepared_comments(check_video_id_localprep, comments, j, logMode):
     if logMode == True:
       log.info("Logging comments")
       logFile.write(str(j+1) + ". " + author + ":  " + text + "\n")
-      log.info(str(j+1) + ". " + author + ":  " + text + "\n")
+      log.log(msg=str(j+1) + ". " + author + ":  " + text + "\n", level=110000)
       if check_video_id_localprep is None:  # Only print video title if searching entire channel
         title = get_video_title(videoID) # Get Video Title
         logFile.write("     > Video: " + title + "\n")
-        log.info("     > Video: " + title + "\n")
+        log.log(msg="     > Video: " + title + "\n", level=110000)
       logFile.write("     > Direct Link: " + "https://www.youtube.com/watch?v=" + videoID + "&lc=" + comments[i] + "\n\n")
-      log.info("     > Direct Link: " + "https://www.youtube.com/watch?v=" + videoID + "&lc=" + comments[i] + "\n\n")
+      log.log(msg="     > Direct Link: " + "https://www.youtube.com/watch?v=" + videoID + "&lc=" + comments[i] + "\n\n", level=110000)
 
     i += 1
     j +=1
