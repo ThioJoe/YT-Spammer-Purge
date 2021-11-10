@@ -655,7 +655,7 @@ def logVariables(youtube,  spamCommentsID, vidIdDict, scannedThreadsCount, scann
   for i in range(len(variablesNames)):
     log.info("Variable "+variablesNames[i] + ": " + str(variablesValues[i]))
 
-def set_up_log(logName="Spam_Log_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S" + ".txt")):
+def set_up_log(logName="Spam_Log_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S")):
   if logName == "": # If the script don't want to log, do nothing
     return False
   ######## Note: if you want to debug, change the "level" to "log.info", or name the file "debug"
