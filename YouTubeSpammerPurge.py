@@ -589,11 +589,11 @@ def main():
       os.remove(TOKEN_FILE_NAME)
       youtube = get_authenticated_service()
   except Exception as e:
-      traceback.print_exc() # Prints traceback
-      print("----------------")
-      print("\nError: " + str(e))
-      input("\nSomething went wrong during authentication. Try deleting token.pickle file. Press Enter to exit...")
-      exit()
+    traceback.print_exc() # Prints traceback
+    print("----------------")
+    print("\nError: " + str(e))
+    input("\nSomething went wrong during authentication. Try deleting token.pickle file. Press Enter to exit...")
+    exit()
   
   # Intro message
   print("\n============ YOUTUBE SPAMMER PURGE v" + version + " ============")
