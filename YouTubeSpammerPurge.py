@@ -42,6 +42,7 @@ from datetime import datetime
 import traceback
 
 from googleapiclient.errors import HttpError
+from googleapiclient.errors import Error as GoogleError
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.oauth2.credentials import Credentials
@@ -582,12 +583,12 @@ def main():
   # Authenticate with the Google API - If token expired and invalid, deletes and re-authenticates
   try:
     youtube = get_authenticated_service() # Set easier name for API function
-  except Exception as e:
+  except GoogleError as e:
     if "invalid_grant" in str(e):
       print("Invalid token - Requires Re-Authentication")
       os.remove(TOKEN_FILE_NAME)
       youtube = get_authenticated_service()
-    else:
+  except Exception as e:
       traceback.print_exc() # Prints traceback
       print("----------------")
       print("\nError: " + str(e))
