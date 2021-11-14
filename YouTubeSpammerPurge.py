@@ -38,6 +38,7 @@ version = "1.5.0-Testing"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 import os
+import re
 from datetime import datetime
 import traceback
 import re
@@ -493,46 +494,13 @@ def print_count_stats(final):
 
 ##################################### VALIDATE VIDEO ID #####################################
 # Checks if video ID is correct length, and if so, gets the title of the video
-def validate_video_id(inputted_video):
-  isolatedVideoID = "Invalid" # Default value
-  # Get id from long video link
-  if "/watch?" in inputted_video:
-    startIndex = 0
-    endIndex = 0
-    
-    if "?v=" in inputted_video:
-      startIndex = inputted_video.index("?v=") + 3
-    elif "&v=" in inputted_video:
-      startIndex = inputted_video.index("&v=") + 3
-
-    if "&" in inputted_video:
-      endIndex = inputted_video.index("&")
-    else:
-      endIndex = len(inputted_video)
-  
-    if startIndex != 0 and endIndex != 0 and startIndex < endIndex and endIndex <= len(inputted_video):
-      isolatedVideoID = inputted_video[startIndex:endIndex]
-
-  # Get id from short video link
-  elif "/youtu.be/" in inputted_video:
-    startIndex = inputted_video.index(".be/") + 4
-    endIndex = len(inputted_video)
-
-    if "?" in inputted_video:
-      endIndex = inputted_video.index("?")
-
-    if endIndex != 0 and startIndex < endIndex and endIndex <= len(inputted_video):
-      isolatedVideoID = inputted_video[startIndex:endIndex]
-
-  else: 
-    isolatedVideoID = inputted_video
-
-  if len(isolatedVideoID) != 11:
-    print("\nInvalid Video link or ID! Video IDs are 11 characters long.")
-    return False, None
-
-  else:
-    return True, isolatedVideoID
+def validate_video_id(video_url):
+    youtube_video_link_regex = r"^\s*(?P<video_url>(?:(?:https?:)?\/\/)?(?:(?:www|m)\.)?(?:youtube\.com|youtu.be)(?:\/(?:[\w\-]+\?v=|embed\/|v\/)?))?(?P<video_id>[\w\-]{11})(?:(?(video_url)\S+|$))?\s*$"
+    match = re.match(youtube_video_link_regex, video_url)
+    if match == None:
+        print("\nInvalid Video link or ID! Video IDs are 11 characters long.")
+        return False, None
+    return True, match.group('video_id')
 
 ##################################### VALIDATE CHANNEL ID ##################################
 # Checks if channel ID is correct length and in correct format - if so returns True
