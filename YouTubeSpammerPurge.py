@@ -857,6 +857,7 @@ def main():
       print("----------------")
       print("\nError: " + str(e))
       input("\nSomething went wrong during authentication. Try deleting token.pickle file. Press Enter to exit...")
+      print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
       exit()
   
   # Intro message
@@ -991,6 +992,7 @@ def main():
     if spam_count == 0: # If no spam comments found, exits
       print("No spam comments found!\n")
       input("\nPress Enter to exit...")
+      print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
       exit()
     print("Number of Spammer Comments Found: " + str(len(spamCommentsID)))
 
@@ -1033,16 +1035,19 @@ def main():
       confirmDelete = input("Do you want to delete ALL of the above comments? Type 'YES' exactly, in all caps! \n") 
       if confirmDelete != "YES":  # Deletion functionality enabled via confirmation, or not
         input("\nDeletion CANCELLED. Press Enter to exit...")
+        print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
         exit()
       elif confirmDelete == "YES":
         deletionEnabled = "True"
     elif deletionEnabled == "False" and inputtedSpammerChannelID == currentUser[0] and scanMode == 2:
       input("\nDeletion functionality disabled for this scanning mode because you scanned your own channel. Press Enter to exit...")
+      print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
       exit()
     else:
       print("\nThe deletion functionality was not enabled. Cannot delete comments.")
       print("Possible Causes: You're trying to scan someone elses video, or your search criteria matched your own channel in channel-wide scan mode.")
       input("Press Enter to exit...")
+      print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
       exit()
       
 
