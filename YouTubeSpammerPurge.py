@@ -41,7 +41,6 @@ import os
 import re
 from datetime import datetime
 import traceback
-import re
 
 from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
