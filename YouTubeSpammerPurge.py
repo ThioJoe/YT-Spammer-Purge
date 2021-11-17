@@ -34,8 +34,10 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "1.5.0-Testing"
+version = "1.5.0"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
+from gui import *
 
 import os
 import re
@@ -672,16 +674,26 @@ def prepare_filter_mode_username(currentUser, deletionEnabledLocal, scanMode):
   currentUserName = currentUser[1]
   channelChars = make_char_set(currentUserName) # Converts channel name to set of characters to compare with entered filter characters
 
-  print("\nInput ONLY any special characters / emojis you want to search for in usernames. Do not include commas or spaces!")
-  print("Note: Letters and numbers will not be included for safety purposes, even if you enter them.")
-  print("Example: 👋🔥✔️✨")
+  print("\nNext, you will input ONLY any special characters / emojis you want to search for in usernames. Don't include commas or spaces!")
+  print("          Note: Letters and numbers will not be included for safety purposes, even if you enter them.")
+  print("          Example: 👋🔥✔️✨")
+  input("\nPress Enter to open the entry window...")
+  print("-------------------------------------------")
+
   validEntry = False
   while validEntry == False:
-    inputChars = input("Input the characters to search (no commas or spaces): ")
-    inputChars = make_char_set(inputChars, stripLettersNumbers=True, stripKeyboardSpecialChars=False, stripPunctuation=False)
+    print("\nWaiting for input Window. Press 'Execute' after entering valid characters to continue...", end="\r")
+    try:
+      inputChars = take_input_gui(stripLettersNumbers=True, stripKeyboardSpecialChars=False, stripPunctuation=False)
+    except NameError: # Catch if user closes GUI window, exit program.
+      print("                                                                                          ") # Clears the line because of \r on previous print
+      print("\nSomething went wrong with the input, or you closed the window improperly.")
+      input("Press Enter to exit...")
+      exit()
 
     if any(x in inputChars for x in channelChars):
       print("WARNING! Character(s) you entered are within your own username, ' " + currentUserName + " '! : " + str(inputChars & channelChars))
+      print("    (Symbols above may not show in windows console, copy and paste them somewhere to see the symbols")
       if scanMode == 1:
         print("Are you SURE you want to search your own comments? (You WILL still get a confirmation before deleting)")
         if choice("Choose") == True:
@@ -693,7 +705,7 @@ def prepare_filter_mode_username(currentUser, deletionEnabledLocal, scanMode):
         if choice("Continue?") == True:
           validEntry = True
     else:
-      print("Usernames will be scanned for ANY of these individual characters: " + str(inputChars))
+      print("     Usernames will be scanned for ANY of the characters shown in the previous window.")
       if choice("Begin scanning? ") == True:
         validEntry = True
         deletionEnabledLocal = "HalfTrue"
@@ -704,15 +716,25 @@ def prepare_filter_mode_username(currentUser, deletionEnabledLocal, scanMode):
 # 3
 # For Filter mode 3, user inputs characters in comment text to filter
 def prepare_filter_mode_comment_text(currentUser, deletionEnabledLocal, scanMode):
-  print("\nInput ONLY any special characters / emojis you want to search for in all comments. Do not include commas or spaces!")
-  print("Note: Letters, numbers, and punctuation will not be included for safety purposes, even if you enter them.")
-  print("Example: 👋🔥✔️✨")
+  print("\nNext, you will input ONLY any special characters / emojis you want to search for in all comments. Do not include commas or spaces!")
+  print("          Note: Letters, numbers, and punctuation will not be included for safety purposes, even if you enter them.")
+  print("          Example: 👋🔥✔️✨")
+  input("\nPress Enter to open the entry window...")
+  print("-------------------------------------------")
+
   validEntry = False
   while validEntry == False:
-    inputChars = input("Input the characters to search (no commas or spaces): ")
-    inputChars = make_char_set(inputChars, stripLettersNumbers=True, stripKeyboardSpecialChars=False, stripPunctuation=True)
+    print("\nWaiting for input Window. Press 'Execute' after entering valid characters to continue...", end="\r")
 
-    print("Comment text will be scanned for ANY of these individual characters: " + str(inputChars))
+    try:
+      inputChars = take_input_gui(stripLettersNumbers=True, stripKeyboardSpecialChars=False, stripPunctuation=True)
+    except NameError: # Catch if user closes GUI window, exit program.
+      print("                                                                                          ") # Clears the line
+      print("\nSomething went wrong with the input, or you closed the window improperly.")
+      input("Press Enter to exit...")
+      exit()
+
+    print("     Comment text will be scanned for ANY of the characters shown in the previous window.")
     if choice("Begin scanning? ") == True:
       validEntry = True
       deletionEnabledLocal = "HalfTrue"
