@@ -29,8 +29,10 @@ YouTube offers a functionality to ban a user, but it does NOT delete previous co
 (Takes you to YouTube, not embedded. See timestamps in video description.)
 
 ## Screenshots
-<img width="640" alt="Screenshot 1" src="https://user-images.githubusercontent.com/12518330/139733769-e0eb6410-3f52-4e51-8643-ef44bd6d5dc5.png">
-<img width="861" alt="Screenshot 2" src="https://user-images.githubusercontent.com/12518330/139733786-8385c16b-fdba-4346-a454-957b52f5ad91.png">
+<p align="center"><img width="615" alt="Screenshot 1 5 2" src="https://user-images.githubusercontent.com/12518330/142356861-b95c3fce-d784-4a98-a732-1c41f8b1ebde.png"></p>
+<p align="center"><img width="762" alt="Screenshot 2" src="https://user-images.githubusercontent.com/12518330/142356872-7720aa8d-3a34-4f74-b75a-e29d13c03d08.png"></p>
+<p align="center"><img width="665" alt="Screenshot 3" src="https://user-images.githubusercontent.com/12518330/142356875-94af0784-4347-460e-8693-f89fc7c9f204.png"></p>
+
 
 
 ## Installation
