@@ -34,7 +34,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "1.6.0-Testing"
+version = "1.5.2"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 from gui import *
@@ -50,9 +50,6 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from colorama import init, Fore as F, Back as B, Style as S
-
-
-
 
 ##########################################################################################
 ################################## AUTHORIZATION #########################################
@@ -874,6 +871,7 @@ def main():
   logMode = False
 
   # Initiates colorama and creates shorthand variables for resetting colors
+  os.system('cls')
   init(autoreset=True)
   S.R = S.RESET_ALL
   F.R = F.RESET
@@ -966,14 +964,14 @@ def main():
           print("\nInvalid Input! Number must be greater than zero.")
       except:
         print("\nInvalid Input! - Must be a whole number.")
-          
+
  
   # User inputs filtering mode
   print("\n-------------------------------------------------------")
   print(f"~~~~~~~ Choose how to identify spammers ~~~~~~~")
   print(f" 1. Enter Spammer's {F.LIGHTRED_EX}channel ID(s) or link(s){S.R}")
   print(f" 2. Scan {F.LIGHTGREEN_EX}usernames for individual characters{S.R} you choose")
-  print(f" 3. Scan {F.CYAN}comment text for individual characters{S.R} you choose") 
+  print(f" 3. Scan {F.CYAN}comment text for individual characters{S.R} you choose")
   print(f" 4. Auto Mode: Scan usernames for {F.LIGHTMAGENTA_EX}ANY non-ASCII special characters{S.R} (May cause collateral damage!)")
   
   # Make sure input is valid, if not ask again
