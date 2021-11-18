@@ -901,6 +901,7 @@ def main():
       traceback.print_exc() # Prints traceback
       print("----------------")
       print("\nError: " + str(e))
+      print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
       input("\nSomething went wrong during authentication. Try deleting token.pickle file. Press Enter to exit...")
       exit()
   
@@ -1034,7 +1035,9 @@ def main():
     # Counts number of found spam comments and prints list
     spam_count = len(spamCommentsID)
     if spam_count == 0: # If no spam comments found, exits
+      print("No matched comments found!\n")
       print(f"{B.RED}{F.BLACK}No matched comments or users found!{S.R}\n")
+      print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
       input("\nPress Enter to exit...")
       exit()
     print(f"Number of Matched Comments Found: {B.RED}{F.WHITE} " + str(len(spamCommentsID)) + f" {S.R}")
@@ -1082,11 +1085,13 @@ def main():
       elif confirmDelete == "YES":
         deletionEnabled = "True"
     elif deletionEnabled == "False" and inputtedSpammerChannelID == currentUser[0] and scanMode == 2:
+      print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
       input(f"\n{F.LIGHTGREEN_EX}Deletion functionality disabled for this scanning mode because you scanned your own channel.{S.R} Press Enter to exit...")
       exit()
     else:
       print("\nThe deletion functionality was not enabled. Cannot delete comments.")
       print("Possible Causes: You're trying to scan someone elses video, or your search criteria matched your own channel in channel-wide scan mode.")
+      print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
       input("Press Enter to exit...")
       exit()
       
