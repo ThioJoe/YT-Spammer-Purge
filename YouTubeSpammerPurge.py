@@ -34,7 +34,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "1.5.2"
+version = "1.5.3"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 from gui import *
@@ -51,8 +51,6 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from colorama import init, Fore as F, Back as B, Style as S
-
-clear_command = "cls" if platform.system() == "Windows" else "clear"
 
 ##########################################################################################
 ################################## AUTHORIZATION #########################################
@@ -873,8 +871,12 @@ def main():
   nextPageToken = "start"
   logMode = False
 
-  # Initiates colorama and creates shorthand variables for resetting colors
+  # Checks system platform to set correct console clear command
+  # Clears console otherwise the windows terminal doesn't work with colorama for some reason  
+  clear_command = "cls" if platform.system() == "Windows" else "clear"
   os.system(clear_command)
+
+  # Initiates colorama and creates shorthand variables for resetting colors
   init(autoreset=True)
   S.R = S.RESET_ALL
   F.R = F.RESET
