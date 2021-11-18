@@ -501,11 +501,7 @@ def convert_comment_id_to_video_id(comment_id):
 
 # Prints Scanning Statistics, can be version that overwrites itself or one that finalizes and moves to next line
 def print_count_stats(final):
-  if final == True:
-    print(f"Top Level Comments Scanned: {F.YELLOW}" + str(scannedCommentsCount) + f"{S.R} | Replies Scanned: {F.YELLOW}" + str(scannedRepliesCount) + f"{S.R} | Matches Found So Far: {F.LIGHTRED_EX}" +  str(len(spamCommentsID)) + f"{S.R}\n")
-  else:
-    print(f"Top Level Comments Scanned: {F.YELLOW}" + str(scannedCommentsCount) + f"{S.R} | Replies Scanned: {F.YELLOW}" + str(scannedRepliesCount) + f"{S.R} | Matches Found So Far: {F.LIGHTRED_EX}" +  str(len(spamCommentsID)) + f"{S.R}", end = "\r")
-  
+  print(f"Top Level Comments Scanned: {F.YELLOW}" + str(scannedCommentsCount) + f"{S.R} | Replies Scanned: {F.YELLOW}" + str(scannedRepliesCount) + f"{S.R} | Matches Found So Far: {F.LIGHTRED_EX}" +  str(len(spamCommentsID)) + f"{S.R}", end = "\r" if final == True else "\n")
   return None
 
 ##################################### VALIDATE VIDEO ID #####################################
@@ -1071,7 +1067,6 @@ def main():
       input("Press Enter to exit...")
       exit()
       
-
     if confirmDelete == "YES" and deletionEnabled == "True":  # Only proceed if deletion functionality is enabled, and user has confirmed deletion
       # Ask if they want to also ban spammer
       banChoice = choice(f"Also {F.YELLOW}ban{S.R} the spammer(s) ?")
@@ -1113,4 +1108,3 @@ def main():
 # Runs the program
 if __name__ == "__main__":
   main()
-
