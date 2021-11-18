@@ -236,23 +236,15 @@ def get_comments(youtube, filterMode, check_video_id=None, check_channel_id=None
     videoID = comment["snippet"]["videoId"] # Only enable if NOT checking specific video
     parent_id = item["snippet"]["topLevelComment"]["id"]
     numReplies = item["snippet"]["totalReplyCount"]
-    try: 
-      authorChannelID = comment["snippet"]["authorChannelId"]["value"]
-    except KeyError:
-      authorChannelID = "[Deleted Channel]"
+    snippet = item["snippet"]
+    authorChannelID = snippet.get("authorChannelId").get("value") or "[Deleted Channel]"
 
     # Need to be able to catch exceptions because sometimes the API will return a comment from non-existent / deleted channel
     # Need individual tries because not all are fetched for each mode
     if filterMode == 2 or filterMode == 4:
-      try:
-        authorChannelName = comment["snippet"]["authorDisplayName"]
-      except KeyError:
-        authorChannelName = "[Deleted Channel]"
+        authorChannelName = snippet.get("authorDisplayName") or "[Deleted Channel]"
     if filterMode == 3:
-      try:
-        commentText = comment["snippet"]["textDisplay"]
-      except KeyError:
-        commentText = "[Deleted/Missing Comment]"
+        commentText = snippet.get("textDisplay") or "[Deleted/Missing Comment]"
     
     # Runs check against comment info for whichever filter data is relevant
     check_against_filter(filterMode, parent_id, videoID, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, authorChannelID, authorChannelName, commentText, regexPattern)
