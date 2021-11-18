@@ -773,19 +773,16 @@ def prepare_filter_mode_non_ascii(currentUser, deletionEnabledLocal, scanMode):
 
     if selection == 1:
       print(f"Searches for {F.YELLOW}usernames with emojis, unicode symbols, and rare foreign characters{S.R} such as: ✔️ ☝️ 🡆 ▲ π Ɲ Œ")
-      if choice("Choose this mode?") == True:
-        regexPattern = r"[^\x00-\xFF]"
-        confirmation = True
+      regexPattern = r"[^\x00-\xFF]"
+      confirmation = choice("Choose this mode?") == True
     elif selection == 2:
       print(f"Searches for {F.YELLOW}usernames with anything EXCEPT{S.R} the following: {F.YELLOW}Letters, numbers, punctuation, and common special characters{S.R} you can type with your keyboard like: % * & () + ")
-      if choice("Choose this mode?") == True:
-        regexPattern = r"[^\x00-\x7F]"
-        confirmation = True
+      regexPattern = r"[^\x00-\x7F]"
+      confirmation = choice("Choose this mode?") == True
     elif selection == 3:
       print(f"Searches for {F.YELLOW}usernames with anything EXCEPT letters, numbers, and spaces{S.R} -- {B.RED}{F.WHITE} EXTREMELY LIKELY to cause collateral damage! {S.R} Recommended to just use to manually gather list of spammer IDs, then use a different mode to delete.")
-      if choice("Choose this mode?") == True:
-        regexPattern = r"[^a-zA-Z0-9 ]"
-        confirmation = True
+      regexPattern = r"[^a-zA-Z0-9 ]"
+      confirmation = choice("Choose this mode?") == True
     else:
       print("Invalid input. Please try again.")
     
