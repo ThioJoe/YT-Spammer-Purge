@@ -43,6 +43,7 @@ import os
 import re
 from datetime import datetime
 import traceback
+import platform
 
 from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
@@ -871,7 +872,10 @@ def main():
   logMode = False
 
   # Initiates colorama and creates shorthand variables for resetting colors
-  os.system('cls')
+  if platform.system() == "Windows":
+    os.system("cls")
+  else:
+    os.system("clear")
   init(autoreset=True)
   S.R = S.RESET_ALL
   F.R = F.RESET
