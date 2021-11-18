@@ -912,7 +912,7 @@ def main():
     try: scanMode = int(scanMode) # If not number entered, will get caught later as invalid
     except: pass
 
-    if scanMode == 1 or scanMode == 2:
+    if scanMode in [1, 2]:
       validMode = True
     else:
       print("\nInvalid choice! - Enter either 1 or 2. ")
