@@ -52,6 +52,8 @@ from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from colorama import init, Fore as F, Back as B, Style as S
 
+clear_command = "cls" if platform.system() == "Windows" else "clear"
+
 ##########################################################################################
 ################################## AUTHORIZATION #########################################
 ##########################################################################################
@@ -872,10 +874,7 @@ def main():
   logMode = False
 
   # Initiates colorama and creates shorthand variables for resetting colors
-  if platform.system() == "Windows":
-    os.system("cls")
-  else:
-    os.system("clear")
+  os.system(clear_command)
   init(autoreset=True)
   S.R = S.RESET_ALL
   F.R = F.RESET
