@@ -41,6 +41,7 @@ from gui import *
 
 import os
 import re
+import sys
 from datetime import datetime
 import traceback
 import platform
@@ -850,6 +851,12 @@ def prepare_filter_mode_non_ascii(currentUser, deletionEnabledLocal, scanMode):
 ##########################################################################################
 
 def main():
+  # Run check on python version, must be 3.6 or higher because of f strings
+  if sys.version_info[0] < 3 or sys.version_info[1] < 6:
+    print("Error: This program requires running python 3.6 or higher! You are running" + str(sys.version_info[0]) + "." + str(sys.version_info[1]))
+    input("Press Enter to exit...")
+    sys.exit()
+
   # Declare Global Variables
   global youtube  
   global spamCommentsID
