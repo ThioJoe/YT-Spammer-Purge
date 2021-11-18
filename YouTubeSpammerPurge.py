@@ -34,7 +34,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "1.5.0"
+version = "1.5.1"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 from gui import *
@@ -108,19 +108,26 @@ def get_authenticated_service():
 ############################### PRINT SPECIFIC COMMENTS ##################################
 ##########################################################################################
 
-# First prepared comments into groups of 50 to be submitted to API simultaneously
+# First prepared comments into segments of 50 to be submitted to API simultaneously
 # Then uses print_prepared_comments() to print / log the comments
 def print_comments(check_video_id_localprint, comments, logMode):
-  j = 0 # Index when going through comments all comment groups
+  j = 0 # Counting index when going through comments all comment segments
+  correctly_ordered_comments_list =[] # Holds new list correctly ordered matched comments, same order as returned by API and presented to user - will be 
+
   if len(comments) > 50:
     remainder = len(comments) % 50
     numDivisions = int((len(comments)-remainder)/50)
     for i in range(numDivisions):
-      j = print_prepared_comments(check_video_id_localprint,comments[i*50:i*50+50], j, logMode)
+      j, k = print_prepared_comments(check_video_id_localprint,comments[i*50:i*50+50], j, logMode)
+      correctly_ordered_comments_list.extend(k)
     if remainder > 0:
-      j = print_prepared_comments(check_video_id_localprint,comments[numDivisions*50:len(comments)],j, logMode)
+      j, k = print_prepared_comments(check_video_id_localprint,comments[numDivisions*50:len(comments)],j, logMode)
+      correctly_ordered_comments_list.extend(k)
   else:
-    j = print_prepared_comments(check_video_id_localprint,comments, j, logMode)
+    j, k = print_prepared_comments(check_video_id_localprint,comments, j, logMode)
+    correctly_ordered_comments_list.extend(k)
+
+  return correctly_ordered_comments_list
 
 # Uses comments.list YouTube API Request to get text and author of specific set of comments, based on comment ID
 def print_prepared_comments(check_video_id_localprep, comments, j, logMode):
@@ -128,39 +135,52 @@ def print_prepared_comments(check_video_id_localprep, comments, j, logMode):
     part="snippet",
     id=comments,  # The API request can take an entire comma separated list of comment IDs (in "id" field) to return info about
     maxResults=100, # 100 is the max per page, but multiple pages will be scanned
-    fields="items/snippet/authorDisplayName,items/snippet/textDisplay",
+    fields="items/snippet/authorDisplayName,items/snippet/textDisplay,items/id,items/snippet/authorChannelId/value",
     textFormat="plainText"
   ).execute()
 
   # Prints author and comment text for each comment
   i = 0 # Index when going through comments
+  comments_segment_list = [] # Holds list of comments for each segment
+
   for item in results["items"]:
     text = item["snippet"]["textDisplay"]
     author = item["snippet"]["authorDisplayName"]
+    author_id_local = item["snippet"]["authorChannelId"]["value"]
+    comment_id_local = item["id"]
 
     # Retrieve video ID from object using comment ID
-    videoID = convert_comment_id_to_video_id(comments[i])
+    videoID = convert_comment_id_to_video_id(comment_id_local)
 
     # Prints comment info to console
     print(str(j+1) + ". " + author + ":  " + text)
-
+    print("—————————————————————————————————————————————————————————————————————————————————————————————")
     if check_video_id_localprep is None:  # Only print video title if searching entire channel
       title = get_video_title(videoID) # Get Video Title
       print("     > Video: " + title)
-    print("     > Direct Link: " + "https://www.youtube.com/watch?v=" + videoID + "&lc=" + comments[i] + "\n")
+    print("     > Direct Link: " + "https://www.youtube.com/watch?v=" + videoID + "&lc=" + comment_id_local)
+    print("     > Author Channel ID: " + author_id_local)
+    print("=============================================================================================\n")
+
 
     # If logging enabled, also prints to log file
     if logMode == True:
       logFile.write(str(j+1) + ". " + author + ":  " + text + "\n")
+      logFile.write("—————————————————————————————————————————————————————————————————————————————————————————————\n")
       if check_video_id_localprep is None:  # Only print video title if searching entire channel
         title = get_video_title(videoID) # Get Video Title
         logFile.write("     > Video: " + title + "\n")
-      logFile.write("     > Direct Link: " + "https://www.youtube.com/watch?v=" + videoID + "&lc=" + comments[i] + "\n\n")
+      logFile.write("     > Direct Link: " + "https://www.youtube.com/watch?v=" + videoID + "&lc=" + comment_id_local + "\n")
+      logFile.write("     > Author Channel ID: " + author_id_local + "\n")
+      logFile.write("=============================================================================================\n\n\n")
 
+    # Appends comment ID to new list of comments so it's in the correct order going forward, as provided by API and presented to user
+    # Must use append here, not extend, or else it would add each character separately
+    comments_segment_list.append(comment_id_local)
     i += 1
-    j +=1
+    j += 1
 
-  return j
+  return j, comments_segment_list
 
 
 ##########################################################################################
@@ -342,14 +362,13 @@ def check_against_filter(filterMode, commentID, videoID, inputtedSpammerChannelI
 ################################ DELETE COMMENTS #########################################
 ########################################################################################## 
 
-# Takes in dictionary of comment IDs to delete, breaks them into 50-comment chunks, and deletes them in groups
-def delete_found_comments(commentsDictionary,banChoice):
+# Takes in list of comment IDs to delete, breaks them into 50-comment chunks, and deletes them in groups
+def delete_found_comments(commentsList,banChoice):
 
     # Deletes specified comment IDs
     def delete(commentIDs):
         youtube.comments().setModerationStatus(id=commentIDs, moderationStatus="rejected", banAuthor=banChoice).execute()
 
-    commentsList = list(commentsDictionary.keys())  # Takes comment IDs out of dictionary and into list
     total = len(commentsList)
     deletedCounter = 0  
     def print_progress(d, t): print("Deleting Comments... - Progress: [" + str(d) + " / " + str(t) + "] (In Groups of 50)", end="\r") # Prints progress of deletion
@@ -371,25 +390,39 @@ def delete_found_comments(commentsDictionary,banChoice):
         print_progress(deletedCounter, total)
     print("Comments Deleted! Will now verify each is gone.                          \n")
 
-# Takes in dictionary of comment IDs and video IDs, and checks if comments still exist individually
-def check_deleted_comments(commentsDictionary):
+# Class for custom exception to throw if a comment is found to remain
+class CommentFoundError(Exception):
+    pass
+
+# Takes in list of comment IDs and video IDs, and checks if comments still exist individually
+def check_deleted_comments(commentsVideoDictionary):
     i = 0 # Count number of remaining comments
     j = 1 # Count number of checked
-    total = len(commentsDictionary)
-    for key, value in commentsDictionary.items():
-        results = youtube.comments().list(
-            part="snippet",
-            id=key,  
-            maxResults=1,
-            fields="items",
-            textFormat="plainText"
-        ).execute()
-        print("Verifying Deleted Comments: [" + str(j) + " / " + str(total) + "]", end="\r")
-        j += 1
+    total = len(commentsVideoDictionary)
+    for key, value in commentsVideoDictionary.items():
+        try:
+          results = youtube.comments().list(
+              part="snippet",
+              id=key,  
+              maxResults=1,
+              fields="items",
+              textFormat="plainText"
+          ).execute()
+          print("Verifying Deleted Comments: [" + str(j) + " / " + str(total) + "]", end="\r")
+          j += 1
 
-        if results["items"]:  # Check if the items result is empty
-            print("Possible Issue Deleting Comment: " + str(key) + " |  Check Here: " + "https://www.youtube.com/watch?v=" + str(value) + "&lc=" + str(key))
-            i += 1
+          if results["items"]:  # Check if the items result is empty
+            raise CommentFoundError
+
+        # If comment is found and possibly not deleted, print out video ID and comment ID
+        except CommentFoundError:
+          print("Possible Issue Deleting Comment: " + str(key) + " |  Check Here: " + "https://www.youtube.com/watch?v=" + str(value) + "&lc=" + str(key))
+          i += 1
+          pass
+        except Exception:
+          print("Unhandled Exception While Deleting Comment: " + str(key) + " |  Check Here: " + "https://www.youtube.com/watch?v=" + str(value) + "&lc=" + str(key))
+          i += 1
+          pass
 
     if i == 0:
         print("\n\nSuccess: All spam comments should be gone.")
@@ -494,7 +527,7 @@ def print_count_stats(final):
   return None
 
 ##################################### VALIDATE VIDEO ID #####################################
-# Checks if video ID is correct length, and if so, gets the title of the video
+# Checks if video ID / video Link is correct length and in correct format - If so returns true and isolated video ID
 def validate_video_id(video_url):
     youtube_video_link_regex = r"^\s*(?P<video_url>(?:(?:https?:)?\/\/)?(?:(?:www|m)\.)?(?:youtube\.com|youtu.be)(?:\/(?:[\w\-]+\?v=|embed\/|v\/)?))?(?P<video_id>[\w\-]{11})(?:(?(video_url)\S+|$))?\s*$"
     match = re.match(youtube_video_link_regex, video_url)
@@ -504,7 +537,7 @@ def validate_video_id(video_url):
     return True, match.group('video_id')
 
 ##################################### VALIDATE CHANNEL ID ##################################
-# Checks if channel ID is correct length and in correct format - if so returns True
+# Checks if channel ID / Channel Link is correct length and in correct format - If so returns true and isolated channel ID
 def validate_channel_id(inputted_channel):
   isolatedChannelID = "Invalid" # Default value
 
@@ -749,9 +782,9 @@ def prepare_filter_mode_non_ascii(currentUser, deletionEnabledLocal, scanMode):
   print("\n-------------------------------------------------------")
   print("~~~ This mode automatically searches for usernames that contain special characters (aka not letters/numbers) ~~~\n")
   print("Choose the sensitivity level of the filter. You will be shown examples after you choose.")
-  print("   1. Allow Extended ASCII:       Filter rare unicode & Emojis only")
+  print("   1. Allow Standard + Extended ASCII:    Filter rare unicode & Emojis only")
   print("   2. Allow Standard ASCII only:  Also filter semi-common foreign characters")
-  print("   3. NUKE Mode (╯°□°)╯︵ ┻━┻:    Allow ONLY numbers, letters, and spaces")
+  print("   3. NUKE Mode (┘°□°)┘≈ ┴──┴ :    Allow ONLY numbers, letters, and spaces")
   print("")
   # Get user input for mode selection, 
   confirmation = False
@@ -792,11 +825,11 @@ def prepare_filter_mode_non_ascii(currentUser, deletionEnabledLocal, scanMode):
           confirmation = True
 
   if selection == 1:
-    autoModeName = "Allow Extended ASCII"
+    autoModeName = "Allow Standard + Extended ASCII"
   elif selection == 2:
     autoModeName = "Allow Standard ASCII only"
   elif selection == 3:
-    autoModeName = "NUKE Mode (╯°□°)╯︵ ┻━┻ - Allow only letters, numbers, and spaces"
+    autoModeName = "NUKE Mode (┘°□°)┘≈ ┴──┴ - Allow only letters, numbers, and spaces"
 
   if confirmation == True:
     deletionEnabledLocal = "HalfTrue"
@@ -978,10 +1011,10 @@ def main():
     # Counts number of found spam comments and prints list
     spam_count = len(spamCommentsID)
     if spam_count == 0: # If no spam comments found, exits
-      print("No spam comments found!\n")
+      print("No matched comments found!\n")
       input("\nPress Enter to exit...")
       exit()
-    print("Number of Spammer Comments Found: " + str(len(spamCommentsID)))
+    print("Number of Matched Comments Found: " + str(len(spamCommentsID)))
 
     # Asks user if they want to save list of spam comments to a file
     if choice("Spam comments ready to display. Also save the list to a text file?") == True:
@@ -1001,15 +1034,15 @@ def main():
         logFile.write("Characters searched in Comment Text: " + str(inputtedCommentTextFilter) + "\n\n")
       elif filterMode == 4:
         logFile.write("Automatic Search Mode: " + str(filterSettings[2]))
-      logFile.write("Number of Spammer Comments Found: " + str(len(spamCommentsID)) + "\n\n")
-      logFile.write("IDs of Spammer Comments: " + "\n" + str(spamCommentsID) + "\n\n\n")
+      logFile.write("Number of Matched Comments Found: " + str(len(spamCommentsID)) + "\n\n")
+      logFile.write("IDs of Matched Comments: " + "\n" + str(spamCommentsID) + "\n\n\n")
       
     else:
       print("Ok, continuing... \n")
 
     # Prints list of spam comments
-    print("\n\nComments by the selected user: \n")
-    print_comments(check_video_id,spamCommentsID, logMode)
+    print("\n\nAll Matched Comments: \n")
+    reorderedSpamCommentsID = print_comments(check_video_id,spamCommentsID, logMode)
     if logMode == True: logFile.close()
       
     
@@ -1043,7 +1076,7 @@ def main():
         logFile.write("\n\nSpammers Banned: " + str(banChoice)) # Write whether or not spammer is banned to log file
         logFile.close()
       print("\n")
-      delete_found_comments(vidIdDict,banChoice) # Deletes spam comments
+      delete_found_comments(reorderedSpamCommentsID,banChoice) # Deletes spam comments
       check_deleted_comments(vidIdDict) #Verifies if comments were deleted
       input("\nDeletion Complete. Press Enter to Exit...")
     else:
