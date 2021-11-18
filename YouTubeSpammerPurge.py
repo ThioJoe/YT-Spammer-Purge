@@ -227,10 +227,7 @@ def get_comments(youtube, filterMode, check_video_id=None, check_channel_id=None
     ).execute()  
 
   # Get token for next page
-  try:
-    RetrievedNextPageToken = results["nextPageToken"]
-  except KeyError:
-    RetrievedNextPageToken = "End"  
+  RetrievedNextPageToken = results.get("nextPageToken") or "End"
  
   # After getting all comments threads for page, extracts data for each and stores matches in spamCommentsID
   # Also goes through each thread and execuites get_replies() to get reply content and matches
@@ -280,13 +277,13 @@ def get_replies(filterMode, parent_id, videoID, inputtedSpammerChannelID=None, i
   authorChannelName = None
   commentText = None
   
-  if filterMode == 1: # User entered spammer IDs -- Get Extra Info: None
-    fieldsToFetch = "items/snippet/authorChannelId/value,items/id"
-  elif filterMode == 2 or filterMode == 4: # Filter by Username -- Get Extra Info: Author Display Name
-    fieldsToFetch = "items/snippet/authorChannelId/value,items/id,items/snippet/authorDisplayName"
-  elif filterMode == 3: # Filter by comment text -- Get Extra Info: Comment Text
-    fieldsToFetch = "items/snippet/authorChannelId/value,items/id,items/snippet/textDisplay"
-
+  fieldsToFetch = {
+    1: "items/snippet/authorChannelId/value,items/id", # User entered spammer IDs -- Get Extra Info: None
+    2: "items/snippet/authorChannelId/value,items/id,items/snippet/authorDisplayName", # Filter by Username -- Get Extra Info: Author Display Name
+    3: "items/snippet/authorChannelId/value,items/id,items/snippet/textDisplay", # Filter by comment text -- Get Extra Info: Comment Text
+    4: "items/snippet/authorChannelId/value,items/id,items/snippet/authorDisplayName", # Filter by Username -- Get Extra Info: Author Display Name
+  }[filterMode]
+  
   results = youtube.comments().list(
     part="snippet",
     parentId=parent_id,
@@ -300,22 +297,13 @@ def get_replies(filterMode, parent_id, videoID, inputtedSpammerChannelID=None, i
   # Need individual tries because not all are fetched for each mode
   for item in results["items"]:  
     replyID = item["id"]
-    try:
-      authorChannelID = item["snippet"]["authorChannelId"]["value"]
-    except KeyError:
-      authorChannelID = "[Deleted Channel]"
+    snippet = item["snippet"]
+    authorChannelID = snippet.get("authorChannelId").get("value") or "[Deleted Channel]"
 
     if filterMode == 2 or filterMode == 4: 
-      try:
-        authorChannelName = item["snippet"]["authorDisplayName"]
-      except KeyError:
-        authorChannelName = "[Deleted Channel]"  
-    
+        authorChannelName = snippet.get("authorDisplayName") or "[Deleted Channel]"  
     if filterMode == 3:
-      try:
-        commentText = item["snippet"]["textDisplay"]
-      except KeyError:
-        commentText = "[Deleted/Missing Comment]"
+        commentText = snippet.get("textDisplay") or "[Deleted/Missing Comment]"
 
     # Runs check against comment info for whichever filter data is relevant
     check_against_filter(filterMode, replyID, videoID, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, authorChannelID, authorChannelName, commentText, regexPattern)
@@ -596,10 +584,10 @@ def choice(message=""):
   # While loop until valid input
   valid = False
   while valid == False:
-    response = input("\n" + message + f" ({F.LIGHTCYAN_EX}y{S.R}/{F.LIGHTRED_EX}n{S.R}): ")
-    if response == "Y" or response == "y":
+    response = (input("\n" + message + f" ({F.LIGHTCYAN_EX}y{S.R}/{F.LIGHTRED_EX}n{S.R}): ")).lower()
+    if response == "y":
       return True
-    elif response == "N" or response == "n":
+    elif response == "n":
       return False
     else:
       print("\nInvalid Input. Enter Y or N")
@@ -737,8 +725,7 @@ def prepare_filter_mode_username(currentUser, deletionEnabledLocal, scanMode):
       elif scanMode == 2:
         print(f"For safety purposes, this program's delete functionality is {F.LIGHTGREEN_EX}disabled{S.R} when scanning for yourself across your entire channel.")
         print(f"Choose {F.LIGHTRED_EX}'N'{S.R} to choose different characters. Choose {F.GREEN}'Y'{S.R} to continue  (But you will get an error when trying to delete!)\n")
-        if choice("Continue?") == True:
-          validEntry = True
+        validEntry = choice("Continue?")
     else:
       print(f"     Usernames will be scanned for {F.MAGENTA}ANY{S.R} of the characters shown in the previous window.")
       if choice("Begin scanning? ") == True:
@@ -830,13 +817,12 @@ def prepare_filter_mode_non_ascii(currentUser, deletionEnabledLocal, scanMode):
             deletionEnabledLocal = "False"
       else:
         deletionEnabledLocal = "HalfTrue"
-
-  if selection == 1:
-    autoModeName = "Allow Standard + Extended ASCII"
-  elif selection == 2:
-    autoModeName = "Allow Standard ASCII only"
-  elif selection == 3:
-    autoModeName = "NUKE Mode (┘°□°)┘≈ ┴──┴ - Allow only letters, numbers, and spaces"
+        
+  autoModeName = {
+    1: "Allow Standard + Extended ASCII",
+    2: "Allow Standard ASCII only",
+    3: "NUKE Mode (┘°□°)┘≈ ┴──┴ - Allow only letters, numbers, and spaces"
+  }[selection]
 
   if confirmation == True:
     return deletionEnabledLocal, regexPattern, autoModeName
@@ -971,8 +957,7 @@ def main():
     while validInteger == False:
       try:
         maxScanNumber = int(input(f"Enter the maximum {F.YELLOW}number of comments{S.R} to scan: "))
-        if maxScanNumber > 0:
-          validInteger = True # If it gets here, it's an integer, otherwise goes to exception
+        validInteger = maxScanNumber > 0 # If it gets here, it's an integer, otherwise goes to exception
         else:
           print("\nInvalid Input! Number must be greater than zero.")
       except:
@@ -993,10 +978,9 @@ def main():
     filterMode = input("\nChoice (1-4): ")
     try: filterMode = int(filterMode) # If not number entered, will get caught later as invalid
     except: pass
-
-    if filterMode == 1 or filterMode == 2 or filterMode == 3 or filterMode == 4:
-      validFilterMode = True
-    else:
+    
+    validFilterMode = filterMode in [1, 2, 3, 4]
+    if validFilterMode is False:
       print("\nInvalid choice! - Enter either 1, 2, 3 or 4. ")
 
   ### Prepare Filtering Modes ###
