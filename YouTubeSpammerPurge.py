@@ -34,7 +34,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "1.5.3"
+version = "1.5.4"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 from gui import *
@@ -45,6 +45,7 @@ import sys
 from datetime import datetime
 import traceback
 import platform
+import rtfunicode
 
 from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
@@ -165,16 +166,25 @@ def print_prepared_comments(check_video_id_localprep, comments, j, logMode):
     print("=============================================================================================\n")
 
 
-    # If logging enabled, also prints to log file
+    # If logging enabled, also prints to log file 
     if logMode == True:
-      logFile.write(str(j+1) + ". " + author + ":  " + text + "\n")
-      logFile.write("—————————————————————————————————————————————————————————————————————————————————————————————\n")
+
+      # All these lines actually print to a single line with author name and comment text in color
+      # Write line with author name and comment text - Requires multiple lines to add colors separately, so they are not encoded along with the unicode
+      write_rtf(logFileName, str(j+1) + r". \cf4") # Author name in blue = \cf4
+      write_rtf(logFileName, author, unicode=True)
+      write_rtf(logFileName, r"\cf1 :  \cf5") # Make colon default color, then comment text in yellow = \cf5
+      write_rtf(logFileName, text, unicode=True)
+      write_rtf(logFileName, r"\cf1 \line " + "\n") # End line with default color = \cf1 , and next line
+
+
+      write_rtf(logFileName, "---------------------------------------------------------------------------------------------\\line " + "\n")
       if check_video_id_localprep is None:  # Only print video title if searching entire channel
         title = get_video_title(videoID) # Get Video Title
-        logFile.write("     > Video: " + title + "\n")
-      logFile.write("     > Direct Link: " + "https://www.youtube.com/watch?v=" + videoID + "&lc=" + comment_id_local + "\n")
-      logFile.write("     > Author Channel ID: " + author_id_local + "\n")
-      logFile.write("=============================================================================================\n\n\n")
+        write_rtf(logFileName, "     > Video: " + title + "\\line " + "\n")
+      write_rtf(logFileName, "     > Direct Link: " + "https://www.youtube.com/watch?v=" + videoID + "&lc=" + comment_id_local + "\\line "+ "\n")
+      write_rtf(logFileName, r"     > Author Channel ID: \cf6" + author_id_local + r"\cf1 \line "+ "\n")
+      write_rtf(logFileName, "=============================================================================================\\line\\line\\line" + "\n\n\n")
 
     # Appends comment ID to new list of comments so it's in the correct order going forward, as provided by API and presented to user
     # Must use append here, not extend, or else it would add each character separately
@@ -628,12 +638,45 @@ def process_spammer_ids(rawString):
   
   return True, IDList
       
-############################ Process Input Spammer IDs ###############################
-# Opens log file to be able to be written
-def open_log_file(name):
-  global logFile
-  logFile = open(name, "a", encoding="utf-8") # Opens log file in write mode
+############################ File Handling ###############################
 
+# Writes properly to rtf file, also can prepare with necessary header information and formatting settings
+def write_rtf(fileName, newText=None, firstWrite=False, unicode=False):
+  if firstWrite == True:
+    file = open(fileName, "w", encoding="utf-8") # Opens log file in write mode
+    # Some header information for RTF file, sets courier as font
+    file.write(r"{\rtf1\ansi\deff0 {\fonttbl {\f0 Courier;}}"+"\n")
+
+    # Sets color table to be able to set colors for text, each color set with RGB values in raw string
+    # To use color, use '\cf1 ' (with space) for black, cf2 = red, cf3 = green, cf4 = blue, cf5 = orange, cf6 = purple
+    file.write(r"{\colortbl;\red0\green0\blue0;\red255\green0\blue0;\red0\green255\blue0;\red0\green0\blue255;\red226\green129\blue0;\red102\green0\blue214;}"+"\n\n")
+    file.write(r"}")
+    file.close()
+
+  # If the string might have unicode, use unicode mode to convert for rtf
+  else:
+    # Writes to line just before last, to preserve required ending bracket in rtf file
+    # Slightly modified from: https://stackoverflow.com/a/50567967/17312053   
+    with open(fileName, 'r+', encoding="utf-8") as file:
+      pos, text = 0, ''
+
+      if unicode == True:
+        # Encodes newText string with rtf compatible encoding, which converts special characters to escaped codes, then decodes back to utf-8
+        newText = newText.encode('rtfunicode').decode('utf-8')
+
+      while True:
+          # save last line value and cursor position
+          prev_pos, pos = pos, file.tell()
+          prev_text, text = text, file.readline()  
+          if text == '': # Checks for last line with only ending bracket
+              break
+      file.seek(prev_pos, 0) # replace cursor to the last line
+      for line in newText: # write new lines. If any brackets, add escape backslash
+          line.replace("}", "\\}")
+          line.replace("{", "\\{")
+          file.write(line)
+      file.write("\n}") # Re-write new line with ending bracket again. Could put prev_text in here if being dynamic
+      file.close()
 
 ######################### Convert string to set of characters#########################
 def make_char_set(stringInput, stripLettersNumbers=False, stripKeyboardSpecialChars=False, stripPunctuation=False):
@@ -1045,23 +1088,24 @@ def main():
     # Asks user if they want to save list of spam comments to a file
     if choice(f"Spam comments ready to display. Also {F.LIGHTGREEN_EX}save the list to a text file?{S.R}") == True:
       logMode = True
-      logFileName = "Spam_Log_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S" + ".txt")
+      global logFileName
+      logFileName = "Spam_Log_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S" + ".rtf")
       print(f"Log file will be called {F.YELLOW}" + logFileName + f"{S.R}\n")
       input(f"Press {F.YELLOW}Enter{S.R} to display comments...")
 
       # Write heading info to log file
-      open_log_file(logFileName)
-      logFile.write("----------- YouTube Spammer Purge Log File ----------- \n\n")
+      write_rtf(logFileName, firstWrite=True)
+      write_rtf(logFileName, "\\par----------- YouTube Spammer Purge Log File -----------\\line\\line " + "\n\n")
       if filterMode == 1:
-        logFile.write("Channel IDs of spammer searched: " + str(inputtedSpammerChannelID) + "\n\n")
+        write_rtf(logFileName, "Channel IDs of spammer searched: " + str(inputtedSpammerChannelID) + "\\line\\line " + "\n\n")
       elif filterMode == 2:
-        logFile.write("Characters searched in Usernames: " + str(inputtedUsernameFilter) + "\n\n")
+        write_rtf(logFileName, "Characters searched in Usernames: " + str(inputtedUsernameFilter) + "\\line\\line " + "\n\n", unicode=True)
       elif filterMode == 3:
-        logFile.write("Characters searched in Comment Text: " + str(inputtedCommentTextFilter) + "\n\n")
+       write_rtf(logFileName, "Characters searched in Comment Text: " + str(inputtedCommentTextFilter) + "\\line\\line " + "\n\n", unicode=True)
       elif filterMode == 4:
-        logFile.write("Automatic Search Mode: " + str(filterSettings[2]))
-      logFile.write("Number of Matched Comments Found: " + str(len(spamCommentsID)) + "\n\n")
-      logFile.write("IDs of Matched Comments: " + "\n" + str(spamCommentsID) + "\n\n\n")
+        write_rtf(logFileName, "Automatic Search Mode: " + str(filterSettings[2]), unicode=True) 
+      write_rtf(logFileName, "Number of Matched Comments Found: " + str(len(spamCommentsID)) + "\\line\\line " + "\n\n")
+      write_rtf(logFileName, "IDs of Matched Comments: " + "\n" + str(spamCommentsID) + "\\line\\line\\line " + "\n\n\n")
       
     else:
       print("Ok, continuing... \n")
@@ -1069,7 +1113,6 @@ def main():
     # Prints list of spam comments
     print("\n\nAll Matched Comments: \n")
     reorderedSpamCommentsID = print_comments(check_video_id,spamCommentsID, logMode)
-    if logMode == True: logFile.close()
       
     
     # Get confirmation to delete spam comments
@@ -1100,9 +1143,7 @@ def main():
       # Ask if they want to also ban spammer
       banChoice = choice(f"Also {F.YELLOW}ban{S.R} the spammer(s) ?")
       if logMode == True:
-        open_log_file(logFileName)
-        logFile.write("\n\nSpammers Banned: " + str(banChoice)) # Write whether or not spammer is banned to log file
-        logFile.close()
+        write_rtf(logFileName, "\n\n"+ "\\line\\line Spammers Banned: " + str(banChoice)) # Write whether or not spammer is banned to log file
       print("\n")
       delete_found_comments(reorderedSpamCommentsID,banChoice) # Deletes spam comments
       check_deleted_comments(vidIdDict) #Verifies if comments were deleted
