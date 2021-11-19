@@ -7,6 +7,8 @@ assignees: ''
 
 ---
 
+**IS THIS A FEATURE REQUEST OR IDEA? SUBMIT A DISCUSSION POST INSTEAD HERE: https://github.com/ThioJoe/YouTube-Spammer-Purge/discussions**
+
 **Describe the bug**
 A clear and concise description of what the bug is.
 
