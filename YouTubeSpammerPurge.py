@@ -172,9 +172,9 @@ def print_prepared_comments(check_video_id_localprep, comments, j, logMode):
       # All these lines actually print to a single line with author name and comment text in color
       # Write line with author name and comment text - Requires multiple lines to add colors separately, so they are not encoded along with the unicode
       write_rtf(logFileName, str(j+1) + r". \cf4") # Author name in blue = \cf4
-      write_rtf(logFileName, author, unicode=True)
+      write_rtf(logFileName, make_rtf_compatible(author))
       write_rtf(logFileName, r"\cf1 :  \cf5") # Make colon default color, then comment text in yellow = \cf5
-      write_rtf(logFileName, text, unicode=True)
+      write_rtf(logFileName, make_rtf_compatible(text))
       write_rtf(logFileName, r"\cf1 \line " + "\n") # End line with default color = \cf1 , and next line
 
 
@@ -638,10 +638,15 @@ def process_spammer_ids(rawString):
   
   return True, IDList
       
-############################ File Handling ###############################
+############################ RTF & File Handling ###############################
+
+# Takes in a string that contains unicode, and returns a string with properly escaped unicode format for use in rtf files
+# Uses 'rtfunicode' module to encode with proper rtf-compatible unicode escapes, then decode back to utf-8 so it can be written to file and read by wordpad or whatever
+def make_rtf_compatible(text):
+  return text.encode('rtfunicode').decode('utf-8')
 
 # Writes properly to rtf file, also can prepare with necessary header information and formatting settings
-def write_rtf(fileName, newText=None, firstWrite=False, unicode=False):
+def write_rtf(fileName, newText=None, firstWrite=False):
   if firstWrite == True:
     file = open(fileName, "w", encoding="utf-8") # Opens log file in write mode
     # Some header information for RTF file, sets courier as font
@@ -659,11 +664,6 @@ def write_rtf(fileName, newText=None, firstWrite=False, unicode=False):
     # Slightly modified from: https://stackoverflow.com/a/50567967/17312053   
     with open(fileName, 'r+', encoding="utf-8") as file:
       pos, text = 0, ''
-
-      if unicode == True:
-        # Encodes newText string with rtf compatible encoding, which converts special characters to escaped codes, then decodes back to utf-8
-        newText = newText.encode('rtfunicode').decode('utf-8')
-
       while True:
           # save last line value and cursor position
           prev_pos, pos = pos, file.tell()
@@ -1099,11 +1099,11 @@ def main():
       if filterMode == 1:
         write_rtf(logFileName, "Channel IDs of spammer searched: " + str(inputtedSpammerChannelID) + "\\line\\line " + "\n\n")
       elif filterMode == 2:
-        write_rtf(logFileName, "Characters searched in Usernames: " + str(inputtedUsernameFilter) + "\\line\\line " + "\n\n", unicode=True)
+        write_rtf(logFileName, "Characters searched in Usernames: " + make_rtf_compatible(str(inputtedUsernameFilter)) + "\\line\\line " + "\n\n")
       elif filterMode == 3:
-       write_rtf(logFileName, "Characters searched in Comment Text: " + str(inputtedCommentTextFilter) + "\\line\\line " + "\n\n", unicode=True)
+       write_rtf(logFileName, "Characters searched in Comment Text: " + make_rtf_compatible(str(inputtedCommentTextFilter)) + "\\line\\line " + "\n\n")
       elif filterMode == 4:
-        write_rtf(logFileName, "Automatic Search Mode: " + str(filterSettings[2]), unicode=True) 
+        write_rtf(logFileName, "Automatic Search Mode: " + make_rtf_compatible(str(filterSettings[2])))
       write_rtf(logFileName, "Number of Matched Comments Found: " + str(len(spamCommentsID)) + "\\line\\line " + "\n\n")
       write_rtf(logFileName, "IDs of Matched Comments: " + "\n" + str(spamCommentsID) + "\\line\\line\\line " + "\n\n\n")
       
@@ -1167,6 +1167,7 @@ def main():
         print("    Reason: " + reason)
         if reason == "processingFailure":
           print(f"\n !! {F.RED}Processing Error{S.R} - Sometimes this error fixes itself. Try just running the program again. !!")
+          print("This issue is often on YouTube's side, so if it keeps happening try again later.")
           print("(This also occurs if you try deleting comments on someone elses video, which is not possible.)")
       input("\n Press Enter to Exit...")
     else:
