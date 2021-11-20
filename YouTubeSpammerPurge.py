@@ -200,17 +200,17 @@ def print_prepared_comments(check_video_id_localprep, comments, j, logMode):
 ##########################################################################################
 
 # Call the API's commentThreads.list method to list the existing comments.
-def get_comments(youtube, filterMode, check_video_id=None, check_channel_id=None, nextPageToken=None, inputtedSpammerChannelID=None, inputtedUsernameFilter=None, inputtedCommentTextFilter=None, regexPattern=None):  # None are set as default if no parameters passed into function
+def get_comments(youtube, filterMode, filterSubMode, check_video_id=None, check_channel_id=None, nextPageToken=None, inputtedSpammerChannelID=None, inputtedUsernameFilter=None, inputtedCommentTextFilter=None, regexPattern=None):  # None are set as default if no parameters passed into function
   global scannedCommentsCount
   # Initialize some variables
   authorChannelName = None
   commentText = None
 
-  if filterMode == 1: # User entered spammer IDs -- Get Extra Info: None
+  if filterMode == "1": # User entered spammer IDs -- Get Extra Info: None
     fieldsToFetch = "nextPageToken,items/snippet/topLevelComment/id,items/snippet/totalReplyCount,items/snippet/topLevelComment/snippet/videoId,items/snippet/topLevelComment/snippet/authorChannelId/value"
-  if filterMode == 2 or filterMode == 4: # Filter char by Username / Auto Regex non-ascii username -- Get Extra Info: Author Display Name
+  elif filterMode == "2" or filterMode == "4" or filterMode == "5": # Filter char by Username / Auto Regex non-ascii username -- Get Extra Info: Author Display Name
     fieldsToFetch = "nextPageToken,items/snippet/topLevelComment/id,items/snippet/totalReplyCount,items/snippet/topLevelComment/snippet/videoId,items/snippet/topLevelComment/snippet/authorChannelId/value,items/snippet/topLevelComment/snippet/authorDisplayName"
-  if filterMode == 3: # Filter char by Comment text -- Get Extra Info: Comment Text
+  elif filterMode == "3": # Filter char by Comment text -- Get Extra Info: Comment Text
     fieldsToFetch = "nextPageToken,items/snippet/topLevelComment/id,items/snippet/totalReplyCount,items/snippet/topLevelComment/snippet/videoId,items/snippet/topLevelComment/snippet/authorChannelId/value,items/snippet/topLevelComment/snippet/textDisplay"
 
 
@@ -256,23 +256,23 @@ def get_comments(youtube, filterMode, check_video_id=None, check_channel_id=None
 
     # Need to be able to catch exceptions because sometimes the API will return a comment from non-existent / deleted channel
     # Need individual tries because not all are fetched for each mode
-    if filterMode == 2 or filterMode == 4:
+    if filterMode == "2" or filterMode == "4" or filterMode == "5":
       try:
         authorChannelName = comment["snippet"]["authorDisplayName"]
       except KeyError:
         authorChannelName = "[Deleted Channel]"
-    if filterMode == 3:
+    elif filterMode == "3":
       try:
         commentText = comment["snippet"]["textDisplay"]
       except KeyError:
         commentText = "[Deleted/Missing Comment]"
     
     # Runs check against comment info for whichever filter data is relevant
-    check_against_filter(filterMode, parent_id, videoID, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, authorChannelID, authorChannelName, commentText, regexPattern)
+    check_against_filter(filterMode, filterSubMode, parent_id, videoID, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, authorChannelID, authorChannelName, commentText, regexPattern)
     scannedCommentsCount += 1  # Counts number of comments scanned, add to global count
 
     if numReplies > 0:
-      get_replies(filterMode, parent_id, videoID, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern)
+      get_replies(filterMode, filterSubMode, parent_id, videoID, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern)
     else:
       print_count_stats(final=False)  # Updates displayed stats if no replies
   
@@ -284,17 +284,17 @@ def get_comments(youtube, filterMode, check_video_id=None, check_channel_id=None
 ##########################################################################################
 
 # Call the API's comments.list method to list the existing comment replies.
-def get_replies(filterMode, parent_id, videoID, inputtedSpammerChannelID=None, inputtedUsernameFilter=None, inputtedCommentTextFilter=None, regexPattern=None):
+def get_replies(filterMode, filterSubMode, parent_id, videoID, inputtedSpammerChannelID=None, inputtedUsernameFilter=None, inputtedCommentTextFilter=None, regexPattern=None):
   global scannedRepliesCount
   # Initialize some variables
   authorChannelName = None
   commentText = None
   
-  if filterMode == 1: # User entered spammer IDs -- Get Extra Info: None
+  if filterMode == "1": # User entered spammer IDs -- Get Extra Info: None
     fieldsToFetch = "items/snippet/authorChannelId/value,items/id"
-  elif filterMode == 2 or filterMode == 4: # Filter by Username -- Get Extra Info: Author Display Name
+  elif filterMode == "2" or filterMode == "4" or filterMode == "5": # Filter by Username -- Get Extra Info: Author Display Name
     fieldsToFetch = "items/snippet/authorChannelId/value,items/id,items/snippet/authorDisplayName"
-  elif filterMode == 3: # Filter by comment text -- Get Extra Info: Comment Text
+  elif filterMode == "3": # Filter by comment text -- Get Extra Info: Comment Text
     fieldsToFetch = "items/snippet/authorChannelId/value,items/id,items/snippet/textDisplay"
 
   results = youtube.comments().list(
@@ -315,20 +315,20 @@ def get_replies(filterMode, parent_id, videoID, inputtedSpammerChannelID=None, i
     except KeyError:
       authorChannelID = "[Deleted Channel]"
 
-    if filterMode == 2 or filterMode == 4: 
+    if filterMode == "2" or filterMode == "4" or filterMode == "5": 
       try:
         authorChannelName = item["snippet"]["authorDisplayName"]
       except KeyError:
         authorChannelName = "[Deleted Channel]"  
     
-    if filterMode == 3:
+    if filterMode == "3":
       try:
         commentText = item["snippet"]["textDisplay"]
       except KeyError:
         commentText = "[Deleted/Missing Comment]"
 
     # Runs check against comment info for whichever filter data is relevant
-    check_against_filter(filterMode, replyID, videoID, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, authorChannelID, authorChannelName, commentText, regexPattern)
+    check_against_filter(filterMode, filterSubMode, replyID, videoID, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, authorChannelID, authorChannelName, commentText, regexPattern)
 
     # Update latest stats
     scannedRepliesCount += 1  # Count number of replies scanned, add to global count
@@ -338,37 +338,57 @@ def get_replies(filterMode, parent_id, videoID, inputtedSpammerChannelID=None, i
 
 ############################## CHECK AGAINST FILTER ######################################
 # The basic logic that actually checks each comment against filter criteria
-def check_against_filter(filterMode, commentID, videoID, inputtedSpammerChannelID=None, inputtedUsernameFilter=None, inputtedCommentTextFilter=None, authorChannelID=None, authorChannelName=None, commentText=None, regexPattern=None):
+def check_against_filter(filterMode, filterSubMode, commentID, videoID, inputtedSpammerChannelID=None, inputtedUsernameFilter=None, inputtedCommentTextFilter=None, authorChannelID=None, authorChannelName=None, commentText=None, regexPattern=None):
   global vidIdDict
   global spamCommentsID
-    # If the comment matches criteria based on mode, add to list of spam comment IDs
-    # Also add key-value pair of comment ID and video ID to dictionary
+
+  # If the comment/username matches criteria based on mode, add to list of spam comment IDs
+  # Also add key-value pair of comment ID and video ID to dictionary
+  def add_spam(commentID, videoID):
+    global spamCommentsID
+    spamCommentsID += [commentID]
+    vidIdDict[commentID] = videoID
 
   # Checks author of either parent comment or reply (both passed in as commentID) against channel ID inputted by user
-  if filterMode == 1:
+  if filterMode == "1":
     if any(authorChannelID == x for x in inputtedSpammerChannelID):
-      spamCommentsID += [commentID]
-      vidIdDict[commentID] = videoID
+      add_spam(commentID, videoID)
 
-  # Check if author channel name contains any characters entered by user
-  elif filterMode == 2:
-    authorChannelName = make_char_set(str(authorChannelName))
-    if any(x in inputtedUsernameFilter for x in authorChannelName):
-      spamCommentsID += [commentID]
-      vidIdDict[commentID] = videoID
+  # Check usernames modes
+  elif filterMode == "2":
+    if filterSubMode == "chars":
+      authorChannelName = make_char_set(str(authorChannelName))
+      if any(x in inputtedUsernameFilter for x in authorChannelName):
+        add_spam(commentID, videoID)
+    elif filterSubMode == "string":
+      if check_list_against_string(listInput=inputtedUsernameFilter, stringInput=authorChannelName, caseSensitive=False):
+        add_spam(commentID, videoID)
+    elif filterSubMode == "regex":
+      if re.search(str(regexPattern), authorChannelName):
+        add_spam(commentID, videoID)
 
-  # Check if comment text contains any characters entered by user
-  elif filterMode == 3:
-    commentText = make_char_set(str(commentText))
-    if any(x in inputtedCommentTextFilter for x in commentText):
-      spamCommentsID += [commentID]
-      vidIdDict[commentID] = videoID
+  # Check comment text modes
+  elif filterMode == "3":
+    if filterSubMode == "chars":
+      commentText = make_char_set(str(commentText))
+      if any(x in inputtedCommentTextFilter for x in commentText):
+        add_spam(commentID, videoID)
+    elif filterSubMode == "string":
+      if check_list_against_string(listInput=inputtedCommentTextFilter, stringInput=commentText, caseSensitive=False):
+        add_spam(commentID, videoID)
+    elif filterSubMode == "regex":
+      if re.search(str(regexPattern), commentText):
+        add_spam(commentID, videoID)
 
   # Check if author name contains non-ascii characters with Regex, sensitivity based on user selection
-  elif filterMode == 4:
+  elif filterMode == "4":
     if re.search(str(regexPattern), authorChannelName):
-      spamCommentsID += [commentID]
-      vidIdDict[commentID] = videoID
+      add_spam(commentID, videoID)
+
+  elif filterMode == "5":
+    authorChannelName = make_char_set(str(authorChannelName))
+    if any(x in inputtedUsernameFilter for x in authorChannelName):
+        add_spam(commentID, videoID)
 
 ##########################################################################################
 ################################ DELETE COMMENTS #########################################
@@ -637,6 +657,42 @@ def process_spammer_ids(rawString):
       return False, None
   
   return True, IDList
+
+################### Process Comma-Separated String to List ####################
+# Take in string, split by commas, remove whitespace and empty items, and return list
+def string_to_list(rawString, lower=False):
+  if lower == True:
+    rawString = rawString.lower()
+  
+  # Remove whitespace
+  newList = rawString.split(",")
+  for i in range(len(newList)):
+    newList[i] =  newList[i].strip()
+
+  # Remove empty strings from list
+  newList = list(filter(None, newList)) 
+  return newList
+
+############################ Validate Regex Input #############################
+# Checks if regex expression is valid, tries to add escapes if necesary
+# From: https://stackoverflow.com/a/51782559/17312053
+
+def validate_regex(regex_from_user: str):
+  try: 
+    re.compile(regex_from_user)
+    is_valid = True
+    processedExpression = regex_from_user
+  except re.error: 
+    try:
+      re.compile(re.escape(regex_from_user))
+      is_valid = True
+      processedExpression = re.escape(regex_from_user)
+    except re.error:
+      print("Failed")
+      is_valid = False
+      processedExpression = None
+
+  return is_valid, processedExpression
       
 ############################ RTF & File Handling ###############################
 
@@ -700,6 +756,79 @@ def make_char_set(stringInput, stripLettersNumbers=False, stripKeyboardSpecialCh
     
     return listedInput
 
+######################### Check List Against String #########################    
+# Checks if any items in a list are a substring of a string
+def check_list_against_string(listInput, stringInput, caseSensitive=False):
+  if caseSensitive == False:
+    stringInput = stringInput.lower()
+    listInput = [item.lower() for item in listInput]
+  if any(x in stringInput for x in listInput):
+    return True
+  else:
+    return False
+
+############################# Check Username Against Filter ##############################
+# Check the own user's username against a filter, warn if it matches
+def safety_check_username_against_filter(currentUserName, scanMode, filterCharsSet=None, filterStringList=None, regexPattern=None):
+  currentUsernameChars = make_char_set(currentUserName)
+  deletionEnabledLocal = "False"
+  proceed = False
+
+  if filterCharsSet:
+    if any(x in filterCharsSet for x in currentUsernameChars):
+      print(f"\n{B.LIGHTRED_EX}{F.BLACK}WARNING!{S.R} Character(s) you entered are within {F.LIGHTRED_EX}your own username{S.R}, ' " + currentUserName + " '! : " + str(filterCharsSet & currentUsernameChars))
+      print("    (Some symbols above may not show in windows console, copy+paste them into a word processor to see the symbols)")
+      if scanMode == 1:
+        print("Are you SURE you want to search your own comments? (You WILL still get a confirmation before deleting)")
+        if choice("Choose") == True:
+          deletionEnabledLocal = "HalfTrue"
+          proceed=True
+      elif scanMode == 2:
+        print(f"For safety purposes, this program's delete functionality is {F.LIGHTGREEN_EX}disabled{S.R} when scanning for yourself across your entire channel.")
+        print(f"Choose {F.LIGHTRED_EX}'N'{S.R} to choose different characters. Choose {F.GREEN}'Y'{S.R} to continue  (But you will get an error when trying to delete!)\n")
+        if choice("Continue?") == True:
+          proceed = True
+    else:
+      proceed = True
+      deletionEnabledLocal = "HalfTrue"
+  
+  elif filterStringList:
+    #if filterString in currentUserName:
+    if check_list_against_string(listInput=filterStringList, stringInput=currentUserName, caseSensitive=False):
+      print(f"\n{B.LIGHTRED_EX}{F.BLACK}WARNING!{S.R} A string you entered is within {F.LIGHTRED_EX}your own username{S.R}!")
+      if scanMode == 1:
+        print("Are you SURE you want to search your own comments? (You WILL still get a confirmation before deleting)")
+        if choice("Choose") == True:
+          deletionEnabledLocal = "HalfTrue"
+          proceed=True
+      elif scanMode == 2:
+        print(f"For safety purposes, this program's delete functionality is {F.LIGHTGREEN_EX}disabled{S.R} when scanning for yourself across your entire channel.")
+        print(f"Choose {F.LIGHTRED_EX}'N'{S.R} to choose different characters. Choose {F.GREEN}'Y'{S.R} to continue  (But you will get an error when trying to delete!)\n")
+        if choice("Continue?") == True:
+          proceed = True
+    else:
+      proceed = True
+      deletionEnabledLocal = "HalfTrue"
+
+  elif regexPattern:
+    if re.search(regexPattern, currentUserName):
+      print(f"{B.RED}{F.WHITE}!! WARNING !!{S.R} This search mode / pattern would detect {F.LIGHTRED_EX}your own username{S.R}!")
+      if scanMode == 1:
+        if choice("Are you REALLY sure you want to continue?") == True:
+          deletionEnabledLocal = "HalfTrue"
+          proceed = True
+      elif scanMode == 2:
+        print(f"For safety purposes, this program's delete functionality is {F.GREEN}disabled{S.R} when scanning for yourself across your entire channel.")
+        print("Choose 'N' to choose a different filter sensitivity. Choose 'Y' to continue  (But you will get an error when trying to delete!)\n")
+        if choice("Continue?") == True:
+          proceed = True
+    else:
+      proceed = True
+      deletionEnabledLocal = "HalfTrue"
+
+  
+
+  return proceed, deletionEnabledLocal
 
 ##########################################################################################
 ################################## FILTERING MODES #######################################
@@ -745,13 +874,12 @@ def prepare_filter_mode_ID(currentUser, deletionEnabledLocal, scanMode):
 
   return deletionEnabledLocal, inputtedSpammerChannelID
 
-# 2
+# 2-1 - Username - Individual Characters
 # For Filter mode 2, user inputs characters in username to filter
-def prepare_filter_mode_username(currentUser, deletionEnabledLocal, scanMode):
+def prepare_filter_mode_username_chars(currentUser, deletionEnabledLocal, scanMode):
   # Create set of characters from users's channel name
   currentUserName = currentUser[1]
-  channelChars = make_char_set(currentUserName) # Converts channel name to set of characters to compare with entered filter characters
-
+  
   print(f"\nNext, you will input {F.YELLOW}ONLY{S.R} any special characters / emojis you want to search for in usernames. Don't include commas or spaces!")
   print("          Note: Letters and numbers will not be included for safety purposes, even if you enter them.")
   print("          Example: 👋🔥✔️✨")
@@ -762,38 +890,81 @@ def prepare_filter_mode_username(currentUser, deletionEnabledLocal, scanMode):
   while validEntry == False:
     print(f"\nWaiting for input Window. Press {F.MAGENTA}'Execute'{S.R} after entering valid characters to continue...", end="\r")
     try:
-      inputChars = take_input_gui(stripLettersNumbers=True, stripKeyboardSpecialChars=False, stripPunctuation=False)
+      # Takes in user input of characters, returns 'set' of characters stripped of specified characters
+      inputChars = take_input_gui(mode="chars", stripLettersNumbers=True, stripKeyboardSpecialChars=False, stripPunctuation=False)
     except NameError: # Catch if user closes GUI window, exit program.
       print("                                                                                          ") # Clears the line because of \r on previous print
       print("\nSomething went wrong with the input, or you closed the window improperly.")
       input("Press Enter to exit...")
       exit()
 
-    if any(x in inputChars for x in channelChars):
-      print(f"\n{B.LIGHTRED_EX}{F.BLACK}WARNING!{S.R} Character(s) you entered are within {F.LIGHTRED_EX}your own username{S.R}, ' " + currentUserName + " '! : " + str(inputChars & channelChars))
-      print("    (Symbols above may not show in windows console, copy and paste them somewhere to see the symbols")
-      if scanMode == 1:
-        print("Are you SURE you want to search your own comments? (You WILL still get a confirmation before deleting)")
-        if choice("Choose") == True:
-          deletionEnabledLocal = "HalfTrue"
-          validEntry = True
-      elif scanMode == 2:
-        print(f"For safety purposes, this program's delete functionality is {F.LIGHTGREEN_EX}disabled{S.R} when scanning for yourself across your entire channel.")
-        print(f"Choose {F.LIGHTRED_EX}'N'{S.R} to choose different characters. Choose {F.GREEN}'Y'{S.R} to continue  (But you will get an error when trying to delete!)\n")
-        if choice("Continue?") == True:
-          validEntry = True
-    else:
-      print(f"     Usernames will be scanned for {F.MAGENTA}ANY{S.R} of the characters shown in the previous window.")
+    validEntry, deletionEnabledLocal = safety_check_username_against_filter(currentUserName, scanMode, filterCharsSet=inputChars)
+
+    if validEntry == True:
+      print(f"     Usernames will be scanned for {F.MAGENTA}ANY{S.R} of the characters you entered in the previous window.")
       if choice("Begin scanning? ") == True:
         validEntry = True
-        deletionEnabledLocal = "HalfTrue"
-        inputtedCommentTextFilter = inputChars
+      else:
+        validEntry = False
 
-  return deletionEnabledLocal, inputtedCommentTextFilter
+  return deletionEnabledLocal, inputChars
 
-# 3
+
+# 2-2 - Username - Entire String
+# For Filter mode 2, user inputs a string or strings in username to filter
+def prepare_filter_mode_username_string(currentUser, deletionEnabledLocal, scanMode):
+  # Create set of characters from users's channel name
+  currentUserName = currentUser[1]
+  
+  print(f"\nPaste or type in a list of any {F.YELLOW}comma separated strings{S.R} you want to search for in usernames. (Not case sensitive)")
+  print("   >Note: If the text you paste includes special characters or emojis, they might not display correctly here, but it WILL still search them fine.")
+  print("          Example Input: whatsapp, whatever multiple words, investment")
+
+  validEntry = False
+  while validEntry == False:
+    inputString = input("Input Here: ")
+
+    # Convert comma separated string into list with function, then check against current user's name
+    filterStringList = string_to_list(inputString, lower=True)
+    if len(filterStringList > 0):
+      validEntry, deletionEnabledLocal = safety_check_username_against_filter(currentUserName.lower(), scanMode, filterStringList=filterStringList)
+
+    if validEntry == True:
+      print(f"     Usernames will be scanned for {F.MAGENTA}ANY{S.R} of the following strings:")
+      print(filterStringList)
+      if choice("Begin scanning? ") == True:
+        validEntry = True
+      else:
+        validEntry = False
+
+  return deletionEnabledLocal, filterStringList
+
+# 2-3 Username - Regex
+def prepare_filter_mode_username_regex (currentUser, deletionEnabledLocal, scanMode):
+  currentUserName = currentUser[1]
+  print(f"Enter any {F.YELLOW}regex expression{S.R} to search within usernames.")
+  print(r"          Example Input:  [^\x00-\xFF]")
+  validExpression = False
+
+  while validExpression == False:
+    inputtedExpression = input("Input Expression Here:  ")
+    validationResults = validate_regex(inputtedExpression) # Returns tuple of valid, and processed expression
+    validExpression = validationResults[0]
+
+    if validExpression == True:
+      processedExpression = validationResults[1]
+      print(f"     The expression appears to be {F.GREEN}valid{S.R}!")
+      validExpression, deletionEnabledLocal = safety_check_username_against_filter(currentUserName, scanMode, regexPattern=processedExpression)
+
+      if validExpression == True and choice("Begin scanning? ") == True:
+       return deletionEnabledLocal, processedExpression
+
+    else: print(f"     {F.RED}Error{S.R}: The expression appears to be {F.RED}invalid{S.R}!")
+
+
+# 3-1: Comment Text - Individual Characters
 # For Filter mode 3, user inputs characters in comment text to filter
-def prepare_filter_mode_comment_text(currentUser, deletionEnabledLocal, scanMode):
+def prepare_filter_mode_comment_text_chars(currentUser, deletionEnabledLocal, scanMode):
   print(f"\nNext, you will input {F.YELLOW}ONLY{S.R} any special characters / emojis you want to search for in all comments. Do not include commas or spaces!")
   print("          Note: Letters, numbers, and punctuation will not be included for safety purposes, even if you enter them.")
   print("          Example: 👋🔥✔️✨")
@@ -805,7 +976,7 @@ def prepare_filter_mode_comment_text(currentUser, deletionEnabledLocal, scanMode
     print(f"\nWaiting for input Window. Press {F.MAGENTA}'Execute'{S.R} after entering valid characters to continue...", end="\r")
 
     try:
-      inputChars = take_input_gui(stripLettersNumbers=True, stripKeyboardSpecialChars=False, stripPunctuation=True)
+      inputChars = take_input_gui(mode="chars", stripLettersNumbers=True, stripKeyboardSpecialChars=False, stripPunctuation=True)
     except NameError: # Catch if user closes GUI window, exit program.
       print("                                                                                          ") # Clears the line
       print("\nSomething went wrong with the input, or you closed the window improperly.")
@@ -820,6 +991,54 @@ def prepare_filter_mode_comment_text(currentUser, deletionEnabledLocal, scanMode
 
   return deletionEnabledLocal, inputtedCommentTextFilter
 
+
+# 3-2 - Comment Text - Entire String
+# For Filter mode 2, user inputs a string or strings in comment text to filter
+def prepare_filter_mode_comment_text_string(currentUser, deletionEnabledLocal, scanMode):
+  print(f"\nPaste or type in a list of any {F.YELLOW}comma separated strings{S.R} you want to search for in comments. (Not case sensitive)")
+  print("   >Note: If the text you paste includes special characters or emojis, they might not display correctly here, but it WILL still search them fine.")
+  print("          Example Input: whatsapp, whatever multiple words, investment")
+
+  validEntry = False
+  while validEntry == False:
+    inputString = input("Input Here: ")
+
+    # Convert comma separated string into list with function
+    filterStringList = string_to_list(inputString, lower=True)
+    if len(filterStringList) > 0:
+      validEntry = True
+
+    if validEntry == True:
+      print(f"     Comment Text will be scanned for {F.MAGENTA}ANY{S.R} of the following strings:")
+      print(filterStringList)
+      if choice("Begin scanning? ") == True:
+        validEntry = True
+        deletionEnabledLocal = "HalfTrue"
+      else:
+        validEntry = False
+
+  return deletionEnabledLocal, filterStringList
+
+# 3-3 Comment Text - Regex
+def prepare_filter_mode_comment_text_regex (currentUser, deletionEnabledLocal, scanMode):
+  print(f"Enter any {F.YELLOW}regex expression{S.R} to search within comment text.")
+  print(r"          Example Input:  [^\x00-\xFF]")
+  validExpression = False
+
+  while validExpression == False:
+    inputtedExpression = input("Input Expression Here:  ")
+    validationResults = validate_regex(inputtedExpression) # Returns tuple of valid, and processed expression
+    validExpression = validationResults[0]
+
+    if validExpression == True:
+      print(f"     The expression appears to be {F.GREEN}valid{S.R}!")
+      if choice("Begin scanning? ") == True:
+        deletionEnabledLocal = "HalfTrue"
+        processedExpression = validationResults[1]
+    else:
+      print(f"     {F.RED}Error{S.R}: The expression appears to be {F.RED}invalid{S.R}!")
+
+  return deletionEnabledLocal, processedExpression
 
 # 4
 # For Filter mode 4, user inputs nothing, program scans for non-ascii
@@ -858,21 +1077,7 @@ def prepare_filter_mode_non_ascii(currentUser, deletionEnabledLocal, scanMode):
       print("Invalid input. Please try again.")
     
     if confirmation == True:
-      if re.search(regexPattern, currentUser[1]):
-        confirmation = False
-        print(f"{B.RED}{F.WHITE}!! WARNING !!{S.R} This search mode would detect {F.LIGHTRED_EX}your own username{S.R}!")
-        if scanMode == 1:
-          if choice("Are you REALLY sure you want to use this filter sensitivity?") == True:
-            deletionEnabledLocal = "HalfTrue"
-            confirmation = True
-        elif scanMode == 2:
-          print(f"For safety purposes, this program's delete functionality is {F.GREEN}disabled{S.R} when scanning for yourself across your entire channel.")
-          print("Choose 'N' to choose a different filter sensitivity. Choose 'Y' to continue  (But you will get an error when trying to delete!)\n")
-          if choice("Continue?") == True:
-            confirmation = True
-            deletionEnabledLocal = "False"
-      else:
-        deletionEnabledLocal = "HalfTrue"
+      confirmation, deletionEnabledLocal = safety_check_username_against_filter(currentUser[1], scanMode=scanMode, regexPattern=regexPattern)
 
   if selection == 1:
     autoModeName = "Allow Standard + Extended ASCII"
@@ -885,6 +1090,28 @@ def prepare_filter_mode_non_ascii(currentUser, deletionEnabledLocal, scanMode):
     return deletionEnabledLocal, regexPattern, autoModeName
   else:
     input("How did you get here? Something very strange went wrong. Press Enter to Exit...")
+    exit()
+
+# 5
+# Auto filter for pre-made list of common spammer-used characters in usernames
+def prepare_filter_mode_smart_chars(currentUser, deletionEnabledLocal, scanMode):
+  currentUserName = currentUser[1]
+  currentUsernameChars = make_char_set(currentUserName)
+
+  print("\n--------------------------------------------------------------------------------------------------------------")
+  print("~~~ This mode is pre-programmed to search usernames for special characters almost exclusively used by spammers ~~~\n")
+  print(" > Specifically, unicode characters that look like numbers\n")
+  input("Press Enter to continue...")
+
+  spammerUsernameCharString = "０１２３４５６７８９０１２３４５６７８９߁①⑴⒈⓵❶➀➊🄂౽੨②⑵⒉⓶❷➁➋🄃౩③⑶⒊⓷❸➂➌🄄૩④⑷⒋⓸❹➃➍🄅⑤⑸⒌⓹❺➄➎➄➎🄆⑥⑹⒍⓺❻➅➏🄇⑦⑺⒎⓻❼➆➐𑄽🄈႘⑧⑻⒏⓼❽➇➑🄉⑨⑼⒐⓽❾➈➒🄊⓪⓿🄋🄌🄁🄀𝟎𝟘𝟢𝟬𝟏𝟙𝟭𝟣𝟶𝟐𝟚𝟮𝟤𝟷𝟑𝟛𝟯𝟥𝟸𝟒𝟜𝟰𝟦𝟹𝟓𝟝𝟱𝟧𝟺𝟔𝟞𝟲𝟨𝟻𝟕𝟟𝟳𝟩𝟼𝟖𝟠𝟴𝟪𝟽𝟗𝟡𝟵𝟫𝟾𝟿"
+  filterCharsSet = make_char_set(spammerUsernameCharString, stripLettersNumbers=False, stripKeyboardSpecialChars=False, stripPunctuation=False)
+
+  proceed, deletionEnabledLocal = safety_check_username_against_filter(currentUserName, filterCharsSet=filterCharsSet, scanMode=scanMode)
+
+  if proceed == True:
+    return deletionEnabledLocal, filterCharsSet
+  else:
+    input("Ok, cancelled. Press Enter to exit...")
     exit()
 
 ##########################################################################################
@@ -1026,21 +1253,48 @@ def main():
   print("\n-------------------------------------------------------")
   print(f"~~~~~~~ Choose how to identify spammers ~~~~~~~")
   print(f" 1. Enter Spammer's {F.LIGHTRED_EX}channel ID(s) or link(s){S.R}")
-  print(f" 2. Scan {F.LIGHTGREEN_EX}usernames for individual characters{S.R} you choose")
-  print(f" 3. Scan {F.CYAN}comment text for individual characters{S.R} you choose")
+  print(f" 2. Scan {F.LIGHTGREEN_EX}usernames{S.R} for criteria you choose")
+  print(f" 3. Scan {F.CYAN}comment text{S.R} for criteria you choose")
   print(f" 4. Auto Mode: Scan usernames for {F.LIGHTMAGENTA_EX}ANY non-ASCII special characters{S.R} (May cause collateral damage!)")
+  print(f" 5. Auto Smart-Mode: Scan usernames for {F.YELLOW}specific characters often used by scammers{S.R}")
   
   # Make sure input is valid, if not ask again
   validFilterMode = False
-  while validFilterMode == False:
-    filterMode = input("\nChoice (1-4): ")
-    try: filterMode = int(filterMode) # If not number entered, will get caught later as invalid
-    except: pass
+  validFilterSubMode = False
+  filterSubMode = None
 
-    if filterMode == 1 or filterMode == 2 or filterMode == 3 or filterMode == 4:
+  while validFilterMode == False:
+    filterMode = input("\nChoice (1-5): ")
+    if filterMode == "1" or filterMode == "2" or filterMode == "3" or filterMode == "4" or filterMode == "5":
       validFilterMode = True
     else:
-      print("\nInvalid choice! - Enter either 1, 2, 3 or 4. ")
+      print("\nInvalid choice! - Enter either 1, 2, 3, 4, or 5. ")
+
+    ## Get filter sub-mode to decide if searching characters or string
+    if filterMode == "2" or filterMode == "3":
+      print("\n--------------------------------------------------------------")
+      if filterMode == "2":
+        print("~~~ What do you want to scan usernames for specifically? ~~~")
+      elif filterMode == "3":
+        print("~~~ What do you want to scan comment text for specifically? ~~~")
+      print(f" 1. An {F.CYAN}individual special character{S.R}, or any of a set of characters")
+      print(f" 2. An {F.LIGHTMAGENTA_EX}entire string{S.R}, or any of a set of strings")
+      print(f" 3. Advanced: A custom {F.YELLOW}Regex pattern{S.R} you'll enter")
+
+      while validFilterSubMode == False:
+        filterSubMode = input("\nChoice (1, 2, or 3): ")
+        if filterSubMode == "1" or filterSubMode == "2" or filterSubMode == "3":
+          if filterSubMode == "1":
+            filterSubMode = "chars"
+            validFilterSubMode = True
+          elif filterSubMode == "2":
+            filterSubMode = "string"
+            validFilterSubMode = True
+          elif filterSubMode == "3":
+            filterSubMode = "regex"
+            validFilterSubMode = True
+        else:
+          print("\nInvalid choice! - Enter 1, 2 or 3")
 
   ### Prepare Filtering Modes ###
   # Default values for filter criteria
@@ -1048,30 +1302,52 @@ def main():
   inputtedUsernameFilter = None
   inputtedCommentTextFilter = None
 
-  if filterMode == 1:
+  if filterMode == "1":
     filterSettings = prepare_filter_mode_ID(currentUser, deletionEnabled, scanMode)
     inputtedSpammerChannelID = filterSettings[1]
-  elif filterMode == 2:
-    filterSettings = prepare_filter_mode_username(currentUser, deletionEnabled, scanMode)
-    inputtedUsernameFilter = filterSettings[1]
-  elif filterMode == 3:
-    filterSettings = prepare_filter_mode_comment_text(currentUser, deletionEnabled, scanMode)
-    inputtedCommentTextFilter = filterSettings[1]
-  elif filterMode == 4:
+
+  elif filterMode == "2":
+    if filterSubMode == "chars":
+      filterSettings = prepare_filter_mode_username_chars(currentUser, deletionEnabled, scanMode)
+      inputtedUsernameFilter = filterSettings[1]
+    elif filterSubMode == "string":
+      filterSettings = prepare_filter_mode_username_string(currentUser, deletionEnabled, scanMode)
+      inputtedUsernameFilter = filterSettings[1]
+    elif filterSubMode == "regex":
+      filterSettings = prepare_filter_mode_username_regex(currentUser, deletionEnabled, scanMode)
+      regexPattern = filterSettings[1]
+
+  elif filterMode == "3":
+    if filterSubMode == "chars":
+      filterSettings = prepare_filter_mode_comment_text_chars(currentUser, deletionEnabled, scanMode)
+      inputtedCommentTextFilter = filterSettings[1]
+    elif filterSubMode == "string":
+      filterSettings = prepare_filter_mode_comment_text_string(currentUser, deletionEnabled, scanMode)
+      inputtedCommentTextFilter = filterSettings[1]
+    elif filterSubMode == "regex":
+      filterSettings = prepare_filter_mode_comment_text_regex(currentUser, deletionEnabled, scanMode)
+      regexPattern = filterSettings[1]
+
+  elif filterMode == "4":
     filterSettings = prepare_filter_mode_non_ascii(currentUser, deletionEnabled, scanMode)
     regexPattern = filterSettings[1]
+
+  elif filterMode == "5":
+    filterSettings = prepare_filter_mode_smart_chars(currentUser, deletionEnabled, scanMode)
+    inputtedUsernameFilter = filterSettings[1]
+
   deletionEnabled = filterSettings[0]
 
   ##################### START SCANNING #####################
   try:
     # Goes to get comments for first page
     print("Scanning... \n")
-    nextPageToken = get_comments(youtube, filterMode, check_video_id, check_channel_id, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, regexPattern=regexPattern)
+    nextPageToken = get_comments(youtube, filterMode, filterSubMode, check_video_id, check_channel_id, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, regexPattern=regexPattern)
     print_count_stats(final=False)  # Prints comment scan stats, updates on same line
 
     # After getting first page, if there are more pages, goes to get comments for next page
     while nextPageToken != "End" and scannedCommentsCount < maxScanNumber:
-      nextPageToken = get_comments(youtube, filterMode, check_video_id, check_channel_id, nextPageToken, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, regexPattern=regexPattern)
+      nextPageToken = get_comments(youtube, filterMode, filterSubMode, check_video_id, check_channel_id, nextPageToken, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, regexPattern=regexPattern)
     print_count_stats(final=True)  # Prints comment scan stats, finalizes
   ##########################################################
 
@@ -1096,14 +1372,16 @@ def main():
       # Write heading info to log file
       write_rtf(logFileName, firstWrite=True)
       write_rtf(logFileName, "\\par----------- YouTube Spammer Purge Log File -----------\\line\\line " + "\n\n")
-      if filterMode == 1:
+      if filterMode == "1":
         write_rtf(logFileName, "Channel IDs of spammer searched: " + str(inputtedSpammerChannelID) + "\\line\\line " + "\n\n")
-      elif filterMode == 2:
+      elif filterMode == "2":
         write_rtf(logFileName, "Characters searched in Usernames: " + make_rtf_compatible(str(inputtedUsernameFilter)) + "\\line\\line " + "\n\n")
-      elif filterMode == 3:
+      elif filterMode == "3":
        write_rtf(logFileName, "Characters searched in Comment Text: " + make_rtf_compatible(str(inputtedCommentTextFilter)) + "\\line\\line " + "\n\n")
-      elif filterMode == 4:
+      elif filterMode == "4":
         write_rtf(logFileName, "Automatic Search Mode: " + make_rtf_compatible(str(filterSettings[2])))
+      elif filterMode == "5":
+        write_rtf(logFileName, "Automatic Search Mode: Smart Mode \\line\\line " + "\n\n")
       write_rtf(logFileName, "Number of Matched Comments Found: " + str(len(spamCommentsID)) + "\\line\\line " + "\n\n")
       write_rtf(logFileName, "IDs of Matched Comments: " + "\n" + str(spamCommentsID) + "\\line\\line\\line " + "\n\n\n")
       
