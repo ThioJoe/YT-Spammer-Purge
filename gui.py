@@ -95,7 +95,12 @@ def rClickbinder(r):
 
 ###################### Main Window ############################
 
-def take_input_gui(stripLettersNumbers=False, stripKeyboardSpecialChars=False, stripPunctuation=False):
+# Function that is called by main program that brings up window to take in user input
+def take_input_gui(mode, stripLettersNumbers=False, stripKeyboardSpecialChars=False, stripPunctuation=False):
+    validModes = ["string", "chars"]
+    if mode not in validModes:
+        raise ValueError("Invalid mode. Possible values: 'string' or 'chars'.")
+
     window = Tk()
     window.title("YT Spammer Purge")
     window.iconphoto(False, PhotoImage(file=resource_path("icon.png")))
@@ -110,7 +115,10 @@ def take_input_gui(stripLettersNumbers=False, stripKeyboardSpecialChars=False, s
         global returnText
         text = boxName.get()
         boxName.delete('0', END)
-        returnText = myFunctions.make_char_set(text, stripLettersNumbers=stripLettersNumbers, stripKeyboardSpecialChars=stripKeyboardSpecialChars, stripPunctuation=stripPunctuation)
+
+        if mode == "chars":
+            # Convert characters string to 'set' of characters
+            returnText = myFunctions.make_char_set(text, stripLettersNumbers=stripLettersNumbers, stripKeyboardSpecialChars=stripKeyboardSpecialChars, stripPunctuation=stripPunctuation)
 
         outputTextBox.config(state='normal')
         outputTextBox.delete('1.0', END)
