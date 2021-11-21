@@ -1070,7 +1070,7 @@ def prepare_filter_mode_non_ascii(currentUser, deletionEnabledLocal, scanMode):
         regexPattern = r"[^\x00-\x7F]"
         confirmation = True
     elif selection == 3:
-      print(f"Searches for {F.YELLOW}usernames with anything EXCEPT letters, numbers, and spaces{S.R} -- {B.RED}{F.WHITE} EXTREMELY LIKELY to cause collateral damage! {S.R} Recommended to just use to manually gather list of spammer IDs, then use a different mode to delete.")
+      print(f"Searches for {F.YELLOW}usernames with anything EXCEPT letters, numbers, and spaces{S.R} - {B.RED}{F.WHITE} EXTREMELY LIKELY to cause collateral damage!{S.R} Recommended to just use to manually gather list of spammer IDs, then use a different mode to delete.")
       if choice("Choose this mode?") == True:
         regexPattern = r"[^a-zA-Z0-9 ]"
         confirmation = True
@@ -1380,7 +1380,7 @@ def main():
       elif filterMode == "3":
        write_rtf(logFileName, "Characters searched in Comment Text: " + make_rtf_compatible(str(inputtedCommentTextFilter)) + "\\line\\line " + "\n\n")
       elif filterMode == "4":
-        write_rtf(logFileName, "Automatic Search Mode: " + make_rtf_compatible(str(filterSettings[2])))
+        write_rtf(logFileName, "Automatic Search Mode: " + make_rtf_compatible(str(filterSettings[2])) + "\\line\\line " + "\n\n")
       elif filterMode == "5":
         write_rtf(logFileName, "Automatic Search Mode: Smart Mode \\line\\line " + "\n\n")
       write_rtf(logFileName, "Number of Matched Comments Found: " + str(len(spamCommentsID)) + "\\line\\line " + "\n\n")
