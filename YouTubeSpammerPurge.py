@@ -1355,7 +1355,6 @@ def main():
     # Counts number of found spam comments and prints list
     spam_count = len(spamCommentsID)
     if spam_count == 0: # If no spam comments found, exits
-      print("No matched comments found!\n")
       print(f"{B.RED}{F.BLACK}No matched comments or users found!{S.R}\n")
       print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
       input("\nPress Enter to exit...")
