@@ -1144,6 +1144,7 @@ def main():
   
   # Declare Default Variables
   maxScanNumber = 999999999
+  maxScanTime = False
   deletionEnabled = "False" # Disables deletion functionality, which is default until later - String is used instead of boolean to prevent flipped bits
   check_video_id = None
   nextPageToken = "start"
@@ -1241,13 +1242,35 @@ def main():
     validInteger = False
     while validInteger == False:
       try:
-        maxScanNumber = int(input(f"Enter the maximum {F.YELLOW}number of comments{S.R} to scan: "))
+        maxScanNumber = int(input(f"Enter the maximum {F.YELLOW}number of comments{S.R} to scan: (or enter any non number to choose max time of scanning comments)"))
         if maxScanNumber > 0:
+          maxScanTime = False
           validInteger = True # If it gets here, it's an integer, otherwise goes to exception
         else:
           print("\nInvalid Input! Number must be greater than zero.")
-      except:
-        print("\nInvalid Input! - Must be a whole number.")
+      except: # If this happend then the user want to input as time
+        maxScanTime = str(input(f"Enter the maximum amount of time to scan comments in seconds: (or enter 'M' before number to enter time in minutes instead of seconds)"))
+        try:
+          int_maxScanTime = int(maxscanTime)
+
+          if maxScanTime > 0:
+            maxScanNumber = False
+            validInteger = True # If it gets here, the user has entered a valid time in seconds
+          else:
+            print("\nInvalid Input! Number must be greater than zero.")
+        except: #If this happens than its most likely a result of the user wanting to input time in minutes
+          try:
+            TMP_scantime = maxScanTime[1]
+            if TMP_scantime[0] == 'M': #If it gets past this than the input was a valid time in minutes (like this: M45)
+              maxScanTime = maxScanTime[1:] #Removes first character, so its just the minutes
+              maxScanTime = maxScanTime*60 #Converts input to seconds
+
+              maxScanNumber = False
+              validInteger = True # If it gets here, the user has entered a valid time in minutes converted to numbers
+            else:
+              print("\nInvalid Input! - Unreconized character, please format youre time like this: in seconds: 454, in minutes: M60.")
+          except:
+            print("\nInvalid Input! - If you want to enter time in minutes, please enter the tipe after the 'M' (Example: M6).")
 
  
   # User inputs filtering mode
@@ -1339,7 +1362,14 @@ def main():
 
   deletionEnabled = filterSettings[0]
 
+  def time_till_calc(till):
+    time_rn = datetime.now()
+    difference = (time_rn - till)
+    difference_sec = difference.total_seconds()
+    return difference_sec
+  
   ##################### START SCANNING #####################
+  start_scan_time = datetime.now()
   try:
     # Goes to get comments for first page
     print("Scanning... \n")
@@ -1347,9 +1377,18 @@ def main():
     print_count_stats(final=False)  # Prints comment scan stats, updates on same line
 
     # After getting first page, if there are more pages, goes to get comments for next page
-    while nextPageToken != "End" and scannedCommentsCount < maxScanNumber:
-      nextPageToken = get_comments(youtube, filterMode, filterSubMode, check_video_id, check_channel_id, nextPageToken, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, regexPattern=regexPattern)
-    print_count_stats(final=True)  # Prints comment scan stats, finalizes
+    if maxScanTime == False:
+      while nextPageToken != "End" and scannedCommentsCount < maxScanNumber:
+        nextPageToken = get_comments(youtube, filterMode, filterSubMode, check_video_id, check_channel_id, nextPageToken, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, regexPattern=regexPattern)
+      print_count_stats(final=True)  # Prints comment scan stats, finalizes
+    elif maxScanNumber == False:
+      time_of_scan = time_till_calc(start_scan_time)
+      while nextPageToken != "End" and time_of_scan < maxScanTime:
+        time_of_scan = time_till_calc(start_scan_time)
+        nextPageToken = get_comments(youtube, filterMode, filterSubMode, check_video_id, check_channel_id, nextPageToken, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, regexPattern=regexPattern)
+      print_count_stats(final=True)  # Prints comment scan stats, finalizes
+    else:
+      print("How did you get here? please create a issue at the github of this project, and include the inputs you have entered")
   ##########################################################
 
     # Counts number of found spam comments and prints list
