@@ -1242,36 +1242,40 @@ def main():
     validInteger = False
     while validInteger == False:
       try:
-        maxScanNumber = int(input(f"Enter the maximum {F.YELLOW}number of comments{S.R} to scan: (or enter any non number to choose max time of scanning comments)"))
-        if maxScanNumber > 0:
-          maxScanTime = False
-          validInteger = True # If it gets here, it's an integer, otherwise goes to exception
-        else:
-          print("\nInvalid Input! Number must be greater than zero.")
-      except: # If this happend then the user want to input as time
-        maxScanTime = str(input(f"Enter the maximum amount of time to scan comments in seconds: (or enter 'M' before number to enter time in minutes instead of seconds)"))
-        try:
-          int_maxScanTime = int(maxscanTime)
-
-          if maxScanTime > 0:
-            maxScanNumber = False
-            validInteger = True # If it gets here, the user has entered a valid time in seconds
+        maxScanNumber = int(input(f"Enter the maximum {F.YELLOW}number of comments{S.R} to scan: (or press enter to choose a max time for scanning for comments)"))
+        if not maxScanNumber == '':
+          if maxScanNumber > 0:
+            maxScanTime = False
+            validInteger = True # If it gets here, it's an integer, otherwise goes to exception
           else:
             print("\nInvalid Input! Number must be greater than zero.")
-        except: #If this happens than its most likely a result of the user wanting to input time in minutes
+            
+        else: # If this happend then the user want to input as time
+          maxScanTime = str(input(f"Enter the maximum amount of time to scan comments in seconds: (or enter 'M' before number to enter time in minutes instead of seconds)"))
           try:
-            TMP_scantime = maxScanTime[1]
-            if TMP_scantime[0] == 'M': #If it gets past this than the input was a valid time in minutes (like this: M45)
-              maxScanTime = maxScanTime[1:] #Removes first character, so its just the minutes
-              maxScanTime = maxScanTime*60 #Converts input to seconds
+            int_maxScanTime = int(maxscanTime)
 
+            if maxScanTime > 0:
               maxScanNumber = False
-              validInteger = True # If it gets here, the user has entered a valid time in minutes converted to numbers
+              validInteger = True # If it gets here, the user has entered a valid time in seconds
             else:
-              print("\nInvalid Input! - Unreconized character, please format youre time like this: in seconds: 454, in minutes: M60.")
-          except:
-            print("\nInvalid Input! - If you want to enter time in minutes, please enter the tipe after the 'M' (Example: M6).")
+              print("\nInvalid Input! Number must be greater than zero.")
+          except: #If this happens than its most likely a result of the user wanting to input time in minutes
+            try:
+              TMP_scantime = maxScanTime[1]
+              if TMP_scantime.startsWith('M'): #If it gets past this than the input was a valid time in minutes (like this: M45)
+                maxScanTime = maxScanTime[1:] #Removes first character, so its just the minutes
+                maxScanTime = maxScanTime*60 #Converts input to seconds
 
+                maxScanNumber = False
+                validInteger = True # If it gets here, the user has entered a valid time in minutes converted to numbers
+              else:
+                print("\nInvalid Input! - Unreconized character, please format youre time like this: in seconds: 454, in minutes: M60.")
+            except:
+              print("\nInvalid Input! - If you want to enter time in minutes, please enter the tipe after the 'M' (Example: M6).")
+
+      except:
+        print("\nInvalid Input! - Please only answer with numbers")
  
   # User inputs filtering mode
   print("\n-------------------------------------------------------")
