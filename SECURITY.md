@@ -8,4 +8,4 @@
 
 ## Reporting a Vulnerability
 
-IF YOU FIND A VULNERABILITY: Please create an issue. If you know how to resolve it, please create a PR.
+IF YOU FIND A VULNERABILITY: Please email [privacy@thiojoe.com](mailto:privacy@thiojoe.com). If you know how to resolve it, please create a PR.
