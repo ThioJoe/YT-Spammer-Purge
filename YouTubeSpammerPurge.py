@@ -27,6 +27,10 @@
 ###
 ###           3. I suck at programming so if something doesn't work I'll try to fix it but might not
 ###              even know how, so don't expect too much.
+###           
+###           4. Please note: You can only delete comments from your own channel's videos and not of any other youtuber's videos to avoid abuse of the system.
+###
+###
 ###
 ###
 ### Author:   ThioJoe - YouTube.com/ThioJoe
