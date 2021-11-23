@@ -7,3 +7,5 @@
 - Avoid adding new non-standard libraries if at all possible. If you have an idea that would require one, please suggest it as an issue first instead of going through all the work and submitting a pull request.
 
 - MAKE SURE IT RUNS
+
+- Please test the program before you submit it, so that there are not any error messeges with your part of editted code.
