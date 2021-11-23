@@ -244,7 +244,7 @@ def get_comments(youtube, filterMode, filterSubMode, check_video_id=None, check_
     RetrievedNextPageToken = "End"  
  
   # After getting all comments threads for page, extracts data for each and stores matches in spamCommentsID
-  # Also goes through each thread and execuites get_replies() to get reply content and matches
+  # Also goes through each thread and executes get_replies() to get reply content and matches
   for item in results["items"]:
     comment = item["snippet"]["topLevelComment"]
     videoID = comment["snippet"]["videoId"] # Only enable if NOT checking specific video
@@ -675,7 +675,7 @@ def string_to_list(rawString, lower=False):
   return newList
 
 ############################ Validate Regex Input #############################
-# Checks if regex expression is valid, tries to add escapes if necesary
+# Checks if regex expression is valid, tries to add escapes if necessary
 # From: https://stackoverflow.com/a/51782559/17312053
 
 def validate_regex(regex_from_user: str):
