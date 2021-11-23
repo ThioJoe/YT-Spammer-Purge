@@ -116,3 +116,10 @@ To use this script, you will need an "Oauth2" credential to access the scanning 
 <p align="center"><img width="595" alt="14 2" src="https://user-images.githubusercontent.com/12518330/139734814-26d04eed-76b6-4b4f-9689-e6960f781faa.png"></p>
 
 15. Now you should be able to run the python script, and it will ask you to log in.
+
+## Issues setting up/Bug Reporting
+If you have any issues setting up, please file it in the issues section of this github or email me on - TJBusiness@thiojoe.com
+
+Thanks for reading,
+ThioJoe
+
