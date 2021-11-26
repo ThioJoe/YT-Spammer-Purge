@@ -1,16 +1,11 @@
 # YouTube Spammer Purge
 
-Allows you to purge all comments left by a user on a specific video or across the entire channel.
+**What Is This?** - Allows you to filter and search for spammer comments on your channel in many different ways AND delete them all at once (see features below).
 
 **How to Download:** Click the "[Releases](https://github.com/ThioJoe/YouTube-Spammer-Purge/releases)" link on the right, then on the latest release, under 'Assets' click to download "YouTubeSpammerPurge.exe". NOTE: You may get a warning - See "[Download & Windows Warning](#download--windows-warning)" section below for details.
 * [Linux Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/Linux-Installation-Instructions) 
 * [MacOS Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/MacOS-Instructions)
 * (Windows installation not necessary if using exe file. But read below for how to set up required API key)
-
-## Purpose
-Recently, there has been a massive infestation of spam on YouTube where fake impersonator accounts leave spam/scam replies to hundreds of users on a creator's videos. For some god-forsaken reason, YouTube offers no way to delete all comments by a specific user at once, meaning you must delete them one by one BY HAND.
-
-YouTube offers a functionality to ban a user, but it does NOT delete previous comments. Therefore I created this script to allow you to instantly purge their spam replies. **IT DOES NOT PREVENT SPAMMERS - It only makes it easier to delete them when they show up!** YouTube still must implement better native tools for dealing with spammers.
 
 ## Features
 * Scan comments on a **single video** or across your **entire channel**
@@ -23,6 +18,10 @@ YouTube offers a functionality to ban a user, but it does NOT delete previous co
  * Automatic deletion of all found comments (after confirmation), as well as the option to ban them
  * Rich text log files
 
+## Purpose
+Recently, there has been a massive infestation of spam on YouTube where fake impersonator accounts leave spam/scam replies to hundreds of users on a creator's videos. For some god-forsaken reason, YouTube offers no way to delete all comments by a specific user at once, meaning you must delete them one by one BY HAND.
+
+YouTube offers a functionality to ban a user, but it does NOT delete previous comments. Therefore I created this script to allow you to instantly purge their spam replies. **IT DOES NOT PREVENT SPAMMERS - It only makes it easier to delete them when they show up!** YouTube still must implement better native tools for dealing with spammers.
 
 ## Usage Notes -READ THIS
 
