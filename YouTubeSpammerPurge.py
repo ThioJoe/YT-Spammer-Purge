@@ -169,23 +169,32 @@ def print_prepared_comments(check_video_id_localprep, comments, j, logMode):
 
     # If logging enabled, also prints to log file 
     if logMode == True:
+      # Truncates very long comments
+      if len(text) > 2000:
+        text = text[0:2000] + "...\n[YT Spammer Purge Note: Long Comment Truncated]"
+      if text.count("\n") > 3:
+        text = text.replace("\n", " ") + "\n[YT Spammer Purge Note: Comment converted to single line because of excessive multiple lines]"
+      # Only print video title info if searching entire channel
+      if check_video_id_localprep is None:  
+         titleInfoLine = "     > Video: " + title + "\\line " + "\n"
+      else:
+        titleInfoLine = ""
 
-      # All these lines actually print to a single line with author name and comment text in color
-      # Write line with author name and comment text - Requires multiple lines to add colors separately, so they are not encoded along with the unicode
-      write_rtf(logFileName, str(j+1) + r". \cf4") # Author name in blue = \cf4
-      write_rtf(logFileName, make_rtf_compatible(author))
-      write_rtf(logFileName, r"\cf1 :  \cf5") # Make colon default color, then comment text in yellow = \cf5
-      write_rtf(logFileName, make_rtf_compatible(text))
-      write_rtf(logFileName, r"\cf1 \line " + "\n") # End line with default color = \cf1 , and next line
-
-
-      write_rtf(logFileName, "---------------------------------------------------------------------------------------------\\line " + "\n")
-      if check_video_id_localprep is None:  # Only print video title if searching entire channel
-        title = get_video_title(videoID) # Get Video Title
-        write_rtf(logFileName, "     > Video: " + title + "\\line " + "\n")
-      write_rtf(logFileName, "     > Direct Link: " + "https://www.youtube.com/watch?v=" + videoID + "&lc=" + comment_id_local + "\\line "+ "\n")
-      write_rtf(logFileName, r"     > Author Channel ID: \cf6" + author_id_local + r"\cf1 \line "+ "\n")
-      write_rtf(logFileName, "=============================================================================================\\line\\line\\line" + "\n\n\n")
+      commentInfo = (
+        # Author Info
+        str(j+1) + r". \cf4"
+        + make_rtf_compatible(author)
+        + r"\cf1 :  \cf5"
+        + make_rtf_compatible(text)
+        + r"\cf1 \line " + "\n"
+        + "---------------------------------------------------------------------------------------------\\line " + "\n"
+        # Rest of Comment Info
+        + titleInfoLine
+        + "     > Direct Link: " + "https://www.youtube.com/watch?v=" + videoID + "&lc=" + comment_id_local + "\\line "+ "\n"
+        + "     > Author Channel ID: \cf6" + author_id_local + r"\cf1 \line "+ "\n"
+        + "=============================================================================================\\line\\line\\line" + "\n\n\n"
+      )
+      write_rtf(logFileName, commentInfo)
 
     # Appends comment ID to new list of comments so it's in the correct order going forward, as provided by API and presented to user
     # Must use append here, not extend, or else it would add each character separately
