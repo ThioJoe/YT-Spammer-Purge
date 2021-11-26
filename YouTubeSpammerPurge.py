@@ -156,6 +156,12 @@ def print_prepared_comments(check_video_id_localprep, comments, j, logMode):
     # Retrieve video ID from object using comment ID
     videoID = convert_comment_id_to_video_id(comment_id_local)
 
+    # Truncates very long comments, and removes excessive multiple lines
+    if len(text) > 1500:
+      text = text[0:1500] + "...\n[YT Spammer Purge Note: Long Comment Truncated - Visit Link to See Full Comment]"
+    if text.count("\n") > 3:
+      text = text.replace("\n", " ") + "\n[YT Spammer Purge Note: Comment converted to single line because of excessive multiple lines]"
+
     # Prints comment info to console
     print(str(j+1) + f". {F.LIGHTCYAN_EX}" + author + f"{S.R}:  {F.YELLOW}" + text + f"{S.R}")
     print("—————————————————————————————————————————————————————————————————————————————————————————————")
@@ -169,11 +175,7 @@ def print_prepared_comments(check_video_id_localprep, comments, j, logMode):
 
     # If logging enabled, also prints to log file 
     if logMode == True:
-      # Truncates very long comments
-      if len(text) > 2000:
-        text = text[0:2000] + "...\n[YT Spammer Purge Note: Long Comment Truncated]"
-      if text.count("\n") > 3:
-        text = text.replace("\n", " ") + "\n[YT Spammer Purge Note: Comment converted to single line because of excessive multiple lines]"
+
       # Only print video title info if searching entire channel
       if check_video_id_localprep is None:  
          titleInfoLine = "     > Video: " + title + "\\line " + "\n"
