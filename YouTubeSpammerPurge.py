@@ -208,17 +208,17 @@ def get_comments(youtube, filterMode, filterSubMode, check_video_id=None, check_
   commentText = None
 
   if filterMode == "1": # User entered spammer IDs -- Get Extra Info: None
-    fieldsToFetch = "nextPageToken,items/snippet/topLevelComment/id,items/snippet/totalReplyCount,items/snippet/topLevelComment/snippet/videoId,items/snippet/topLevelComment/snippet/authorChannelId/value"
+    fieldsToFetch = "nextPageToken,items/snippet/topLevelComment/id,items/replies/comments,items/snippet/totalReplyCount,items/snippet/topLevelComment/snippet/videoId,items/snippet/topLevelComment/snippet/authorChannelId/value"
   elif filterMode == "2" or filterMode == "4" or filterMode == "5": # Filter char by Username / Auto Regex non-ascii username -- Get Extra Info: Author Display Name
-    fieldsToFetch = "nextPageToken,items/snippet/topLevelComment/id,items/snippet/totalReplyCount,items/snippet/topLevelComment/snippet/videoId,items/snippet/topLevelComment/snippet/authorChannelId/value,items/snippet/topLevelComment/snippet/authorDisplayName"
+    fieldsToFetch = "nextPageToken,items/snippet/topLevelComment/id,items/replies/comments,items/snippet/totalReplyCount,items/snippet/topLevelComment/snippet/videoId,items/snippet/topLevelComment/snippet/authorChannelId/value,items/snippet/topLevelComment/snippet/authorDisplayName"
   elif filterMode == "3": # Filter char by Comment text -- Get Extra Info: Comment Text
-    fieldsToFetch = "nextPageToken,items/snippet/topLevelComment/id,items/snippet/totalReplyCount,items/snippet/topLevelComment/snippet/videoId,items/snippet/topLevelComment/snippet/authorChannelId/value,items/snippet/topLevelComment/snippet/textDisplay"
+    fieldsToFetch = "nextPageToken,items/snippet/topLevelComment/id,items/replies/comments,items/snippet/totalReplyCount,items/snippet/topLevelComment/snippet/videoId,items/snippet/topLevelComment/snippet/authorChannelId/value,items/snippet/topLevelComment/snippet/textDisplay"
 
 
   # Gets all comment threads for a specific video
   if check_video_id is not None:
     results = youtube.commentThreads().list(
-      part="snippet",
+      part="snippet, replies",
       videoId=check_video_id, 
       maxResults=100, # 100 is the max per page allowed by YouTube, but multiple pages will be scanned
       pageToken=nextPageToken,
@@ -229,7 +229,7 @@ def get_comments(youtube, filterMode, filterSubMode, check_video_id=None, check_
   # Get all comment threads across the whole channel
   elif check_video_id is None:
     results = youtube.commentThreads().list(
-      part="snippet",
+      part="snippet, replies",
       allThreadsRelatedToChannelId=check_channel_id,
       maxResults=100, # 100 is the max per page allowed by YouTube, but multiple pages will be scanned
       pageToken=nextPageToken,
@@ -250,6 +250,14 @@ def get_comments(youtube, filterMode, filterSubMode, check_video_id=None, check_
     videoID = comment["snippet"]["videoId"] # Only enable if NOT checking specific video
     parent_id = item["snippet"]["topLevelComment"]["id"]
     numReplies = item["snippet"]["totalReplyCount"]
+
+    # Need to use try/except, because if no replies, will throw KeyError
+    try:
+      limitedRepliesList = item["replies"]["comments"] # API will return a limited number of replies (~5), but to get all, need to make separate call
+    except KeyError:
+      limitedRepliesList = []
+      pass
+
     try: 
       authorChannelID = comment["snippet"]["authorChannelId"]["value"]
     except KeyError:
@@ -272,8 +280,10 @@ def get_comments(youtube, filterMode, filterSubMode, check_video_id=None, check_
     check_against_filter(filterMode, filterSubMode, parent_id, videoID, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, authorChannelID, authorChannelName, commentText, regexPattern)
     scannedCommentsCount += 1  # Counts number of comments scanned, add to global count
 
-    if numReplies > 0:
+    if numReplies > 0 and len(limitedRepliesList) < numReplies:
       get_replies(filterMode, filterSubMode, parent_id, videoID, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern)
+    elif numReplies > 0 and len(limitedRepliesList) <= numReplies:
+      get_replies(filterMode, filterSubMode, parent_id, videoID, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern, limitedRepliesList)
     else:
       print_count_stats(final=False)  # Updates displayed stats if no replies
   
@@ -285,46 +295,53 @@ def get_comments(youtube, filterMode, filterSubMode, check_video_id=None, check_
 ##########################################################################################
 
 # Call the API's comments.list method to list the existing comment replies.
-def get_replies(filterMode, filterSubMode, parent_id, videoID, inputtedSpammerChannelID=None, inputtedUsernameFilter=None, inputtedCommentTextFilter=None, regexPattern=None):
+def get_replies(filterMode, filterSubMode, parent_id, videoID, inputtedSpammerChannelID=None, inputtedUsernameFilter=None, inputtedCommentTextFilter=None, regexPattern=None, repliesList=None):
   global scannedRepliesCount
   # Initialize some variables
   authorChannelName = None
   commentText = None
   
-  if filterMode == "1": # User entered spammer IDs -- Get Extra Info: None
-    fieldsToFetch = "items/snippet/authorChannelId/value,items/id"
-  elif filterMode == "2" or filterMode == "4" or filterMode == "5": # Filter by Username -- Get Extra Info: Author Display Name
-    fieldsToFetch = "items/snippet/authorChannelId/value,items/id,items/snippet/authorDisplayName"
-  elif filterMode == "3": # Filter by comment text -- Get Extra Info: Comment Text
-    fieldsToFetch = "items/snippet/authorChannelId/value,items/id,items/snippet/textDisplay"
+  if repliesList == None:
 
-  results = youtube.comments().list(
-    part="snippet",
-    parentId=parent_id,
-    maxResults=100, # 100 is the max per page, but multiple pages will be scanned
-    fields=fieldsToFetch,
-    textFormat="plainText"
-  ).execute()
+    if filterMode == "1": # User entered spammer IDs -- Get Extra Info: None
+      fieldsToFetch = "items/snippet/authorChannelId/value,items/id"
+    elif filterMode == "2" or filterMode == "4" or filterMode == "5": # Filter by Username -- Get Extra Info: Author Display Name
+      fieldsToFetch = "items/snippet/authorChannelId/value,items/id,items/snippet/authorDisplayName"
+    elif filterMode == "3": # Filter by comment text -- Get Extra Info: Comment Text
+      fieldsToFetch = "items/snippet/authorChannelId/value,items/id,items/snippet/textDisplay"
+
+    results = youtube.comments().list(
+      part="snippet",
+      parentId=parent_id,
+      maxResults=100, # 100 is the max per page, but multiple pages will be scanned
+      fields=fieldsToFetch,
+      textFormat="plainText"
+    ).execute()
+
+    replies = results["items"]
+
+  else:
+    replies = repliesList
  
   # Iterates through items in results
   # Need to be able to catch exceptions because sometimes the API will return a comment from non-existent / deleted channel
   # Need individual tries because not all are fetched for each mode
-  for item in results["items"]:  
-    replyID = item["id"]
+  for reply in replies:  
+    replyID = reply["id"]
     try:
-      authorChannelID = item["snippet"]["authorChannelId"]["value"]
+      authorChannelID = reply["snippet"]["authorChannelId"]["value"]
     except KeyError:
       authorChannelID = "[Deleted Channel]"
 
     if filterMode == "2" or filterMode == "4" or filterMode == "5": 
       try:
-        authorChannelName = item["snippet"]["authorDisplayName"]
+        authorChannelName = reply["snippet"]["authorDisplayName"]
       except KeyError:
         authorChannelName = "[Deleted Channel]"  
     
     if filterMode == "3":
       try:
-        commentText = item["snippet"]["textDisplay"]
+        commentText = reply["snippet"]["textDisplay"]
       except KeyError:
         commentText = "[Deleted/Missing Comment]"
 
@@ -473,16 +490,21 @@ def check_deleted_comments(commentsVideoDictionary):
 ########################################################################################## 
 
 ################################### GET VIDEO TITLE ###############################################
-# Get video title from video ID using YouTube API request
+# Check if video title is in dictionary, if not get video title from video ID using YouTube API request, then return title
 def get_video_title(video_id):
-  results = youtube.videos().list(
-    part="snippet",
-    id=video_id,
-    fields="items/snippet/title",
-    maxResults=1
-  ).execute()
-  
-  title = results["items"][0]["snippet"]["title"]
+  global vidTitleDict
+
+  if video_id in vidTitleDict.keys():
+    title = vidTitleDict[video_id]
+  else:
+    results = youtube.videos().list(
+      part="snippet",
+      id=video_id,
+      fields="items/snippet/title",
+      maxResults=1
+    ).execute()
+    title = results["items"][0]["snippet"]["title"]
+    vidTitleDict[video_id] = title
 
   return title
 
@@ -1132,12 +1154,14 @@ def main():
   global youtube  
   global spamCommentsID
   global vidIdDict
+  global vidTitleDict
   global scannedRepliesCount
   global scannedCommentsCount
 
   # Default values for global variables
   spamCommentsID = []
   vidIdDict = {}
+  vidTitleDict = {}
   scannedRepliesCount = 0
   scannedCommentsCount = 0
   regexPattern = ""
