@@ -3,3 +3,4 @@ google_auth_oauthlib==0.4.6
 protobuf==3.19.1
 colorama==0.4.4
 rtfunicode==2.0
+art==5.3
