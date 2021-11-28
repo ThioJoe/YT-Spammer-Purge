@@ -47,6 +47,7 @@ from datetime import datetime
 import traceback
 import platform
 import rtfunicode
+from art import tprint
 
 from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
@@ -1212,7 +1213,7 @@ def main():
       exit()
   
   # Intro message
-  print(f"{F.YELLOW}\n============ YOUTUBE SPAMMER PURGE v" + version + f" ============{S.R}")
+  tprint(f"{F.YELLOW}\n============  YOUTUBE  SPAMMER  PURGE  v" + version + f"  ============{S.R}")
   print("== https://github.com/ThioJoe/YouTube-Spammer-Purge ==")
   print("======== Author: ThioJoe - YouTube.com/ThioJoe ======= \n")
 
