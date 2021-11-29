@@ -31,6 +31,8 @@
 ###
 ### Author:   ThioJoe - YouTube.com/ThioJoe
 ###                     Twitter.com/ThioJoe
+###            For more information, please check out my original video about this project at - https://www.youtube.com/watch?v=-vOakOgYLUI\
+###            I was considering making a update video on this too.
 ###
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
