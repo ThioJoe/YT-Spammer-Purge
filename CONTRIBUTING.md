@@ -6,4 +6,6 @@
 
 - Avoid adding new non-standard libraries if at all possible. If you have an idea that would require one, please suggest it as an issue first instead of going through all the work and submitting a pull request.
 
+- We appriciate you contributing on this project.
+
 - MAKE SURE IT RUNS
