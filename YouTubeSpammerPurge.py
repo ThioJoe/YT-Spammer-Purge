@@ -243,7 +243,7 @@ def add_sample(authorID, authorName, commentText):
 ##########################################################################################
 
 # Call the API's commentThreads.list method to list the existing comments.
-def get_comments(youtube, filterMode, filterSubMode, check_video_id=None, check_channel_id=None, nextPageToken=None, inputtedSpammerChannelID=None, inputtedUsernameFilter=None, inputtedCommentTextFilter=None, regexPattern=None):  # None are set as default if no parameters passed into function
+def get_comments(youtube, currentUser, filterMode, filterSubMode, check_video_id=None, check_channel_id=None, nextPageToken=None, inputtedSpammerChannelID=None, inputtedUsernameFilter=None, inputtedCommentTextFilter=None, regexPattern=None):  # None are set as default if no parameters passed into function
   global scannedCommentsCount
   # Initialize some variables
   authorChannelName = None
@@ -321,13 +321,13 @@ def get_comments(youtube, filterMode, filterSubMode, check_video_id=None, check_
         commentText = "[Deleted/Missing Comment]"
     
     # Runs check against comment info for whichever filter data is relevant
-    check_against_filter(filterMode=filterMode, filterSubMode=filterSubMode, commentID=parent_id, videoID=videoID, parentAuthorChannelID=None, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, authorChannelID=parentAuthorChannelID, authorChannelName=authorChannelName, commentText=commentText, regexPattern=regexPattern)
+    check_against_filter(currentUser, filterMode=filterMode, filterSubMode=filterSubMode, commentID=parent_id, videoID=videoID, authorChannelID=parentAuthorChannelID, parentAuthorChannelID=None, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, authorChannelName=authorChannelName, commentText=commentText, regexPattern=regexPattern)
     scannedCommentsCount += 1  # Counts number of comments scanned, add to global count
 
     if numReplies > 0 and len(limitedRepliesList) < numReplies:
-      get_replies(filterMode, filterSubMode, parent_id, videoID, parentAuthorChannelID, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern)
+      get_replies(currentUser, filterMode, filterSubMode, parent_id, videoID, parentAuthorChannelID, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern)
     elif numReplies > 0 and len(limitedRepliesList) <= numReplies:
-      get_replies(filterMode, filterSubMode, parent_id, videoID, parentAuthorChannelID, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern, limitedRepliesList)
+      get_replies(currentUser, filterMode, filterSubMode, parent_id, videoID, parentAuthorChannelID, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern, limitedRepliesList)
     else:
       print_count_stats(final=False)  # Updates displayed stats if no replies
   
@@ -339,14 +339,13 @@ def get_comments(youtube, filterMode, filterSubMode, check_video_id=None, check_
 ##########################################################################################
 
 # Call the API's comments.list method to list the existing comment replies.
-def get_replies(filterMode, filterSubMode, parent_id, videoID, parentAuthorChannelID, inputtedSpammerChannelID=None, inputtedUsernameFilter=None, inputtedCommentTextFilter=None, regexPattern=None, repliesList=None):
+def get_replies(currentUser, filterMode, filterSubMode, parent_id, videoID, parentAuthorChannelID, inputtedSpammerChannelID=None, inputtedUsernameFilter=None, inputtedCommentTextFilter=None, regexPattern=None, repliesList=None):
   global scannedRepliesCount
   # Initialize some variables
   authorChannelName = None
   commentText = None
   
   if repliesList == None:
-
     if filterMode == "ID": # Get Extra Info: None
       fieldsToFetch = "items/snippet/authorChannelId/value,items/id"
     elif filterMode == "Username" or filterMode == "AutoASCII": # Get Extra Info: Author Display Name
@@ -355,7 +354,6 @@ def get_replies(filterMode, filterSubMode, parent_id, videoID, parentAuthorChann
       fieldsToFetch = "items/snippet/authorChannelId/value,items/id,items/snippet/textDisplay"
     elif filterMode == "AutoSmart" or filterMode == "NameAndText": # Get Extra Info: Author Display Name, Comment Text
       fieldsToFetch = "items/snippet/authorChannelId/value,items/id,items/snippet/authorDisplayName,items/snippet/textDisplay"
-
 
     results = youtube.comments().list(
       part="snippet",
@@ -366,7 +364,6 @@ def get_replies(filterMode, filterSubMode, parent_id, videoID, parentAuthorChann
     ).execute()
 
     replies = results["items"]
-
   else:
     replies = repliesList
  
@@ -395,7 +392,7 @@ def get_replies(filterMode, filterSubMode, parent_id, videoID, parentAuthorChann
         commentText = "[Deleted/Missing Comment]"
 
     # Runs check against comment info for whichever filter data is relevant
-    check_against_filter(filterMode=filterMode, filterSubMode=filterSubMode, commentID=replyID, videoID=videoID, parentAuthorChannelID=parentAuthorChannelID, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, authorChannelID=authorChannelID, authorChannelName=authorChannelName, commentText=commentText, regexPattern=regexPattern)
+    check_against_filter(currentUser, filterMode=filterMode, filterSubMode=filterSubMode, commentID=replyID, videoID=videoID, authorChannelID=authorChannelID, parentAuthorChannelID=parentAuthorChannelID, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, authorChannelName=authorChannelName, commentText=commentText, regexPattern=regexPattern)
 
     # Update latest stats
     scannedRepliesCount += 1  # Count number of replies scanned, add to global count
@@ -405,83 +402,87 @@ def get_replies(filterMode, filterSubMode, parent_id, videoID, parentAuthorChann
 
 ############################## CHECK AGAINST FILTER ######################################
 # The basic logic that actually checks each comment against filter criteria
-def check_against_filter(filterMode, filterSubMode, commentID, videoID, parentAuthorChannelID=None, inputtedSpammerChannelID=None, inputtedUsernameFilter=None, inputtedCommentTextFilter=None, authorChannelID=None, authorChannelName=None, commentText=None, regexPattern=None):
+def check_against_filter(currentUser, filterMode, filterSubMode, commentID, videoID, authorChannelID, parentAuthorChannelID=None, inputtedSpammerChannelID=None, inputtedUsernameFilter=None, inputtedCommentTextFilter=None,  authorChannelName=None, commentText=None, regexPattern=None):
   global vidIdDict
   global spamCommentsID
 
-  # If the comment/username matches criteria based on mode, add to list of spam comment IDs
-  # Also add key-value pair of comment ID and video ID to dictionary
-  def add_spam(commentID, videoID):
-    global spamCommentsID
-    spamCommentsID += [commentID]
-    vidIdDict[commentID] = videoID
+  # Do not even check comment author ID matches currently logged in user's ID
+  if currentUser[0] != authorChannelID: 
+    # If the comment/username matches criteria based on mode, add to list of spam comment IDs
+    # Also add key-value pair of comment ID and video ID to dictionary
+    def add_spam(commentID, videoID):
+      global spamCommentsID
+      spamCommentsID += [commentID]
+      vidIdDict[commentID] = videoID
 
-  # Checks author of either parent comment or reply (both passed in as commentID) against channel ID inputted by user
-  if filterMode == "ID":
-    if any(authorChannelID == x for x in inputtedSpammerChannelID):
-      add_spam(commentID, videoID)
+    # Checks author of either parent comment or reply (both passed in as commentID) against channel ID inputted by user
+    if filterMode == "ID":
+      if any(authorChannelID == x for x in inputtedSpammerChannelID):
+        add_spam(commentID, videoID)
 
-  # Check Modes: Username
-  elif filterMode == "Username":
-    if filterSubMode == "chars":
-      authorChannelName = make_char_set(str(authorChannelName))
-      if any(x in inputtedUsernameFilter for x in authorChannelName):
-        add_spam(commentID, videoID)
-    elif filterSubMode == "string":
-      if check_list_against_string(listInput=inputtedUsernameFilter, stringInput=authorChannelName, caseSensitive=False):
-        add_spam(commentID, videoID)
-    elif filterSubMode == "regex":
+    # Check Modes: Username
+    elif filterMode == "Username":
+      if filterSubMode == "chars":
+        authorChannelName = make_char_set(str(authorChannelName))
+        if any(x in inputtedUsernameFilter for x in authorChannelName):
+          add_spam(commentID, videoID)
+      elif filterSubMode == "string":
+        if check_list_against_string(listInput=inputtedUsernameFilter, stringInput=authorChannelName, caseSensitive=False):
+          add_spam(commentID, videoID)
+      elif filterSubMode == "regex":
+        if re.search(str(regexPattern), authorChannelName):
+          add_spam(commentID, videoID)
+
+    # Check Modes: Comment Text
+    elif filterMode == "Text":
+      if filterSubMode == "chars":
+        commentText = make_char_set(str(commentText))
+        if any(x in inputtedCommentTextFilter for x in commentText):
+          add_spam(commentID, videoID)
+      elif filterSubMode == "string":
+        if check_list_against_string(listInput=inputtedCommentTextFilter, stringInput=commentText, caseSensitive=False):
+          add_spam(commentID, videoID)
+      elif filterSubMode == "regex":
+        if re.search(str(regexPattern), commentText):
+          add_spam(commentID, videoID)
+
+    # Check Modes: Name and Text
+    elif filterMode == "NameAndText":
+      if filterSubMode == "chars":
+        authorChannelName = make_char_set(str(authorChannelName))
+        commentText = make_char_set(str(commentText))
+        if any(x in inputtedUsernameFilter for x in authorChannelName):
+          add_spam(commentID, videoID)
+        elif any(x in inputtedCommentTextFilter for x in commentText):
+          add_spam(commentID, videoID)
+      elif filterSubMode == "string":
+        if check_list_against_string(listInput=inputtedUsernameFilter, stringInput=authorChannelName, caseSensitive=False):
+          add_spam(commentID, videoID)
+        if check_list_against_string(listInput=inputtedCommentTextFilter, stringInput=commentText, caseSensitive=False):
+          add_spam(commentID, videoID)
+      elif filterSubMode == "regex":
+        if re.search(str(regexPattern), authorChannelName):
+          add_spam(commentID, videoID)
+        if re.search(str(regexPattern), commentText):
+          add_spam(commentID, videoID)
+
+    # Check Modes: Auto ASCII (in username)
+    elif filterMode == "AutoASCII":
       if re.search(str(regexPattern), authorChannelName):
         add_spam(commentID, videoID)
 
-  # Check Modes: Comment Text
-  elif filterMode == "Text":
-    if filterSubMode == "chars":
-      commentText = make_char_set(str(commentText))
-      if any(x in inputtedCommentTextFilter for x in commentText):
-        add_spam(commentID, videoID)
-    elif filterSubMode == "string":
-      if check_list_against_string(listInput=inputtedCommentTextFilter, stringInput=commentText, caseSensitive=False):
-        add_spam(commentID, videoID)
-    elif filterSubMode == "regex":
-      if re.search(str(regexPattern), commentText):
-        add_spam(commentID, videoID)
-
-  # Check Modes: Name and Text
-  elif filterMode == "NameAndText":
-    if filterSubMode == "chars":
+    # Check Modes: Auto Smart (in username or comment text)
+    ## Also Check if reply author ID is same as parent comment author ID, if so, ignore (to account for users who reply to spammers)
+    elif filterMode == "AutoSmart":
       authorChannelName = make_char_set(str(authorChannelName))
       commentText = make_char_set(str(commentText))
       if any(x in inputtedUsernameFilter for x in authorChannelName):
         add_spam(commentID, videoID)
       elif any(x in inputtedCommentTextFilter for x in commentText):
-        add_spam(commentID, videoID)
-    elif filterSubMode == "string":
-      if check_list_against_string(listInput=inputtedUsernameFilter, stringInput=authorChannelName, caseSensitive=False):
-        add_spam(commentID, videoID)
-      if check_list_against_string(listInput=inputtedCommentTextFilter, stringInput=commentText, caseSensitive=False):
-        add_spam(commentID, videoID)
-    elif filterSubMode == "regex":
-      if re.search(str(regexPattern), authorChannelName):
-        add_spam(commentID, videoID)
-      if re.search(str(regexPattern), commentText):
-        add_spam(commentID, videoID)
-
-  # Check Modes: Auto ASCII (in username)
-  elif filterMode == "AutoASCII":
-    if re.search(str(regexPattern), authorChannelName):
-      add_spam(commentID, videoID)
-
-  # Check Modes: Auto Smart (in username or comment text)
-  ## Also Check if reply author ID is same as parent comment author ID, if so, ignore (to account for users who reply to spammers)
-  elif filterMode == "AutoSmart":
-    authorChannelName = make_char_set(str(authorChannelName))
-    commentText = make_char_set(str(commentText))
-    if any(x in inputtedUsernameFilter for x in authorChannelName):
-      add_spam(commentID, videoID)
-    elif any(x in inputtedCommentTextFilter for x in commentText):
-      if authorChannelID != parentAuthorChannelID:
-        add_spam(commentID, videoID)
+        if authorChannelID != parentAuthorChannelID:
+          add_spam(commentID, videoID)
+  else:
+    pass
 
 
 
@@ -600,6 +601,9 @@ def get_channel_id(video_id):
   return channel_id
 
 ############################# GET CURRENTLY LOGGED IN USER #####################################
+# Class for custom exception to throw if a comment if invalid channel ID returned
+class ChannelIDError(Exception):
+    pass
 # Get channel ID and channel title of the currently authorized user
 def get_current_user():
   global youtube
@@ -625,6 +629,9 @@ def get_current_user():
 
   try:
     channelID = results["items"][0]["id"]
+    IDCheck = validate_channel_id(channelID)
+    if IDCheck[0] == False:
+      raise ChannelIDError
     try:
       channelTitle = results["items"][0]["snippet"]["title"] # If channel ID was found, but not channel title/name
     except KeyError:
@@ -633,10 +640,17 @@ def get_current_user():
       channelTitle = ""
       input("Press Enter to Continue...")
       pass
+  except ChannelIDError:
+    traceback.print_exc()
+    print("\nError: Still unable to get channel info. Big Bruh Moment. Try deleting token.pickle. The info above might help if you want to report a bug.")
+    print("Note: A channel ID was retrieved but is invalid: " + str(channelID))
+    input("\nPress Enter to Exit...")
+    exit()
   except KeyError:
     traceback.print_exc()
     print("\nError: Still unable to get channel info. Big Bruh Moment. Try deleting token.pickle. The info above might help if you want to report a bug.")
     input("\nPress Enter to Exit...")
+    exit()
     
 
   return channelID, channelTitle
@@ -869,6 +883,7 @@ def check_list_against_string(listInput, stringInput, caseSensitive=False):
 
 ############################# Check Username Against Filter ##############################
 # Check the own user's username against a filter, warn if it matches
+# Note: Most uses of this function are obsolete after changing it so the program totally ignores current users's own comments
 def safety_check_username_against_filter(currentUserName, scanMode, filterCharsSet=None, filterStringList=None, regexPattern=None):
   currentUsernameChars = make_char_set(currentUserName)
   deletionEnabledLocal = "False"
@@ -876,57 +891,25 @@ def safety_check_username_against_filter(currentUserName, scanMode, filterCharsS
 
   if filterCharsSet:
     if any(x in filterCharsSet for x in currentUsernameChars):
-      print(f"\n{B.LIGHTRED_EX}{F.BLACK}WARNING!{S.R} Character(s) you entered are within {F.LIGHTRED_EX}your own username{S.R}, ' " + currentUserName + " '! : " + str(filterCharsSet & currentUsernameChars))
-      print("    (Some symbols above may not show in windows console, copy+paste them into a word processor to see the symbols)")
-      if scanMode == 1:
-        print("Are you SURE you want to search your own comments? (You WILL still get a confirmation before deleting)")
-        if choice("Choose") == True:
-          deletionEnabledLocal = "HalfTrue"
-          proceed=True
-      elif scanMode == 2:
-        print(f"For safety purposes, this program's delete functionality is {F.LIGHTGREEN_EX}disabled{S.R} when scanning for yourself across your entire channel.")
-        print(f"Choose {F.LIGHTRED_EX}'N'{S.R} to choose different characters. Choose {F.GREEN}'Y'{S.R} to continue  (But you will get an error when trying to delete!)\n")
-        if choice("Continue?") == True:
-          proceed = True
-    else:
-      proceed = True
-      deletionEnabledLocal = "HalfTrue"
+      print(f"\n{B.LIGHTRED_EX}{F.BLACK}NOTE!{S.R} Character(s) you entered are within {F.LIGHTRED_EX}your own username{S.R}, ' " + currentUserName + " '! : " + str(filterCharsSet & currentUsernameChars))
+      print("       (Some symbols above may not show in windows console)")
+      print(f"\n  This program will {F.YELLOW}ignore{S.R} any comments made by you (by checking the author channel ID)")
+      input("\nPress enter to continue...")    
   
   elif filterStringList:
-    #if filterString in currentUserName:
     if check_list_against_string(listInput=filterStringList, stringInput=currentUserName, caseSensitive=False):
-      print(f"\n{B.LIGHTRED_EX}{F.BLACK}WARNING!{S.R} A string you entered is within {F.LIGHTRED_EX}your own username{S.R}!")
-      if scanMode == 1:
-        print("Are you SURE you want to search your own comments? (You WILL still get a confirmation before deleting)")
-        if choice("Choose") == True:
-          deletionEnabledLocal = "HalfTrue"
-          proceed=True
-      elif scanMode == 2:
-        print(f"For safety purposes, this program's delete functionality is {F.LIGHTGREEN_EX}disabled{S.R} when scanning for yourself across your entire channel.")
-        print(f"Choose {F.LIGHTRED_EX}'N'{S.R} to choose different characters. Choose {F.GREEN}'Y'{S.R} to continue  (But you will get an error when trying to delete!)\n")
-        if choice("Continue?") == True:
-          proceed = True
-    else:
-      proceed = True
-      deletionEnabledLocal = "HalfTrue"
+      print(f"\n{B.LIGHTRED_EX}{F.BLACK}NOTE!{S.R} A string you entered is within {F.LIGHTRED_EX}your own username{S.R}!")
+      print(f"\n  This program will {F.YELLOW}ignore{S.R} any comments made by you (by checking the author channel ID)")
+      input("\nPress enter to continue...")
 
   elif regexPattern:
     if re.search(regexPattern, currentUserName):
-      print(f"{B.RED}{F.WHITE}!! WARNING !!{S.R} This search mode / pattern would detect {F.LIGHTRED_EX}your own username{S.R}!")
-      if scanMode == 1:
-        if choice("Are you REALLY sure you want to continue?") == True:
-          deletionEnabledLocal = "HalfTrue"
-          proceed = True
-      elif scanMode == 2:
-        print(f"For safety purposes, this program's delete functionality is {F.GREEN}disabled{S.R} when scanning for yourself across your entire channel.")
-        print("Choose 'N' to choose a different filter sensitivity. Choose 'Y' to continue  (But you will get an error when trying to delete!)\n")
-        if choice("Continue?") == True:
-          proceed = True
-    else:
-      proceed = True
-      deletionEnabledLocal = "HalfTrue"
+      print(f"{B.RED}{F.WHITE}NOTE!{S.R} This search mode / pattern would detect {F.LIGHTRED_EX}your own username{S.R}!")
+      print(f"\n  This program will {F.YELLOW}ignore{S.R} any comments made by you (by checking the author channel ID)")
+      input("\nPress enter to continue...")
 
-  
+  proceed = True
+  deletionEnabledLocal = "HalfTrue"
 
   return proceed, deletionEnabledLocal
 
@@ -1070,26 +1053,12 @@ def prepare_filter_mode_ID(currentUser, deletionEnabledLocal, scanMode):
 
   # Check if spammer ID and user's channel ID are the same, and warn
   # If using channel-wide scanning mode, program will not run for safety purposes
-  if any(currentUserID == i for i in inputtedSpammerChannelID) and scanMode == 2:
-    print(f"{B.RED}{F.WHITE} WARNING: {S.R} - You are scanning for your own channel ID!")
-    print("For safety purposes, this program's delete functionality is disabled when scanning for yourself across your entire channel.")
-    print("If you want to delete your own comments for testing purposes, you can instead scan an individual video.")
-    confirmation = choice("Continue?")
-    if confirmation == False:
-      input("Ok, Cancelled. Press Enter to Exit...")
-      exit()
-  elif any(currentUserID == i for i in inputtedSpammerChannelID) and scanMode == 1:
-    print(f"{B.RED}{F.WHITE} WARNING: {S.R} You are scanning for your own channel ID! This would delete all of your comments on the video!")
-    print("     (You WILL still be asked to confirm before actually deleting anything)")
-    print("If you are testing and want to scan and/or delete your own comments, enter 'Y' to continue, otherwise enter 'N' to exit.")
-    confirmation = choice("Continue?")
-    if confirmation == True:  # After confirmation, deletion functionality is eligible to be enabled later
-      deletionEnabledLocal = "HalfTrue"
-    elif confirmation == False:
-      input("Ok, Cancelled. Press Enter to Exit...")
-      exit()
-  else: 
-    deletionEnabledLocal = "HalfTrue" # If no matching problem found, deletion functionality is eligible to be enabled later
+  if any(currentUserID == i for i in inputtedSpammerChannelID):
+    print(f"{B.RED}{F.WHITE} WARNING: {S.R} - You entered your own channel ID!")
+    print(f"For safety purposes, this program always {F.YELLOW}ignores{S.R} your own comments.")
+    input("\nPress Enter to continue...")
+  
+  deletionEnabledLocal = "HalfTrue"
   return deletionEnabledLocal, inputtedSpammerChannelID
 
 # For Filter mode auto-ascii, user inputs nothing, program scans for non-ascii
@@ -1146,7 +1115,6 @@ def prepare_filter_mode_non_ascii(currentUser, deletionEnabledLocal, scanMode):
 # Auto filter for pre-made list of common spammer-used characters in usernames
 def prepare_filter_mode_smart_chars(currentUser, deletionEnabledLocal, scanMode):
   currentUserName = currentUser[1]
-  currentUsernameChars = make_char_set(currentUserName)
 
   print("\n--------------------------------------------------------------------------------------------------------------")
   print("~~~ This mode is pre-programmed to search usernames for special characters almost exclusively used by spammers ~~~\n")
@@ -1228,9 +1196,9 @@ def main():
       print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
       input("\nSomething went wrong during authentication. Try deleting token.pickle file. Press Enter to exit...")
       exit()
-  
-  # Intro message
-  print(f"{F.YELLOW}\n============ YOUTUBE SPAMMER PURGE v" + version + f" ============{S.R}")
+
+  #----------------------------------- Begin Showing Program --------------------------------------------------
+    print(f"{F.YELLOW}\n============ YOUTUBE SPAMMER PURGE v" + version + f" ============{S.R}")
   print("== https://github.com/ThioJoe/YouTube-Spammer-Purge ==")
   print("======== Author: ThioJoe - YouTube.com/ThioJoe ======= \n")
 
@@ -1409,12 +1377,12 @@ def main():
   try:
     # Goes to get comments for first page
     print("Scanning... \n")
-    nextPageToken = get_comments(youtube, filterMode, filterSubMode, check_video_id, check_channel_id, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, regexPattern=regexPattern)
+    nextPageToken = get_comments(youtube, currentUser, filterMode, filterSubMode, check_video_id, check_channel_id, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, regexPattern=regexPattern)
     print_count_stats(final=False)  # Prints comment scan stats, updates on same line
 
     # After getting first page, if there are more pages, goes to get comments for next page
     while nextPageToken != "End" and scannedCommentsCount < maxScanNumber:
-      nextPageToken = get_comments(youtube, filterMode, filterSubMode, check_video_id, check_channel_id, nextPageToken, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, regexPattern=regexPattern)
+      nextPageToken = get_comments(youtube, currentUser, filterMode, filterSubMode, check_video_id, check_channel_id, nextPageToken, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, regexPattern=regexPattern)
     print_count_stats(final=True)  # Prints comment scan stats, finalizes
   ##########################################################
 
@@ -1473,13 +1441,9 @@ def main():
         exit()
       elif confirmDelete == "YES":
         deletionEnabled = "True"
-    elif deletionEnabled == "False" and inputtedSpammerChannelID == currentUser[0] and scanMode == 2:
-      print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
-      input(f"\n{F.LIGHTGREEN_EX}Deletion functionality disabled for this scanning mode because you scanned your own channel.{S.R} Press Enter to exit...")
-      exit()
     else:
       print("\nThe deletion functionality was not enabled. Cannot delete comments.")
-      print("Possible Causes: You're trying to scan someone elses video, or your search criteria matched your own channel in channel-wide scan mode.")
+      print("Possible Cause: You're trying to scan someone elses video.")
       print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
       input("Press Enter to exit...")
       exit()
