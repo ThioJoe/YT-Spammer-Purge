@@ -293,13 +293,13 @@ def get_comments(youtube, currentUser, filterMode, filterSubMode, check_video_id
       fields=fieldsToFetch,
       textFormat="plainText"
     ).execute()  
-
+    
   # Get token for next page
   try:
     RetrievedNextPageToken = results["nextPageToken"]
   except KeyError:
     RetrievedNextPageToken = "End"  
- 
+  
   # After getting all comments threads for page, extracts data for each and stores matches in spamCommentsID
   # Also goes through each thread and executes get_replies() to get reply content and matches
   for item in results["items"]:
@@ -336,14 +336,14 @@ def get_comments(youtube, currentUser, filterMode, filterSubMode, check_video_id
     # Runs check against comment info for whichever filter data is relevant
     check_against_filter(currentUser, filterMode=filterMode, filterSubMode=filterSubMode, commentID=parent_id, videoID=videoID, authorChannelID=parentAuthorChannelID, parentAuthorChannelID=None, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, authorChannelName=authorChannelName, commentText=commentText, regexPattern=regexPattern)
     scannedCommentsCount += 1  # Counts number of comments scanned, add to global count
-
+    
     if numReplies > 0 and len(limitedRepliesList) < numReplies:
       get_replies(currentUser, filterMode, filterSubMode, parent_id, videoID, parentAuthorChannelID, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern)
     elif numReplies > 0 and len(limitedRepliesList) <= numReplies:
       get_replies(currentUser, filterMode, filterSubMode, parent_id, videoID, parentAuthorChannelID, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern, limitedRepliesList)
     else:
       print_count_stats(final=False)  # Updates displayed stats if no replies
-  
+
   return RetrievedNextPageToken
 
 
@@ -1338,7 +1338,7 @@ def prepare_filter_mode_non_ascii(currentUser, deletionEnabledLocal, scanMode, c
 # Auto filter for pre-made list of common spammer-used characters in usernames
 def prepare_filter_mode_smart_chars(currentUser, deletionEnabledLocal, scanMode, config):
   currentUserName = currentUser[1]
-  if config and config["filtering"]["smart_chars_sensitivity"] != "ask":
+  if config and config["filtering"]["filter_mode"] == "AutoSmart":
     print("Using Auto Smart Mode - Set from config file.")
     bypass = True
   else:
@@ -1677,7 +1677,6 @@ def main():
     print("                    Scanning... \n")
     nextPageToken = get_comments(youtube, currentUser, filterMode, filterSubMode, check_video_id, check_channel_id, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, regexPattern=regexPattern)
     print_count_stats(final=False)  # Prints comment scan stats, updates on same line
-
     # After getting first page, if there are more pages, goes to get comments for next page
     while nextPageToken != "End" and scannedCommentsCount < maxScanNumber:
       nextPageToken = get_comments(youtube, currentUser, filterMode, filterSubMode, check_video_id, check_channel_id, nextPageToken, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, regexPattern=regexPattern)
