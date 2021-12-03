@@ -38,22 +38,32 @@
 version = "1.7.0-Testing"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
+# GUI Related
 from gui import *
 
+# Standard Libraries
 import os
 import re
 import sys
+import time
 from datetime import datetime
 import traceback
 import platform
-import rtfunicode
+import requests
+from configparser import ConfigParser
+from distutils.version import LooseVersion
 
+# Non Standard Modules
+import rtfunicode
+from colorama import init, Fore as F, Back as B, Style as S
+
+# Google Authentication Modules
 from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
-from colorama import init, Fore as F, Back as B, Style as S
+
 
 ##########################################################################################
 ################################## AUTHORIZATION #########################################
@@ -132,14 +142,17 @@ def print_comments(check_video_id_localprint, comments, logMode):
     correctly_ordered_comments_list.extend(k)
 
   # Print Sample Match List
+  valuesPreparedToWrite = ""
+  valuesPreparedToPrint = ""
   print(f"{F.LIGHTMAGENTA_EX}---------------------------- Match Samples: One comment per matched-comment author ----------------------------{S.R}")
-  if logMode == True:
-      write_rtf(logFileName, "-------------------- Match Samples: One comment per matched-comment author -------------------- \\line\\line \n")
   for value in matchSamplesDict.values():
-    print(value)
-    if logMode == True:
-      write_rtf(logFileName, make_rtf_compatible(value) + " \\line \n")
-  print("---------------------------------------------------------------------------------------------------------------")
+    valuesPreparedToWrite = valuesPreparedToWrite + make_rtf_compatible(str(value)) + " \\line \n"
+    valuesPreparedToPrint = valuesPreparedToPrint + str(value) + "\n"
+  if logMode == True:
+    write_rtf(logFileName, "-------------------- Match Samples: One comment per matched-comment author -------------------- \\line\\line \n")
+    write_rtf(logFileName, valuesPreparedToWrite)
+  print(valuesPreparedToPrint)
+  print(f"{F.LIGHTMAGENTA_EX}---------------------------------------------------------------------------------------------------------------{S.R}")
 
   return correctly_ordered_comments_list
 
@@ -491,11 +504,11 @@ def check_against_filter(currentUser, filterMode, filterSubMode, commentID, vide
 ########################################################################################## 
 
 # Takes in list of comment IDs to delete, breaks them into 50-comment chunks, and deletes them in groups
-def delete_found_comments(commentsList,banChoice):
+def delete_found_comments(commentsList,banChoice, deletionMode):
 
     # Deletes specified comment IDs
     def delete(commentIDs):
-        youtube.comments().setModerationStatus(id=commentIDs, moderationStatus="rejected", banAuthor=banChoice).execute()
+        youtube.comments().setModerationStatus(id=commentIDs, moderationStatus=deletionMode, banAuthor=banChoice).execute()
 
     total = len(commentsList)
     deletedCounter = 0  
@@ -527,44 +540,58 @@ def check_deleted_comments(commentsVideoDictionary):
     i = 0 # Count number of remaining comments
     j = 1 # Count number of checked
     total = len(commentsVideoDictionary)
+    unsuccessfulResults = []
+
+    # Wait 2 seconds so YouTube API has time to update comment status
+    print("Preparing...", end="\r")
+    time.sleep(1)
+    print("                               ")
     for key, value in commentsVideoDictionary.items():
-        try:
-          results = youtube.comments().list(
-              part="snippet",
-              id=key,  
-              maxResults=1,
-              fields="items",
-              textFormat="plainText"
-          ).execute()
-          print("Verifying Deleted Comments: [" + str(j) + " / " + str(total) + "]", end="\r")
-          j += 1
+      try:
+        results = youtube.comments().list(
+          part="snippet",
+          id=key,  
+          maxResults=1,
+          fields="items",
+          textFormat="plainText"
+        ).execute()
+        print("Verifying Deleted Comments: [" + str(j) + " / " + str(total) + "]", end="\r")
+        j += 1
 
-          if results["items"]:  # Check if the items result is empty
-            raise CommentFoundError
+        if results["items"]:  # Check if the items result is empty
+          raise CommentFoundError
 
-        # If comment is found and possibly not deleted, print out video ID and comment ID
-        except CommentFoundError:
-          print("Possible Issue Deleting Comment: " + str(key) + " |  Check Here: " + "https://www.youtube.com/watch?v=" + str(value) + "&lc=" + str(key))
-          i += 1
-          pass
-        except Exception:
-          print("Unhandled Exception While Deleting Comment: " + str(key) + " |  Check Here: " + "https://www.youtube.com/watch?v=" + str(value) + "&lc=" + str(key))
-          i += 1
-          pass
+      # If comment is found and possibly not deleted, print out video ID and comment ID
+      except CommentFoundError:
+        print("Possible Issue Deleting Comment: " + str(key) + " |  Check Here: " + "https://www.youtube.com/watch?v=" + str(value) + "&lc=" + str(key))
+        i += 1
+        unsuccessfulResults.append(results)
+        pass
+      except Exception:
+        print("Unhandled Exception While Deleting Comment: " + str(key) + " |  Check Here: " + "https://www.youtube.com/watch?v=" + str(value) + "&lc=" + str(key))
+        i += 1
+        unsuccessfulResults.append(results)
+        pass
 
     if i == 0:
-        print("\n\nSuccess: All spam comments should be gone.")
+      print("\n\nSuccess: All spam comments should be gone.")
     elif i > 0:
-        print("\n\nWarning: " + str(i) + " spam comments may remain. Check links above or try running the program again.")
+      print("\n\nWarning: " + str(i) + " spam comments may remain. Check links above or try running the program again.")
+      # Write error log
+      f = open("Deletion_Error_Log.txt", "a")
+      f.write("----- YT Spammer Purge Error Log: Possible Issue Deleting Comments ------\n\n")
+      f.write(str(unsuccessfulResults))
+      f.write("\n\n")
+      f.close()
     else:
-        print("\n\nSomething strange happened... The comments may or may have not been deleted.")
+      print("\n\nSomething strange happened... The comments may or may have not been deleted.")
 
     return None
 
 
 
 ##########################################################################################
-############################### LESSER FUNCTIONS #########################################
+############################## UTILITY FUNCTIONS #########################################
 ########################################################################################## 
 
 ################################### GET VIDEO TITLE ###############################################
@@ -605,7 +632,7 @@ def get_channel_id(video_id):
 class ChannelIDError(Exception):
     pass
 # Get channel ID and channel title of the currently authorized user
-def get_current_user():
+def get_current_user(config):
   global youtube
 
   #Define fetch function so it can be re-used if issue and need to re-run it
@@ -651,9 +678,24 @@ def get_current_user():
     print("\nError: Still unable to get channel info. Big Bruh Moment. Try deleting token.pickle. The info above might help if you want to report a bug.")
     input("\nPress Enter to Exit...")
     exit()
-    
+  
+  if config == None:
+    configMatch = None
+  elif config and config['general']['your_channel_id'] == "ask":
+    configMatch = None
+  elif validate_channel_id(config['general']['your_channel_id'])[0] == True:
+    if config['general']['your_channel_id'] == channelID:
+      configMatch = True
+    else:
+      print("Error: The channel ID in the config file appears to be valid, but does not match the channel ID of the currently logged in user.")
+      input("Please check the config file. Press Enter to Exit...")
+      exit()
+  else:
+    print("Error: The channel ID in the config file appears to be invalid.")
+    input("Please check the config file. Press Enter to Exit...")
+    exit()
 
-  return channelID, channelTitle
+  return channelID, channelTitle, configMatch
 
 ################################# VIDEO ID LOOKUP ##############################################
 # Using comment ID, get corresponding video ID from dictionary variable
@@ -736,7 +778,10 @@ def validate_channel_id(inputted_channel):
 # User inputs Y/N for choice, returns True or False
 # Takes in message to display
 
-def choice(message=""):
+def choice(message="", bypass=False):
+  if bypass == True:
+    return True
+
   # While loop until valid input
   valid = False
   while valid == False:
@@ -884,41 +929,158 @@ def check_list_against_string(listInput, stringInput, caseSensitive=False):
 ############################# Check Username Against Filter ##############################
 # Check the own user's username against a filter, warn if it matches
 # Note: Most uses of this function are obsolete after changing it so the program totally ignores current users's own comments
-def safety_check_username_against_filter(currentUserName, scanMode, filterCharsSet=None, filterStringList=None, regexPattern=None):
+def safety_check_username_against_filter(currentUserName, scanMode, filterCharsSet=None, filterStringList=None, regexPattern=None, bypass = False):
   currentUsernameChars = make_char_set(currentUserName)
   deletionEnabledLocal = "False"
   proceed = False
+  if bypass != True:
+    if filterCharsSet:
+      if any(x in filterCharsSet for x in currentUsernameChars):
+        print(f"\n{B.LIGHTRED_EX}{F.BLACK}NOTE!{S.R} Character(s) you entered are within {F.LIGHTRED_EX}your own username{S.R}, ' " + currentUserName + " '! : " + str(filterCharsSet & currentUsernameChars))
+        print("       (Some symbols above may not show in windows console)")
+        print(f"\n  This program will {F.YELLOW}ignore{S.R} any comments made by you (by checking the author channel ID)")
+        input("\nPress enter to continue...")    
+    
+    elif filterStringList:
+      if check_list_against_string(listInput=filterStringList, stringInput=currentUserName, caseSensitive=False):
+        print(f"\n{B.LIGHTRED_EX}{F.BLACK}NOTE!{S.R} A string you entered is within {F.LIGHTRED_EX}your own username{S.R}!")
+        print(f"\n  This program will {F.YELLOW}ignore{S.R} any comments made by you (by checking the author channel ID)")
+        input("\nPress enter to continue...")
 
-  if filterCharsSet:
-    if any(x in filterCharsSet for x in currentUsernameChars):
-      print(f"\n{B.LIGHTRED_EX}{F.BLACK}NOTE!{S.R} Character(s) you entered are within {F.LIGHTRED_EX}your own username{S.R}, ' " + currentUserName + " '! : " + str(filterCharsSet & currentUsernameChars))
-      print("       (Some symbols above may not show in windows console)")
-      print(f"\n  This program will {F.YELLOW}ignore{S.R} any comments made by you (by checking the author channel ID)")
-      input("\nPress enter to continue...")    
-  
-  elif filterStringList:
-    if check_list_against_string(listInput=filterStringList, stringInput=currentUserName, caseSensitive=False):
-      print(f"\n{B.LIGHTRED_EX}{F.BLACK}NOTE!{S.R} A string you entered is within {F.LIGHTRED_EX}your own username{S.R}!")
-      print(f"\n  This program will {F.YELLOW}ignore{S.R} any comments made by you (by checking the author channel ID)")
-      input("\nPress enter to continue...")
-
-  elif regexPattern:
-    if re.search(regexPattern, currentUserName):
-      print(f"{B.RED}{F.WHITE}NOTE!{S.R} This search mode / pattern would detect {F.LIGHTRED_EX}your own username{S.R}!")
-      print(f"\n  This program will {F.YELLOW}ignore{S.R} any comments made by you (by checking the author channel ID)")
-      input("\nPress enter to continue...")
+    elif regexPattern:
+      if re.search(regexPattern, currentUserName):
+        print(f"{B.RED}{F.WHITE}NOTE!{S.R} This search mode / pattern would detect {F.LIGHTRED_EX}your own username{S.R}!")
+        print(f"\n  This program will {F.YELLOW}ignore{S.R} any comments made by you (by checking the author channel ID)")
+        input("\nPress enter to continue...")
 
   proceed = True
   deletionEnabledLocal = "HalfTrue"
 
   return proceed, deletionEnabledLocal
 
+############################# Check For Update ##############################
+def check_for_update(currentVersion):
+  try:
+    response = requests.get("https://api.github.com/repos/ThioJoe/YouTube-Spammer-Purge/releases/latest")
+    latestVersion = response.json()["name"]
+  except Exception as e:
+    print(e + "\n")
+    print(f"{B.RED}{F.WHITE}Error:{S.R} Problem checking for update! See above error for more details.\n")
+    input("Press enter to Exit...")
+    exit()
+
+  if LooseVersion(latestVersion) > LooseVersion(currentVersion):
+    print(f"A {F.LIGHTGREEN_EX}new version{S.R} is available!")
+    print("Current Version: " + currentVersion)
+    print("Latest Version: " + latestVersion)
+    print("Available Here: https://github.com/ThioJoe/YouTube-Spammer-Purge/releases")
+    print("     Note - To copy from windows console: Right Click > Choose 'Mark' > Highlight the text > Use Ctrl-C")
+    input("\nPress enter to Exit...")
+    exit()
+  elif LooseVersion(latestVersion) == LooseVersion(currentVersion):
+    print("\nYou have the latest version: " + currentVersion)
+  else:
+    print("\nNo newer release available - Your Version: " + currentVersion + "  --  Latest Version: " + latestVersion)
+    input("\nPress enter to Exit...")
+    exit()
+
+############################# CONFIG FILE FUNCTIONS ##############################
+def create_config_file():
+
+  def config_path(relative_path):
+    if hasattr(sys, '_MEIPASS'): # If running as a pyinstaller bundle
+        #print("Test1") # For Debugging
+        #print(os.path.join(sys._MEIPASS, relative_path)) # For Debugging
+        return os.path.join(sys._MEIPASS, relative_path)
+    #print("Test2") # for Debugging
+    #print(os.path.join(os.path.abspath("assets"), relative_path)) # For debugging
+    return os.path.join(os.path.abspath(""), relative_path) # If running as script, specifies resource folder as /assets
+
+
+  configFileName = "SpamPurgeConfig.ini"
+  confirm = True
+  if os.path.exists(configFileName):
+    print(f"{B.RED}{F.WHITE}WARNING!{S.R} {F.YELLOW}SpamPurgeConfig.ini{S.R} file already exists. This would overwrite the existing file.")
+    confirm = choice("Create new empty config file and overwrite existing?")
+    if confirm == True:
+      try:
+        os.remove(configFileName)
+      except:
+        traceback.print_exc()
+        print("Error when deleting existing existing file! Check if it's gone. The info above may help if it's a bug.")
+        input("Press enter to Exit...")
+        exit()
+    else:
+      return None
+
+  if confirm == True:
+    # Get default config file contents
+    try:
+      with open(config_path('default_config.ini'), 'r', encoding="utf-8") as defaultConfigFile:
+        data = defaultConfigFile.read()
+      defaultConfigFile.close()
+    except:
+      traceback.print_exc()
+      print(f"{B.RED}{F.WHITE}ERROR!{S.R} Problem reading default config file! The info above may help if it's a bug.")
+      input("Press enter to Exit...")
+      exit()
+
+    # Create config file
+    try:
+      configFile = open(configFileName, "w", encoding="utf-8")
+      configFile.write(data)
+      configFile.close()
+    except:
+      traceback.print_exc()
+      print(f"{B.RED}{F.WHITE}ERROR!{S.R} Problem creating config file! The info above may help if it's a bug.")
+      input("Press enter to Exit...")
+      exit()
+
+    if os.path.exists(configFileName):
+      parser = ConfigParser()
+      try:
+        parser.read("SpamPurgeConfig.ini")
+        if parser.get("general", "prompt_use_config") == "True":
+          print(f"{B.GREEN}{F.WHITE}SUCCESS!{S.R} {F.YELLOW}SpamPurgeConfig.ini{S.R} file created successfully.")
+          print("\nYou can now edit the file to your liking.\n")
+          input("Press enter to Exit...")
+          exit()
+        else:
+          print("Something might have gone wrong. Check if SpamPurgeConfig.ini file exists and has text.")
+          input("Press enter to Exit...")
+          exit()
+      except SystemExit:
+        exit()
+      except:
+        traceback.print_exc()
+        print("Something went wrong when checking the created file. Check if SpamPurgeConfig.ini exists and has text. The info above may help if it's a bug.")
+        input("Press enter to Exit...")
+        exit()
+  else:
+    return None
+
+# Put config settings into dictionary
+def load_config_file():
+    if os.path.exists("SpamPurgeConfig.ini"):
+      parser = ConfigParser()
+      try:
+        parser.read("SpamPurgeConfig.ini")
+        ConfigDict = {s:dict(parser.items(s)) for s in parser.sections()}
+      except:
+        traceback.print_exc()
+        print(f"{B.RED}{F.WHITE}ERROR!{S.R} Problem loading config file! The info above may help if it's a bug.")
+        input("Press enter to Exit...")
+        exit()
+      return ConfigDict
+    else:
+      return None
+
 ##########################################################################################
 ################################## FILTERING MODES #######################################
 ##########################################################################################
 
 # For scanning for individual chars
-def prepare_filter_mode_chars(currentUser, deletionEnabledLocal, scanMode, filterMode):
+def prepare_filter_mode_chars(currentUser, deletionEnabledLocal, scanMode, filterMode, config):
   currentUserName = currentUser[1]
   if filterMode == "Username":
     whatToScanMsg = "Usernames"
@@ -927,42 +1089,57 @@ def prepare_filter_mode_chars(currentUser, deletionEnabledLocal, scanMode, filte
   elif filterMode == "NameAndText":
     whatToScanMsg = "Usernames and Comment Text"
 
-  print(f"\nNext, you will input {F.YELLOW}ONLY{S.R} any special characters / emojis you want to search for in all {whatToScanMsg}. Do not include commas or spaces!")
-  print("          Note: Letters, numbers, and basic punctuation will not be included for safety purposes, even if you enter them.")
-  print("          Example: 👋🔥✔️✨")
-  input(f"\nPress {F.LIGHTGREEN_EX}Enter{S.R} to open the {F.LIGHTGREEN_EX}text entry window{S.R}...")
-  print("-------------------------------------------")
+  if config and config["filtering"]["characters_to_filter"] != "ask":
+    print("Characters to filter obtained from config file.")
+    pass
+  else:
+    print(f"\nNext, you will input {F.YELLOW}ONLY{S.R} any special characters / emojis you want to search for in all {whatToScanMsg}. Do not include commas or spaces!")
+    print("          Note: Letters, numbers, and basic punctuation will not be included for safety purposes, even if you enter them.")
+    print("          Example: 👋🔥✔️✨")
+    input(f"\nPress {F.LIGHTGREEN_EX}Enter{S.R} to open the {F.LIGHTGREEN_EX}text entry window{S.R}...")
+    print("-------------------------------------------")
 
   validEntry = False
+  validConfig = True
   while validEntry == False:
-    print(f"\nWaiting for input Window. Press {F.MAGENTA}'Execute'{S.R} after entering valid characters to continue...", end="\r")
-    try:
-      # Takes in user input of characters, returns 'set' of characters stripped of specified characters
-      inputChars = take_input_gui(mode="chars", stripLettersNumbers=True, stripKeyboardSpecialChars=False, stripPunctuation=True)
-    except NameError: # Catch if user closes GUI window, exit program.
-      print("                                                                                          ") # Clears the line because of \r on previous print
-      print("\nSomething went wrong with the input, or you closed the window improperly.")
-      input("Press Enter to exit...")
-      exit()
+    if validConfig == True and config and config["filtering"]["characters_to_filter"] != "ask":
+      inputChars = make_char_set(config["filtering"]["characters_to_filter"], stripLettersNumbers=True, stripKeyboardSpecialChars=False, stripPunctuation=True)
+      bypass = True
+    else:
+      bypass = False
+      print(f"\nWaiting for input Window. Press {F.MAGENTA}'Execute'{S.R} after entering valid characters to continue...", end="\r")
+      try:
+        # Takes in user input of characters, returns 'set' of characters stripped of specified characters
+        inputChars = take_input_gui(mode="chars", stripLettersNumbers=True, stripKeyboardSpecialChars=False, stripPunctuation=True)
+      except NameError: # Catch if user closes GUI window, exit program.
+        print("                                                                                          ") # Clears the line because of \r on previous print
+        print("\nSomething went wrong with the input, or you closed the window improperly.")
+        input("Press Enter to exit...")
+        exit()
+
     if filterMode == "Username" or filterMode == "NameAndText":
-      validEntry, deletionEnabledLocal = safety_check_username_against_filter(currentUserName, scanMode, filterCharsSet=inputChars)
+      validEntry, deletionEnabledLocal = safety_check_username_against_filter(currentUserName, scanMode, filterCharsSet=inputChars, bypass=bypass)
     elif filterMode == "Text":
       validEntry = True
 
     if validEntry == True:
-      print(f"     {whatToScanMsg} will be scanned for {F.MAGENTA}ANY{S.R} of the characters you entered in the previous window.")
-      if choice("Begin Scanning? ") == True:
+      if validConfig == True and config and config["filtering"]["characters_to_filter"] != "ask":
+        pass
+      else:
+        print(f"     {whatToScanMsg} will be scanned for {F.MAGENTA}ANY{S.R} of the characters you entered in the previous window.")
+      if choice("Begin Scanning? ", bypass) == True:
         validEntry = True
         if filterMode == "Text":
           deletionEnabledLocal = "HalfTrue"
       else:
         validEntry = False
         deletionEnabledLocal = "False"
-        
+        validConfig = False
+
   return deletionEnabledLocal, inputChars
 
 # For scanning for strings
-def prepare_filter_mode_strings(currentUser, deletionEnabledLocal, scanMode, filterMode):
+def prepare_filter_mode_strings(currentUser, deletionEnabledLocal, scanMode, filterMode, config):
   currentUserName = currentUser[1]
   if filterMode == "Username":
     whatToScanMsg = "Usernames"
@@ -971,27 +1148,41 @@ def prepare_filter_mode_strings(currentUser, deletionEnabledLocal, scanMode, fil
   elif filterMode == "NameAndText":
     whatToScanMsg = "Usernames and Comment Text"
 
-  print(f"\nPaste or type in a list of any {F.YELLOW}comma separated strings{S.R} you want to search for in {whatToScanMsg}. (Not case sensitive)")
-  print("   >Note: If the text you paste includes special characters or emojis, they might not display correctly here, but it WILL still search them fine.")
-  print("          Example Input: whatsapp, whatever multiple words, investment")
+  if config and config["filtering"]["strings_to_filter"] != "ask":
+    print("Strings to filter obtained from config file.")
+    pass
+  else:
+    print(f"\nPaste or type in a list of any {F.YELLOW}comma separated strings{S.R} you want to search for in {whatToScanMsg}. (Not case sensitive)")
+    print("   >Note: If the text you paste includes special characters or emojis, they might not display correctly here, but it WILL still search them fine.")
+    print("          Example Input: whatsapp, whatever multiple words, investment")
 
   validEntry = False
+  validConfig = True
   while validEntry == False:
-    inputString = input("Input Here: ")
+    if validConfig == True and config and config["filtering"]["strings_to_filter"] != "ask":
+      inputString = config["filtering"]["strings_to_filter"]
+      bypass = True
+    else:
+      bypass = False
+      inputString = input("Input Here: ")
 
     # Convert comma separated string into list with function, then check against current user's name
     filterStringList = string_to_list(inputString, lower=True)
     if len(filterStringList) > 0:
       if filterMode == "Username" or filterMode == "NameAndText":
-        validEntry, deletionEnabledLocal = safety_check_username_against_filter(currentUserName.lower(), scanMode, filterStringList=filterStringList)
+        validEntry, deletionEnabledLocal = safety_check_username_against_filter(currentUserName.lower(), scanMode, filterStringList=filterStringList, bypass=bypass)
       elif filterMode == "Text":
         validEntry = True
-
+    else:
+      validConfig = False
 
     if validEntry == True:
-      print(f"     {whatToScanMsg} will be scanned for {F.MAGENTA}ANY{S.R} of the following strings:")
-      print(filterStringList)
-      if choice("Begin scanning? ") == True:
+      if config and config["filtering"]["strings_to_filter"] != "ask":
+        pass
+      else:
+        print(f"     {whatToScanMsg} will be scanned for {F.MAGENTA}ANY{S.R} of the following strings:")
+        print(filterStringList)
+      if choice("Begin scanning? ", bypass) == True:
         validEntry = True
         if filterMode == "Text":
           deletionEnabledLocal = "HalfTrue"
@@ -1002,7 +1193,7 @@ def prepare_filter_mode_strings(currentUser, deletionEnabledLocal, scanMode, fil
   return deletionEnabledLocal, filterStringList
 
 # For scanning for regex expression
-def prepare_filter_mode_regex(currentUser, deletionEnabledLocal, scanMode, filterMode):
+def prepare_filter_mode_regex(currentUser, deletionEnabledLocal, scanMode, filterMode, config):
   currentUserName = currentUser[1]
   if filterMode == "Username":
     whatToScanMsg = "Usernames"
@@ -1011,12 +1202,23 @@ def prepare_filter_mode_regex(currentUser, deletionEnabledLocal, scanMode, filte
   elif filterMode == "NameAndText":
     whatToScanMsg = "Usernames and Comment Text"
 
-  print(f"Enter any {F.YELLOW}regex expression{S.R} to search within {whatToScanMsg}.")
-  print(r"          Example Input:  [^\x00-\xFF]")
+  if config and config["filtering"]["regex_to_filter"] != "ask":
+    print("Regex expression obtained from config file.")
+    validConfig = True
+  else:
+    print(f"Enter any {F.YELLOW}regex expression{S.R} to search within {whatToScanMsg}.")
+    print(r"          Example Input:  [^\x00-\xFF]")
+    validConfig = False
   validExpression = False
 
   while validExpression == False:
-    inputtedExpression = input("Input Expression Here:  ")
+    if validConfig == True and config and config["filtering"]["regex_to_filter"] != "ask":
+      inputtedExpression = config["filtering"]["regex_to_filter"]
+      bypass = True
+    else:
+      inputtedExpression = input("Input Expression Here:  ")
+      bypass = False
+
     validationResults = validate_regex(inputtedExpression) # Returns tuple of valid, and processed expression
     validExpression = validationResults[0]
 
@@ -1024,31 +1226,41 @@ def prepare_filter_mode_regex(currentUser, deletionEnabledLocal, scanMode, filte
       processedExpression = validationResults[1]
       print(f"     The expression appears to be {F.GREEN}valid{S.R}!")
       if filterMode == "Username" or filterMode == "NameAndText":
-        validExpression, deletionEnabledLocal = safety_check_username_against_filter(currentUserName, scanMode, regexPattern=processedExpression)
+        validExpression, deletionEnabledLocal = safety_check_username_against_filter(currentUserName, scanMode, regexPattern=processedExpression, bypass=bypass)
 
-      if validExpression == True and choice("Begin scanning? ") == True:
+      if validExpression == True and choice("Begin scanning? ", bypass) == True:
         if filterMode == "Text":
           deletionEnabledLocal = "HalfTrue"
       else:
         validExpression = False
         deletionEnabledLocal = "False"
+        validConfig = False
     else:
       print(f"     {F.RED}Error{S.R}: The expression appears to be {F.RED}invalid{S.R}!")
+      validConfig = False
 
   return deletionEnabledLocal, processedExpression
 
 # Filter Mode: User manually enters ID
 # Returns new deletionEnabled value, and inputtedSpammerChannelID
-def prepare_filter_mode_ID(currentUser, deletionEnabledLocal, scanMode):
+def prepare_filter_mode_ID(currentUser, deletionEnabledLocal, scanMode, config):
+
   currentUserID = currentUser[0]
-  # Filter scanMode 1: User inputs spammer channel ID(s) or link(s)
-  # User inputs channel ID of the spammer, while loop repeats until valid input
   processResult = (False, None) #Tuple, first element is status of validity of channel ID, second element is channel ID
+  validConfig = True
   while processResult[0] == False:
-    inputtedSpammerChannelID = input(f"Enter the {F.LIGHTRED_EX} Channel link(s) or ID(s){S.R} of the spammer (comma separated): ")
+    if validConfig == True and config and config["filtering"]["channel_ids_to_filter"] != "ask":
+      inputtedSpammerChannelID = config["filtering"]["channel_ids_to_filter"]
+      bypass = True
+    else:
+      bypass = False
+      inputtedSpammerChannelID = input(f"Enter the {F.LIGHTRED_EX} Channel link(s) or ID(s){S.R} of the spammer (comma separated): ")
+
     processResult = process_spammer_ids(inputtedSpammerChannelID)
     if processResult[0] == True:
       inputtedSpammerChannelID = processResult[1] # After processing, if valid, inputtedSpammerChannelID is a list of channel IDs
+    else:
+      validConfig = False
   print("\n")
 
   # Check if spammer ID and user's channel ID are the same, and warn
@@ -1056,13 +1268,18 @@ def prepare_filter_mode_ID(currentUser, deletionEnabledLocal, scanMode):
   if any(currentUserID == i for i in inputtedSpammerChannelID):
     print(f"{B.RED}{F.WHITE} WARNING: {S.R} - You entered your own channel ID!")
     print(f"For safety purposes, this program always {F.YELLOW}ignores{S.R} your own comments.")
-    input("\nPress Enter to continue...")
+
+    if config and config["filtering"]["channel_ids_to_filter"] != "ask":
+      pass
+    else:
+      input("\nPress Enter to continue...")
   
   deletionEnabledLocal = "HalfTrue"
   return deletionEnabledLocal, inputtedSpammerChannelID
 
 # For Filter mode auto-ascii, user inputs nothing, program scans for non-ascii
-def prepare_filter_mode_non_ascii(currentUser, deletionEnabledLocal, scanMode):
+def prepare_filter_mode_non_ascii(currentUser, deletionEnabledLocal, scanMode, config):
+
   print("\n--------------------------------------------------------------------------------------------------------------")
   print("~~~ This mode automatically searches for usernames that contain special characters (aka not letters/numbers) ~~~\n")
   print("Choose the sensitivity level of the filter. You will be shown examples after you choose.")
@@ -1070,40 +1287,46 @@ def prepare_filter_mode_non_ascii(currentUser, deletionEnabledLocal, scanMode):
   print(f"   2. Allow {F.LIGHTMAGENTA_EX}Standard ASCII only{S.R}:  Also filter semi-common foreign characters")
   print(f"   3. {F.LIGHTRED_EX}NUKE Mode (┘°□°)┘≈ ┴──┴ :    Allow ONLY numbers, letters, and spaces{S.R}")
   print("")
+
   # Get user input for mode selection, 
   confirmation = False
+  validConfig = True
   while confirmation == False:
     deletionEnabledLocal = "False"
-    selection = input("Choose Mode: ")
-    try: selection = int(selection) # If not number entered, will get caught later as invalid
-    except: pass
 
-    if selection == 1:
+    if validConfig == True and config and config["filtering"]["autoascii_sensitivity"] != "ask":
+      selection = config["filtering"]["autoascii_sensitivity"]
+      bypass = True
+    else:
+      bypass = False
+      selection = input("Choose Mode: ")
+    if selection == "1":
       print(f"Searches for {F.YELLOW}usernames with emojis, unicode symbols, and rare foreign characters{S.R} such as: ✔️ ☝️ 🡆 ▲ π Ɲ Œ")
-      if choice("Choose this mode?") == True:
+      if choice("Choose this mode?", bypass) == True:
         regexPattern = r"[^\x00-\xFF]"
         confirmation = True
-    elif selection == 2:
+    elif selection == "2":
       print(f"Searches for {F.YELLOW}usernames with anything EXCEPT{S.R} the following: {F.YELLOW}Letters, numbers, punctuation, and common special characters{S.R} you can type with your keyboard like: % * & () + ")
-      if choice("Choose this mode?") == True:
+      if choice("Choose this mode?", bypass) == True:
         regexPattern = r"[^\x00-\x7F]"
         confirmation = True
-    elif selection == 3:
+    elif selection == "3":
       print(f"Searches for {F.YELLOW}usernames with anything EXCEPT letters, numbers, and spaces{S.R} - {B.RED}{F.WHITE} EXTREMELY LIKELY to cause collateral damage!{S.R} Recommended to just use to manually gather list of spammer IDs, then use a different mode to delete.")
-      if choice("Choose this mode?") == True:
+      if choice("Choose this mode?", bypass) == True:
         regexPattern = r"[^a-zA-Z0-9 ]"
         confirmation = True
     else:
-      print("Invalid input. Please try again.")
+      print(f"Invalid input: {selection} - Must be 1, 2, or 3.")
+      validConfig = False
     
     if confirmation == True:
-      confirmation, deletionEnabledLocal = safety_check_username_against_filter(currentUser[1], scanMode=scanMode, regexPattern=regexPattern)
+      confirmation, deletionEnabledLocal = safety_check_username_against_filter(currentUser[1], scanMode=scanMode, regexPattern=regexPattern, bypass=bypass)
 
-  if selection == 1:
+  if selection == "1":
     autoModeName = "Allow Standard + Extended ASCII"
-  elif selection == 2:
+  elif selection == "2":
     autoModeName = "Allow Standard ASCII only"
-  elif selection == 3:
+  elif selection == "3":
     autoModeName = "NUKE Mode (┘°□°)┘≈ ┴──┴ - Allow only letters, numbers, and spaces"
 
   if confirmation == True:
@@ -1113,18 +1336,21 @@ def prepare_filter_mode_non_ascii(currentUser, deletionEnabledLocal, scanMode):
     exit()
 
 # Auto filter for pre-made list of common spammer-used characters in usernames
-def prepare_filter_mode_smart_chars(currentUser, deletionEnabledLocal, scanMode):
+def prepare_filter_mode_smart_chars(currentUser, deletionEnabledLocal, scanMode, config):
   currentUserName = currentUser[1]
-
-  print("\n--------------------------------------------------------------------------------------------------------------")
-  print("~~~ This mode is pre-programmed to search usernames for special characters almost exclusively used by spammers ~~~\n")
-  print(" > Specifically, unicode characters that look like numbers\n")
-  input("Press Enter to continue...")
+  if config and config["filtering"]["smart_chars_sensitivity"] != "ask":
+    print("Using Auto Smart Mode - Set from config file.")
+    bypass = True
+  else:
+    print("\n--------------------------------------------------------------------------------------------------------------")
+    print("~~~ This mode is pre-programmed to search usernames for special characters almost exclusively used by spammers ~~~\n")
+    print(" > Specifically, unicode characters that look like numbers\n")
+    input("Press Enter to continue...")
 
   spammerUsernameCharString = "０１２３４５６７８９０１２３４５６７８９߁①⑴⒈⓵❶➀➊🄂౽੨②⑵⒉⓶❷➁➋🄃౩③⑶⒊⓷❸➂➌🄄૩④⑷⒋⓸❹➃➍🄅⑤⑸⒌⓹❺➄➎➄➎🄆⑥⑹⒍⓺❻➅➏🄇⑦⑺⒎⓻❼➆➐𑄽🄈႘⑧⑻⒏⓼❽➇➑🄉⑨⑼⒐⓽❾➈➒🄊⓪⓿🄋🄌🄁🄀𝟎𝟘𝟢𝟬𝟏𝟙𝟭𝟣𝟶𝟐𝟚𝟮𝟤𝟷𝟑𝟛𝟯𝟥𝟸𝟒𝟜𝟰𝟦𝟹𝟓𝟝𝟱𝟧𝟺𝟔𝟞𝟲𝟨𝟻𝟕𝟟𝟳𝟩𝟼𝟖𝟠𝟴𝟪𝟽𝟗𝟡𝟵𝟫𝟾𝟿"
   filterCharsSet = make_char_set(spammerUsernameCharString, stripLettersNumbers=False, stripKeyboardSpecialChars=False, stripPunctuation=False)
 
-  proceed, deletionEnabledLocal = safety_check_username_against_filter(currentUserName, filterCharsSet=filterCharsSet, scanMode=scanMode)
+  proceed, deletionEnabledLocal = safety_check_username_against_filter(currentUserName, filterCharsSet=filterCharsSet, scanMode=scanMode, bypass=bypass)
 
   if proceed == True:
     return deletionEnabledLocal, filterCharsSet
@@ -1197,23 +1423,36 @@ def main():
       input("\nSomething went wrong during authentication. Try deleting token.pickle file. Press Enter to exit...")
       exit()
 
-  #----------------------------------- Begin Showing Program --------------------------------------------------
-    print(f"{F.YELLOW}\n============ YOUTUBE SPAMMER PURGE v" + version + f" ============{S.R}")
+  #----------------------------------- Begin Showing Program ---------------------------------
+  print(f"{F.YELLOW}\n============ YOUTUBE SPAMMER PURGE v" + version + f" ============{S.R}")
   print("== https://github.com/ThioJoe/YouTube-Spammer-Purge ==")
   print("======== Author: ThioJoe - YouTube.com/ThioJoe ======= \n")
 
+  # Instructions
   print("Purpose: Lets you scan and mass delete all comments from a specific user at once \n")
   print("NOTE: It's probably better to scan a single video, because you can scan all those comments,")
   print("      but scanning your entire channel must be limited and might miss older spam comments.")
-  print("You WILL be shown the comments to confirm before they are deleted.")
+  print("You will be shown the comments to confirm before they are deleted.")
+
+  # Check for config file, load into dictionary 'config'
+  config = load_config_file()
+  if config != None:
+    if config['general']['prompt_use_config'] == 'True':
+      if choice(f"\nFound {F.YELLOW}config file{S.R}, use those settings?") == False:
+        config = None
+    elif config['general']['prompt_use_config'] == 'False':
+      pass
+    else:
+      input("Error: Invalid value in config file for: 'prompt_use_config' .  Press Enter to exit...")
+      exit()
 
   # While loop until user confirms they are logged into the correct account
   confirmedCorrectLogin = False
   while confirmedCorrectLogin == False:
     # Get channel ID and title of current user, confirm with user
-    currentUser = get_current_user() # Returns [channelID, channelTitle]
+    currentUser = get_current_user(config) # Returns [channelID, channelTitle]
     print("\n    >  Currently logged in user: " + f"{F.LIGHTGREEN_EX}" + str(currentUser[1]) + f"{S.R} (Channel ID: {F.LIGHTGREEN_EX}" + str(currentUser[0]) + f"{S.R} )")
-    if choice("       Continue as this user?") == True:
+    if choice("       Continue as this user?", currentUser[2]) == True:
       check_channel_id = currentUser[0]
       confirmedCorrectLogin = True
     else:
@@ -1221,56 +1460,95 @@ def main():
       youtube = get_authenticated_service()
   
   # User selects scanning mode,  while Loop to get scanning mode, so if invalid input, it will keep asking until valid input
-  print("\n-----------------------------------------------------------------")
-  print(f"~~ Do you want to scan a single video, or your entire channel? ~~")
+  print(f"\n---------- {F.YELLOW}Scanning Options{S.R} --------------------------------------")
   print(f"      1. Scan a {F.LIGHTBLUE_EX}Single Video{S.R} (Recommended)")
-  print(f"      2. Scan your {F.LIGHTMAGENTA_EX}Entire Channel{S.R}\n")
+  print(f"      2. Scan your {F.LIGHTMAGENTA_EX}Entire Channel{S.R}")
+  print(f"-------------------------------------- {F.RED}Other Options{S.R} -------------")
+  print(f"      3. Create your own config file to quickly run the program with pre-set settings.")
+  print(f"      4. Check for newer version. \n")
 
   # Make sure input is valid, if not ask again
   validMode = False
+  validConfig = True
   while validMode == False:
-    scanMode = input("Choice (1 or 2): ")
-    try: scanMode = int(scanMode) # If not number entered, will get caught later as invalid
-    except: pass
-
-    if scanMode == 1 or scanMode == 2:
-      validMode = True
+    if validConfig == True and config and config['scanning']['scan_mode'] != 'ask':
+      scanMode = config['scanning']['scan_mode']
     else:
-      print("\nInvalid choice! - Enter either 1 or 2. ")
+      scanMode = input("Choice (1-4): ")
 
-  # If chooses to scan single video - Validate Video ID, get title, and confirm with user - otherwise exits
-  if scanMode == 1:  
+    # Set scanMode Variable Names
+    if scanMode == "1" or scanMode == "2" or scanMode == "3" or scanMode == "4":
+      validMode = True
+      if scanMode == "1":
+        scanMode = "chosenVideo"
+      elif scanMode == "2":
+        scanMode = "entireChannel"
+      elif scanMode == "3":
+        scanMode = "makeConfig"
+      elif scanMode == "4":
+        scanMode = "checkUpdates"
+    else:
+      print(f"\nInvalid choice: {scanMode} - Enter either 1, 2, 3, or 4. ")
+      validConfig = False
+
+  # If chooses to scan single video - Validate Video ID, get title, and confirm with user
+  if scanMode == "chosenVideo":  
     #While loop to get video ID and if invalid ask again
     validVideoID = (False, None) # Tuple, first element is status of validity of video ID, second element is video ID
     confirm = False
+    validConfig = True
     while validVideoID[0] == False or confirm == False:
-      check_video_id = input(F"Enter {F.YELLOW}Video Link{S.R} or {F.YELLOW}Video ID{S.R} to scan: ")
+      if validConfig == True and config and config['scanning']['video_to_scan'] != 'ask':
+        check_video_id = config['scanning']['video_to_scan']
+      else:
+        check_video_id = input(F"Enter {F.YELLOW}Video Link{S.R} or {F.YELLOW}Video ID{S.R} to scan: ")
+        validConfig = False
+
       validVideoID = validate_video_id(check_video_id) # Sends link or video ID for isolation and validation
       
       if validVideoID[0] == True:  #validVideoID now contains True/False and video ID
         check_video_id = str(validVideoID[1])
         title = get_video_title(check_video_id)
         print("\nChosen Video:  " + title)
-        confirm = choice("Is this correct?")
-        if currentUser[0] != get_channel_id(check_video_id) and confirm == True:
-          print(f"\n   >>> {B.RED}{F.WHITE} WARNING {S.R} It is not possible to delete comments on someone elses video! Who do you think you are!? <<<")
+        confirm = choice("Is this correct?", bypass=validConfig)
+        if currentUser[0] != get_channel_id(check_video_id) and confirm == True and validConfig == False:
+          print(f"\n   >>> {B.RED}{F.WHITE} WARNING {S.R} It is simply not possible to delete comments on someone elses video! <<<")
           input("\n   Press Enter to continue for testing purposes...  (But you will get an error when trying to delete!)\n")
+      else:
+        print("\nInvalid Video ID or Link: " + str(validVideoID[1]))
+        validConfig = False
 
   # If chooses to scan entire channel - Validate Channel ID
-  elif scanMode == 2:
+  elif scanMode == "entireChannel":
     # While loop to get max scan number, not an integer, asks again
     validInteger = False
+    if config: validConfig = True
     while validInteger == False:
       try:
-        maxScanNumber = int(input(f"Enter the maximum {F.YELLOW}number of comments{S.R} to scan: "))
+        if validConfig == True and config and config['scanning']['max_comments'] != 'ask':
+          maxScanNumber = int(config['scanning']['max_comments'])
+        else:
+          maxScanNumber = int(input(f"Enter the maximum {F.YELLOW}number of comments{S.R} to scan: "))
+
         if maxScanNumber > 0:
           validInteger = True # If it gets here, it's an integer, otherwise goes to exception
         else:
           print("\nInvalid Input! Number must be greater than zero.")
+          validConfig = False
       except:
         print("\nInvalid Input! - Must be a whole number.")
+        validConfig = False
+  
+  # Create config file
+  elif scanMode == "makeConfig":
+    create_config_file()
+    print("\nConfig file created: SpamPurgeConfig.ini - Open file with text editor to read instructions and change settings.")
 
- 
+  # Check for latest version
+  elif scanMode == "checkUpdates":
+    check_for_update(version)
+
+
   # User inputs filtering mode
   print("\n-------------------------------------------------------")
   print(f"~~~~~~~ Choose how to identify spammers ~~~~~~~")
@@ -1285,30 +1563,44 @@ def main():
   validFilterMode = False
   validFilterSubMode = False
   filterSubMode = None
+  validConfig = True
 
+  validConfig = True
   while validFilterMode == False:
-    filterChoice = input("\nChoice (1-5): ")
-    if filterChoice == "1" or filterChoice == "2" or filterChoice == "3" or filterChoice == "4" or filterChoice == "5" or filterChoice == "6":
-      validFilterMode = True
+    if validConfig == True and config and config['filtering']['filter_mode'] != 'ask':
+      filterChoice = config['filtering']['filter_mode'].lower()
+    else:
+      filterChoice = input("\nChoice (1-5): ")
 
+    validChoices = ['1', '2', '3', '4', '5', '6', 'id', 'username', 'text', 'nameandtext', 'autoascii', 'autosmart']
+    if filterChoice in validChoices:
+      validFilterMode = True
       # Set string variable names for filtering modes
-      if filterChoice == "1":
+      if filterChoice == "1" or filterChoice == "id":
         filterMode = "ID"
-      elif filterChoice == "2":
+      elif filterChoice == "2" or filterChoice == "username":
         filterMode = "Username"
-      elif filterChoice == "3":
+      elif filterChoice == "3" or filterChoice == "text":
         filterMode = "Text"
-      elif filterChoice == "4":
+      elif filterChoice == "4" or filterChoice == "nameandtext":
         filterMode = "NameAndText"
-      elif filterChoice == "5":
+      elif filterChoice == "5" or filterChoice == "autoascii":
         filterMode = "AutoASCII"
-      elif filterChoice == "6":
+      elif filterChoice == "6" or filterChoice == "autosmart":
         filterMode = "AutoSmart"
     else:
-      print("\nInvalid choice! - Enter either 1, 2, 3, 4, or 5. ")
+      print(f"\nInvalid Filter Mode: {filterChoice} - Enter either 1, 2, 3, 4, 5, or 6 ")
+      validConfig = False
 
-    ## Get filter sub-mode to decide if searching characters or string
-    if filterMode == "Username" or filterMode == "Text" or filterMode == "NameAndText":
+  ## Get filter sub-mode to decide if searching characters or string
+  validConfig = None
+  if config and config['filtering']['filter_submode'] != 'ask':
+    filterSubMode = config['filtering']['filter_submode'].lower()
+    validConfig = True
+  else:
+    validConfig = False
+
+  if filterMode == "Username" or filterMode == "Text" or filterMode == "NameAndText":
       print("\n--------------------------------------------------------------")
       if filterMode == "Username":
         print("~~~ What do you want to scan usernames for specifically? ~~~")
@@ -1321,19 +1613,24 @@ def main():
       print(f" 3. Advanced: A custom {F.YELLOW}Regex pattern{S.R} you'll enter")
 
       while validFilterSubMode == False:
-        filterSubMode = input("\nChoice (1, 2, or 3): ")
-        if filterSubMode == "1" or filterSubMode == "2" or filterSubMode == "3":
-          if filterSubMode == "1":
-            filterSubMode = "chars"
-            validFilterSubMode = True
-          elif filterSubMode == "2":
-            filterSubMode = "string"
-            validFilterSubMode = True
-          elif filterSubMode == "3":
-            filterSubMode = "regex"
-            validFilterSubMode = True
+        if validConfig == True:
+          pass
         else:
-          print("\nInvalid choice! - Enter 1, 2 or 3")
+          filterSubMode = input("\nChoice (1, 2, or 3): ")
+        validFilterSubModes = ["1", "2", "3", "characters", "strings", "regex"]
+        if filterSubMode in validFilterSubModes:
+          validFilterSubMode = True
+          validConfig = True
+          if filterSubMode == "1" or filterSubMode == "characters":
+            filterSubMode = "chars"
+          elif filterSubMode == "2" or filterSubMode == "strings":
+            filterSubMode = "string"
+          elif filterSubMode == "3" or filterSubMode == "regex":
+            filterSubMode = "regex"
+        else:
+          print(f"\nInvalid choice: {filterSubMode} - Enter 1, 2 or 3")
+          validConfig = False
+
 
   ### Prepare Filtering Modes ###
   # Default values for filter criteria
@@ -1342,24 +1639,24 @@ def main():
   inputtedCommentTextFilter = None
 
   if filterMode == "ID":
-    filterSettings = prepare_filter_mode_ID(currentUser, deletionEnabled, scanMode)
+    filterSettings = prepare_filter_mode_ID(currentUser, deletionEnabled, scanMode, config)
     inputtedSpammerChannelID = filterSettings[1]
 
   elif filterMode == "AutoASCII":
-    filterSettings = prepare_filter_mode_non_ascii(currentUser, deletionEnabled, scanMode)
+    filterSettings = prepare_filter_mode_non_ascii(currentUser, deletionEnabled, scanMode, config)
     regexPattern = filterSettings[1]
 
   elif filterMode == "AutoSmart":
-    filterSettings = prepare_filter_mode_smart_chars(currentUser, deletionEnabled, scanMode)
+    filterSettings = prepare_filter_mode_smart_chars(currentUser, deletionEnabled, scanMode, config)
     inputtedUsernameFilter = filterSettings[1]
     inputtedCommentTextFilter = filterSettings[1]
 
   elif filterSubMode == "chars":
-    filterSettings = prepare_filter_mode_chars(currentUser, deletionEnabled, scanMode, filterMode)
+    filterSettings = prepare_filter_mode_chars(currentUser, deletionEnabled, scanMode, filterMode, config)
   elif filterSubMode == "string":
-    filterSettings = prepare_filter_mode_strings(currentUser, deletionEnabled, scanMode, filterMode)
+    filterSettings = prepare_filter_mode_strings(currentUser, deletionEnabled, scanMode, filterMode, config)
   elif filterSubMode == "regex":
-    filterSettings = prepare_filter_mode_regex(currentUser, deletionEnabled, scanMode, filterMode)
+    filterSettings = prepare_filter_mode_regex(currentUser, deletionEnabled, scanMode, filterMode, config)
     regexPattern = filterSettings[1]
 
   if filterSubMode != "regex":
@@ -1376,7 +1673,8 @@ def main():
   ##################### START SCANNING #####################
   try:
     # Goes to get comments for first page
-    print("Scanning... \n")
+    print("\n--------------------------------------------------------------")
+    print("                    Scanning... \n")
     nextPageToken = get_comments(youtube, currentUser, filterMode, filterSubMode, check_video_id, check_channel_id, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, regexPattern=regexPattern)
     print_count_stats(final=False)  # Prints comment scan stats, updates on same line
 
@@ -1395,13 +1693,32 @@ def main():
       exit()
     print(f"Number of Matched Comments Found: {B.RED}{F.WHITE} " + str(len(spamCommentsID)) + f" {S.R}")
 
-    # Asks user if they want to save list of spam comments to a file
-    if choice(f"Spam comments ready to display. Also {F.LIGHTGREEN_EX}save the list to a text file?{S.R}") == True:
+    bypass = False
+    if config and config['general']['enable_logging'] != 'ask':
+      logSetting = config['general']['enable_logging'].lower()
+      if logSetting == "true":
+        logMode = True
+        bypass = True
+      elif logSetting == "false":
+        logMode = False
+        bypass = True
+      elif logSetting == "ask":
+        bypass = False
+      else:
+        bypass = False
+        print("Error: Invalid value for 'enable_logging' in config file:  " + logSetting)
+
+    if bypass == False:
+      # Asks user if they want to save list of spam comments to a file
+      logMode = choice(f"Spam comments ready to display. Also {F.LIGHTGREEN_EX}save the list to a text file?{S.R}")
+
+    if logMode == True:
       logMode = True
       global logFileName
       logFileName = "Spam_Log_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S" + ".rtf")
       print(f"Log file will be called {F.YELLOW}" + logFileName + f"{S.R}\n")
-      input(f"Press {F.YELLOW}Enter{S.R} to display comments...")
+      if bypass == False:
+        input(f"Press {F.YELLOW}Enter{S.R} to display comments...")
 
       # Write heading info to log file
       write_rtf(logFileName, firstWrite=True)
@@ -1422,42 +1739,86 @@ def main():
       write_rtf(logFileName, "IDs of Matched Comments: " + "\n" + str(spamCommentsID) + "\\line\\line\\line " + "\n\n\n")
       
     else:
-      print("Ok, continuing... \n")
+      print("Continuing without logging... \n")
 
     # Prints list of spam comments
     print("\n\nAll Matched Comments: \n")
     reorderedSpamCommentsID = print_comments(check_video_id, spamCommentsID, logMode)
-      
-    
-    # Get confirmation to delete spam comments
-    confirmDelete = None
     print("\n")
     print(f"{F.WHITE}{B.RED} NOTE: {S.R} Check that all comments listed above are indeed spam.")
+    
+    # Logic to decide whether to delete comments or not
+    confirmDelete = None
+    deletionMode = "heldForReview" #From YouTube API setModerationStatus: 'rejected', 'heldForReview'
+    if deletionMode == "rejected":
+      deletionModeFriendlyName = "Removed"
+    elif deletionMode == "heldForReview":
+      deletionModeFriendlyName = "Moved to 'Held for Review' Section"
 
-    if deletionEnabled == "HalfTrue": # Check if deletion functionality is eligible to be enabled
-      confirmDelete = input(f"Do you want to {F.RED}delete ALL of the above comments{S.R}? Type ' {F.YELLOW}YES{S.R} ' exactly, in all caps to be sure! \n") 
-      if confirmDelete != "YES":  # Deletion functionality enabled via confirmation, or not
-        input(f"\nDeletion {F.YELLOW}CANCELLED{S.R}. Press Enter to exit...")
-        exit()
-      elif confirmDelete == "YES":
-        deletionEnabled = "True"
-    else:
-      print("\nThe deletion functionality was not enabled. Cannot delete comments.")
-      print("Possible Cause: You're trying to scan someone elses video.")
-      print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
-      input("Press Enter to exit...")
+    if not config:
+      pass
+      deletionMode = "rejected"
+    elif config['removal']['skip_deletion'] == 'True':
       exit()
+    elif config['removal']['skip_deletion'] != 'False':
+      print("Error: Invalid value for 'skip_deletion' in config file. Must be 'True' or 'False':  " + config['removal']['skip_deletion'])
+      input("\nPress Enter to exit...")
+      exit()
+    elif config['removal']['delete_without_reviewing'] == "True":
+      if filterMode == "AutoSmart" or filterMode == "ID":
+        deletionEnabled = "True"
+        confirmDelete = "YES"
+      else:
+        confirmDelete = None
+        print("Error: 'delete_without_reviewing' is set to 'True' in config file, but the scan mode is not set to 'AutoSmart' or 'ID'.\n")
+    elif config['removal']['delete_without_reviewing'] != "False":
+      print("Error: Invalid value for 'delete_without_reviewing' in config file. Must be 'True' or 'False':  " + config['removal']['delete_without_reviewing'])
+      input("\nPress Enter to exit...")
+      exit()
+    else:
+      deletionEnabled = "False"
+      confirmDelete = None
 
+    if confirmDelete == None:
+      if deletionEnabled == "HalfTrue": # Check if deletion functionality is eligible to be enabled
+        confirmDelete = input(f"Do you want to {F.RED}delete ALL of the above comments{S.R}? Type ' {F.YELLOW}YES{S.R} ' exactly, in all caps to be sure! \n") 
+        if confirmDelete != "YES":  # Deletion functionality enabled via confirmation, or not
+          input(f"\nDeletion {F.YELLOW}CANCELLED{S.R}. Press Enter to exit...")
+          exit()
+        elif confirmDelete == "YES":
+          deletionEnabled = "True"
+      else:
+        print("\nThe deletion functionality was not enabled. Cannot delete comments.")
+        print("Possible Cause: You're trying to scan someone elses video.")
+        print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
+        input("Press Enter to exit...")
+        exit()
 
     if confirmDelete == "YES" and deletionEnabled == "True":  # Only proceed if deletion functionality is enabled, and user has confirmed deletion
-      # Ask if they want to also ban spammer
-      banChoice = choice(f"Also {F.YELLOW}ban{S.R} the spammer(s) ?")
+      banChoice = False
+      if config and config['removal']['enable_ban'] != "ask":
+        if config['removal']['enable_ban'] == "False":
+          pass
+        elif config['removal']['enable_ban'] == "True":
+          print("Error: 'enable_ban' is set to 'True' in config file. Only possible config options are 'ask' or 'False' when using config.\n")
+          input("Press Enter to continue...")
+        else:
+          print("Error: 'enable_ban' is set to an invalid value in config file. Only possible config options are 'ask' or 'False' when using config.\n")
+          input("Press Enter to continue...")
+      else:
+        # Ask if they want to also ban spammer
+        banChoice = choice(f"Also {F.YELLOW}ban{S.R} the spammer(s) ?")
+      print("\n")
+      # Deletion Logic
+      delete_found_comments(reorderedSpamCommentsID, banChoice, deletionMode)
+      check_deleted_comments(vidIdDict)
       if logMode == True:
         write_rtf(logFileName, "\n\n"+ "\\line\\line Spammers Banned: " + str(banChoice)) # Write whether or not spammer is banned to log file
-      print("\n")
-      delete_found_comments(reorderedSpamCommentsID,banChoice) # Deletes spam comments
-      check_deleted_comments(vidIdDict) #Verifies if comments were deleted
+        write_rtf(logFileName, "\n\n"+ "\\line\\line Action Taken on Comments: " + str(deletionModeFriendlyName))
       input(f"\nDeletion {F.LIGHTGREEN_EX}Complete{S.R}. Press Enter to Exit...")
+
+    elif config:
+        exit()
     else:
       input(f"\nDeletion {F.LIGHTRED_EX}Cancelled{S.R}. Press Enter to exit...")
       exit()
@@ -1483,6 +1844,8 @@ def main():
     else:
       print(f"{F.RED}Unknown Error{S.R} occurred. If this keeps happening, consider posting a bug report on the GitHub issues page, and include the above error info.")
       input("\n Press Enter to Exit...")
+  except SystemExit:
+    exit()
   else:
     print("\nFinished Executing.")
 
