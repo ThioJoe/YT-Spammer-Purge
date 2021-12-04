@@ -26,6 +26,18 @@ body:
       value: "I had a problem..."
     validations:
       required: true
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to reproduce
+      description: This will allow me to figure out where the issue originates.
+      placeholder: Step 1, Step 2, Step 3...
+      value: |
+             1. 
+             2. 
+             3. 
+    validations:
+      required: true
   - type: dropdown
     id: platform
     attributes:
