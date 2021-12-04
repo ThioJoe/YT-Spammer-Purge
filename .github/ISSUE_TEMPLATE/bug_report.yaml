@@ -26,6 +26,15 @@ body:
       value: "I had a problem..."
     validations:
       required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: What platform are you seeing the problem on?
+      multiple: false
+      options:
+        - Windows
+        - MacOS
+        - Linux (can also be ChromeOS)
   - type: textarea
     id: logs
     attributes:
