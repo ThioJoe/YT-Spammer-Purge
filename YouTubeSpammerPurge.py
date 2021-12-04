@@ -170,6 +170,7 @@ def print_prepared_comments(check_video_id_localprep, comments, j, logMode):
   # Prints author and comment text for each comment
   i = 0 # Index when going through comments
   comments_segment_list = [] # Holds list of comments for each segment
+  dataPreparedToWrite = ""
 
   for item in results["items"]:
     text = item["snippet"]["textDisplay"]
@@ -224,13 +225,17 @@ def print_prepared_comments(check_video_id_localprep, comments, j, logMode):
         + "     > Author Channel ID: \cf6" + author_id_local + r"\cf1 \line "+ "\n"
         + "=============================================================================================\\line\\line\\line" + "\n\n\n"
       )
-      write_rtf(logFileName, commentInfo)
+      #write_rtf(logFileName, commentInfo)
+      dataPreparedToWrite = dataPreparedToWrite + commentInfo
 
     # Appends comment ID to new list of comments so it's in the correct order going forward, as provided by API and presented to user
     # Must use append here, not extend, or else it would add each character separately
     comments_segment_list.append(comment_id_local)
     i += 1
     j += 1
+
+  if logMode == True:
+    write_rtf(logFileName, dataPreparedToWrite)
 
   return j, comments_segment_list
 
@@ -1682,16 +1687,6 @@ def main():
       nextPageToken = get_comments(youtube, currentUser, filterMode, filterSubMode, check_video_id, check_channel_id, nextPageToken, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, regexPattern=regexPattern)
     print_count_stats(final=True)  # Prints comment scan stats, finalizes
   ##########################################################
-
-    # Counts number of found spam comments and prints list
-    spam_count = len(spamCommentsID)
-    if spam_count == 0: # If no spam comments found, exits
-      print(f"{B.RED}{F.BLACK}No matched comments or users found!{S.R}\n")
-      print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
-      input("\nPress Enter to exit...")
-      exit()
-    print(f"Number of Matched Comments Found: {B.RED}{F.WHITE} " + str(len(spamCommentsID)) + f" {S.R}")
-
     bypass = False
     if config and config['general']['enable_logging'] != 'ask':
       logSetting = config['general']['enable_logging'].lower()
@@ -1706,6 +1701,15 @@ def main():
       else:
         bypass = False
         print("Error: Invalid value for 'enable_logging' in config file:  " + logSetting)
+        
+    # Counts number of found spam comments and prints list
+    spam_count = len(spamCommentsID)
+    if spam_count == 0 and bypass != True: # If no spam comments found, exits
+      print(f"{B.RED}{F.BLACK}No matched comments or users found!{S.R}\n")
+      print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
+      input("\nPress Enter to exit...")
+      exit()
+    print(f"Number of Matched Comments Found: {B.RED}{F.WHITE} " + str(len(spamCommentsID)) + f" {S.R}")
 
     if bypass == False:
       # Asks user if they want to save list of spam comments to a file
@@ -1763,6 +1767,8 @@ def main():
       print("Error: Invalid value for 'skip_deletion' in config file. Must be 'True' or 'False':  " + config['removal']['skip_deletion'])
       input("\nPress Enter to exit...")
       exit()
+
+    # Effecitively below = skip_deletion == 'False'
     elif config['removal']['delete_without_reviewing'] == "True":
       if filterMode == "AutoSmart" or filterMode == "ID":
         deletionEnabled = "True"
@@ -1770,13 +1776,20 @@ def main():
       else:
         confirmDelete = None
         print("Error: 'delete_without_reviewing' is set to 'True' in config file, but the scan mode is not set to 'AutoSmart' or 'ID'.\n")
+
     elif config['removal']['delete_without_reviewing'] != "False":
       print("Error: Invalid value for 'delete_without_reviewing' in config file. Must be 'True' or 'False':  " + config['removal']['delete_without_reviewing'])
       input("\nPress Enter to exit...")
       exit()
+
+    elif config['removal']['delete_without_reviewing'] == "False":
+      deletionEnabled = "HalfTrue"
+      confirmDelete = None
+
     else:
       deletionEnabled = "False"
       confirmDelete = None
+      print("Something weird happened if you got to this point.")
 
     if confirmDelete == None:
       if deletionEnabled == "HalfTrue": # Check if deletion functionality is eligible to be enabled
