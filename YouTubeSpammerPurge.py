@@ -511,32 +511,40 @@ def check_against_filter(currentUser, filterMode, filterSubMode, commentID, vide
 ########################################################################################## 
 
 # Takes in list of comment IDs to delete, breaks them into 50-comment chunks, and deletes them in groups
-def delete_found_comments(commentsList,banChoice, deletionMode):
+def delete_found_comments(commentsList, banChoice, deletionMode, recoveryMode=False):
 
-    # Deletes specified comment IDs
-    def delete(commentIDs):
-        youtube.comments().setModerationStatus(id=commentIDs, moderationStatus=deletionMode, banAuthor=banChoice).execute()
+  # Local Functions 
+  def setStatus(commentIDs): #Does the actual deletion
+      youtube.comments().setModerationStatus(id=commentIDs, moderationStatus=deletionMode, banAuthor=banChoice).execute()
 
-    total = len(commentsList)
-    deletedCounter = 0  
-    def print_progress(d, t): print("Deleting Comments... - Progress: [" + str(d) + " / " + str(t) + "] (In Groups of 50)", end="\r") # Prints progress of deletion
-    print_progress(deletedCounter, total)
+  def print_progress(d, t, recoveryMode=False): 
+    if recoveryMode == False:
+      print("Deleting Comments... - Progress: [" + str(d) + " / " + str(t) + "] (In Groups of 50)", end="\r")
+    elif recoveryMode == True:
+      print("Recovering Comments... - Progress: [" + str(d) + " / " + str(t) + "] (In Groups of 50)", end="\r")
 
-    if total > 50:                                  # If more than 50 comments, break into chunks of 50
-        remainder = total % 50                      # Gets how many left over after dividing into chunks of 50
-        numDivisions = int((total-remainder)/50)    # Gets how many full chunks of 50 there are
-        for i in range(numDivisions):               # Loops through each full chunk of 50
-            delete(commentsList[i*50:i*50+50])
-            deletedCounter += 50
-            print_progress(deletedCounter, total)
-        if remainder > 0:
-            delete(commentsList[numDivisions*50:total]) # Deletes any leftover comments range after last full chunk
-            deletedCounter += remainder
-            print_progress(deletedCounter, total)
-    else:
-        delete(commentsList)
-        print_progress(deletedCounter, total)
+  total = len(commentsList)
+  deletedCounter = 0  
+  print_progress(deletedCounter, total, recoveryMode)
+
+  if total > 50:                                  # If more than 50 comments, break into chunks of 50
+      remainder = total % 50                      # Gets how many left over after dividing into chunks of 50
+      numDivisions = int((total-remainder)/50)    # Gets how many full chunks of 50 there are
+      for i in range(numDivisions):               # Loops through each full chunk of 50
+          setStatus(commentsList[i*50:i*50+50])
+          deletedCounter += 50
+          print_progress(deletedCounter, total, recoveryMode)
+      if remainder > 0:
+          setStatus(commentsList[numDivisions*50:total]) # Deletes any leftover comments range after last full chunk
+          deletedCounter += remainder
+          print_progress(deletedCounter, total, recoveryMode)
+  else:
+      setStatus(commentsList)
+      print_progress(deletedCounter, total, recoveryMode)
+  if recoveryMode == False:
     print("Comments Deleted! Will now verify each is gone.                          \n")
+  elif recoveryMode == True:
+    print("Comments Recovered! Will now verify each is back.                          \n")
 
 # Class for custom exception to throw if a comment is found to remain
 class CommentFoundError(Exception):
@@ -581,9 +589,9 @@ def check_deleted_comments(commentsVideoDictionary):
         pass
 
     if i == 0:
-      print("\n\nSuccess: All spam comments should be gone.")
+      print("\n\nSuccess: All comments should be gone.")
     elif i > 0:
-      print("\n\nWarning: " + str(i) + " spam comments may remain. Check links above or try running the program again.")
+      print("\n\nWarning: " + str(i) + " comments may remain. Check links above or try running the program again.")
       # Write error log
       f = open("Deletion_Error_Log.txt", "a")
       f.write("----- YT Spammer Purge Error Log: Possible Issue Deleting Comments ------\n\n")
@@ -595,6 +603,47 @@ def check_deleted_comments(commentsVideoDictionary):
 
     return None
 
+# Class for custom exception to throw if a comment is found to remain
+class CommentNotFoundError(Exception):
+  pass
+
+def check_recovered_comments(commentsList):
+  i = 0 # Count number of remaining comments
+  j = 1 # Count number of checked
+  total = len(commentsList)
+  unsuccessfulResults = []
+
+  for comment in commentsList:
+    try:
+      results = youtube.comments().list(
+        part="snippet",
+        id=comment,  
+        maxResults=1,
+        fields="items",
+        textFormat="plainText"
+      ).execute()
+      print("Verifying Deleted Comments: [" + str(j) + " / " + str(total) + "]", end="\r")
+      j += 1
+
+      if not results["items"]:  # Check if the items result is empty
+        raise CommentNotFoundError
+
+    except CommentNotFoundError:
+      #print("Possible Issue Deleting Comment: " + str(key) + " |  Check Here: " + "https://www.youtube.com/watch?v=" + str(value) + "&lc=" + str(key))
+      print("Possible Issue Restoring Comment: " + str(comment))
+      i += 1
+      unsuccessfulResults.append(comment)
+  
+  if i == 0:
+      print(f"\n\n{F.LIGHTGREEN_EX}Success: All spam comments should be restored!{S.R}")
+      print("You can view them by using the links to them in the same log file you used.")
+
+  elif i > 0:
+    print("\n\nWarning: " + str(i) + " comments may have not been restored. See above list.")
+    print("Use the links to the comments from the log file you used, to verify if they are back or not.")
+
+  input("\nRecovery process finished. Press Enter to Exit...")
+  exit()
 
 
 ##########################################################################################
@@ -1082,6 +1131,57 @@ def load_config_file():
     else:
       return None
 
+################################ RECOVERY MODE ###########################################
+def recover_deleted_comments():
+  print(f"\n\n-------------------- {F.LIGHTGREEN_EX}Comment Recovery Mode{S.R} --------------------\n")
+  print("Believe it or not, the YouTube API actually allows you to re-instate \"deleted\" comments.")
+  print(f"This is {F.YELLOW}only possible if you have stored the comment IDs{S.R} of the deleted comments, such as {F.YELLOW}having kept the log file{S.R} of that session.")
+  print("If you don't have the comment IDs you can't recover the comments, and there is no way to find them. \n")
+
+  validFile = False
+  manuallyEnter = False
+  while validFile == False and manuallyEnter == False:
+    print("Enter the name of the log file to use to recover comments (you can rename it to something easier) Example: log.rtf")
+    recoveryFileName = input("Log File Name: ")
+
+    # Get file path
+    if os.path.exists(recoveryFileName):
+      try:
+        with open(recoveryFileName, 'r', encoding="utf-8") as recoveryFile:
+          data = recoveryFile.read()
+        recoveryFile.close()
+        validFile = True
+      except:
+        print("Error: File was found but there was a problem reading it.")
+    else:
+      print(f"\n{F.LIGHTRED_EX}Error: File not found.{S.R} Make sure it is in the same folder as the program.\n")
+      print("Enter 'Y' to try again, or 'N' to manually paste in the comment IDs.")
+      if choice("Try entering file name again?") == True:
+        pass
+      else:
+        manuallyEnter = True
+
+  if manuallyEnter == True:
+    print("\n\n---Instructions---")
+    print("1. Open the log file and look for where it shows the list of \"IDs of Matched Comments\".")
+    print("2. Copy that list (brackets [] and all), and paste it below (In windows console try pasting by right clicking).")
+    data = str(input("Paste the list here, then hit Enter: "))
+    print("\n")
+
+  # Parse data into list
+  #matchBetweenBrackets = '(?<=\[)(.*?)(?=\])' # Matches text between first set of two square brackets
+  matchIncludeBracktes = '\[(.*?)\]' # Matches between square brackets, including brackets
+  result = str(re.search(matchIncludeBracktes, data).group(0))
+  result = result.replace("\'", "")
+  result = result.replace("[", "")
+  result = result.replace("]", "")
+  result = result.replace(" ", "")
+  result = result.split(",")
+
+  delete_found_comments(commentsList=result, banChoice=False, deletionMode="published", recoveryMode=True)
+  check_recovered_comments(commentsList=result)
+
+
 ##########################################################################################
 ################################## FILTERING MODES #######################################
 ##########################################################################################
@@ -1471,8 +1571,9 @@ def main():
   print(f"      1. Scan a {F.LIGHTBLUE_EX}Single Video{S.R} (Recommended)")
   print(f"      2. Scan your {F.LIGHTMAGENTA_EX}Entire Channel{S.R}")
   print(f"-------------------------------------- {F.RED}Other Options{S.R} -------------")
-  print(f"      3. Create your own config file to quickly run the program with pre-set settings.")
-  print(f"      4. Check for newer version. \n")
+  print(f"      3. Create your own config file to quickly run the program with pre-set settings")
+  print(f"      4. Check for newer version")
+  print(f"      5. Recover deleted comments using log file\n")
 
   # Make sure input is valid, if not ask again
   validMode = False
@@ -1481,10 +1582,10 @@ def main():
     if validConfig == True and config and config['scanning']['scan_mode'] != 'ask':
       scanMode = config['scanning']['scan_mode']
     else:
-      scanMode = input("Choice (1-4): ")
+      scanMode = input("Choice (1-5): ")
 
     # Set scanMode Variable Names
-    if scanMode == "1" or scanMode == "2" or scanMode == "3" or scanMode == "4":
+    if scanMode == "1" or scanMode == "2" or scanMode == "3" or scanMode == "4" or scanMode == "5":
       validMode = True
       if scanMode == "1":
         scanMode = "chosenVideo"
@@ -1494,8 +1595,10 @@ def main():
         scanMode = "makeConfig"
       elif scanMode == "4":
         scanMode = "checkUpdates"
+      elif scanMode == "5":
+        scanMode = "recoverMode"
     else:
-      print(f"\nInvalid choice: {scanMode} - Enter either 1, 2, 3, or 4. ")
+      print(f"\nInvalid choice: {scanMode} - Enter either 1, 2, 3, 4, or 5. ")
       validConfig = False
 
   # If chooses to scan single video - Validate Video ID, get title, and confirm with user
@@ -1554,6 +1657,10 @@ def main():
   # Check for latest version
   elif scanMode == "checkUpdates":
     check_for_update(version)
+
+  # Recove deleted comments mode
+  elif scanMode == "recoverMode":
+    recover_deleted_comments()
 
 
   # User inputs filtering mode
@@ -1715,7 +1822,9 @@ def main():
 
     if bypass == False:
       # Asks user if they want to save list of spam comments to a file
-      logMode = choice(f"Spam comments ready to display. Also {F.LIGHTGREEN_EX}save the list to a text file?{S.R}")
+      print("\nSpam comments ready to display. Also {F.LIGHTGREEN_EX}save a log file?{S.R} {B.GREEN}{F.WHITE}Highly Recommended!{S.R}")
+      print(f"        (It even allows you to {F.LIGHTGREEN_EX}restore{S.R} deleted comments later)")
+      logMode = choice(f"Save Log File (Recommended)?")
 
     if logMode == True:
       logMode = True
