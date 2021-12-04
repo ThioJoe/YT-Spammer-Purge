@@ -146,13 +146,13 @@ def print_comments(check_video_id_localprint, comments, logMode):
   valuesPreparedToPrint = ""
   print(f"{F.LIGHTMAGENTA_EX}---------------------------- Match Samples: One comment per matched-comment author ----------------------------{S.R}")
   for value in matchSamplesDict.values():
-    valuesPreparedToWrite = valuesPreparedToWrite + make_rtf_compatible(str(value)) + " \\line \n"
-    valuesPreparedToPrint = valuesPreparedToPrint + str(value) + "\n"
+    valuesPreparedToWrite = valuesPreparedToWrite + f"{str(value[0])}. {str(value[1])} | {make_rtf_compatible(str(value[2]))} \\line \n"
+    valuesPreparedToPrint = valuesPreparedToPrint + f"{str(value[0])}. {str(value[2])}\n"
   if logMode == True:
     write_rtf(logFileName, "-------------------- Match Samples: One comment per matched-comment author -------------------- \\line\\line \n")
     write_rtf(logFileName, valuesPreparedToWrite)
   print(valuesPreparedToPrint)
-  print(f"{F.LIGHTMAGENTA_EX}---------------------------------------------------------------------------------------------------------------{S.R}")
+  print(f"{F.LIGHTMAGENTA_EX}---------------------------- (See log file for channel IDs of matched authors above) ---------------------------{S.R}")
 
   return correctly_ordered_comments_list
 
@@ -183,9 +183,9 @@ def print_prepared_comments(check_video_id_localprep, comments, j, logMode):
 
     # Truncates very long comments, and removes excessive multiple lines
     if len(text) > 1500:
-      text = text[0:1500] + "...\n[YT Spammer Purge Note: Long Comment Truncated - Visit Link to See Full Comment]"
+      text = text[0:1500] + "  ...[YT Spammer Purge Note: Long Comment Truncated - Visit Link to See Full Comment]"
     if text.count("\n") > 0:
-      text = text.replace("\n", " ") + "\n[YT Spammer Purge Note: Comment converted from multiple lines to single line]"
+      text = text.replace("\n", " ") + "  ...[YT Spammer Purge Note: Comment converted from multiple lines to single line]"
 
     # Add one sample from each matching author to matchSamplesDict, containing author ID, name, and text
     if author_id_local not in matchSamplesDict:
@@ -242,18 +242,20 @@ def print_prepared_comments(check_video_id_localprep, comments, j, logMode):
 # Adds a sample to matchSamplesDict and preps formatting
 def add_sample(authorID, authorName, commentText):
   global matchSamplesDict
+  count = len(matchSamplesDict) + 1
 
   # Left Justify Author Name and Comment Text
-  if len(authorName) > 30:
-    authorName = authorName[0:27] + "..."
-  authorName = authorName[0:30].ljust(30)+": "
+  if len(authorName) > 20:
+    authorName = authorName[0:17] + "..."
+  authorName = authorName[0:20].ljust(20)+": "
 
   if len(commentText) > 85:
     commentText = commentText[0:82] + "..."
   commentText = commentText[0:85].ljust(85)
 
-  # Add sample to matchSamplesDict
-  matchSamplesDict[authorID] = (authorName + commentText)
+  # Add comment sample, author ID, name, and counter
+  values = [count, authorID, authorName + commentText]
+  matchSamplesDict[authorID] = list(values)
 
 
 ##########################################################################################
@@ -1701,7 +1703,7 @@ def main():
       else:
         bypass = False
         print("Error: Invalid value for 'enable_logging' in config file:  " + logSetting)
-        
+
     # Counts number of found spam comments and prints list
     spam_count = len(spamCommentsID)
     if spam_count == 0 and bypass != True: # If no spam comments found, exits
