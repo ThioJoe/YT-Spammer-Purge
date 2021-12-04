@@ -9,6 +9,8 @@ body:
     attributes:
       value: |
         Thanks for taking the time to fill out this bug report!
+        
+        IS THIS A FEATURE REQUEST OR IDEA? SUBMIT A DISCUSSION POST INSTEAD HERE: https://github.com/ThioJoe/YouTube-Spammer-Purge/discussions
   - type: checkboxes
     id: no-issues-relating-to-this
     attributes:
@@ -26,6 +28,11 @@ body:
       value: "I had a problem..."
     validations:
       required: true
+  - type: input
+    id: version
+    attributes:
+      label: Release version
+      description: What version of this program are you using (can be found in the title when running (eg. ======== YOUTUBE SPAMMER PURGE VERSION (insert version here) or in the version variable in the `YouTubeSpammerPurge.py` file)?
   - type: textarea
     id: steps-to-reproduce
     attributes:
