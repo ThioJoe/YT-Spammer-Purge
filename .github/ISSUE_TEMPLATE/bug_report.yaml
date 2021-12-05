@@ -17,7 +17,7 @@ body:
       label: Duplicate Issues
       description: By submitting this issue, you are sure that there are no issues surronding this problem.
       options:
-        - label: Are there are **no issues relating to your problem**
+        - label: There are **no issues relating to your problem**
           required: true
   - type: textarea
     id: what-happened
