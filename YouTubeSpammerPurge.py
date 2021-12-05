@@ -1973,11 +1973,16 @@ def main():
     # Counts number of found spam comments and prints list
     spam_count = len(matchedCommentsDict)
 
-    if spam_count == 0 and bypass != True: # If no spam comments found, exits
+    if spam_count == 0: # If no spam comments found, exits
       print(f"{B.RED}{F.BLACK}No matched comments or users found!{S.R}\n")
       print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
-      input("\nPress Enter to exit...")
-      exit()
+      if bypass == False:
+        input("\nPress Enter to exit...")
+        exit()
+      elif bypass == True:
+        print("Exiting in 5 seconds...")
+        time.sleep(5)
+        exit()
     print(f"Number of Matched Comments Found: {B.RED}{F.WHITE} " + str(len(matchedCommentsDict)) + f" {S.R}")
 
     if bypass == False:
@@ -1987,7 +1992,6 @@ def main():
       logMode = choice(f"Save Log File (Recommended)?")
 
     if logMode == True:
-      logMode = True
       global logFileName
       logFileName = "Spam_Log_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S" + ".rtf")
       print(f"Log file will be called {F.YELLOW}" + logFileName + f"{S.R}\n")
