@@ -23,9 +23,9 @@ body:
     id: what-happened
     attributes:
       label: What happened?
-      description: Also tell us, what did you expect to happen?
-      placeholder: Tell us what you see!
-      value: "I had a problem..."
+      description: Also tell me, what did you expect to happen?
+      placeholder: Tell me what you see!
+      value: "Well, I was trying to ... but then ..."
     validations:
       required: true
   - type: input
