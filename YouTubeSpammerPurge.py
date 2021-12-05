@@ -127,7 +127,7 @@ def get_authenticated_service():
 # Then uses print_prepared_comments() to print / log the comments
 def print_comments(check_video_id_localprint, comments, logMode):
   j = 0 # Counting index when going through comments all comment segments
-  correctly_ordered_comments_list =[] # Holds new list correctly ordered matched comments, same order as returned by API and presented to user - will be 
+  correctly_ordered_comments_list =[] # Holds new list correctly ordered matched comments, same order as returned by API and presented to user
 
   if len(comments) > 50:
     remainder = len(comments) % 50
@@ -147,8 +147,8 @@ def print_comments(check_video_id_localprint, comments, logMode):
   valuesPreparedToPrint = ""
   print(f"{F.LIGHTMAGENTA_EX}---------------------------- Match Samples: One comment per matched-comment author ----------------------------{S.R}")
   for value in matchSamplesDict.values():
-    valuesPreparedToWrite = valuesPreparedToWrite + f"{str(value[0])}. {str(value[1])} | {make_rtf_compatible(str(value[2]))} \\line \n"
-    valuesPreparedToPrint = valuesPreparedToPrint + f"{str(value[0])}. {str(value[2])}\n"
+    valuesPreparedToWrite = valuesPreparedToWrite + f"{str(value['n'])}. {str(value['authorID'])} | {make_rtf_compatible(str(value['nameAndText']))} \\line \n"
+    valuesPreparedToPrint = valuesPreparedToPrint + f"{str(value['n'])}. {str(value['nameAndText'])}\n"
   if logMode == True:
     write_rtf(logFileName, "-------------------- Match Samples: One comment per matched-comment author -------------------- \\line\\line \n")
     write_rtf(logFileName, valuesPreparedToWrite)
@@ -178,9 +178,11 @@ def print_prepared_comments(check_video_id_localprep, comments, j, logMode):
     author = item["snippet"]["authorDisplayName"]
     author_id_local = item["snippet"]["authorChannelId"]["value"]
     comment_id_local = item["id"]
-
     # Retrieve video ID from object using comment ID
     videoID = convert_comment_id_to_video_id(comment_id_local)
+
+    # Update master dictionary of comment info for each comment
+    matchedCommentsDict[comment_id_local] = {'text':text, 'authorName':author, 'authorID':author_id_local, 'videoID':videoID}
 
     # Truncates very long comments, and removes excessive multiple lines
     if len(text) > 1500:
@@ -189,7 +191,7 @@ def print_prepared_comments(check_video_id_localprep, comments, j, logMode):
       text = text.replace("\n", " ") + "  ...[YT Spammer Purge Note: Comment converted from multiple lines to single line]"
 
     # Add one sample from each matching author to matchSamplesDict, containing author ID, name, and text
-    if author_id_local not in matchSamplesDict:
+    if author_id_local not in matchSamplesDict.keys():
       add_sample(author_id_local, author, text)
 
     # Prints comment info to console
@@ -241,22 +243,23 @@ def print_prepared_comments(check_video_id_localprep, comments, j, logMode):
   return j, comments_segment_list
 
 # Adds a sample to matchSamplesDict and preps formatting
-def add_sample(authorID, authorName, commentText):
+def add_sample(authorID, authorNameRaw, commentText):
   global matchSamplesDict
   count = len(matchSamplesDict) + 1
 
   # Left Justify Author Name and Comment Text
-  if len(authorName) > 20:
-    authorName = authorName[0:17] + "..."
-  authorName = authorName[0:20].ljust(20)+": "
+  if len(authorNameRaw) > 20:
+    authorName = authorNameRaw[0:17] + "..."
+    authorName = authorName[0:20].ljust(20)+": "
+  else: 
+    authorName = authorNameRaw[0:20].ljust(20)+": "
 
   if len(commentText) > 85:
     commentText = commentText[0:82] + "..."
   commentText = commentText[0:85].ljust(85)
 
   # Add comment sample, author ID, name, and counter
-  values = [count, authorID, authorName + commentText]
-  matchSamplesDict[authorID] = list(values)
+  matchSamplesDict[authorID] = {'n':count, 'authorID':authorID, 'authorName':authorNameRaw, 'nameAndText':authorName + commentText}
 
 
 ##########################################################################################
@@ -308,7 +311,7 @@ def get_comments(youtube, currentUser, filterMode, filterSubMode, check_video_id
   except KeyError:
     RetrievedNextPageToken = "End"  
   
-  # After getting all comments threads for page, extracts data for each and stores matches in spamCommentsID
+  # After getting all comments threads for page, extracts data for each and stores matches in matchedCommentsDict
   # Also goes through each thread and executes get_replies() to get reply content and matches
   for item in results["items"]:
     comment = item["snippet"]["topLevelComment"]
@@ -425,15 +428,15 @@ def get_replies(currentUser, filterMode, filterSubMode, parent_id, videoID, pare
 # The basic logic that actually checks each comment against filter criteria
 def check_against_filter(currentUser, filterMode, filterSubMode, commentID, videoID, authorChannelID, parentAuthorChannelID=None, inputtedSpammerChannelID=None, inputtedUsernameFilter=None, inputtedCommentTextFilter=None,  authorChannelName=None, commentText=None, regexPattern=None):
   global vidIdDict
-  global spamCommentsID
+  global matchedCommentsDict
 
   # Do not even check comment author ID matches currently logged in user's ID
   if currentUser[0] != authorChannelID: 
-    # If the comment/username matches criteria based on mode, add to list of spam comment IDs
+    # If the comment/username matches criteria based on mode, add key/value pair of comment ID and author ID to matchedCommentsDict
     # Also add key-value pair of comment ID and video ID to dictionary
     def add_spam(commentID, videoID):
-      global spamCommentsID
-      spamCommentsID += [commentID]
+      global matchedCommentsDict
+      matchedCommentsDict[commentID] = {}
       vidIdDict[commentID] = videoID
 
     # Checks author of either parent comment or reply (both passed in as commentID) against channel ID inputted by user
@@ -552,21 +555,21 @@ class CommentFoundError(Exception):
     pass
 
 # Takes in list of comment IDs and video IDs, and checks if comments still exist individually
-def check_deleted_comments(commentsVideoDictionary):
+def check_deleted_comments(checkDict):
     i = 0 # Count number of remaining comments
     j = 1 # Count number of checked
-    total = len(commentsVideoDictionary)
+    total = len(checkDict)
     unsuccessfulResults = []
 
     # Wait 2 seconds so YouTube API has time to update comment status
     print("Preparing...", end="\r")
     time.sleep(1)
     print("                               ")
-    for key, value in commentsVideoDictionary.items():
+    for commentID, metadata in checkDict.items():
       try:
         results = youtube.comments().list(
           part="snippet",
-          id=key,  
+          id=commentID,  
           maxResults=1,
           fields="items",
           textFormat="plainText"
@@ -579,12 +582,12 @@ def check_deleted_comments(commentsVideoDictionary):
 
       # If comment is found and possibly not deleted, print out video ID and comment ID
       except CommentFoundError:
-        print("Possible Issue Deleting Comment: " + str(key) + " |  Check Here: " + "https://www.youtube.com/watch?v=" + str(value) + "&lc=" + str(key))
+        print("Possible Issue Deleting Comment: " + str(commentID) + " |  Check Here: " + "https://www.youtube.com/watch?v=" + str(metadata['videoID']) + "&lc=" + str(commentID))
         i += 1
         unsuccessfulResults.append(results)
         pass
       except Exception:
-        print("Unhandled Exception While Deleting Comment: " + str(key) + " |  Check Here: " + "https://www.youtube.com/watch?v=" + str(value) + "&lc=" + str(key))
+        print("Unhandled Exception While Deleting Comment: " + str(commentID) + " |  Check Here: " + "https://www.youtube.com/watch?v=" + str(metadata['videoID']) + "&lc=" + str(commentID))
         i += 1
         unsuccessfulResults.append(results)
         pass
@@ -646,6 +649,61 @@ def check_recovered_comments(commentsList):
   input("\nRecovery process finished. Press Enter to Exit...")
   exit()
 
+# Removes comments by user-selected authors from list of comments to delete
+def exclude_authors(inputtedString):
+  global matchSamplesDict
+
+  expression = r"(?<=exclude ).*" # Match everything after 'exclude '
+  result = str(re.search(expression, inputtedString).group(0))
+  result = result.replace(" ", "")
+  SampleIDsToExclude = result.split(",")
+  authorIDsToExclude = []
+  displayString = ""
+  excludedCommentsDict = {}
+  rtfFormattedExcludes = ""
+  commentIDExcludeList = []
+
+  # Get authorIDs for selected sample comments
+  for authorID, info in matchSamplesDict.items():
+    if str(info['n']) in SampleIDsToExclude:
+      authorIDsToExclude += [authorID]
+
+  # Get comment IDs to be excluded
+  for comment, metadata in matchedCommentsDict.items():
+    if metadata['authorID'] in authorIDsToExclude:
+      commentIDExcludeList.append(comment)
+  # Remove all comments by selected authors from dictionary of comments
+  for comment in commentIDExcludeList:
+    if comment in matchedCommentsDict.keys():
+      excludedCommentsDict[comment] = matchedCommentsDict.pop(comment)
+
+  rtfFormattedExcludes += f"Comments Excluded From Deletion: \\line \n"
+  rtfFormattedExcludes += f"(Values = Comment ID | Author ID | Author Name | Comment Text) \\line \n"
+  for commentID, meta in excludedCommentsDict.items():
+    rtfFormattedExcludes += f"{str(commentID)}  |  {str(excludedCommentsDict[commentID]['authorID'])}  |  {str(excludedCommentsDict[commentID]['authorName'])}  |   {str(excludedCommentsDict[commentID]['text'])} \\line \n"
+
+  # Verify removal
+  for comment in matchedCommentsDict.keys():
+    if comment in commentIDExcludeList:
+      print("Fatal Error: Something went wrong while trying to exclude comments. No comments have been deleted.")
+      input("Press Enter to Exit...")
+      exit()
+  
+  # Get author names and IDs from dictionary, and display them
+  for author in authorIDsToExclude:
+    displayString += f"    User ID: {author}   |   User Name: {matchSamplesDict[author]['authorName']}\n"
+  print(f"\n{F.CYAN}All {len(excludedCommentsDict)} comments{S.R} from the {F.CYAN}following {len(authorIDsToExclude)} users{S.R} will be {F.LIGHTGREEN_EX}excluded{S.R} from deletion:")
+  print(displayString+"\n")
+
+  # Get final confirmation from user
+  confirm = input(f"To proceed and delete all other comments, type ' {F.YELLOW}DELETE{S.R} ' exactly (in all caps).\n")
+  if confirm != "DELETE":
+    input(f"\nDeletion {F.YELLOW}cancelled{S.R}. Press Enter to Exit...")
+    exit()
+  elif confirm == "DELETE":
+    return confirm, excludedCommentsDict, rtfFormattedExcludes
+
+  
 
 ##########################################################################################
 ############################## UTILITY FUNCTIONS #########################################
@@ -765,9 +823,9 @@ def convert_comment_id_to_video_id(comment_id):
 # Prints Scanning Statistics, can be version that overwrites itself or one that finalizes and moves to next line
 def print_count_stats(final):
   if final == True:
-    print(f"Top Level Comments Scanned: {F.YELLOW}" + str(scannedCommentsCount) + f"{S.R} | Replies Scanned: {F.YELLOW}" + str(scannedRepliesCount) + f"{S.R} | Matches Found So Far: {F.LIGHTRED_EX}" +  str(len(spamCommentsID)) + f"{S.R}\n")
+    print(f"Top Level Comments Scanned: {F.YELLOW}" + str(scannedCommentsCount) + f"{S.R} | Replies Scanned: {F.YELLOW}" + str(scannedRepliesCount) + f"{S.R} | Matches Found So Far: {F.LIGHTRED_EX}" +  str(len(matchedCommentsDict)) + f"{S.R}\n")
   else:
-    print(f"Top Level Comments Scanned: {F.YELLOW}" + str(scannedCommentsCount) + f"{S.R} | Replies Scanned: {F.YELLOW}" + str(scannedRepliesCount) + f"{S.R} | Matches Found So Far: {F.LIGHTRED_EX}" +  str(len(spamCommentsID)) + f"{S.R}", end = "\r")
+    print(f"Top Level Comments Scanned: {F.YELLOW}" + str(scannedCommentsCount) + f"{S.R} | Replies Scanned: {F.YELLOW}" + str(scannedRepliesCount) + f"{S.R} | Matches Found So Far: {F.LIGHTRED_EX}" +  str(len(matchedCommentsDict)) + f"{S.R}", end = "\r")
   
   return None
 
@@ -926,7 +984,8 @@ def write_rtf(fileName, newText=None, firstWrite=False):
 
     # Sets color table to be able to set colors for text, each color set with RGB values in raw string
     # To use color, use '\cf1 ' (with space) for black, cf2 = red, cf3 = green, cf4 = blue, cf5 = orange, cf6 = purple
-    file.write(r"{\colortbl;\red0\green0\blue0;\red255\green0\blue0;\red0\green255\blue0;\red0\green0\blue255;\red226\green129\blue0;\red102\green0\blue214;}"+"\n\n")
+    #                       cf1                cf2                  cf3                  cf4                  cf5                    cf6                 
+    file.write(r"{\colortbl;\red0\green0\blue0;\red255\green0\blue0;\red0\green255\blue0;\red0\green0\blue255;\red143\green81\blue0;\red102\green0\blue214;}"+"\n\n")
     file.write(r"}")
     file.close()
 
@@ -1203,15 +1262,17 @@ def recover_deleted_comments():
   if manuallyEnter == True:
     print("\n\n--- Manual Comment ID Entry Instructions ---")
     print("1. Open the log file and look for where it shows the list of \"IDs of Matched Comments\".")
-    print("2. Copy that list (brackets [] and all), and paste it below (In windows console try pasting by right clicking).")
-    print("3. If not using a log file, instead enter the ID list in this format: [\'FirstID\', \'SecondID\', \'ThirdID\', \'...\']")
+    print("2. Copy that list, and paste it below (In windows console try pasting by right clicking).")
+    print("3. If not using a log file, instead enter the ID list in this format: FirstID, SecondID, ThirdID, ... \n")
     data = str(input("Paste the list here, then hit Enter: "))
     print("\n")
 
   # Parse data into list
-  #matchBetweenBrackets = '(?<=\[)(.*?)(?=\])' # Matches text between first set of two square brackets
-  matchIncludeBracktes = '\[(.*?)\]' # Matches between square brackets, including brackets
-  result = str(re.search(matchIncludeBracktes, data).group(0))
+  if manuallyEnter == False and '[' in data and ']' in data:
+    matchBetweenBrackets = '(?<=\[)(.*?)(?=\])' # Matches text between first set of two square brackets
+    #matchIncludeBracktes = '\[(.*?)\]' # Matches between square brackets, including brackets
+    result = str(re.search(matchBetweenBrackets, data).group(0))
+  else: result = data
   result = result.replace("\'", "")
   result = result.replace("[", "")
   result = result.replace("]", "")
@@ -1523,6 +1584,8 @@ def prepare_filter_mode_smart_chars(currentUser, deletionEnabledLocal, scanMode,
     print("~~~ This mode is pre-programmed to search usernames for special characters almost exclusively used by spammers ~~~\n")
     print(" > Specifically, unicode characters that look like numbers\n")
     input("Press Enter to continue...")
+    bypass = False
+
 
   spammerUsernameCharString = "０１２３４５６７８９０１２３４５６７８９߁①⑴⒈⓵❶➀➊🄂౽੨②⑵⒉⓶❷➁➋🄃౩③⑶⒊⓷❸➂➌🄄૩④⑷⒋⓸❹➃➍🄅⑤⑸⒌⓹❺➄➎➄➎🄆⑥⑹⒍⓺❻➅➏🄇⑦⑺⒎⓻❼➆➐𑄽🄈႘⑧⑻⒏⓼❽➇➑🄉⑨⑼⒐⓽❾➈➒🄊⓪⓿🄋🄌🄁🄀𝟎𝟘𝟢𝟬𝟏𝟙𝟭𝟣𝟶𝟐𝟚𝟮𝟤𝟷𝟑𝟛𝟯𝟥𝟸𝟒𝟜𝟰𝟦𝟹𝟓𝟝𝟱𝟧𝟺𝟔𝟞𝟲𝟨𝟻𝟕𝟟𝟳𝟩𝟼𝟖𝟠𝟴𝟪𝟽𝟗𝟡𝟵𝟫𝟾𝟿"
   filterCharsSet = make_char_set(spammerUsernameCharString, stripLettersNumbers=False, stripKeyboardSpecialChars=False, stripPunctuation=False)
@@ -1549,8 +1612,8 @@ def main():
     sys.exit()
 
   # Declare Global Variables
-  global youtube  
-  global spamCommentsID
+  global youtube
+  global matchedCommentsDict
   global vidIdDict
   global vidTitleDict
   global scannedRepliesCount
@@ -1558,7 +1621,7 @@ def main():
   global matchSamplesDict
 
   # Default values for global variables
-  spamCommentsID = []
+  matchedCommentsDict = {}
   vidIdDict = {}
   vidTitleDict = {}
   matchSamplesDict = {}
@@ -1629,6 +1692,7 @@ def main():
       print(f"{F.LIGHTRED_EX}Error occurred while checking for updates. (Checking can be disabled using the config file setting) Continuing...{S.R}\n")
       updateAvailable = False
   else:
+    updateAvailable = False
     os.system(clear_command)
 
   #----------------------------------- Begin Showing Program ---------------------------------
@@ -1756,7 +1820,6 @@ def main():
   # Recove deleted comments mode
   elif scanMode == "recoverMode":
     recover_deleted_comments()
-
 
   # User inputs filtering mode
   print("\n-------------------------------------------------------")
@@ -1908,17 +1971,18 @@ def main():
         print("Error: Invalid value for 'enable_logging' in config file:  " + logSetting)
 
     # Counts number of found spam comments and prints list
-    spam_count = len(spamCommentsID)
+    spam_count = len(matchedCommentsDict)
+
     if spam_count == 0 and bypass != True: # If no spam comments found, exits
       print(f"{B.RED}{F.BLACK}No matched comments or users found!{S.R}\n")
       print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
       input("\nPress Enter to exit...")
       exit()
-    print(f"Number of Matched Comments Found: {B.RED}{F.WHITE} " + str(len(spamCommentsID)) + f" {S.R}")
+    print(f"Number of Matched Comments Found: {B.RED}{F.WHITE} " + str(len(matchedCommentsDict)) + f" {S.R}")
 
     if bypass == False:
       # Asks user if they want to save list of spam comments to a file
-      print("\nSpam comments ready to display. Also {F.LIGHTGREEN_EX}save a log file?{S.R} {B.GREEN}{F.WHITE}Highly Recommended!{S.R}")
+      print(f"\nSpam comments ready to display. Also {F.LIGHTGREEN_EX}save a log file?{S.R} {B.GREEN}{F.BLACK}Highly Recommended!{S.R}")
       print(f"        (It even allows you to {F.LIGHTGREEN_EX}restore{S.R} deleted comments later)")
       logMode = choice(f"Save Log File (Recommended)?")
 
@@ -1934,40 +1998,33 @@ def main():
       write_rtf(logFileName, firstWrite=True)
       write_rtf(logFileName, "\\par----------- YouTube Spammer Purge Log File -----------\\line\\line " + "\n\n")
       if filterMode == "ID":
-        write_rtf(logFileName, "Channel IDs of spammer searched: " + str(inputtedSpammerChannelID) + "\\line\\line " + "\n\n")
+        write_rtf(logFileName, "Channel IDs of spammer searched: " + ", ".join(inputtedSpammerChannelID) + "\\line\\line " + "\n\n")
       elif filterMode == "Username":
-        write_rtf(logFileName, "Characters searched in Usernames: " + make_rtf_compatible(str(inputtedUsernameFilter)) + "\\line\\line " + "\n\n")
+        write_rtf(logFileName, "Characters searched in Usernames: " + make_rtf_compatible(", ".join(inputtedUsernameFilter)) + "\\line\\line " + "\n\n")
       elif filterMode == "Text":
-        write_rtf(logFileName, "Characters searched in Comment Text: " + make_rtf_compatible(str(inputtedCommentTextFilter)) + "\\line\\line " + "\n\n")
+        write_rtf(logFileName, "Characters searched in Comment Text: " + make_rtf_compatible(", ".join(inputtedCommentTextFilter)) + "\\line\\line " + "\n\n")
       elif filterMode == "NameAndText":
-        write_rtf(logFileName, "Characters searched in Usernames and Comment Text: " + make_rtf_compatible(str(filterSettings[1])) + "\\line\\line " + "\n\n")
+        write_rtf(logFileName, "Characters searched in Usernames and Comment Text: " + make_rtf_compatible(", ".join(filterSettings[1])) + "\\line\\line " + "\n\n")
       elif filterMode == "AutoASCII":
         write_rtf(logFileName, "Automatic Search Mode: " + make_rtf_compatible(str(filterSettings[2])) + "\\line\\line " + "\n\n")
       elif filterMode == "AutoSmart":
         write_rtf(logFileName, "Automatic Search Mode: Smart Mode \\line\\line " + "\n\n")
-      write_rtf(logFileName, "Number of Matched Comments Found: " + str(len(spamCommentsID)) + "\\line\\line " + "\n\n")
-      write_rtf(logFileName, "IDs of Matched Comments: " + "\n" + str(spamCommentsID) + "\\line\\line\\line " + "\n\n\n")
-      
+      write_rtf(logFileName, "Number of Matched Comments Found: " + str(len(matchedCommentsDict)) + "\\line\\line \n\n")
+      write_rtf(logFileName, f"IDs of Matched Comments: \n[ {', '.join(matchedCommentsDict)} ] \\line\\line\\line \n\n\n")
     else:
       print("Continuing without logging... \n")
 
     # Prints list of spam comments
     print("\n\nAll Matched Comments: \n")
-    reorderedSpamCommentsID = print_comments(check_video_id, spamCommentsID, logMode)
-    print("\n")
-    print(f"{F.WHITE}{B.RED} NOTE: {S.R} Check that all comments listed above are indeed spam.")
-    
-    # Logic to decide whether to delete comments or not
-    confirmDelete = None
-    deletionMode = "heldForReview" #From YouTube API setModerationStatus: 'rejected', 'heldForReview'
-    if deletionMode == "rejected":
-      deletionModeFriendlyName = "Removed"
-    elif deletionMode == "heldForReview":
-      deletionModeFriendlyName = "Moved to 'Held for Review' Section"
-
+    print_comments(check_video_id, list(matchedCommentsDict.keys()), logMode)
+    print(f"\n{F.WHITE}{B.RED} NOTE: {S.R} Check that all comments listed above are indeed spam.")
+    print()
+    # Defaults
+    deletionMode = "heldForReview" # Should be changed later, but if missed it will default to heldForReview
+    confirmDelete = None # If None, will later cause user to be asked to delete
+    # Decide whether to skip deletion
     if not config:
       pass
-      deletionMode = "rejected"
     elif config['removal']['skip_deletion'].lower() == 'true':
       exit()
     elif config['removal']['skip_deletion'].lower() != 'false':
@@ -1975,37 +2032,67 @@ def main():
       input("\nPress Enter to exit...")
       exit()
 
-    # Effecitively below = skip_deletion == 'False'
+    # Using config to determine deletion type, block invalid settings
+        # Below is for if skip_deletion is false (user wants to delete, or be asked to delete)
+        # If confirmDelete is None, will display prompt to delete as normal
+
+    # This is normal behavior same as no config. Except here user can change deletionMode using config file
+    elif config['removal']['delete_without_reviewing'].lower() == "false":
+      deletionEnabled = "HalfTrue"
+      confirmDelete = None
+      # Check valid deletion mode in config
+      if config['removal']['removal_type'].lower() == "heldforreview":
+        deletionMode = "heldForReview"
+      elif config['removal']['removal_type'].lower() == "rejected":
+        deletionMode = "rejected"
+
+    # User wants to automatically delete with no user intervention
     elif config['removal']['delete_without_reviewing'].lower() == "true":
       if filterMode == "AutoSmart" or filterMode == "ID":
         deletionEnabled = "True"
         confirmDelete = "YES"
+        deletionMode = "heldForReview"
       else:
         confirmDelete = None
         print("Error: 'delete_without_reviewing' is set to 'True' in config file, but the scan mode is not set to 'AutoSmart' or 'ID'.\n")
-
+        print("Either use one of those scan modes, or set 'delete_without_reviewing' to 'False'.")
+        input("\nPress Enter to continue...")
     elif config['removal']['delete_without_reviewing'].lower() != "false":
       print("Error: Invalid value for 'delete_without_reviewing' in config file. Must be 'True' or 'False':  " + config['removal']['delete_without_reviewing'])
       input("\nPress Enter to exit...")
-      exit()
-
-    elif config['removal']['delete_without_reviewing'].lower() == "false":
-      deletionEnabled = "HalfTrue"
-      confirmDelete = None
-
+      exit()      
     else:
       deletionEnabled = "False"
       confirmDelete = None
       print("Something weird happened if you got to this point.")
 
+    # Set deletion mode friendly name
+    #deletionMode = "heldForReview" #Set as heldForReview by default but may be changed later
+    if deletionMode == "rejected":
+      deletionModeFriendlyName = "Removed"
+    elif deletionMode == "heldForReview":
+      deletionModeFriendlyName = "Moved to 'Held for Review' Section"    
+
     if confirmDelete == None:
+      exclude = False
       if deletionEnabled == "HalfTrue": # Check if deletion functionality is eligible to be enabled
-        confirmDelete = input(f"Do you want to {F.RED}delete ALL of the above comments{S.R}? Type ' {F.YELLOW}YES{S.R} ' exactly, in all caps to be sure! \n") 
-        if confirmDelete != "YES":  # Deletion functionality enabled via confirmation, or not
+        print(f"{F.YELLOW}How do you want to handle the matched comments above?{S.R}")
+        print(f" > To {F.LIGHTRED_EX}delete ALL of the above comments{S.R}: Type ' {F.YELLOW}DELETE{S.R} ' exactly (in all caps), then hit Enter.")
+        print(f" > To {F.LIGHTGREEN_EX}exclude certain authors from deletion{S.R}: Type \'{F.LIGHTGREEN_EX}exclude{S.R}\' followed by a list of the numbers {F.LIGHTMAGENTA_EX}in the sample list{S.R} next to those authors.")
+        print("      > Example:  exclude 1, 12, 9")
+        confirmDelete = input("Input: ")
+        if confirmDelete == "DELETE":
+          deletionEnabled = "True"
+        elif "exclude" in confirmDelete.lower():
+          excludeResponse, excludedDict, rtfExclude = exclude_authors(confirmDelete)
+          if excludeResponse == "DELETE":
+            deletionEnabled = "True"
+            confirmDelete = "DELETE"
+            exclude = True
+        else:
           input(f"\nDeletion {F.YELLOW}CANCELLED{S.R}. Press Enter to exit...")
           exit()
-        elif confirmDelete == "YES":
-          deletionEnabled = "True"
+
       else:
         print("\nThe deletion functionality was not enabled. Cannot delete comments.")
         print("Possible Cause: You're trying to scan someone elses video.")
@@ -2013,8 +2100,9 @@ def main():
         input("Press Enter to exit...")
         exit()
 
-    if confirmDelete == "YES" and deletionEnabled == "True":  # Only proceed if deletion functionality is enabled, and user has confirmed deletion
+    if confirmDelete == "DELETE" and deletionEnabled == "True":  # Only proceed if deletion functionality is enabled, and user has confirmed deletion
       banChoice = False
+      # Verify valid ban settings in config
       if config and config['removal']['enable_ban'].lower() != "ask":
         if config['removal']['enable_ban'].lower() == "false":
           pass
@@ -2024,16 +2112,20 @@ def main():
         else:
           print("Error: 'enable_ban' is set to an invalid value in config file. Only possible config options are 'ask' or 'False' when using config.\n")
           input("Press Enter to continue...")
-      else:
-        # Ask if they want to also ban spammer
+      elif deletionMode == "rejected":
         banChoice = choice(f"Also {F.YELLOW}ban{S.R} the spammer(s) ?")
+      elif deletionMode == "heldForReview":
+        pass
+
       print("\n")
       # Deletion Logic
-      delete_found_comments(reorderedSpamCommentsID, banChoice, deletionMode)
-      check_deleted_comments(vidIdDict)
+      delete_found_comments(list(matchedCommentsDict), banChoice, deletionMode)
+      check_deleted_comments(matchedCommentsDict)
       if logMode == True:
-        write_rtf(logFileName, "\n\n"+ "\\line\\line Spammers Banned: " + str(banChoice)) # Write whether or not spammer is banned to log file
-        write_rtf(logFileName, "\n\n"+ "\\line\\line Action Taken on Comments: " + str(deletionModeFriendlyName))
+        write_rtf(logFileName, "\n\n \\line\\line Spammers Banned: " + str(banChoice)) # Write whether or not spammer is banned to log file
+        write_rtf(logFileName, "\n\n \\line\\line Action Taken on Comments: " + str(deletionModeFriendlyName) + "\n\n"+ "\\line\\line")
+        if exclude == True:
+          write_rtf(logFileName, str(rtfExclude))
       input(f"\nDeletion {F.LIGHTGREEN_EX}Complete{S.R}. Press Enter to Exit...")
 
     elif config:
