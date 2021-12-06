@@ -115,3 +115,20 @@ To use this script, you will need an "Oauth2" credential to access the scanning 
 <p align="center"><img width="595" alt="14 2" src="https://user-images.githubusercontent.com/12518330/139734814-26d04eed-76b6-4b4f-9689-e6960f781faa.png"></p>
 
 15. Now you should be able to run the python script, and it will ask you to log in.
+
+<h1>Unsupported Devices/Android Users</h1>
+<p> If you are unable to run the .exe file and the code files because your computer/phone doesn't support it please follow these instructions. </p>
+1. Go to https://replit.com. If you are on android go into destop view
+2. Create a account/Login.
+3. On the menu, click Create Repl, if it doesn't load click the menu icon.
+4. Click, import from github and paste this repo's url, open the YouTubeSpammerPurger.py file.
+5. It will open markdown, tap shell and type the following commands:
+
+Command List for Shell:
+pip install rtfunicode
+pip install colorama
+pip install google-api-python-client (make sure you put the dashes in between)
+python3 YouTubeSpammerPurge.py (case sensitive)
+
+Then, you need to do the following setup mentioned above, tap the add file button and add your client_secrets.json file.
+
