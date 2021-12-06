@@ -125,9 +125,7 @@ To use this script, you will need an "Oauth2" credential to access the scanning 
 <p>5. It will open markdown, tap shell and type the following commands:</p>
 
 <p>Command List for Shell:</p>
-<p>pip install rtfunicode</p>
-<p>pip install colorama</p>
-<p>pip install google-api-python-client (make sure you put the dashes in between)</p>
+<p>pip install -r requirements.txt</p>
 <p>python3 YouTubeSpammerPurge.py (case sensitive)</p>
 
 <p>Then, you need to do the following setup mentioned above, tap the add file button and add your client_secrets.json file.</p>
