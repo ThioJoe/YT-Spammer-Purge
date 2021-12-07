@@ -1,6 +1,6 @@
 # YouTube Spammer Purge
 
-**What Is This?** - Allows you to filter and search for spammer comments on your channel in many different ways AND delete them all at once (see features below).
+**What Is This?** - This is a program, made by me which, allows you to filter and search for spammer comments on your channel in many different ways AND delete them all at once (see features below).
 
 **How to Download:** Click the "[Releases](https://github.com/ThioJoe/YouTube-Spammer-Purge/releases)" link on the right, then on the latest release, under 'Assets' click to download "YouTubeSpammerPurge.exe". NOTE: You may get a warning - See "[Download & Windows Warning](#download--windows-warning)" section below for details.
 * [Linux Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/Linux-Installation-Instructions) 
@@ -8,8 +8,8 @@
 * (Windows installation not necessary if using exe file. But read below for how to set up required API key)
 
 ## Features
-* Scan comments on a **single video** or across your **entire channel**
-* 11 Different Filtering Methods
+* This program allows you to, scan comments on a **single video** or across your **entire channel**
+* We have 11 Different Filtering Methods
    * **Scan by Channel ID**: Enter a known spammer's channel link or ID directly
    * **Scan Usernames** for: Individual special characters, individual strings, or using a custom Regex expression
    * **Scan Comment Text for**: Individual special characters, individual strings, or using a custom Regex expression
@@ -56,7 +56,7 @@ Either way, you DO need to acquire your own API credentials file to access the Y
 
 ## Download & Windows Warning
 
-Because I haven't published software before, web browsers and Windows might block the exe from downloading / running as "unrecognized" until it builds a reputation as being safe. In the meantime, you can simply unblock the program by Right Clicking > Properties > Check 'Unblock' > Click Apply. You can confirm the download by selecting "keep". (If you see these warnings at all)
+Because I haven't published software before, web browsers, antivirus softwares and Windows might block the exe from downloading / running as "unrecognized" until it builds a reputation as being safe. In the meantime, you can simply unblock the program by Right Clicking > Properties > Check 'Unblock' > Click Apply. You can confirm the download by selecting "keep". (If you see these warnings at all)
 
 ![Download Warnings](https://user-images.githubusercontent.com/12518330/139365793-75df4170-24d9-4724-b54a-43eddb64dd53.png)
 
