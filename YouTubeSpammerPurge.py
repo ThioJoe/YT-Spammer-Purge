@@ -65,6 +65,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 
+bug_link = "https://bit.ly/3rEOSx4"
 
 ##########################################################################################
 ################################## AUTHORIZATION #########################################
@@ -1661,7 +1662,7 @@ def main():
       traceback.print_exc() # Prints traceback
       print("----------------")
       print("\nError: " + str(e))
-      print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
+      print(f"If you think this is a bug, you may report it on this project's GitHub page: {bug_link}")
       input("\nSomething went wrong during authentication. Try deleting token.pickle file. Press Enter to exit...")
       exit()
 
@@ -1975,7 +1976,7 @@ def main():
 
     if spam_count == 0: # If no spam comments found, exits
       print(f"{B.RED}{F.BLACK}No matched comments or users found!{S.R}\n")
-      print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
+      print(f"If you think this is a bug, you may report it on this project's GitHub page: {bug_link}")
       if bypass == False:
         input("\nPress Enter to exit...")
         exit()
@@ -2100,7 +2101,7 @@ def main():
       else:
         print("\nThe deletion functionality was not enabled. Cannot delete comments.")
         print("Possible Cause: You're trying to scan someone elses video.")
-        print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
+        print(f"If you think this is a bug, you may report it on this project's GitHub page: {bug_link}")
         input("Press Enter to exit...")
         exit()
 
