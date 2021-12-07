@@ -6,4 +6,6 @@
 
 - Avoid adding new non-standard libraries if at all possible. If you have an idea that would require one, please suggest it as an issue first instead of going through all the work and submitting a pull request.
 
+- We have a pull request template, which you need to follow while creating a pull request, so that you give us more information of what exactly your creating a pull request for, the file is located at - .github/PULL_REQUEST_TEMPLATE/pull_request_template.md.
+
 - MAKE SURE IT RUNS
