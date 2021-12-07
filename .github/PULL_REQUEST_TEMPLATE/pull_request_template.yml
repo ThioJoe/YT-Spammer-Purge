@@ -1,0 +1,53 @@
+name: Pull Request Form
+description: Please fill this out for a pull request.
+title: "[Fix]: (Enter short, one sentance summary of fix here)"
+labels: ["fix"]
+assignees:
+  - ThioJoe 
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fix an issue (or add an enhancement!    
+    - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Also tell me, what did you expect to happen?
+      placeholder: Tell me what you see!
+      value: "Well, I was trying to ... but then ..."
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Release version
+      description: What version of this program are you using? (can be found in the title when running (eg. ======== YOUTUBE SPAMMER PURGE VERSION (insert version here) or in the `version` variable in the `YouTubeSpammerPurge.py` file.)
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to reproduce
+      description: This will allow me to figure out where the issue originates.
+      placeholder: Step 1, Step 2, Step 3...
+      value: |
+             1. 
+             2. 
+             3. 
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: What platform are you seeing this problem on?
+      description: Sometimes, problems can be platform-specific.
+      multiple: false
+      options:
+        - Windows
+        - MacOS
+        - Linux (can also be ChromeOS)
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: Copy and paste from tracebacks, aka any error message text that appears during a program crash
+      render: shell
