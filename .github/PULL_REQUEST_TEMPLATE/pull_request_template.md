@@ -1,4 +1,4 @@
-# Related Issue/Additionto code
+# Related Issue/Addition to code
 - Issue goes here
 
 ## Type of change
