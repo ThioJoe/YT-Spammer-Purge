@@ -54,7 +54,7 @@ Either way, you DO need to acquire your own API credentials file to access the Y
 * [Linux Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/Linux-Installation-Instructions) 
 * [MacOS Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/MacOS-Instructions)
 
-If you have any issues while installing, please let us know [here](https://bit.ly/mainbugreport)
+If you have any issues while installing, please let me know [here](https://bit.ly/mainbugreport)
 
 ## Download & Windows Warning
 
