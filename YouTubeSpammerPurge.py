@@ -38,32 +38,43 @@
 version = "2.0.0-Testing"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-# GUI Related
-from gui import *
+# Try Imports
+try:
 
-# Standard Libraries
-import io
-import os
-import re
-import sys
-import time
-from datetime import datetime
-import traceback
-import platform
-import requests
-from configparser import ConfigParser
-from distutils.version import LooseVersion
+  # GUI Related
+  from gui import *
 
-# Non Standard Modules
-import rtfunicode
-from colorama import init, Fore as F, Back as B, Style as S
+  # Standard Libraries
+  import io
+  import os
+  import re
+  import sys
+  import time
+  from datetime import datetime
+  import traceback
+  import platform
+  import requests
+  from configparser import ConfigParser
+  from distutils.version import LooseVersion
 
-# Google Authentication Modules
-from googleapiclient.errors import HttpError
-from googleapiclient.discovery import build
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.oauth2.credentials import Credentials
-from google.auth.transport.requests import Request
+  # Non Standard Modules
+  import rtfunicode
+  from colorama import init, Fore as F, Back as B, Style as S
+
+  # Google Authentication Modules
+  from googleapiclient.errors import HttpError
+  from googleapiclient.discovery import build
+  from google_auth_oauthlib.flow import InstalledAppFlow
+  from google.oauth2.credentials import Credentials
+  from google.auth.transport.requests import Request
+
+except ModuleNotFoundError as e:
+  print(e)
+  print("\nA module was not found try installing the requirements using either of these:")
+  print("pip3 install -r requirements.txt")
+  print("pip install -r requirements.txt")
+except Exception as e:
+  print(e)
 
 
 ##########################################################################################
@@ -429,82 +440,102 @@ def get_replies(currentUser, filterMode, filterSubMode, parent_id, videoID, pare
 def check_against_filter(currentUser, filterMode, filterSubMode, commentID, videoID, authorChannelID, parentAuthorChannelID=None, inputtedSpammerChannelID=None, inputtedUsernameFilter=None, inputtedCommentTextFilter=None,  authorChannelName=None, commentText=None, regexPattern=None):
   global vidIdDict
   global matchedCommentsDict
+  innocentTest = None
 
   # Do not even check comment author ID matches currently logged in user's ID
-  if currentUser[0] != authorChannelID: 
-    # If the comment/username matches criteria based on mode, add key/value pair of comment ID and author ID to matchedCommentsDict
-    # Also add key-value pair of comment ID and video ID to dictionary
-    def add_spam(commentID, videoID):
-      global matchedCommentsDict
-      matchedCommentsDict[commentID] = {}
-      vidIdDict[commentID] = videoID
+  if currentUser[0] != authorChannelID:
+    # Logic to avoid false positives from replies to spammers
+    if (filterMode == "AutoSmart" or filterMode == "NameAndText") and len(previousMatchCommentDataList) > 0:
+      if "@"+str(previousMatchCommentDataList[1]) in commentText and previousMatchCommentDataList[0] != authorChannelID:
+        innocentTest = True
+      else:
+        innocentTest = False
 
-    # Checks author of either parent comment or reply (both passed in as commentID) against channel ID inputted by user
-    if filterMode == "ID":
-      if any(authorChannelID == x for x in inputtedSpammerChannelID):
-        add_spam(commentID, videoID)
+    if innocentTest != True:
+      # If the comment/username matches criteria based on mode, add key/value pair of comment ID and author ID to matchedCommentsDict
+      # Also add key-value pair of comment ID and video ID to dictionary
+      def add_spam(commentID, videoID):
+        global matchedCommentsDict
+        global previousMatchCommentDataList
+        matchedCommentsDict[commentID] = {}
+        vidIdDict[commentID] = videoID
+        previousMatchCommentDataList = [authorChannelID, authorChannelName, commentText]
 
-    # Check Modes: Username
-    elif filterMode == "Username":
-      if filterSubMode == "chars":
-        authorChannelName = make_char_set(str(authorChannelName))
-        if any(x in inputtedUsernameFilter for x in authorChannelName):
+      # Checks author of either parent comment or reply (both passed in as commentID) against channel ID inputted by user
+      if filterMode == "ID":
+        if any(authorChannelID == x for x in inputtedSpammerChannelID):
           add_spam(commentID, videoID)
-      elif filterSubMode == "string":
-        if check_list_against_string(listInput=inputtedUsernameFilter, stringInput=authorChannelName, caseSensitive=False):
-          add_spam(commentID, videoID)
-      elif filterSubMode == "regex":
+
+      # Check Modes: Username
+      elif filterMode == "Username":
+        if filterSubMode == "chars":
+          authorChannelName = make_char_set(str(authorChannelName))
+          if any(x in inputtedUsernameFilter for x in authorChannelName):
+            add_spam(commentID, videoID)
+        elif filterSubMode == "string":
+          if check_list_against_string(listInput=inputtedUsernameFilter, stringInput=authorChannelName, caseSensitive=False):
+            add_spam(commentID, videoID)
+        elif filterSubMode == "regex":
+          if re.search(str(regexPattern), authorChannelName):
+            add_spam(commentID, videoID)
+
+      # Check Modes: Comment Text
+      elif filterMode == "Text":
+        if filterSubMode == "chars":
+          commentText = make_char_set(str(commentText))
+          if any(x in inputtedCommentTextFilter for x in commentText):
+            add_spam(commentID, videoID)
+        elif filterSubMode == "string":
+          if check_list_against_string(listInput=inputtedCommentTextFilter, stringInput=commentText, caseSensitive=False):
+            add_spam(commentID, videoID)
+        elif filterSubMode == "regex":
+          if re.search(str(regexPattern), commentText):
+            add_spam(commentID, videoID)
+
+      # Check Modes: Name and Text
+      elif filterMode == "NameAndText":
+        if filterSubMode == "chars":
+          authorChannelName = make_char_set(str(authorChannelName))
+          commentText = make_char_set(str(commentText))
+          if any(x in inputtedUsernameFilter for x in authorChannelName):
+            add_spam(commentID, videoID)
+          elif any(x in inputtedCommentTextFilter for x in commentText):
+            add_spam(commentID, videoID)
+        elif filterSubMode == "string":
+          if check_list_against_string(listInput=inputtedUsernameFilter, stringInput=authorChannelName, caseSensitive=False):
+            add_spam(commentID, videoID)
+          if check_list_against_string(listInput=inputtedCommentTextFilter, stringInput=commentText, caseSensitive=False):
+            add_spam(commentID, videoID)
+        elif filterSubMode == "regex":
+          if re.search(str(regexPattern), authorChannelName):
+            add_spam(commentID, videoID)
+          if re.search(str(regexPattern), commentText):
+            add_spam(commentID, videoID)
+
+      # Check Modes: Auto ASCII (in username)
+      elif filterMode == "AutoASCII":
         if re.search(str(regexPattern), authorChannelName):
           add_spam(commentID, videoID)
 
-    # Check Modes: Comment Text
-    elif filterMode == "Text":
-      if filterSubMode == "chars":
-        commentText = make_char_set(str(commentText))
-        if any(x in inputtedCommentTextFilter for x in commentText):
+      # Check Modes: Auto Smart (in username or comment text)
+      # Here inputtedComment/Author Filters are tuples of, where 2nd element is list of char-sets to check against
+      ## Also Check if reply author ID is same as parent comment author ID, if so, ignore (to account for users who reply to spammers)
+      elif filterMode == "AutoSmart":
+        numberFilterSet = inputtedUsernameFilter['spammerNumbersSet']
+        authorChannelNameSet = make_char_set(str(authorChannelName))
+        commentTextSet = make_char_set(str(commentText))
+        compiledRegex = inputtedUsernameFilter['compiledRegex']
+        
+        combinedString = authorChannelName + commentText
+        combinedSet = authorChannelNameSet + commentTextSet
+        if authorChannelID == parentAuthorChannelID:
+          pass
+        elif any(x in numberFilterSet for x in combinedSet):
           add_spam(commentID, videoID)
-      elif filterSubMode == "string":
-        if check_list_against_string(listInput=inputtedCommentTextFilter, stringInput=commentText, caseSensitive=False):
+        elif compiledRegex.search(combinedString):
           add_spam(commentID, videoID)
-      elif filterSubMode == "regex":
-        if re.search(str(regexPattern), commentText):
-          add_spam(commentID, videoID)
-
-    # Check Modes: Name and Text
-    elif filterMode == "NameAndText":
-      if filterSubMode == "chars":
-        authorChannelName = make_char_set(str(authorChannelName))
-        commentText = make_char_set(str(commentText))
-        if any(x in inputtedUsernameFilter for x in authorChannelName):
-          add_spam(commentID, videoID)
-        elif any(x in inputtedCommentTextFilter for x in commentText):
-          add_spam(commentID, videoID)
-      elif filterSubMode == "string":
-        if check_list_against_string(listInput=inputtedUsernameFilter, stringInput=authorChannelName, caseSensitive=False):
-          add_spam(commentID, videoID)
-        if check_list_against_string(listInput=inputtedCommentTextFilter, stringInput=commentText, caseSensitive=False):
-          add_spam(commentID, videoID)
-      elif filterSubMode == "regex":
-        if re.search(str(regexPattern), authorChannelName):
-          add_spam(commentID, videoID)
-        if re.search(str(regexPattern), commentText):
-          add_spam(commentID, videoID)
-
-    # Check Modes: Auto ASCII (in username)
-    elif filterMode == "AutoASCII":
-      if re.search(str(regexPattern), authorChannelName):
-        add_spam(commentID, videoID)
-
-    # Check Modes: Auto Smart (in username or comment text)
-    ## Also Check if reply author ID is same as parent comment author ID, if so, ignore (to account for users who reply to spammers)
-    elif filterMode == "AutoSmart":
-      authorChannelName = make_char_set(str(authorChannelName))
-      commentText = make_char_set(str(commentText))
-      if any(x in inputtedUsernameFilter for x in authorChannelName):
-        add_spam(commentID, videoID)
-      elif any(x in inputtedCommentTextFilter for x in commentText):
-        if authorChannelID != parentAuthorChannelID:
-          add_spam(commentID, videoID)
+    else:
+      pass
   else:
     pass
 
@@ -516,14 +547,32 @@ def check_against_filter(currentUser, filterMode, filterSubMode, commentID, vide
 
 # Takes in list of comment IDs to delete, breaks them into 50-comment chunks, and deletes them in groups
 def delete_found_comments(commentsList, banChoice, deletionMode, recoveryMode=False):
+  print("\n")
+  if deletionMode == "rejected":
+    actionPresent = "Deleting"
+    actionPast = "Deleted"
+  elif deletionMode == "heldForReview":
+    actionPresent = "Hiding"
+    actionPast = "Hidden"
+  elif deletionMode == "reportSpam":
+    actionPresent = "Reporting"
+    actionPast = "Reported"
+  else:
+    actionPresent = "Processing"
+    actionPast = "Processed"
 
   # Local Functions 
   def setStatus(commentIDs): #Does the actual deletion
+    if deletionMode == "heldForReview" or deletionMode == "rejected":
       youtube.comments().setModerationStatus(id=commentIDs, moderationStatus=deletionMode, banAuthor=banChoice).execute()
+    elif deletionMode == "reportSpam":
+      result = youtube.comments().markAsSpam(id=commentIDs).execute()
+      if len(result) > 0:
+        print("\nSomething may gone wrong when reporting the comments.")
 
   def print_progress(d, t, recoveryMode=False): 
     if recoveryMode == False:
-      print("Deleting Comments... - Progress: [" + str(d) + " / " + str(t) + "] (In Groups of 50)", end="\r")
+      print(actionPresent +" Comments... - Progress: [" + str(d) + " / " + str(t) + "] (In Groups of 50)", end="\r")
     elif recoveryMode == True:
       print("Recovering Comments... - Progress: [" + str(d) + " / " + str(t) + "] (In Groups of 50)", end="\r")
 
@@ -545,8 +594,10 @@ def delete_found_comments(commentsList, banChoice, deletionMode, recoveryMode=Fa
   else:
       setStatus(commentsList)
       print_progress(deletedCounter, total, recoveryMode)
-  if recoveryMode == False:
-    print("Comments Deleted! Will now verify each is gone.                          \n")
+  if deletionMode == "reportSpam":
+    print(f"{F.YELLOW}Comments Reported!{S.R} If no error messages were displayed, then everything was successful.")
+  elif recoveryMode == False:
+    print("Comments " + actionPast + "! Will now verify each is gone.                          \n")
   elif recoveryMode == True:
     print("Comments Recovered! Will now verify each is back.                          \n")
 
@@ -692,16 +743,11 @@ def exclude_authors(inputtedString):
   # Get author names and IDs from dictionary, and display them
   for author in authorIDsToExclude:
     displayString += f"    User ID: {author}   |   User Name: {matchSamplesDict[author]['authorName']}\n"
-  print(f"\n{F.CYAN}All {len(excludedCommentsDict)} comments{S.R} from the {F.CYAN}following {len(authorIDsToExclude)} users{S.R} will be {F.LIGHTGREEN_EX}excluded{S.R} from deletion:")
+  print(f"\n{F.CYAN}All {len(excludedCommentsDict)} comments{S.R} from the {F.CYAN}following {len(authorIDsToExclude)} users{S.R} are now {F.LIGHTGREEN_EX}excluded{S.R} from deletion:")
   print(displayString+"\n")
-
-  # Get final confirmation from user
-  confirm = input(f"To proceed and delete all other comments, type ' {F.YELLOW}DELETE{S.R} ' exactly (in all caps).\n")
-  if confirm != "DELETE":
-    input(f"\nDeletion {F.YELLOW}cancelled{S.R}. Press Enter to Exit...")
-    exit()
-  elif confirm == "DELETE":
-    return confirm, excludedCommentsDict, rtfFormattedExcludes
+  input("Press Enter to decide what to do with the rest...")
+  
+  return excludedCommentsDict, rtfFormattedExcludes # May use excludedCommentsDict later for printing them to log file
 
   
 
@@ -796,10 +842,10 @@ def get_current_user(config):
   
   if config == None:
     configMatch = None
-  elif config and config['general']['your_channel_id'].lower() == "ask":
+  elif config and config['your_channel_id'] == "ask":
     configMatch = None
-  elif validate_channel_id(config['general']['your_channel_id'])[0] == True:
-    if config['general']['your_channel_id'] == channelID:
+  elif validate_channel_id(config['your_channel_id'])[0] == True:
+    if config['your_channel_id'] == channelID:
       configMatch = True
     else:
       print("Error: The channel ID in the config file appears to be valid, but does not match the channel ID of the currently logged in user.")
@@ -1070,7 +1116,7 @@ def safety_check_username_against_filter(currentUserName, scanMode, filterCharsS
         input("\nPress enter to continue...")
 
   proceed = True
-  deletionEnabledLocal = "HalfTrue"
+  deletionEnabledLocal = "Allowed"
 
   return proceed, deletionEnabledLocal
 
@@ -1214,9 +1260,25 @@ def load_config_file():
     wrappedConfigData = io.StringIO(configData)
     parser = ConfigParser()
     parser.read_file(wrappedConfigData)
-    ConfigDict = {s:dict(parser.items(s)) for s in parser.sections()}
+    #configDictRaw = {s:dict(parser.items(s)) for s in parser.sections()}
 
-    return ConfigDict
+    # Convert raw config dictionary into easier to use dictionary
+    settingsToKeepCase = ["your_channel_id", "video_to_scan", "channel_ids_to_filter", "regex_to_filter"]
+    configDict = {}
+    for section in parser.sections():
+      for setting in parser.items(section):
+        # Setting[0] is name of the setting, Setting[1] is the value of the setting
+        if setting[0] in settingsToKeepCase and setting[1].lower() != "ask":
+          configDict[setting[0]] = setting[1]
+        else:
+          # Take values out of raw dictionary structure and put into easy dictionary with processed values
+          configDict[setting[0]] = setting[1].lower()
+          if setting[1].lower() == "false":
+            configDict[setting[0]] = False
+          elif setting[1].lower() == "true":
+            configDict[setting[0]] = True
+
+    return configDict
   else:
     return None
 
@@ -1327,7 +1389,7 @@ def prepare_filter_mode_chars(currentUser, deletionEnabledLocal, scanMode, filte
   elif filterMode == "NameAndText":
     whatToScanMsg = "Usernames and Comment Text"
 
-  if config and config["filtering"]["characters_to_filter"].lower() != "ask":
+  if config and config['characters_to_filter'] != "ask":
     print("Characters to filter obtained from config file.")
     pass
   else:
@@ -1338,10 +1400,10 @@ def prepare_filter_mode_chars(currentUser, deletionEnabledLocal, scanMode, filte
     print("-------------------------------------------")
 
   validEntry = False
-  validConfig = True
+  validConfigSetting = True
   while validEntry == False:
-    if validConfig == True and config and config["filtering"]["characters_to_filter"].lower() != "ask":
-      inputChars = make_char_set(config["filtering"]["characters_to_filter"], stripLettersNumbers=True, stripKeyboardSpecialChars=False, stripPunctuation=True)
+    if validConfigSetting == True and config and config['characters_to_filter'] != "ask":
+      inputChars = make_char_set(config['characters_to_filter'], stripLettersNumbers=True, stripKeyboardSpecialChars=False, stripPunctuation=True)
       bypass = True
     else:
       bypass = False
@@ -1361,18 +1423,18 @@ def prepare_filter_mode_chars(currentUser, deletionEnabledLocal, scanMode, filte
       validEntry = True
 
     if validEntry == True:
-      if validConfig == True and config and config["filtering"]["characters_to_filter"].lower() != "ask":
+      if validConfigSetting == True and config and config['characters_to_filter'] != "ask":
         pass
       else:
         print(f"     {whatToScanMsg} will be scanned for {F.MAGENTA}ANY{S.R} of the characters you entered in the previous window.")
       if choice("Begin Scanning? ", bypass) == True:
         validEntry = True
         if filterMode == "Text":
-          deletionEnabledLocal = "HalfTrue"
+          deletionEnabledLocal = "Allowed"
       else:
         validEntry = False
         deletionEnabledLocal = "False"
-        validConfig = False
+        validConfigSetting = False
 
   return deletionEnabledLocal, inputChars
 
@@ -1386,7 +1448,7 @@ def prepare_filter_mode_strings(currentUser, deletionEnabledLocal, scanMode, fil
   elif filterMode == "NameAndText":
     whatToScanMsg = "Usernames and Comment Text"
 
-  if config and config["filtering"]["strings_to_filter"].lower() != "ask":
+  if config and config['strings_to_filter'] != "ask":
     print("Strings to filter obtained from config file.")
     pass
   else:
@@ -1395,10 +1457,10 @@ def prepare_filter_mode_strings(currentUser, deletionEnabledLocal, scanMode, fil
     print("          Example Input: whatsapp, whatever multiple words, investment")
 
   validEntry = False
-  validConfig = True
+  validConfigSetting = True
   while validEntry == False:
-    if validConfig == True and config and config["filtering"]["strings_to_filter"].lower() != "ask":
-      inputString = config["filtering"]["strings_to_filter"]
+    if validConfigSetting == True and config and config['strings_to_filter'] != "ask":
+      inputString = config['strings_to_filter']
       bypass = True
     else:
       bypass = False
@@ -1412,10 +1474,10 @@ def prepare_filter_mode_strings(currentUser, deletionEnabledLocal, scanMode, fil
       elif filterMode == "Text":
         validEntry = True
     else:
-      validConfig = False
+      validConfigSetting = False
 
     if validEntry == True:
-      if config and config["filtering"]["strings_to_filter"].lower() != "ask":
+      if config and config['strings_to_filter'] != "ask":
         pass
       else:
         print(f"     {whatToScanMsg} will be scanned for {F.MAGENTA}ANY{S.R} of the following strings:")
@@ -1423,7 +1485,7 @@ def prepare_filter_mode_strings(currentUser, deletionEnabledLocal, scanMode, fil
       if choice("Begin scanning? ", bypass) == True:
         validEntry = True
         if filterMode == "Text":
-          deletionEnabledLocal = "HalfTrue"
+          deletionEnabledLocal = "Allowed"
       else:
         validEntry = False
         deletionEnabledLocal = "False"
@@ -1440,18 +1502,18 @@ def prepare_filter_mode_regex(currentUser, deletionEnabledLocal, scanMode, filte
   elif filterMode == "NameAndText":
     whatToScanMsg = "Usernames and Comment Text"
 
-  if config and config["filtering"]["regex_to_filter"].lower() != "ask":
+  if config and config['regex_to_filter'] != "ask":
     print("Regex expression obtained from config file.")
-    validConfig = True
+    validConfigSetting = True
   else:
     print(f"Enter any {F.YELLOW}regex expression{S.R} to search within {whatToScanMsg}.")
     print(r"          Example Input:  [^\x00-\xFF]")
-    validConfig = False
+    validConfigSetting = False
   validExpression = False
 
   while validExpression == False:
-    if validConfig == True and config and config["filtering"]["regex_to_filter"].lower() != "ask":
-      inputtedExpression = config["filtering"]["regex_to_filter"]
+    if validConfigSetting == True and config and config['regex_to_filter'] != "ask":
+      inputtedExpression = config['regex_to_filter']
       bypass = True
     else:
       inputtedExpression = input("Input Expression Here:  ")
@@ -1468,14 +1530,14 @@ def prepare_filter_mode_regex(currentUser, deletionEnabledLocal, scanMode, filte
 
       if validExpression == True and choice("Begin scanning? ", bypass) == True:
         if filterMode == "Text":
-          deletionEnabledLocal = "HalfTrue"
+          deletionEnabledLocal = "Allowed"
       else:
         validExpression = False
         deletionEnabledLocal = "False"
-        validConfig = False
+        validConfigSetting = False
     else:
       print(f"     {F.RED}Error{S.R}: The expression appears to be {F.RED}invalid{S.R}!")
-      validConfig = False
+      validConfigSetting = False
 
   return deletionEnabledLocal, processedExpression
 
@@ -1485,10 +1547,10 @@ def prepare_filter_mode_ID(currentUser, deletionEnabledLocal, scanMode, config):
 
   currentUserID = currentUser[0]
   processResult = (False, None) #Tuple, first element is status of validity of channel ID, second element is channel ID
-  validConfig = True
+  validConfigSetting = True
   while processResult[0] == False:
-    if validConfig == True and config and config["filtering"]["channel_ids_to_filter"].lower() != "ask":
-      inputtedSpammerChannelID = config["filtering"]["channel_ids_to_filter"]
+    if validConfigSetting == True and config and config['channel_ids_to_filter'] != "ask":
+      inputtedSpammerChannelID = config['channel_ids_to_filter']
       bypass = True
     else:
       bypass = False
@@ -1498,7 +1560,7 @@ def prepare_filter_mode_ID(currentUser, deletionEnabledLocal, scanMode, config):
     if processResult[0] == True:
       inputtedSpammerChannelID = processResult[1] # After processing, if valid, inputtedSpammerChannelID is a list of channel IDs
     else:
-      validConfig = False
+      validConfigSetting = False
   print("\n")
 
   # Check if spammer ID and user's channel ID are the same, and warn
@@ -1507,12 +1569,12 @@ def prepare_filter_mode_ID(currentUser, deletionEnabledLocal, scanMode, config):
     print(f"{B.RED}{F.WHITE} WARNING: {S.R} - You entered your own channel ID!")
     print(f"For safety purposes, this program always {F.YELLOW}ignores{S.R} your own comments.")
 
-    if config and config["filtering"]["channel_ids_to_filter"].lower() != "ask":
+    if config and config['channel_ids_to_filter'] != "ask":
       pass
     else:
       input("\nPress Enter to continue...")
   
-  deletionEnabledLocal = "HalfTrue"
+  deletionEnabledLocal = "Allowed"
   return deletionEnabledLocal, inputtedSpammerChannelID
 
 # For Filter mode auto-ascii, user inputs nothing, program scans for non-ascii
@@ -1528,12 +1590,12 @@ def prepare_filter_mode_non_ascii(currentUser, deletionEnabledLocal, scanMode, c
 
   # Get user input for mode selection, 
   confirmation = False
-  validConfig = True
+  validConfigSetting = True
   while confirmation == False:
     deletionEnabledLocal = "False"
 
-    if validConfig == True and config and config["filtering"]["autoascii_sensitivity"].lower() != "ask":
-      selection = config["filtering"]["autoascii_sensitivity"]
+    if validConfigSetting == True and config and config['autoascii_sensitivity'] != "ask":
+      selection = config['autoascii_sensitivity']
       bypass = True
     else:
       bypass = False
@@ -1555,7 +1617,7 @@ def prepare_filter_mode_non_ascii(currentUser, deletionEnabledLocal, scanMode, c
         confirmation = True
     else:
       print(f"Invalid input: {selection} - Must be 1, 2, or 3.")
-      validConfig = False
+      validConfigSetting = False
     
     if confirmation == True:
       confirmation, deletionEnabledLocal = safety_check_username_against_filter(currentUser[1], scanMode=scanMode, regexPattern=regexPattern, bypass=bypass)
@@ -1576,27 +1638,28 @@ def prepare_filter_mode_non_ascii(currentUser, deletionEnabledLocal, scanMode, c
 # Auto filter for pre-made list of common spammer-used characters in usernames
 def prepare_filter_mode_smart_chars(currentUser, deletionEnabledLocal, scanMode, config):
   currentUserName = currentUser[1]
-  if config and config["filtering"]["filter_mode"].lower() == "autosmart":
+  if config and config['filter_mode'] == "autosmart":
     print("Using Auto Smart Mode - Set from config file.")
-    bypass = True
   else:
     print("\n--------------------------------------------------------------------------------------------------------------")
     print("~~~ This mode is pre-programmed to search usernames for special characters almost exclusively used by spammers ~~~\n")
     print(" > Specifically, unicode characters that look like numbers\n")
     input("Press Enter to continue...")
-    bypass = False
 
+  spammerNumbersString = "０１２３４５６７８９０１２３４５６７８９߁①⑴⒈⓵❶➀➊🄂౽੨②⑵⒉⓶❷➁➋🄃౩③⑶⒊⓷❸➂➌🄄૩④⑷⒋⓸❹➃➍🄅⑤⑸⒌⓹❺➄➎➄➎🄆⑥⑹⒍⓺❻➅➏🄇⑦⑺⒎⓻❼➆➐𑄽🄈႘⑧⑻⒏⓼❽➇➑🄉⑨⑼⒐⓽❾➈➒🄊⓪⓿🄋🄌🄁🄀𝟎𝟘𝟢𝟬𝟏𝟙𝟭𝟣𝟶𝟐𝟚𝟮𝟤𝟷𝟑𝟛𝟯𝟥𝟸𝟒𝟜𝟰𝟦𝟹𝟓𝟝𝟱𝟧𝟺𝟔𝟞𝟲𝟨𝟻𝟕𝟟𝟳𝟩𝟼𝟖𝟠𝟴𝟪𝟽𝟗𝟡𝟵𝟫𝟾𝟿"
+  spammerPlusSignsString = "✚✙➕±˖ᐩ⁺₊∓∔⊕⊞⟴⧺⧻⨁⨄⨢⨣⨤⨥⨦⨧⨨⨭⨮⨹⩱⩲⬲﹢＋+᛭⁜☩☨☦♰♱⛨✙✚✛✜✝✞✟✠Ꚛꚛ🕀🕁🕂🕆🕇🕈🞡🞢🞣🞤🞥🞦🞧"
+  spammerOneString = "１𝟏𝟙𝟣𝟭𝟷⒈⓵❶➀➊🄂߁①⑴"
+  spammerNumbersSet = make_char_set(spammerNumbersString, stripLettersNumbers=False, stripKeyboardSpecialChars=False, stripPunctuation=False)
+  
+  regexTest1 = f"[{spammerPlusSignsString}][1]"
+  regexTest2 = f"[+][{spammerOneString}]"
+  regexTest3 = f"[{spammerNumbersString}][{spammerPlusSignsString}]"
 
-  spammerUsernameCharString = "０１２３４５６７８９０１２３４５６７８９߁①⑴⒈⓵❶➀➊🄂౽੨②⑵⒉⓶❷➁➋🄃౩③⑶⒊⓷❸➂➌🄄૩④⑷⒋⓸❹➃➍🄅⑤⑸⒌⓹❺➄➎➄➎🄆⑥⑹⒍⓺❻➅➏🄇⑦⑺⒎⓻❼➆➐𑄽🄈႘⑧⑻⒏⓼❽➇➑🄉⑨⑼⒐⓽❾➈➒🄊⓪⓿🄋🄌🄁🄀𝟎𝟘𝟢𝟬𝟏𝟙𝟭𝟣𝟶𝟐𝟚𝟮𝟤𝟷𝟑𝟛𝟯𝟥𝟸𝟒𝟜𝟰𝟦𝟹𝟓𝟝𝟱𝟧𝟺𝟔𝟞𝟲𝟨𝟻𝟕𝟟𝟳𝟩𝟼𝟖𝟠𝟴𝟪𝟽𝟗𝟡𝟵𝟫𝟾𝟿"
-  filterCharsSet = make_char_set(spammerUsernameCharString, stripLettersNumbers=False, stripKeyboardSpecialChars=False, stripPunctuation=False)
+  compiledRegex = re.compile(f"({regexTest1}|{regexTest2}|{regexTest3})")
 
-  proceed, deletionEnabledLocal = safety_check_username_against_filter(currentUserName, filterCharsSet=filterCharsSet, scanMode=scanMode, bypass=bypass)
-
-  if proceed == True:
-    return deletionEnabledLocal, filterCharsSet
-  else:
-    input("Ok, cancelled. Press Enter to exit...")
-    exit()
+  #proceed, deletionEnabledLocal = safety_check_username_against_filter(currentUserName, filterCharsSet=filterCharsSet, scanMode=scanMode, bypass=bypass)
+  filterSettings = {'spammerNumbersSet': spammerNumbersSet, 'compiledRegex': compiledRegex}
+  return deletionEnabledLocal, filterSettings
 
 ##########################################################################################
 ##########################################################################################
@@ -1606,14 +1669,15 @@ def prepare_filter_mode_smart_chars(currentUser, deletionEnabledLocal, scanMode,
 
 def main():
   # Run check on python version, must be 3.6 or higher because of f strings
-  if sys.version_info[0] < 3 or sys.version_info[1] < 6:
-    print("Error: This program requires running python 3.6 or higher! You are running" + str(sys.version_info[0]) + "." + str(sys.version_info[1]))
+  if sys.version_info[0] < 3 or sys.version_info[1] < 10:
+    print("Error: This program requires running python 3.10 or higher! You are running" + str(sys.version_info[0]) + "." + str(sys.version_info[1]))
     input("Press Enter to exit...")
     sys.exit()
 
   # Declare Global Variables
   global youtube
   global matchedCommentsDict
+  global previousMatchCommentDataList
   global vidIdDict
   global vidTitleDict
   global scannedRepliesCount
@@ -1621,6 +1685,7 @@ def main():
   global matchSamplesDict
 
   # Default values for global variables
+  previousMatchCommentDataList = []
   matchedCommentsDict = {}
   vidIdDict = {}
   vidTitleDict = {}
@@ -1635,6 +1700,7 @@ def main():
   check_video_id = None
   nextPageToken = "start"
   logMode = False
+  userNotChannelOwner = False
 
   # Checks system platform to set correct console clear command
   # Clears console otherwise the windows terminal doesn't work with colorama for some reason  
@@ -1669,13 +1735,13 @@ def main():
   config = load_config_file()
   os.system(clear_command)
   if config != None:
-    if config['general']['use_this_config'].lower() == 'ask':
+    if config['use_this_config'] == 'ask':
       if choice(f"\nFound {F.YELLOW}config file{S.R}, use those settings?") == False:
         config = None
       os.system(clear_command)
-    elif config['general']['use_this_config'].lower() == 'false':
+    elif config['use_this_config'] == False:
       config = None
-    elif config ['general']['use_this_config'].lower() == 'true':
+    elif config['use_this_config'] == True:
       pass
     else:
       print("Error: Invalid value in config file for setting 'use_this_config' - Must be 'True', 'False', or 'Ask'")
@@ -1684,7 +1750,7 @@ def main():
 
   print("\n   Loading...\n")
   # Check for program updates
-  if not config or config['general']['auto_check_update'].lower() == 'true':
+  if not config or config['auto_check_update'] == True:
     try:
       updateAvailable = check_for_update(version, silentCheck=True)
       os.system(clear_command)
@@ -1735,10 +1801,10 @@ def main():
 
   # Make sure input is valid, if not ask again
   validMode = False
-  validConfig = True
+  validConfigSetting = True
   while validMode == False:
-    if validConfig == True and config and config['scanning']['scan_mode'].lower() != 'ask':
-      scanMode = config['scanning']['scan_mode'].lower()
+    if validConfigSetting == True and config and config['scan_mode'] != 'ask':
+      scanMode = config['scan_mode']
     else:
       scanMode = input("Choice (1-5): ")
 
@@ -1746,32 +1812,34 @@ def main():
     validModeValues = ['1', '2', '3', '4', '5', 'chosenvideos', 'entirechannel']
     if scanMode in validModeValues:
       validMode = True
-      if scanMode == "1" or scanMode == "chosenvideos":
-        scanMode = "chosenVideos"
-      elif scanMode == "2" or scanMode == "entirechannel":
-        scanMode = "entireChannel"
-      elif scanMode == "3":
-        scanMode = "makeConfig"
-      elif scanMode == "4":
-        scanMode = "recoverMode"
-      elif scanMode == "5":
-        scanMode = "checkUpdates"
+      match scanMode:
+        case "1" | "chosenvideos":
+          scanMode = "chosenVideos"
+        case "2" | "entirechannel":
+          scanMode = "entireChannel"
+        case "3":
+          scanMode = "makeConfig"
+        case "4":
+          scanMode = "recoverMode"
+        case "5":
+          scanMode = "checkUpdates"
     else:
       print(f"\nInvalid choice: {scanMode} - Enter either 1, 2, 3, 4, or 5. ")
-      validConfig = False
+      validConfigSetting = False
 
   # If chooses to scan single video - Validate Video ID, get title, and confirm with user
   if scanMode == "chosenVideos":  
-    #While loop to get video ID and if invalid ask again
+    # While loop to get video ID and if invalid ask again
     validVideoID = (False, None) # Tuple, first element is status of validity of video ID, second element is video ID
     confirm = False
-    validConfig = True
+    validConfigSetting = True
+
     while validVideoID[0] == False or confirm == False:
-      if validConfig == True and config and config['scanning']['video_to_scan'].lower() != 'ask':
-        check_video_id = config['scanning']['video_to_scan']
+      if validConfigSetting == True and config and config['video_to_scan'] != 'ask':
+        check_video_id = config['video_to_scan']
       else:
         check_video_id = input(F"Enter {F.YELLOW}Video Link{S.R} or {F.YELLOW}Video ID{S.R} to scan: ")
-        validConfig = False
+        validConfigSetting = False
 
       validVideoID = validate_video_id(check_video_id) # Sends link or video ID for isolation and validation
       
@@ -1779,23 +1847,28 @@ def main():
         check_video_id = str(validVideoID[1])
         title = get_video_title(check_video_id)
         print("\nChosen Video:  " + title)
-        confirm = choice("Is this correct?", bypass=validConfig)
-        if currentUser[0] != get_channel_id(check_video_id) and confirm == True and validConfig == False:
-          print(f"\n   >>> {B.RED}{F.WHITE} WARNING {S.R} It is simply not possible to delete comments on someone elses video! <<<")
-          input("\n   Press Enter to continue for testing purposes...  (But you will get an error when trying to delete!)\n")
+        if currentUser[0] != get_channel_id(check_video_id):
+          userNotChannelOwner = True
+          print(f"{F.LIGHTRED_EX}NOTE: This is not your video. Enabling '{F.YELLOW}Not Your Channel Mode{F.LIGHTRED_EX}'. You'll be able to report spam comments, but not delete them.{S.R}")
+        # Ask if correct video, or skip if config
+        if config and config['skip_confirm_video'] == True:
+          confirm = True
+        else:
+          confirm = choice("Is this video correct?", bypass=validConfigSetting)
+
       else:
         print("\nInvalid Video ID or Link: " + str(validVideoID[1]))
-        validConfig = False
+        validConfigSetting = False
 
   # If chooses to scan entire channel - Validate Channel ID
   elif scanMode == "entireChannel":
     # While loop to get max scan number, not an integer, asks again
     validInteger = False
-    if config: validConfig = True
+    if config: validConfigSetting = True
     while validInteger == False:
       try:
-        if validConfig == True and config and config['scanning']['max_comments'].lower() != 'ask':
-          maxScanNumber = int(config['scanning']['max_comments'])
+        if validConfigSetting == True and config and config['max_comments'] != 'ask':
+          maxScanNumber = int(config['max_comments'])
         else:
           maxScanNumber = int(input(f"Enter the maximum {F.YELLOW}number of comments{S.R} to scan: "))
 
@@ -1803,10 +1876,10 @@ def main():
           validInteger = True # If it gets here, it's an integer, otherwise goes to exception
         else:
           print("\nInvalid Input! Number must be greater than zero.")
-          validConfig = False
+          validConfigSetting = False
       except:
         print("\nInvalid Input! - Must be a whole number.")
-        validConfig = False
+        validConfigSetting = False
   
   # Create config file
   elif scanMode == "makeConfig":
@@ -1830,78 +1903,82 @@ def main():
   print(f" 4. Scan both {F.BLUE}usernames and comment text{S.R} for criteria you choose")
   print(f" 5. Auto Mode: Scan usernames for {F.LIGHTMAGENTA_EX}ANY non-ASCII special characters{S.R} (May cause collateral damage!)")
   print(f" 6. Auto Smart-Mode: Scan usernames and comments for {F.YELLOW}characters often used by scammers{S.R}")
-  
+
+  if userNotChannelOwner == True:
+    print(f"    {F.LIGHTRED_EX}Note: With 'Not Your Channel Mode' enabled, you can only report comments using modes 1 or 6.{S.R}")
   # Make sure input is valid, if not ask again
   validFilterMode = False
   validFilterSubMode = False
   filterSubMode = None
-  validConfig = True
+  validConfigSetting = True
 
-  validConfig = True
+  validConfigSetting = True
   while validFilterMode == False:
-    if validConfig == True and config and config['filtering']['filter_mode'].lower() != 'ask':
-      filterChoice = config['filtering']['filter_mode'].lower()
+    if validConfigSetting == True and config and config['filter_mode'] != 'ask':
+      filterChoice = config['filter_mode']
     else:
-      filterChoice = input("\nChoice (1-5): ")
+      filterChoice = input("\nChoice (1-6): ")
 
     validChoices = ['1', '2', '3', '4', '5', '6', 'id', 'username', 'text', 'nameandtext', 'autoascii', 'autosmart']
     if filterChoice in validChoices:
       validFilterMode = True
       # Set string variable names for filtering modes
-      if filterChoice == "1" or filterChoice == "id":
-        filterMode = "ID"
-      elif filterChoice == "2" or filterChoice == "username":
-        filterMode = "Username"
-      elif filterChoice == "3" or filterChoice == "text":
-        filterMode = "Text"
-      elif filterChoice == "4" or filterChoice == "nameandtext":
-        filterMode = "NameAndText"
-      elif filterChoice == "5" or filterChoice == "autoascii":
-        filterMode = "AutoASCII"
-      elif filterChoice == "6" or filterChoice == "autosmart":
-        filterMode = "AutoSmart"
+      match filterChoice:
+        case "1" | "id":
+          filterMode = "ID"
+        case "2" | "username":
+          filterMode = "Username"
+        case "3" | "text":
+          filterMode = "Text"
+        case "4" | "nameandtext":
+          filterMode = "NameAndText"
+        case "5" | "autoascii":
+          filterMode = "AutoASCII"
+        case "6" | "autosmart":
+          filterMode = "AutoSmart"
     else:
       print(f"\nInvalid Filter Mode: {filterChoice} - Enter either 1, 2, 3, 4, 5, or 6 ")
-      validConfig = False
+      validConfigSetting = False
 
   ## Get filter sub-mode to decide if searching characters or string
-  validConfig = None
-  if config and config['filtering']['filter_submode'].lower() != 'ask':
-    filterSubMode = config['filtering']['filter_submode'].lower()
-    validConfig = True
+  validConfigSetting = None
+  if config and config['filter_submode'] != 'ask':
+    filterSubMode = config['filter_submode']
+    validConfigSetting = True
   else:
-    validConfig = False
+    validConfigSetting = False
 
   if filterMode == "Username" or filterMode == "Text" or filterMode == "NameAndText":
-      print("\n--------------------------------------------------------------")
-      if filterMode == "Username":
-        print("~~~ What do you want to scan usernames for specifically? ~~~")
-      elif filterMode == "Text":
-        print("~~~ What do you want to scan comment text for specifically? ~~~")
-      elif filterMode == "NameAndText":
-        print("~~~ What do you want to scan names and comments for specifically? ~~~")
-      print(f" 1. A {F.CYAN}certain special character{S.R}, or set of multiple characters")
-      print(f" 2. An {F.LIGHTMAGENTA_EX}entire string{S.R}, or multiple strings")
-      print(f" 3. Advanced: A custom {F.YELLOW}Regex pattern{S.R} you'll enter")
+    print("\n--------------------------------------------------------------")
+    if filterMode == "Username":
+      print("~~~ What do you want to scan usernames for specifically? ~~~")
+    elif filterMode == "Text":
+      print("~~~ What do you want to scan comment text for specifically? ~~~")
+    elif filterMode == "NameAndText":
+      print("~~~ What do you want to scan names and comments for specifically? ~~~")
+    print(f" 1. A {F.CYAN}certain special character{S.R}, or set of multiple characters")
+    print(f" 2. An {F.LIGHTMAGENTA_EX}entire string{S.R}, or multiple strings")
+    print(f" 3. Advanced: A custom {F.YELLOW}Regex pattern{S.R} you'll enter")
 
-      while validFilterSubMode == False:
-        if validConfig == True:
-          pass
-        else:
-          filterSubMode = input("\nChoice (1, 2, or 3): ")
-        validFilterSubModes = ["1", "2", "3", "characters", "strings", "regex"]
-        if filterSubMode in validFilterSubModes:
-          validFilterSubMode = True
-          validConfig = True
-          if filterSubMode == "1" or filterSubMode == "characters":
+    while validFilterSubMode == False:
+      if validConfigSetting == True:
+        pass
+      else:
+        filterSubMode = input("\nChoice (1, 2, or 3): ")
+      validFilterSubModes = ["1", "2", "3", "characters", "strings", "regex"]
+      if filterSubMode in validFilterSubModes:
+        validFilterSubMode = True
+        validConfigSetting = True
+        match filterSubMode:
+          case "1" | "characters":
             filterSubMode = "chars"
-          elif filterSubMode == "2" or filterSubMode == "strings":
+          case "2" | "strings":
             filterSubMode = "string"
-          elif filterSubMode == "3" or filterSubMode == "regex":
+          case "3" | "regex":
             filterSubMode = "regex"
-        else:
-          print(f"\nInvalid choice: {filterSubMode} - Enter 1, 2 or 3")
-          validConfig = False
+      else:
+        print(f"\nInvalid choice: {filterSubMode} - Enter 1, 2 or 3")
+        validConfigSetting = False
 
 
   ### Prepare Filtering Modes ###
@@ -1956,12 +2033,12 @@ def main():
     print_count_stats(final=True)  # Prints comment scan stats, finalizes
   ##########################################################
     bypass = False
-    if config and config['general']['enable_logging'].lower() != 'ask':
-      logSetting = config['general']['enable_logging'].lower()
-      if logSetting == "true":
+    if config and config['enable_logging'] != 'ask':
+      logSetting = config['enable_logging']
+      if logSetting == True:
         logMode = True
         bypass = True
-      elif logSetting == "false":
+      elif logSetting == False:
         logMode = False
         bypass = True
       elif logSetting == "ask":
@@ -2023,94 +2100,138 @@ def main():
     print_comments(check_video_id, list(matchedCommentsDict.keys()), logMode)
     print(f"\n{F.WHITE}{B.RED} NOTE: {S.R} Check that all comments listed above are indeed spam.")
     print()
+
+    ### -------- Decide whether to skip deletion --------
     # Defaults
     deletionMode = "heldForReview" # Should be changed later, but if missed it will default to heldForReview
     confirmDelete = None # If None, will later cause user to be asked to delete
-    # Decide whether to skip deletion
+    
     if not config:
-      pass
-    elif config['removal']['skip_deletion'].lower() == 'true':
+      if userNotChannelOwner == True:
+        if filterMode == "ID" or filterMode == "AutoSmart":
+          deletionMode = "reportSpam"
+          deletionEnabled = "Allowed"
+    elif config['skip_deletion'] == True:
       exit()
-    elif config['removal']['skip_deletion'].lower() != 'false':
-      print("Error: Invalid value for 'skip_deletion' in config file. Must be 'True' or 'False':  " + config['removal']['skip_deletion'])
+    elif config['skip_deletion'] != False:
+      print("Error: Invalid value for 'skip_deletion' in config file. Must be 'True' or 'False':  " + str(config['skip_deletion']))
       input("\nPress Enter to exit...")
       exit()
 
     # Using config to determine deletion type, block invalid settings
-        # Below is for if skip_deletion is false (user wants to delete, or be asked to delete)
-        # If confirmDelete is None, will display prompt to delete as normal
+    # Below is for if skip_deletion is false (user wants to delete, or be asked to delete)
+    # If confirmDelete is None, will display prompt to delete as normal
 
-    # This is normal behavior same as no config. Except here user can change deletionMode using config file
-    elif config['removal']['delete_without_reviewing'].lower() == "false":
-      deletionEnabled = "HalfTrue"
-      confirmDelete = None
+    # Normal behavior same as no config, except here user can change deletionMode using config file
+    elif config['delete_without_reviewing'] == False:
+      deletionEnabled = "Allowed"
       # Check valid deletion mode in config
-      if config['removal']['removal_type'].lower() == "heldforreview":
+      if config['removal_type'] == "reportspam":
+        deletionMode = "reportSpam"
+      elif config['removal_type'] == "heldforreview":
         deletionMode = "heldForReview"
-      elif config['removal']['removal_type'].lower() == "rejected":
+      elif config['removal_type'] == "rejected":
         deletionMode = "rejected"
+      else:
+        print("Error: Invalid value for 'removal_type' in config file. Must be 'heldforreview', 'rejected', or 'reportSpam':  " + config['removal_type'])
+        input("\nPress Enter to exit...")
+        exit()
 
     # User wants to automatically delete with no user intervention
-    elif config['removal']['delete_without_reviewing'].lower() == "true":
-      if filterMode == "AutoSmart" or filterMode == "ID":
-        deletionEnabled = "True"
-        confirmDelete = "YES"
-        deletionMode = "heldForReview"
+    elif config['delete_without_reviewing'] == True:
+      if config['removal_type'] == "reportSpam" or config['removal_type'] == "heldForReview":
+        if filterMode == "AutoSmart" or filterMode == "ID":
+          deletionEnabled = "True"
+          confirmDelete = "DELETE"
+          deletionMode = "heldForReview"
+        # If non-allowed mode, will require user to confirm deletion as usual
+        else:
+          print("Error: 'delete_without_reviewing' is set to 'True' in config file, so only filter modes 'AutoSmart' and 'ID' allowed..\n")
+          print("Next time use one of those filter modes, or set 'delete_without_reviewing' to 'False'.")
+          print("    > For this run, you will be asked to confirm removal of spam comments.")
+          input("\nPress Enter to continue...")
+          confirmDelete = None
+          deletionEnabled = "Allowed"
       else:
-        confirmDelete = None
-        print("Error: 'delete_without_reviewing' is set to 'True' in config file, but the scan mode is not set to 'AutoSmart' or 'ID'.\n")
-        print("Either use one of those scan modes, or set 'delete_without_reviewing' to 'False'.")
+        print("Error: 'delete_without_reviewing' is set to 'True' in config file. 'removal_type' must be either 'heldForReview' or 'reportSpam'.\n")
+        print("NExt time, either set one of those removal types, or set 'delete_without_reviewing' to 'False'.")
+        print("    > For this run, you will be asked to confirm removal of spam comments.")
         input("\nPress Enter to continue...")
-    elif config['removal']['delete_without_reviewing'].lower() != "false":
-      print("Error: Invalid value for 'delete_without_reviewing' in config file. Must be 'True' or 'False':  " + config['removal']['delete_without_reviewing'])
-      input("\nPress Enter to exit...")
-      exit()      
+        confirmDelete = None
+        deletionEnabled = "Allowed"
+
+    # Catch Invalid value    
     else:
-      deletionEnabled = "False"
-      confirmDelete = None
-      print("Something weird happened if you got to this point.")
+      print("Error: Invalid value for 'delete_without_reviewing' in config file. Must be 'True' or 'False':  " + config['delete_without_reviewing'])
+      input("\nPress Enter to exit...")
+      exit()
 
-    # Set deletion mode friendly name
-    #deletionMode = "heldForReview" #Set as heldForReview by default but may be changed later
-    if deletionMode == "rejected":
-      deletionModeFriendlyName = "Removed"
-    elif deletionMode == "heldForReview":
-      deletionModeFriendlyName = "Moved to 'Held for Review' Section"    
 
+    ### ---------------- Set Up How To Handle Comments  ----------------
+    # If not skipped by config, ask user what to do
     if confirmDelete == None:
       exclude = False
-      if deletionEnabled == "HalfTrue": # Check if deletion functionality is eligible to be enabled
-        print(f"{F.YELLOW}How do you want to handle the matched comments above?{S.R}")
-        print(f" > To {F.LIGHTRED_EX}delete ALL of the above comments{S.R}: Type ' {F.YELLOW}DELETE{S.R} ' exactly (in all caps), then hit Enter.")
-        print(f" > To {F.LIGHTGREEN_EX}exclude certain authors from deletion{S.R}: Type \'{F.LIGHTGREEN_EX}exclude{S.R}\' followed by a list of the numbers {F.LIGHTMAGENTA_EX}in the sample list{S.R} next to those authors.")
-        print("      > Example:  exclude 1, 12, 9")
-        confirmDelete = input("Input: ")
-        if confirmDelete == "DELETE":
-          deletionEnabled = "True"
-        elif "exclude" in confirmDelete.lower():
-          excludeResponse, excludedDict, rtfExclude = exclude_authors(confirmDelete)
-          if excludeResponse == "DELETE":
-            deletionEnabled = "True"
-            confirmDelete = "DELETE"
-            exclude = True
-        else:
-          input(f"\nDeletion {F.YELLOW}CANCELLED{S.R}. Press Enter to exit...")
-          exit()
+      # Menu for deletion mode
+      if deletionEnabled == "Allowed":
+        while confirmDelete != "DELETE" and confirmDelete != "REPORT":
+          # Title
+          if exclude == False:
+            print(f"{F.YELLOW}How do you want to handle the matched comments above?{S.R}")
+          elif exclude == True:
+            print(f"{F.YELLOW}How do you want to handle the rest of the comments (not ones you {F.LIGHTGREEN_EX}excluded{F.YELLOW})?{S.R}")
+          if userNotChannelOwner == True:
+            print(f"{F.GREEN}~~ Not Your Channel Mode: Delete Mode Not Available ~~{S.R}")
 
+          # Exclude
+          if exclude == False:
+            print(f" > To first {F.LIGHTGREEN_EX}exclude certain authors{S.R}: Type \'{F.LIGHTGREEN_EX}exclude{S.R}\' followed by a list of the numbers {F.LIGHTMAGENTA_EX}in the sample list{S.R} next to those authors.")
+            print("      > Example:  exclude 1, 12, 9")
+
+          # Delete Instructions
+          if exclude == False and userNotChannelOwner == False:
+            print(f" > To {F.LIGHTRED_EX}delete ALL of the above comments{S.R}: Type ' {F.LIGHTRED_EX}DELETE{S.R} ' exactly (in all caps), then hit Enter.")
+          elif exclude == True and userNotChannelOwner == False:
+            print(f" > To {F.LIGHTRED_EX}delete the rest of the comments{S.R}: Type ' {F.LIGHTRED_EX}DELETE{S.R} ' exactly (in all caps), then hit Enter.")
+          
+          # Report Instructions
+          print(f" > To {F.LIGHTCYAN_EX}just report the comments for spam{S.R}, type ' {F.LIGHTCYAN_EX}REPORT{S.R} '. (Can be done even if you're not the channel owner)")
+
+          confirmDelete = input("\nInput: ")
+          if confirmDelete == "DELETE" and userNotChannelOwner == False:
+            deletionEnabled = True
+          elif "exclude" in confirmDelete.lower():
+            excludedDict, rtfExclude = exclude_authors(confirmDelete)
+            exclude = True
+          elif confirmDelete == "REPORT":
+            deletionEnabled = True
+            confirmDelete = "REPORT"
+            deletionMode = "reportSpam"
+          else:
+            input(f"\nDeletion {F.YELLOW}CANCELLED{S.R} (Because no matching option entered). Press Enter to exit...")
+            exit()
+      # Deletion disabled
       else:
-        print("\nThe deletion functionality was not enabled. Cannot delete comments.")
-        print("Possible Cause: You're trying to scan someone elses video.")
+        print("\nThe deletion functionality was not enabled. Cannot delete or report comments.")
+        print("Possible Cause: You're scanning someone elses video with a non-supported filter mode.\n")
         print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
         input("Press Enter to exit...")
         exit()
+    
+    # Set deletion mode friendly name
+    if deletionMode == "rejected":
+      deletionModeFriendlyName = "Removed"
+    elif deletionMode == "heldForReview":
+      deletionModeFriendlyName = "Moved to 'Held for Review' Section"
+    elif deletionMode == "reportSpam":
+      deletionModeFriendlyName = "Reported for spam"
 
-    if confirmDelete == "DELETE" and deletionEnabled == "True":  # Only proceed if deletion functionality is enabled, and user has confirmed deletion
+    # Set or choose ban mode, check if valid based on deletion mode
+    if (confirmDelete == "DELETE" or confirmDelete == "REPORT") and deletionEnabled == True:  
       banChoice = False
-      # Verify valid ban settings in config
-      if config and config['removal']['enable_ban'].lower() != "ask":
-        if config['removal']['enable_ban'].lower() == "false":
+      if config and config['enable_ban'] != "ask":
+        if config['enable_ban'] == False:
           pass
-        elif config['removal']['enable_ban'].lower() == "true":
+        elif config['enable_ban'] == True:
           print("Error: 'enable_ban' is set to 'True' in config file. Only possible config options are 'ask' or 'False' when using config.\n")
           input("Press Enter to continue...")
         else:
@@ -2120,17 +2241,19 @@ def main():
         banChoice = choice(f"Also {F.YELLOW}ban{S.R} the spammer(s) ?")
       elif deletionMode == "heldForReview":
         pass
-
-      print("\n")
-      # Deletion Logic
+      elif deletionMode == "REPORT":
+        pass
+      
+      ### ---------------- Reporting / Deletion Begins  ----------------
       delete_found_comments(list(matchedCommentsDict), banChoice, deletionMode)
-      check_deleted_comments(matchedCommentsDict)
+      if deletionMode != "reportSpam":
+        check_deleted_comments(matchedCommentsDict)
       if logMode == True:
         write_rtf(logFileName, "\n\n \\line\\line Spammers Banned: " + str(banChoice)) # Write whether or not spammer is banned to log file
         write_rtf(logFileName, "\n\n \\line\\line Action Taken on Comments: " + str(deletionModeFriendlyName) + "\n\n"+ "\\line\\line")
         if exclude == True:
           write_rtf(logFileName, str(rtfExclude))
-      input(f"\nDeletion {F.LIGHTGREEN_EX}Complete{S.R}. Press Enter to Exit...")
+      input(f"\nProgram {F.LIGHTGREEN_EX}Complete{S.R}. Press Enter to Exit...")
 
     elif config:
         exit()
