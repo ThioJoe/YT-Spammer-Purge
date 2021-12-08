@@ -1,6 +1,6 @@
 name: Bug Report
 description: File a bug report
-title: "[Bug]: (Enter short, one sentance summary of bug here)"
+title: "[Bug]: (Enter short, one sentence summary of bug here)"
 labels: ["bug"]
 assignees:
   - ThioJoe
