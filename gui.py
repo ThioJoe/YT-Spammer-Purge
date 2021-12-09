@@ -300,6 +300,7 @@ def take_input_gui(mode, stripLettersNumbers=False, stripKeyboardSpecialChars=Fa
 
     window.resizable(False, False)
     window.mainloop()
+    window.update()
 
     return returnText
 
