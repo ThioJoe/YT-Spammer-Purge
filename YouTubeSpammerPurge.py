@@ -525,12 +525,13 @@ def check_against_filter(currentUser, filterMode, filterSubMode, commentID, vide
         authorChannelNameSet = make_char_set(str(authorChannelName))
         commentTextSet = make_char_set(str(commentText))
         compiledRegex = inputtedUsernameFilter['compiledRegex']
+        minNumbersMatchCount = inputtedUsernameFilter['minNumbersMatchCount']
         
         combinedString = authorChannelName + commentText
-        combinedSet = authorChannelNameSet + commentTextSet
+        combinedSet = set.union(authorChannelNameSet, commentTextSet)
         if authorChannelID == parentAuthorChannelID:
           pass
-        elif any(x in numberFilterSet for x in combinedSet):
+        elif len(numberFilterSet.intersection(combinedSet)) >= minNumbersMatchCount:
           add_spam(commentID, videoID)
         elif compiledRegex.search(combinedString):
           add_spam(commentID, videoID)
@@ -1072,8 +1073,7 @@ def make_char_set(stringInput, stripLettersNumbers=False, stripKeyboardSpecialCh
         if stripPunctuation == True:
             listedInput[i] = listedInput[i].strip(punctuationChars)
         listedInput[i] = listedInput[i].strip('\ufe0f') # Strips invisible varation selector for emojis
-    listedInput = list(filter(None, listedInput))
-    
+    listedInput = set(list(filter(None, listedInput)))
     
     return listedInput
 
@@ -1646,19 +1646,21 @@ def prepare_filter_mode_smart_chars(currentUser, deletionEnabledLocal, scanMode,
     print(" > Specifically, unicode characters that look like numbers\n")
     input("Press Enter to continue...")
 
+  # Spam Criteria
+  minNumbersMatchCount = 3 # Choice of minimum number of matches from spammerNumbersString before considered spam
   spammerNumbersString = "０１２３４５６７８９０１２３４５６７８９߁①⑴⒈⓵❶➀➊🄂౽੨②⑵⒉⓶❷➁➋🄃౩③⑶⒊⓷❸➂➌🄄૩④⑷⒋⓸❹➃➍🄅⑤⑸⒌⓹❺➄➎➄➎🄆⑥⑹⒍⓺❻➅➏🄇⑦⑺⒎⓻❼➆➐𑄽🄈႘⑧⑻⒏⓼❽➇➑🄉⑨⑼⒐⓽❾➈➒🄊⓪⓿🄋🄌🄁🄀𝟎𝟘𝟢𝟬𝟏𝟙𝟭𝟣𝟶𝟐𝟚𝟮𝟤𝟷𝟑𝟛𝟯𝟥𝟸𝟒𝟜𝟰𝟦𝟹𝟓𝟝𝟱𝟧𝟺𝟔𝟞𝟲𝟨𝟻𝟕𝟟𝟳𝟩𝟼𝟖𝟠𝟴𝟪𝟽𝟗𝟡𝟵𝟫𝟾𝟿"
   spammerPlusSignsString = "✚✙➕±˖ᐩ⁺₊∓∔⊕⊞⟴⧺⧻⨁⨄⨢⨣⨤⨥⨦⨧⨨⨭⨮⨹⩱⩲⬲﹢＋+᛭⁜☩☨☦♰♱⛨✙✚✛✜✝✞✟✠Ꚛꚛ🕀🕁🕂🕆🕇🕈🞡🞢🞣🞤🞥🞦🞧"
   spammerOneString = "１𝟏𝟙𝟣𝟭𝟷⒈⓵❶➀➊🄂߁①⑴"
-  spammerNumbersSet = make_char_set(spammerNumbersString, stripLettersNumbers=False, stripKeyboardSpecialChars=False, stripPunctuation=False)
   
+  # Process / Repair for Filter Use
+  spammerNumbersSet = make_char_set(spammerNumbersString, stripLettersNumbers=False, stripKeyboardSpecialChars=False, stripPunctuation=False)
   regexTest1 = f"[{spammerPlusSignsString}][1]"
   regexTest2 = f"[+][{spammerOneString}]"
   regexTest3 = f"[{spammerNumbersString}][{spammerPlusSignsString}]"
-
   compiledRegex = re.compile(f"({regexTest1}|{regexTest2}|{regexTest3})")
 
   #proceed, deletionEnabledLocal = safety_check_username_against_filter(currentUserName, filterCharsSet=filterCharsSet, scanMode=scanMode, bypass=bypass)
-  filterSettings = {'spammerNumbersSet': spammerNumbersSet, 'compiledRegex': compiledRegex}
+  filterSettings = {'spammerNumbersSet': spammerNumbersSet, 'compiledRegex': compiledRegex, 'minNumbersMatchCount': minNumbersMatchCount}
   return deletionEnabledLocal, filterSettings
 
 ##########################################################################################
