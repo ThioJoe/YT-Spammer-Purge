@@ -1669,8 +1669,8 @@ def prepare_filter_mode_smart_chars(currentUser, deletionEnabledLocal, scanMode,
 
 def main():
   # Run check on python version, must be 3.6 or higher because of f strings
-  if sys.version_info[0] < 3 or sys.version_info[1] < 10:
-    print("Error: This program requires running python 3.10 or higher! You are running" + str(sys.version_info[0]) + "." + str(sys.version_info[1]))
+  if sys.version_info[0] < 3 or sys.version_info[1] < 6:
+    print("Error: This program requires running python 3.6 or higher! You are running" + str(sys.version_info[0]) + "." + str(sys.version_info[1]))
     input("Press Enter to exit...")
     sys.exit()
 
@@ -1812,17 +1812,16 @@ def main():
     validModeValues = ['1', '2', '3', '4', '5', 'chosenvideos', 'entirechannel']
     if scanMode in validModeValues:
       validMode = True
-      match scanMode:
-        case "1" | "chosenvideos":
-          scanMode = "chosenVideos"
-        case "2" | "entirechannel":
-          scanMode = "entireChannel"
-        case "3":
-          scanMode = "makeConfig"
-        case "4":
-          scanMode = "recoverMode"
-        case "5":
-          scanMode = "checkUpdates"
+      if scanMode == "1" or scanMode == "chosenvideos":
+        scanMode = "chosenVideos"
+      elif scanMode == "2" or scanMode == "entirechannel":
+        scanMode = "entireChannel"
+      elif scanMode == "3":
+        scanMode = "makeConfig"
+      elif scanMode == "4":
+        scanMode = "recoverMode"
+      elif scanMode == "5":
+        scanMode = "checkUpdates"
     else:
       print(f"\nInvalid choice: {scanMode} - Enter either 1, 2, 3, 4, or 5. ")
       validConfigSetting = False
@@ -1923,19 +1922,18 @@ def main():
     if filterChoice in validChoices:
       validFilterMode = True
       # Set string variable names for filtering modes
-      match filterChoice:
-        case "1" | "id":
-          filterMode = "ID"
-        case "2" | "username":
-          filterMode = "Username"
-        case "3" | "text":
-          filterMode = "Text"
-        case "4" | "nameandtext":
-          filterMode = "NameAndText"
-        case "5" | "autoascii":
-          filterMode = "AutoASCII"
-        case "6" | "autosmart":
-          filterMode = "AutoSmart"
+      if filterChoice == "1" or filterChoice == "id":
+        filterMode = "ID"
+      elif filterChoice == "2" or filterChoice == "username":
+        filterMode = "Username"
+      elif filterChoice == "3" or filterChoice == "text":
+        filterMode = "Text"
+      elif filterChoice == "4" or filterChoice == "nameandtext":
+        filterMode = "NameAndText"
+      elif filterChoice == "5" or filterChoice == "autoascii":
+        filterMode = "AutoASCII"
+      elif filterChoice == "6" or filterChoice == "autosmart":
+        filterMode = "AutoSmart"
     else:
       print(f"\nInvalid Filter Mode: {filterChoice} - Enter either 1, 2, 3, 4, 5, or 6 ")
       validConfigSetting = False
@@ -1969,13 +1967,12 @@ def main():
       if filterSubMode in validFilterSubModes:
         validFilterSubMode = True
         validConfigSetting = True
-        match filterSubMode:
-          case "1" | "characters":
-            filterSubMode = "chars"
-          case "2" | "strings":
-            filterSubMode = "string"
-          case "3" | "regex":
-            filterSubMode = "regex"
+        if filterSubMode == "1" or filterSubMode == "characters":
+          filterSubMode = "chars"
+        elif filterSubMode == "2" or filterSubMode == "strings":
+          filterSubMode = "string"
+        elif filterSubMode == "3" or filterSubMode == "regex":
+          filterSubMode = "regex"
       else:
         print(f"\nInvalid choice: {filterSubMode} - Enter 1, 2 or 3")
         validConfigSetting = False
