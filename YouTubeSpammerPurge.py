@@ -647,7 +647,7 @@ def check_deleted_comments(checkDict):
     if i == 0:
       print("\n\nSuccess: All comments should be gone.")
     elif i > 0:
-      print("\n\nWarning: " + str(i) + " comments may remain. Check links above or try running the program again.")
+      print("\n\nWarning: " + str(i) + " comments may remain. Check links above or try running the program again. An error log file has been created: 'Deletion_Error_Log.txt'")
       # Write error log
       f = open("Deletion_Error_Log.txt", "a")
       f.write("----- YT Spammer Purge Error Log: Possible Issue Deleting Comments ------\n\n")
@@ -737,7 +737,9 @@ def exclude_authors(inputtedString):
   # Verify removal
   for comment in matchedCommentsDict.keys():
     if comment in commentIDExcludeList:
-      print("Fatal Error: Something went wrong while trying to exclude comments. No comments have been deleted.")
+      print("FATAL ERROR: Something went wrong while trying to exclude comments. No comments have been deleted.")
+      print("You should report this bug here: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
+      print("Provide the error code: X-1")
       input("Press Enter to Exit...")
       exit()
   
@@ -1129,7 +1131,8 @@ def check_for_update(currentVersion, silentCheck=False):
   except Exception as e:
     if silentCheck == False:
       print(e + "\n")
-      print(f"{B.RED}{F.WHITE}Error:{S.R} Problem checking for update! See above error for more details.\n")
+      print(f"{B.RED}{F.WHITE}Error Code U-1:{S.R} Problem checking for update! See above error for more details.\n")
+      print("If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
       input("Press enter to Exit...")
       exit()
     elif silentCheck == True:
@@ -1184,7 +1187,8 @@ def create_config_file():
         os.remove(configFileName)
       except:
         traceback.print_exc()
-        print("Error when deleting existing existing file! Check if it's gone. The info above may help if it's a bug.")
+        print("Error Code F-1: Problem deleting existing existing file! Check if it's gone. The info above may help if it's a bug.")
+        print("If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
         input("Press enter to Exit...")
         exit()
     else:
@@ -1198,7 +1202,7 @@ def create_config_file():
       defaultConfigFile.close()
     except:
       traceback.print_exc()
-      print(f"{B.RED}{F.WHITE}ERROR!{S.R} Problem reading default config file! The info above may help if it's a bug.")
+      print(f"{B.RED}{F.WHITE}Error Code: F-2{S.R} - Problem reading default config file! The info above may help if it's a bug.")
       input("Press enter to Exit...")
       exit()
 
@@ -1209,7 +1213,7 @@ def create_config_file():
       configFile.close()
     except:
       traceback.print_exc()
-      print(f"{B.RED}{F.WHITE}ERROR!{S.R} Problem creating config file! The info above may help if it's a bug.")
+      print(f"{B.RED}{F.WHITE}Error Code: F-3{S.R} Problem creating config file! The info above may help if it's a bug.")
       input("Press enter to Exit...")
       exit()
 
@@ -1246,7 +1250,7 @@ def load_config_file():
         configFile.close()
     except:
       traceback.print_exc()
-      print(f"{B.RED}{F.WHITE}ERROR!{S.R} Config file found, but there was a problem loading it! The info above may help if it's a bug.")
+      print(f"{B.RED}{F.WHITE}Error Code: F-4{S.R} - Config file found, but there was a problem loading it! The info above may help if it's a bug.")
       print("\nYou can manually delete SpamPurgeConfig.ini and use the program to create a new default config.")
       input("Press enter to Exit...")
       exit()
@@ -1310,7 +1314,7 @@ def recover_deleted_comments():
           recoveryFile.close()
           validFile = True
         except:
-          print("Error: File was found but there was a problem reading it.")
+          print("Error Code F-5: Log File was found but there was a problem reading it.")
       else:
         print(f"\n{F.LIGHTRED_EX}Error: File not found.{S.R} Make sure it is in the same folder as the program.\n")
         print("Enter 'Y' to try again, or 'N' to manually paste in the comment IDs.")
@@ -1342,7 +1346,7 @@ def recover_deleted_comments():
   result = result.split(",")
 
   if len(result) == 0:
-    print("Error: No comment IDs found, try entering them manually and make sure they are formatted correctly.")
+    print("Error Code R-1: No comment IDs detected, try entering them manually and make sure they are formatted correctly.")
     input("Press enter to Exit...")
     exit()
 
@@ -1413,7 +1417,8 @@ def prepare_filter_mode_chars(currentUser, deletionEnabledLocal, scanMode, filte
         inputChars = take_input_gui(mode="chars", stripLettersNumbers=True, stripKeyboardSpecialChars=False, stripPunctuation=True)
       except NameError: # Catch if user closes GUI window, exit program.
         print("                                                                                          ") # Clears the line because of \r on previous print
-        print("\nSomething went wrong with the input, or you closed the window improperly.")
+        print("\nError Code G-1: Something went wrong with the input, or you closed the window improperly.")
+        print("If this keeps happening inexplicably, consider filing a bug report here: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
         input("Press Enter to exit...")
         exit()
 
@@ -1672,7 +1677,7 @@ def prepare_filter_mode_smart_chars(currentUser, deletionEnabledLocal, scanMode,
 def main():
   # Run check on python version, must be 3.6 or higher because of f strings
   if sys.version_info[0] < 3 or sys.version_info[1] < 6:
-    print("Error: This program requires running python 3.6 or higher! You are running" + str(sys.version_info[0]) + "." + str(sys.version_info[1]))
+    print("Error Code U-2: This program requires running python 3.6 or higher! You are running" + str(sys.version_info[0]) + "." + str(sys.version_info[1]))
     input("Press Enter to exit...")
     sys.exit()
 
@@ -1730,7 +1735,7 @@ def main():
       print("----------------")
       print("\nError: " + str(e))
       print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
-      input("\nSomething went wrong during authentication. Try deleting token.pickle file. Press Enter to exit...")
+      input("\nError Code A-1: Something went wrong during authentication. Try deleting token.pickle file. Press Enter to exit...")
       exit()
 
   # Check for config file, load into dictionary 'config'
@@ -1746,7 +1751,7 @@ def main():
     elif config['use_this_config'] == True:
       pass
     else:
-      print("Error: Invalid value in config file for setting 'use_this_config' - Must be 'True', 'False', or 'Ask'")
+      print("Error C-1: Invalid value in config file for setting 'use_this_config' - Must be 'True', 'False', or 'Ask'")
       input("Press Enter to exit...")
       exit()
 
@@ -1757,7 +1762,7 @@ def main():
       updateAvailable = check_for_update(version, silentCheck=True)
       os.system(clear_command)
     except:
-      print(f"{F.LIGHTRED_EX}Error occurred while checking for updates. (Checking can be disabled using the config file setting) Continuing...{S.R}\n")
+      print(f"{F.LIGHTRED_EX}Error Code U-3 occurred while checking for updates. (Checking can be disabled using the config file setting) Continuing...{S.R}\n")
       updateAvailable = False
   else:
     updateAvailable = False
@@ -2044,7 +2049,7 @@ def main():
         bypass = False
       else:
         bypass = False
-        print("Error: Invalid value for 'enable_logging' in config file:  " + logSetting)
+        print("Error Code C-2: Invalid value for 'enable_logging' in config file:  " + logSetting)
 
     # Counts number of found spam comments and prints list
     spam_count = len(matchedCommentsDict)
@@ -2113,7 +2118,7 @@ def main():
     elif config['skip_deletion'] == True:
       exit()
     elif config['skip_deletion'] != False:
-      print("Error: Invalid value for 'skip_deletion' in config file. Must be 'True' or 'False':  " + str(config['skip_deletion']))
+      print("Error Code C-3: Invalid value for 'skip_deletion' in config file. Must be 'True' or 'False':  " + str(config['skip_deletion']))
       input("\nPress Enter to exit...")
       exit()
 
@@ -2132,7 +2137,7 @@ def main():
       elif config['removal_type'] == "rejected":
         deletionMode = "rejected"
       else:
-        print("Error: Invalid value for 'removal_type' in config file. Must be 'heldforreview', 'rejected', or 'reportSpam':  " + config['removal_type'])
+        print("Error Code C-4: Invalid value for 'removal_type' in config file. Must be 'heldforreview', 'rejected', or 'reportSpam':  " + config['removal_type'])
         input("\nPress Enter to exit...")
         exit()
 
@@ -2145,14 +2150,14 @@ def main():
           deletionMode = "heldForReview"
         # If non-allowed mode, will require user to confirm deletion as usual
         else:
-          print("Error: 'delete_without_reviewing' is set to 'True' in config file, so only filter modes 'AutoSmart' and 'ID' allowed..\n")
+          print("Error Code C-5: 'delete_without_reviewing' is set to 'True' in config file, so only filter modes 'AutoSmart' and 'ID' allowed..\n")
           print("Next time use one of those filter modes, or set 'delete_without_reviewing' to 'False'.")
           print("    > For this run, you will be asked to confirm removal of spam comments.")
           input("\nPress Enter to continue...")
           confirmDelete = None
           deletionEnabled = "Allowed"
       else:
-        print("Error: 'delete_without_reviewing' is set to 'True' in config file. 'removal_type' must be either 'heldForReview' or 'reportSpam'.\n")
+        print("Error Code C-6: 'delete_without_reviewing' is set to 'True' in config file. 'removal_type' must be either 'heldForReview' or 'reportSpam'.\n")
         print("NExt time, either set one of those removal types, or set 'delete_without_reviewing' to 'False'.")
         print("    > For this run, you will be asked to confirm removal of spam comments.")
         input("\nPress Enter to continue...")
@@ -2161,7 +2166,7 @@ def main():
 
     # Catch Invalid value    
     else:
-      print("Error: Invalid value for 'delete_without_reviewing' in config file. Must be 'True' or 'False':  " + config['delete_without_reviewing'])
+      print("Error C-7: Invalid value for 'delete_without_reviewing' in config file. Must be 'True' or 'False':  " + config['delete_without_reviewing'])
       input("\nPress Enter to exit...")
       exit()
 
@@ -2231,10 +2236,10 @@ def main():
         if config['enable_ban'] == False:
           pass
         elif config['enable_ban'] == True:
-          print("Error: 'enable_ban' is set to 'True' in config file. Only possible config options are 'ask' or 'False' when using config.\n")
+          print("Error Code C-8: 'enable_ban' is set to 'True' in config file. Only possible config options are 'ask' or 'False' when using config.\n")
           input("Press Enter to continue...")
         else:
-          print("Error: 'enable_ban' is set to an invalid value in config file. Only possible config options are 'ask' or 'False' when using config.\n")
+          print("Error Code C-9: 'enable_ban' is set to an invalid value in config file. Only possible config options are 'ask' or 'False' when using config.\n")
           input("Press Enter to continue...")
       elif deletionMode == "rejected":
         banChoice = choice(f"Also {F.YELLOW}ban{S.R} the spammer(s) ?")
@@ -2268,8 +2273,8 @@ def main():
     print("Error Message: ")
     print(e)
     if e.status_code: # If error code is available, print it
-      print("\nError Info:")
-      print("    Code: "+ str(e.status_code))
+      print("\nError Info - Code A-2:")
+      print("    Status Code: "+ str(e.status_code))
       if e.error_details[0]["reason"]: # If error reason is available, print it
         reason = str(e.error_details[0]["reason"])
         print("    Reason: " + reason)
@@ -2279,7 +2284,7 @@ def main():
           print("(This also occurs if you try deleting comments on someone elses video, which is not possible.)")
       input("\n Press Enter to Exit...")
     else:
-      print(f"{F.RED}Unknown Error{S.R} occurred. If this keeps happening, consider posting a bug report on the GitHub issues page, and include the above error info.")
+      print(f"{F.RED}Unknown Error - Code: X-2{S.R} occurred. If this keeps happening, consider posting a bug report on the GitHub issues page, and include the above error info.")
       input("\n Press Enter to Exit...")
   except SystemExit:
     exit()
