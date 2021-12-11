@@ -117,15 +117,4 @@ To use this script, you will need an "Oauth2" credential to access the scanning 
 15. Now you should be able to run the python script, and it will ask you to log in.
 
 <h1>Unsupported Devices/Android Users</h1>
-<p> If you are unable to run the .exe file and the code files because your computer/phone doesn't support it please follow these instructions. </p>
-<p> 1. Go to https://replit.com. If you are on android go into destop view </p>
-<p> 2. Create a account/Login.</p>
-<p>3. On the menu, click Create Repl, if it doesn't load click the menu icon.</p>
-<p>4. Click, import from github and paste this repo's url, open the YouTubeSpammerPurger.py file.</p>
-<p>5. It will open markdown, tap shell and type the following commands:</p>
-
-<p>Command List for Shell:</p>
-<p>pip install -r requirements.txt</p>
-<p>python3 YouTubeSpammerPurge.py (case sensitive)</p>
-
-<p>Then, you need to do the following setup mentioned above, tap the add file button and add your client_secrets.json file.</p>
+<p> Working on a way to be able to run the code on the online version of VS code for unsupported devices </p>
