@@ -54,7 +54,7 @@ body:
       options:
         - Windows
         - MacOS
-        - Linux (can also be ChromeOS and Replit)
+        - Linux (can also be ChromeOS)
     validations:
       required: true
   - type: textarea
