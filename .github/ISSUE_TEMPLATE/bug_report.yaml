@@ -55,6 +55,8 @@ body:
         - Windows
         - MacOS
         - Linux (can also be ChromeOS)
+    validations:
+      required: true
   - type: textarea
     id: logs
     attributes:
