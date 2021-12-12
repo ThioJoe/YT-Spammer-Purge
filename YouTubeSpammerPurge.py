@@ -35,7 +35,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.0.0-Testing"
+version = "2.0.0-Beta1"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 # Try Imports
@@ -55,7 +55,7 @@ try:
   import platform
   import requests
   from configparser import ConfigParser
-  from distutils.version import LooseVersion
+  from pkg_resources import parse_version
 
   # Non Standard Modules
   import rtfunicode
@@ -417,12 +417,12 @@ def check_against_filter(currentUser, filterMode, filterSubMode, commentID, vide
   global matchedCommentsDict
   commentTextOriginal = str(commentText)
 
-  # Do not even check comment author ID matches currently logged in user's ID
+  # Do not even check comment if author ID matches currently logged in user's ID
   if currentUser[0] != authorChannelID:
     # Logic to avoid false positives from replies to spammers
-    if allThreadAuthorNames and (filterMode == "AutoSmart" or filterMode == "NameAndText") and len(allThreadAuthorNames) > 0:
+    if allThreadAuthorNames and (filterMode == "AutoSmart" or filterMode == "NameAndText"):
       for name in allThreadAuthorNames:
-        if "@"+str(name) in commentText[0:75]: #Only bother with first part of comment text
+        if "@"+str(name) in commentText:
           commentText = commentText.replace("@"+str(name), "")
 
     # If the comment/username matches criteria based on mode, add key/value pair of comment ID and author ID to matchedCommentsDict
@@ -1028,8 +1028,8 @@ def write_rtf(fileName, newText=None, firstWrite=False):
 ######################### Convert string to set of characters#########################
 def make_char_set(stringInput, stripLettersNumbers=False, stripKeyboardSpecialChars=False, stripPunctuation=False):
     # Optional lists of characters to strip from string
-    
-    charsToStrip = ""
+    translateDict = {}
+    charsToStrip = " "
     if stripLettersNumbers == True:
       numbersLettersChars = ("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
       charsToStrip += numbersLettersChars
@@ -1040,11 +1040,14 @@ def make_char_set(stringInput, stripLettersNumbers=False, stripKeyboardSpecialCh
       punctuationChars = ("!?\".,;:'-/()")
       charsToStrip += punctuationChars
     
+    # Adds characters to dictionary to use with translate to remove these characters
+    for c in charsToStrip:
+      translateDict[c] = None
+    translateDict["\ufe0f"] = None # Strips invisible varation selector for emojis
+    
+    # Removes charsToStrip from string
+    stringInput = stringInput.translate(translateDict)
     listedInput = list(stringInput)
-    for i in range(len(listedInput)):
-        listedInput[i] = listedInput[i].strip()
-        listedInput[i] = listedInput[i].strip(charsToStrip)
-        listedInput[i] = listedInput[i].strip('\ufe0f') # Strips invisible varation selector for emojis
     
     return set(filter(None, listedInput))
 
@@ -1105,7 +1108,7 @@ def check_for_update(currentVersion, silentCheck=False):
     elif silentCheck == True:
       return isUpdateAvailable
 
-  if LooseVersion(latestVersion) > LooseVersion(currentVersion):
+  if parse_version(latestVersion) > parse_version(currentVersion):
     isUpdateAvailable = True
     if silentCheck == False:
       print("--------------------------------------------------------------------------------")
@@ -1120,7 +1123,7 @@ def check_for_update(currentVersion, silentCheck=False):
       isUpdateAvailable = True
       return isUpdateAvailable
 
-  elif LooseVersion(latestVersion) == LooseVersion(currentVersion):
+  elif parse_version(latestVersion) == parse_version(currentVersion):
     if silentCheck == False:
       print("\nYou have the latest version: " + currentVersion)
   else:
@@ -2266,20 +2269,19 @@ def main():
 
 # Runs the program
 if __name__ == "__main__":
-  # For speed testing
-  # import cProfile
-  # #cProfile.run('main()', "output.dat")
+  #For speed testing
 
+  # import cProfile
+  # cProfile.run('main()', "output.dat")
   # import pstats
   # from pstats import SortKey
-
   # with open("output_time.txt", "w") as f:
   #   p = pstats.Stats("output.dat", stream=f)
   #   p.sort_stats("time").print_stats()
-  
   # with open("output_calls.txt", "w") as f:
   #   p = pstats.Stats("output.dat", stream=f)
   #   p.sort_stats("calls").print_stats()
+
   main()
 
 
