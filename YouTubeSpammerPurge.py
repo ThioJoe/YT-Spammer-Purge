@@ -109,7 +109,7 @@ def get_authenticated_service():
     print(" ------ See section with instructions on obtaining an API Key at this page: ------- ")
     print(" ---------- https://github.com/ThioJoe/YouTube-Spammer-Purge/ ---------- ")
     input("\n Press Enter to Exit...")
-    exit()
+    sys.exit()
 
   creds = None
   # The file token.pickle stores the user's access and refresh tokens, and is
@@ -666,7 +666,7 @@ def check_recovered_comments(commentsList):
     print("Use the links to the comments from the log file you used, to verify if they are back or not.")
 
   input("\nRecovery process finished. Press Enter to Exit...")
-  exit()
+  sys.exit()
 
 # Removes comments by user-selected authors from list of comments to delete
 def exclude_authors(inputtedString):
@@ -708,7 +708,7 @@ def exclude_authors(inputtedString):
       print("You should report this bug here: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
       print("Provide the error code: X-1")
       input("Press Enter to Exit...")
-      exit()
+      sys.exit()
   
   # Get author names and IDs from dictionary, and display them
   for author in authorIDsToExclude:
@@ -803,12 +803,12 @@ def get_current_user(config):
     print("\nError: Still unable to get channel info. Big Bruh Moment. Try deleting token.pickle. The info above might help if you want to report a bug.")
     print("Note: A channel ID was retrieved but is invalid: " + str(channelID))
     input("\nPress Enter to Exit...")
-    exit()
+    sys.exit()
   except KeyError:
     traceback.print_exc()
     print("\nError: Still unable to get channel info. Big Bruh Moment. Try deleting token.pickle. The info above might help if you want to report a bug.")
     input("\nPress Enter to Exit...")
-    exit()
+    sys.exit()
   
   if config == None:
     configMatch = None
@@ -820,11 +820,11 @@ def get_current_user(config):
     else:
       print("Error: The channel ID in the config file appears to be valid, but does not match the channel ID of the currently logged in user.")
       input("Please check the config file. Press Enter to Exit...")
-      exit()
+      sys.exit()
   else:
     print("Error: The channel ID in the config file appears to be invalid.")
     input("Please check the config file. Press Enter to Exit...")
-    exit()
+    sys.exit()
 
   return channelID, channelTitle, configMatch
 
@@ -1101,7 +1101,7 @@ def check_for_update(currentVersion, silentCheck=False):
       print(f"{B.RED}{F.WHITE}Error Code U-1:{S.R} Problem checking for update! See above error for more details.\n")
       print("If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
       input("Press enter to Exit...")
-      exit()
+      sys.exit()
     elif silentCheck == True:
       return isUpdateAvailable
 
@@ -1115,7 +1115,7 @@ def check_for_update(currentVersion, silentCheck=False):
       print("\nAvailable Here: https://github.com/ThioJoe/YouTube-Spammer-Purge/releases")
       print("Note: To copy from windows console: Right Click > Choose 'Mark' > Highlight the text > Use Ctrl-C")
       input("\nPress enter to Exit...")
-      exit()
+      sys.exit()
     elif silentCheck == True:
       isUpdateAvailable = True
       return isUpdateAvailable
@@ -1127,7 +1127,7 @@ def check_for_update(currentVersion, silentCheck=False):
     if silentCheck == False:
       print("\nNo newer release available - Your Version: " + currentVersion + "  --  Latest Version: " + latestVersion)
       input("\nPress enter to Exit...")
-      exit()
+      sys.exit()
     elif silentCheck == True:
       return isUpdateAvailable
 
@@ -1157,7 +1157,7 @@ def create_config_file():
         print("Error Code F-1: Problem deleting existing existing file! Check if it's gone. The info above may help if it's a bug.")
         print("If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
         input("Press enter to Exit...")
-        exit()
+        sys.exit()
     else:
       return None
 
@@ -1171,7 +1171,7 @@ def create_config_file():
       traceback.print_exc()
       print(f"{B.RED}{F.WHITE}Error Code: F-2{S.R} - Problem reading default config file! The info above may help if it's a bug.")
       input("Press enter to Exit...")
-      exit()
+      sys.exit()
 
     # Create config file
     try:
@@ -1182,7 +1182,7 @@ def create_config_file():
       traceback.print_exc()
       print(f"{B.RED}{F.WHITE}Error Code: F-3{S.R} Problem creating config file! The info above may help if it's a bug.")
       input("Press enter to Exit...")
-      exit()
+      sys.exit()
 
     if os.path.exists(configFileName):
       parser = ConfigParser()
@@ -1192,18 +1192,18 @@ def create_config_file():
           print(f"{B.GREEN}{F.BLACK}SUCCESS!{S.R} {F.YELLOW}SpamPurgeConfig.ini{S.R} file created successfully.")
           print("\nYou can now edit the file to your liking.\n")
           input("Press enter to Exit...")
-          exit()
+          sys.exit()
         else:
           print("Something might have gone wrong. Check if SpamPurgeConfig.ini file exists and has text.")
           input("Press enter to Exit...")
-          exit()
+          sys.exit()
       except SystemExit:
-        exit()
+        sys.exit()
       except:
         traceback.print_exc()
         print("Something went wrong when checking the created file. Check if SpamPurgeConfig.ini exists and has text. The info above may help if it's a bug.")
         input("Press enter to Exit...")
-        exit()
+        sys.exit()
   else:
     return None
 
@@ -1220,7 +1220,7 @@ def load_config_file():
       print(f"{B.RED}{F.WHITE}Error Code: F-4{S.R} - Config file found, but there was a problem loading it! The info above may help if it's a bug.")
       print("\nYou can manually delete SpamPurgeConfig.ini and use the program to create a new default config.")
       input("Press enter to Exit...")
-      exit()
+      sys.exit()
     
     # Sanitize config Data by removing quotes
     configData = configData.replace("\'", "")
@@ -1315,7 +1315,7 @@ def recover_deleted_comments():
   if len(result) == 0:
     print("Error Code R-1: No comment IDs detected, try entering them manually and make sure they are formatted correctly.")
     input("Press enter to Exit...")
-    exit()
+    sys.exit()
 
   # Check for valid comment IDs
   validCount = 0
@@ -1387,7 +1387,7 @@ def prepare_filter_mode_chars(currentUser, scanMode, filterMode, config):
         print("\nError Code G-1: Something went wrong with the input, or you closed the window improperly.")
         print("If this keeps happening inexplicably, consider filing a bug report here: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
         input("Press Enter to exit...")
-        exit()
+        sys.exit()
 
     if filterMode == "Username" or filterMode == "NameAndText":
       validEntry= safety_check_username_against_filter(currentUserName, scanMode, filterCharsSet=inputChars, bypass=bypass)
@@ -1594,7 +1594,7 @@ def prepare_filter_mode_non_ascii(currentUser, scanMode, config):
     return regexPattern, autoModeName
   else:
     input("How did you get here? Something very strange went wrong. Press Enter to Exit...")
-    exit()
+    sys.exit()
 
 # Auto filter for pre-made list of common spammer-used characters in usernames
 def prepare_filter_mode_smart_chars(currentUser, scanMode, config):
@@ -1688,7 +1688,7 @@ def main():
       print("\nError: " + str(e))
       print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
       input("\nError Code A-1: Something went wrong during authentication. Try deleting token.pickle file. Press Enter to exit...")
-      exit()
+      sys.exit()
 
   # Check for config file, load into dictionary 'config'
   config = load_config_file()
@@ -1705,7 +1705,7 @@ def main():
     else:
       print("Error C-1: Invalid value in config file for setting 'use_this_config' - Must be 'True', 'False', or 'Ask'")
       input("Press Enter to exit...")
-      exit()
+      sys.exit()
 
   print("\n   Loading...\n")
   # Check for program updates
@@ -2015,11 +2015,11 @@ def main():
       print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
       if bypass == False:
         input("\nPress Enter to exit...")
-        exit()
+        sys.exit()
       elif bypass == True:
         print("Exiting in 5 seconds...")
         time.sleep(5)
-        exit()
+        sys.exit()
     print(f"Number of Matched Comments Found: {B.RED}{F.WHITE} " + str(len(matchedCommentsDict)) + f" {S.R}")
 
     if bypass == False:
@@ -2077,11 +2077,11 @@ def main():
 
     # Test skip_deletion preference - If passes both, will either delete or ask user to delete
     elif config['skip_deletion'] == True:
-      exit()
+      sys.exit()
     elif config['skip_deletion'] != False:
       print("Error Code C-3: Invalid value for 'skip_deletion' in config file. Must be 'True' or 'False':  " + str(config['skip_deletion']))
       input("\nPress Enter to exit...")
-      exit()
+      sys.exit()
     ### ----------------------------------------------------------------  
 
     ### ------------- Decide whether to ask before deleting -------------
@@ -2097,7 +2097,7 @@ def main():
       else:
         print("Error Code C-4: Invalid value for 'removal_type' in config file. Must be 'heldforreview', 'rejected', or 'reportSpam':  " + config['removal_type'])
         input("\nPress Enter to exit...")
-        exit()
+        sys.exit()
 
     # User wants to automatically delete with no user intervention
     elif config['delete_without_reviewing'] == True:
@@ -2133,7 +2133,7 @@ def main():
       # Catch Invalid value    
       print("Error C-7: Invalid value for 'delete_without_reviewing' in config file. Must be 'True' or 'False':  " + config['delete_without_reviewing'])
       input("\nPress Enter to exit...")
-      exit()
+      sys.exit()
 
     
     # Check if deletion is enabled, otherwise block and quit
@@ -2142,7 +2142,7 @@ def main():
         print("Possible Cause: You're scanning someone elses video with a non-supported filter mode.\n")
         print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
         input("Press Enter to exit...")
-        exit()
+        sys.exit()
 
 
     ### ---------------- Set Up How To Handle Comments  ----------------
@@ -2190,7 +2190,7 @@ def main():
           exclude = True
         else:
           input(f"\nDeletion {F.YELLOW}CANCELLED{S.R} (Because no matching option entered). Press Enter to exit...")
-          exit()
+          sys.exit()
 
     
     # Set deletion mode friendly name
@@ -2233,10 +2233,10 @@ def main():
       input(f"\nProgram {F.LIGHTGREEN_EX}Complete{S.R}. Press Enter to Exit...")
 
     elif config:
-        exit()
+        sys.exit()
     else:
       input(f"\nDeletion {F.LIGHTRED_EX}Cancelled{S.R}. Press Enter to exit...")
-      exit()
+      sys.exit()
 
   # Catches exception errors and prints error info
   # If possible transient error, tells user to try again
@@ -2260,7 +2260,7 @@ def main():
       print(f"{F.RED}Unknown Error - Code: X-2{S.R} occurred. If this keeps happening, consider posting a bug report on the GitHub issues page, and include the above error info.")
       input("\n Press Enter to Exit...")
   except SystemExit:
-    exit()
+    sys.exit()
   else:
     print("\nFinished Executing.")
 
@@ -2280,7 +2280,6 @@ if __name__ == "__main__":
   # with open("output_calls.txt", "w") as f:
   #   p = pstats.Stats("output.dat", stream=f)
   #   p.sort_stats("calls").print_stats()
-
   main()
 
 
