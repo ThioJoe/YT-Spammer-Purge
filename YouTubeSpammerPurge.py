@@ -402,6 +402,17 @@ def get_replies(currentUser, filterMode, filterSubMode, parent_id, videoID, pare
   else:
     replies = repliesList
  
+  # Create list of author names in current thread, add into list
+  allThreadAuthorNames = []
+  if filterMode == "Username" or filterMode == "AutoASCII" or filterMode == "AutoSmart" or filterMode == "NameAndText":
+    for reply in replies:
+      try:
+        authorChannelName = reply["snippet"]["authorDisplayName"]
+      except KeyError:
+        authorChannelName = "[Deleted Channel]"
+      # Add authorchannelname to list
+      allThreadAuthorNames.append(authorChannelName)
+
   # Iterates through items in results
   # Need to be able to catch exceptions because sometimes the API will return a comment from non-existent / deleted channel
   # Need individual tries because not all are fetched for each mode
@@ -417,7 +428,8 @@ def get_replies(currentUser, filterMode, filterSubMode, parent_id, videoID, pare
       try:
         authorChannelName = reply["snippet"]["authorDisplayName"]
       except KeyError:
-        authorChannelName = "[Deleted Channel]"  
+        authorChannelName = "[Deleted Channel]"
+    else: authorChannelName = ""
     
     # Comment Text
     if filterMode == "Text" or filterMode == "AutoSmart" or filterMode == "NameAndText":
@@ -427,7 +439,7 @@ def get_replies(currentUser, filterMode, filterSubMode, parent_id, videoID, pare
         commentText = "[Deleted/Missing Comment]"
 
     # Runs check against comment info for whichever filter data is relevant
-    check_against_filter(currentUser, filterMode=filterMode, filterSubMode=filterSubMode, commentID=replyID, videoID=videoID, authorChannelID=authorChannelID, parentAuthorChannelID=parentAuthorChannelID, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, authorChannelName=authorChannelName, commentText=commentText, regexPattern=regexPattern)
+    check_against_filter(currentUser, filterMode=filterMode, filterSubMode=filterSubMode, commentID=replyID, videoID=videoID, authorChannelID=authorChannelID, parentAuthorChannelID=parentAuthorChannelID, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, authorChannelName=authorChannelName, commentText=commentText, regexPattern=regexPattern, allThreadAuthorNames=allThreadAuthorNames)
 
     # Update latest stats
     scannedRepliesCount += 1  # Count number of replies scanned, add to global count
@@ -437,106 +449,99 @@ def get_replies(currentUser, filterMode, filterSubMode, parent_id, videoID, pare
 
 ############################## CHECK AGAINST FILTER ######################################
 # The basic logic that actually checks each comment against filter criteria
-def check_against_filter(currentUser, filterMode, filterSubMode, commentID, videoID, authorChannelID, parentAuthorChannelID=None, inputtedSpammerChannelID=None, inputtedUsernameFilter=None, inputtedCommentTextFilter=None,  authorChannelName=None, commentText=None, regexPattern=None):
+def check_against_filter(currentUser, filterMode, filterSubMode, commentID, videoID, authorChannelID, parentAuthorChannelID=None, inputtedSpammerChannelID=None, inputtedUsernameFilter=None, inputtedCommentTextFilter=None,  authorChannelName=None, commentText=None, regexPattern=None, allThreadAuthorNames=None):
   global vidIdDict
   global matchedCommentsDict
-  innocentTest = None
 
   # Do not even check comment author ID matches currently logged in user's ID
   if currentUser[0] != authorChannelID:
     # Logic to avoid false positives from replies to spammers
-    if (filterMode == "AutoSmart" or filterMode == "NameAndText") and len(previousMatchCommentDataList) > 0:
-      if "@"+str(previousMatchCommentDataList[1]) in commentText and previousMatchCommentDataList[0] != authorChannelID:
-        innocentTest = True
-      else:
-        innocentTest = False
+    if allThreadAuthorNames and (filterMode == "AutoSmart" or filterMode == "NameAndText") and len(allThreadAuthorNames) > 0:
+      for name in allThreadAuthorNames:
+        if "@"+str(name) in commentText:
+          commentText = commentText.replace("@"+str(name), "")
 
-    if innocentTest != True:
-      # If the comment/username matches criteria based on mode, add key/value pair of comment ID and author ID to matchedCommentsDict
-      # Also add key-value pair of comment ID and video ID to dictionary
-      def add_spam(commentID, videoID):
-        global matchedCommentsDict
-        global previousMatchCommentDataList
-        matchedCommentsDict[commentID] = {}
-        vidIdDict[commentID] = videoID
-        previousMatchCommentDataList = [authorChannelID, authorChannelName, commentText]
+    # If the comment/username matches criteria based on mode, add key/value pair of comment ID and author ID to matchedCommentsDict
+    # Also add key-value pair of comment ID and video ID to dictionary
+    def add_spam(commentID, videoID):
+      global matchedCommentsDict
+      matchedCommentsDict[commentID] = {}
+      vidIdDict[commentID] = videoID
 
-      # Checks author of either parent comment or reply (both passed in as commentID) against channel ID inputted by user
-      if filterMode == "ID":
-        if any(authorChannelID == x for x in inputtedSpammerChannelID):
+    # Checks author of either parent comment or reply (both passed in as commentID) against channel ID inputted by user
+    if filterMode == "ID":
+      if any(authorChannelID == x for x in inputtedSpammerChannelID):
+        add_spam(commentID, videoID)
+
+    # Check Modes: Username
+    elif filterMode == "Username":
+      if filterSubMode == "chars":
+        authorChannelName = make_char_set(str(authorChannelName))
+        if any(x in inputtedUsernameFilter for x in authorChannelName):
           add_spam(commentID, videoID)
-
-      # Check Modes: Username
-      elif filterMode == "Username":
-        if filterSubMode == "chars":
-          authorChannelName = make_char_set(str(authorChannelName))
-          if any(x in inputtedUsernameFilter for x in authorChannelName):
-            add_spam(commentID, videoID)
-        elif filterSubMode == "string":
-          if check_list_against_string(listInput=inputtedUsernameFilter, stringInput=authorChannelName, caseSensitive=False):
-            add_spam(commentID, videoID)
-        elif filterSubMode == "regex":
-          if re.search(str(regexPattern), authorChannelName):
-            add_spam(commentID, videoID)
-
-      # Check Modes: Comment Text
-      elif filterMode == "Text":
-        if filterSubMode == "chars":
-          commentText = make_char_set(str(commentText))
-          if any(x in inputtedCommentTextFilter for x in commentText):
-            add_spam(commentID, videoID)
-        elif filterSubMode == "string":
-          if check_list_against_string(listInput=inputtedCommentTextFilter, stringInput=commentText, caseSensitive=False):
-            add_spam(commentID, videoID)
-        elif filterSubMode == "regex":
-          if re.search(str(regexPattern), commentText):
-            add_spam(commentID, videoID)
-
-      # Check Modes: Name and Text
-      elif filterMode == "NameAndText":
-        if filterSubMode == "chars":
-          authorChannelName = make_char_set(str(authorChannelName))
-          commentText = make_char_set(str(commentText))
-          if any(x in inputtedUsernameFilter for x in authorChannelName):
-            add_spam(commentID, videoID)
-          elif any(x in inputtedCommentTextFilter for x in commentText):
-            add_spam(commentID, videoID)
-        elif filterSubMode == "string":
-          if check_list_against_string(listInput=inputtedUsernameFilter, stringInput=authorChannelName, caseSensitive=False):
-            add_spam(commentID, videoID)
-          if check_list_against_string(listInput=inputtedCommentTextFilter, stringInput=commentText, caseSensitive=False):
-            add_spam(commentID, videoID)
-        elif filterSubMode == "regex":
-          if re.search(str(regexPattern), authorChannelName):
-            add_spam(commentID, videoID)
-          if re.search(str(regexPattern), commentText):
-            add_spam(commentID, videoID)
-
-      # Check Modes: Auto ASCII (in username)
-      elif filterMode == "AutoASCII":
+      elif filterSubMode == "string":
+        if check_list_against_string(listInput=inputtedUsernameFilter, stringInput=authorChannelName, caseSensitive=False):
+          add_spam(commentID, videoID)
+      elif filterSubMode == "regex":
         if re.search(str(regexPattern), authorChannelName):
           add_spam(commentID, videoID)
 
-      # Check Modes: Auto Smart (in username or comment text)
-      # Here inputtedComment/Author Filters are tuples of, where 2nd element is list of char-sets to check against
-      ## Also Check if reply author ID is same as parent comment author ID, if so, ignore (to account for users who reply to spammers)
-      elif filterMode == "AutoSmart":
-        numberFilterSet = inputtedUsernameFilter['spammerNumbersSet']
-        authorChannelNameSet = make_char_set(str(authorChannelName))
-        commentTextSet = make_char_set(str(commentText))
-        compiledRegex = inputtedUsernameFilter['compiledRegex']
-        minNumbersMatchCount = inputtedUsernameFilter['minNumbersMatchCount']
-        
-        combinedString = authorChannelName + commentText
-        combinedSet = set.union(authorChannelNameSet, commentTextSet)
-        if authorChannelID == parentAuthorChannelID:
-          pass
-        elif len(numberFilterSet.intersection(combinedSet)) >= minNumbersMatchCount:
+    # Check Modes: Comment Text
+    elif filterMode == "Text":
+      if filterSubMode == "chars":
+        commentText = make_char_set(str(commentText))
+        if any(x in inputtedCommentTextFilter for x in commentText):
           add_spam(commentID, videoID)
-        elif compiledRegex.search(combinedString):
+      elif filterSubMode == "string":
+        if check_list_against_string(listInput=inputtedCommentTextFilter, stringInput=commentText, caseSensitive=False):
           add_spam(commentID, videoID)
-    else:
-      pass
+      elif filterSubMode == "regex":
+        if re.search(str(regexPattern), commentText):
+          add_spam(commentID, videoID)
+
+    # Check Modes: Name and Text
+    elif filterMode == "NameAndText":
+      if filterSubMode == "chars":
+        authorChannelName = make_char_set(str(authorChannelName))
+        commentText = make_char_set(str(commentText))
+        if any(x in inputtedUsernameFilter for x in authorChannelName):
+          add_spam(commentID, videoID)
+        elif any(x in inputtedCommentTextFilter for x in commentText):
+          add_spam(commentID, videoID)
+      elif filterSubMode == "string":
+        if check_list_against_string(listInput=inputtedUsernameFilter, stringInput=authorChannelName, caseSensitive=False):
+          add_spam(commentID, videoID)
+        if check_list_against_string(listInput=inputtedCommentTextFilter, stringInput=commentText, caseSensitive=False):
+          add_spam(commentID, videoID)
+      elif filterSubMode == "regex":
+        if re.search(str(regexPattern), authorChannelName):
+          add_spam(commentID, videoID)
+        if re.search(str(regexPattern), commentText):
+          add_spam(commentID, videoID)
+
+    # Check Modes: Auto ASCII (in username)
+    elif filterMode == "AutoASCII":
+      if re.search(str(regexPattern), authorChannelName):
+        add_spam(commentID, videoID)
+
+    # Check Modes: Auto Smart (in username or comment text)
+    # Here inputtedComment/Author Filters are tuples of, where 2nd element is list of char-sets to check against
+    ## Also Check if reply author ID is same as parent comment author ID, if so, ignore (to account for users who reply to spammers)
+    elif filterMode == "AutoSmart":
+      numberFilterSet = inputtedUsernameFilter['spammerNumbersSet']
+      authorChannelNameSet = make_char_set(str(authorChannelName))
+      commentTextSet = make_char_set(str(commentText))
+      compiledRegex = inputtedUsernameFilter['compiledRegex']
+      minNumbersMatchCount = inputtedUsernameFilter['minNumbersMatchCount']
+      
+      combinedString = authorChannelName + commentText
+      combinedSet = set.union(authorChannelNameSet, commentTextSet)
+      if authorChannelID == parentAuthorChannelID:
+        pass
+      elif len(numberFilterSet.intersection(combinedSet)) >= minNumbersMatchCount:
+        add_spam(commentID, videoID)
+      elif compiledRegex.search(combinedString):
+        add_spam(commentID, videoID)
   else:
     pass
 
@@ -1095,7 +1100,6 @@ def check_list_against_string(listInput, stringInput, caseSensitive=False):
 # Note: Most uses of this function are obsolete after changing it so the program totally ignores current users's own comments
 def safety_check_username_against_filter(currentUserName, scanMode, filterCharsSet=None, filterStringList=None, regexPattern=None, bypass = False):
   currentUsernameChars = make_char_set(currentUserName)
-  deletionEnabledLocal = "False"
   proceed = False
   if bypass != True:
     if filterCharsSet:
@@ -1118,9 +1122,8 @@ def safety_check_username_against_filter(currentUserName, scanMode, filterCharsS
         input("\nPress enter to continue...")
 
   proceed = True
-  deletionEnabledLocal = "Allowed"
 
-  return proceed, deletionEnabledLocal
+  return proceed
 
 ############################# Check For Update ##############################
 def check_for_update(currentVersion, silentCheck=False):
@@ -1384,7 +1387,7 @@ def recover_deleted_comments():
 ##########################################################################################
 
 # For scanning for individual chars
-def prepare_filter_mode_chars(currentUser, deletionEnabledLocal, scanMode, filterMode, config):
+def prepare_filter_mode_chars(currentUser, scanMode, filterMode, config):
   currentUserName = currentUser[1]
   if filterMode == "Username":
     whatToScanMsg = "Usernames"
@@ -1423,7 +1426,7 @@ def prepare_filter_mode_chars(currentUser, deletionEnabledLocal, scanMode, filte
         exit()
 
     if filterMode == "Username" or filterMode == "NameAndText":
-      validEntry, deletionEnabledLocal = safety_check_username_against_filter(currentUserName, scanMode, filterCharsSet=inputChars, bypass=bypass)
+      validEntry= safety_check_username_against_filter(currentUserName, scanMode, filterCharsSet=inputChars, bypass=bypass)
     elif filterMode == "Text":
       validEntry = True
 
@@ -1434,17 +1437,14 @@ def prepare_filter_mode_chars(currentUser, deletionEnabledLocal, scanMode, filte
         print(f"     {whatToScanMsg} will be scanned for {F.MAGENTA}ANY{S.R} of the characters you entered in the previous window.")
       if choice("Begin Scanning? ", bypass) == True:
         validEntry = True
-        if filterMode == "Text":
-          deletionEnabledLocal = "Allowed"
       else:
         validEntry = False
-        deletionEnabledLocal = "False"
         validConfigSetting = False
 
-  return deletionEnabledLocal, inputChars
+  return inputChars, None
 
 # For scanning for strings
-def prepare_filter_mode_strings(currentUser, deletionEnabledLocal, scanMode, filterMode, config):
+def prepare_filter_mode_strings(currentUser, scanMode, filterMode, config):
   currentUserName = currentUser[1]
   if filterMode == "Username":
     whatToScanMsg = "Usernames"
@@ -1475,7 +1475,7 @@ def prepare_filter_mode_strings(currentUser, deletionEnabledLocal, scanMode, fil
     filterStringList = string_to_list(inputString, lower=True)
     if len(filterStringList) > 0:
       if filterMode == "Username" or filterMode == "NameAndText":
-        validEntry, deletionEnabledLocal = safety_check_username_against_filter(currentUserName.lower(), scanMode, filterStringList=filterStringList, bypass=bypass)
+        validEntry = safety_check_username_against_filter(currentUserName.lower(), scanMode, filterStringList=filterStringList, bypass=bypass)
       elif filterMode == "Text":
         validEntry = True
     else:
@@ -1489,16 +1489,13 @@ def prepare_filter_mode_strings(currentUser, deletionEnabledLocal, scanMode, fil
         print(filterStringList)
       if choice("Begin scanning? ", bypass) == True:
         validEntry = True
-        if filterMode == "Text":
-          deletionEnabledLocal = "Allowed"
       else:
         validEntry = False
-        deletionEnabledLocal = "False"
 
-  return deletionEnabledLocal, filterStringList
+  return filterStringList, None
 
 # For scanning for regex expression
-def prepare_filter_mode_regex(currentUser, deletionEnabledLocal, scanMode, filterMode, config):
+def prepare_filter_mode_regex(currentUser, scanMode, filterMode, config):
   currentUserName = currentUser[1]
   if filterMode == "Username":
     whatToScanMsg = "Usernames"
@@ -1531,24 +1528,22 @@ def prepare_filter_mode_regex(currentUser, deletionEnabledLocal, scanMode, filte
       processedExpression = validationResults[1]
       print(f"     The expression appears to be {F.GREEN}valid{S.R}!")
       if filterMode == "Username" or filterMode == "NameAndText":
-        validExpression, deletionEnabledLocal = safety_check_username_against_filter(currentUserName, scanMode, regexPattern=processedExpression, bypass=bypass)
+        validExpression = safety_check_username_against_filter(currentUserName, scanMode, regexPattern=processedExpression, bypass=bypass)
 
       if validExpression == True and choice("Begin scanning? ", bypass) == True:
-        if filterMode == "Text":
-          deletionEnabledLocal = "Allowed"
+        pass
       else:
         validExpression = False
-        deletionEnabledLocal = "False"
         validConfigSetting = False
     else:
       print(f"     {F.RED}Error{S.R}: The expression appears to be {F.RED}invalid{S.R}!")
       validConfigSetting = False
 
-  return deletionEnabledLocal, processedExpression
+  return processedExpression, None
 
 # Filter Mode: User manually enters ID
-# Returns new deletionEnabled value, and inputtedSpammerChannelID
-def prepare_filter_mode_ID(currentUser, deletionEnabledLocal, scanMode, config):
+# Returns inputtedSpammerChannelID
+def prepare_filter_mode_ID(currentUser, scanMode, config):
 
   currentUserID = currentUser[0]
   processResult = (False, None) #Tuple, first element is status of validity of channel ID, second element is channel ID
@@ -1579,11 +1574,10 @@ def prepare_filter_mode_ID(currentUser, deletionEnabledLocal, scanMode, config):
     else:
       input("\nPress Enter to continue...")
   
-  deletionEnabledLocal = "Allowed"
-  return deletionEnabledLocal, inputtedSpammerChannelID
+  return inputtedSpammerChannelID, None
 
 # For Filter mode auto-ascii, user inputs nothing, program scans for non-ascii
-def prepare_filter_mode_non_ascii(currentUser, deletionEnabledLocal, scanMode, config):
+def prepare_filter_mode_non_ascii(currentUser, scanMode, config):
 
   print("\n--------------------------------------------------------------------------------------------------------------")
   print("~~~ This mode automatically searches for usernames that contain special characters (aka not letters/numbers) ~~~\n")
@@ -1597,8 +1591,6 @@ def prepare_filter_mode_non_ascii(currentUser, deletionEnabledLocal, scanMode, c
   confirmation = False
   validConfigSetting = True
   while confirmation == False:
-    deletionEnabledLocal = "False"
-
     if validConfigSetting == True and config and config['autoascii_sensitivity'] != "ask":
       selection = config['autoascii_sensitivity']
       bypass = True
@@ -1625,7 +1617,7 @@ def prepare_filter_mode_non_ascii(currentUser, deletionEnabledLocal, scanMode, c
       validConfigSetting = False
     
     if confirmation == True:
-      confirmation, deletionEnabledLocal = safety_check_username_against_filter(currentUser[1], scanMode=scanMode, regexPattern=regexPattern, bypass=bypass)
+      confirmation = safety_check_username_against_filter(currentUser[1], scanMode=scanMode, regexPattern=regexPattern, bypass=bypass)
 
   if selection == "1":
     autoModeName = "Allow Standard + Extended ASCII"
@@ -1635,13 +1627,13 @@ def prepare_filter_mode_non_ascii(currentUser, deletionEnabledLocal, scanMode, c
     autoModeName = "NUKE Mode (┘°□°)┘≈ ┴──┴ - Allow only letters, numbers, and spaces"
 
   if confirmation == True:
-    return deletionEnabledLocal, regexPattern, autoModeName
+    return regexPattern, autoModeName
   else:
     input("How did you get here? Something very strange went wrong. Press Enter to Exit...")
     exit()
 
 # Auto filter for pre-made list of common spammer-used characters in usernames
-def prepare_filter_mode_smart_chars(currentUser, deletionEnabledLocal, scanMode, config):
+def prepare_filter_mode_smart_chars(currentUser, scanMode, config):
   currentUserName = currentUser[1]
   if config and config['filter_mode'] == "autosmart":
     print("Using Auto Smart Mode - Set from config file.")
@@ -1654,7 +1646,7 @@ def prepare_filter_mode_smart_chars(currentUser, deletionEnabledLocal, scanMode,
   # Spam Criteria
   minNumbersMatchCount = 3 # Choice of minimum number of matches from spammerNumbersString before considered spam
   spammerNumbersString = "０１２３４５６７８９０１２３４５６７８９߁①⑴⒈⓵❶➀➊🄂౽੨②⑵⒉⓶❷➁➋🄃౩③⑶⒊⓷❸➂➌🄄૩④⑷⒋⓸❹➃➍🄅⑤⑸⒌⓹❺➄➎➄➎🄆⑥⑹⒍⓺❻➅➏🄇⑦⑺⒎⓻❼➆➐𑄽🄈႘⑧⑻⒏⓼❽➇➑🄉⑨⑼⒐⓽❾➈➒🄊⓪⓿🄋🄌🄁🄀𝟎𝟘𝟢𝟬𝟏𝟙𝟭𝟣𝟶𝟐𝟚𝟮𝟤𝟷𝟑𝟛𝟯𝟥𝟸𝟒𝟜𝟰𝟦𝟹𝟓𝟝𝟱𝟧𝟺𝟔𝟞𝟲𝟨𝟻𝟕𝟟𝟳𝟩𝟼𝟖𝟠𝟴𝟪𝟽𝟗𝟡𝟵𝟫𝟾𝟿"
-  spammerPlusSignsString = "✚✙➕±˖ᐩ⁺₊∓∔⊕⊞⟴⧺⧻⨁⨄⨢⨣⨤⨥⨦⨧⨨⨭⨮⨹⩱⩲⬲﹢＋+᛭⁜☩☨☦♰♱⛨✙✚✛✜✝✞✟✠Ꚛꚛ🕀🕁🕂🕆🕇🕈🞡🞢🞣🞤🞥🞦🞧"
+  spammerPlusSignsString = "✚✙➕±˖ᐩ⁺₊∓∔⊕⊞⟴⧺⧻⨁⨄⨢⨣⨤⨥⨦⨧⨨⨭⨮⨹⩱⩲⬲﹢＋᛭⁜☩☨☦♰♱⛨✙✚✛✜✝✞✟✠Ꚛꚛ🕀🕁🕂🕆🕇🕈🞡🞢🞣🞤🞥🞦🞧"
   spammerOneString = "１𝟏𝟙𝟣𝟭𝟷⒈⓵❶➀➊🄂߁①⑴"
   
   # Process / Repair for Filter Use
@@ -1664,9 +1656,8 @@ def prepare_filter_mode_smart_chars(currentUser, deletionEnabledLocal, scanMode,
   regexTest3 = f"[{spammerNumbersString}][{spammerPlusSignsString}]"
   compiledRegex = re.compile(f"({regexTest1}|{regexTest2}|{regexTest3})")
 
-  #proceed, deletionEnabledLocal = safety_check_username_against_filter(currentUserName, filterCharsSet=filterCharsSet, scanMode=scanMode, bypass=bypass)
   filterSettings = {'spammerNumbersSet': spammerNumbersSet, 'compiledRegex': compiledRegex, 'minNumbersMatchCount': minNumbersMatchCount}
-  return deletionEnabledLocal, filterSettings
+  return filterSettings, None
 
 ##########################################################################################
 ##########################################################################################
@@ -1684,7 +1675,6 @@ def main():
   # Declare Global Variables
   global youtube
   global matchedCommentsDict
-  global previousMatchCommentDataList
   global vidIdDict
   global vidTitleDict
   global scannedRepliesCount
@@ -1692,7 +1682,6 @@ def main():
   global matchSamplesDict
 
   # Default values for global variables
-  previousMatchCommentDataList = []
   matchedCommentsDict = {}
   vidIdDict = {}
   vidTitleDict = {}
@@ -1703,7 +1692,6 @@ def main():
   
   # Declare Default Variables
   maxScanNumber = 999999999
-  deletionEnabled = "False" # Disables deletion functionality, which is default until later - String is used instead of boolean to prevent flipped bits
   check_video_id = None
   nextPageToken = "start"
   logMode = False
@@ -1855,11 +1843,11 @@ def main():
         print("\nChosen Video:  " + title)
         if currentUser[0] != get_channel_id(check_video_id):
           userNotChannelOwner = True
-          print(f"{F.LIGHTRED_EX}NOTE: This is not your video. Enabling '{F.YELLOW}Not Your Channel Mode{F.LIGHTRED_EX}'. You'll be able to report spam comments, but not delete them.{S.R}")
         # Ask if correct video, or skip if config
         if config and config['skip_confirm_video'] == True:
           confirm = True
         else:
+          print(f"{F.LIGHTRED_EX}NOTE: This is not your video. Enabling '{F.YELLOW}Not Your Channel Mode{F.LIGHTRED_EX}'. You'll be able to report spam comments, but not delete them.{S.R}")
           confirm = choice("Is this video correct?", bypass=validConfigSetting)
 
       else:
@@ -1911,7 +1899,7 @@ def main():
   print(f" 6. Auto Smart-Mode: Scan usernames and comments for {F.YELLOW}characters often used by scammers{S.R}")
 
   if userNotChannelOwner == True:
-    print(f"    {F.LIGHTRED_EX}Note: With 'Not Your Channel Mode' enabled, you can only report comments using modes 1 or 6.{S.R}")
+    print(f"    {F.LIGHTRED_EX}Note: With 'Not Your Channel Mode' enabled, you can only report matched comments while using 'Auto Smart' mode.{S.R}") # Based on filterModesAllowedforNonOwners
   # Make sure input is valid, if not ask again
   validFilterMode = False
   validFilterSubMode = False
@@ -1992,36 +1980,34 @@ def main():
   inputtedCommentTextFilter = None
 
   if filterMode == "ID":
-    filterSettings = prepare_filter_mode_ID(currentUser, deletionEnabled, scanMode, config)
-    inputtedSpammerChannelID = filterSettings[1]
+    filterSettings = prepare_filter_mode_ID(currentUser, scanMode, config)
+    inputtedSpammerChannelID = filterSettings[0]
 
   elif filterMode == "AutoASCII":
-    filterSettings = prepare_filter_mode_non_ascii(currentUser, deletionEnabled, scanMode, config)
-    regexPattern = filterSettings[1]
+    filterSettings = prepare_filter_mode_non_ascii(currentUser, scanMode, config)
+    regexPattern = filterSettings[0]
 
   elif filterMode == "AutoSmart":
-    filterSettings = prepare_filter_mode_smart_chars(currentUser, deletionEnabled, scanMode, config)
-    inputtedUsernameFilter = filterSettings[1]
-    inputtedCommentTextFilter = filterSettings[1]
+    filterSettings = prepare_filter_mode_smart_chars(currentUser, scanMode, config)
+    inputtedUsernameFilter = filterSettings[0]
+    inputtedCommentTextFilter = filterSettings[0]
 
   elif filterSubMode == "chars":
-    filterSettings = prepare_filter_mode_chars(currentUser, deletionEnabled, scanMode, filterMode, config)
+    filterSettings = prepare_filter_mode_chars(currentUser, scanMode, filterMode, config)
   elif filterSubMode == "string":
-    filterSettings = prepare_filter_mode_strings(currentUser, deletionEnabled, scanMode, filterMode, config)
+    filterSettings = prepare_filter_mode_strings(currentUser, scanMode, filterMode, config)
   elif filterSubMode == "regex":
-    filterSettings = prepare_filter_mode_regex(currentUser, deletionEnabled, scanMode, filterMode, config)
+    filterSettings = prepare_filter_mode_regex(currentUser, scanMode, filterMode, config)
     regexPattern = filterSettings[1]
 
   if filterSubMode != "regex":
     if filterMode == "Username":
-      inputtedUsernameFilter = filterSettings[1]
+      inputtedUsernameFilter = filterSettings[0]
     elif filterMode == "Text":
-      inputtedCommentTextFilter = filterSettings[1]
+      inputtedCommentTextFilter = filterSettings[0]
     elif filterMode == "NameAndText":
-      inputtedUsernameFilter = filterSettings[1]
-      inputtedCommentTextFilter = filterSettings[1]
-  
-  deletionEnabled = filterSettings[0]
+      inputtedUsernameFilter = filterSettings[0]
+      inputtedCommentTextFilter = filterSettings[0]
 
   ##################### START SCANNING #####################
   try:
@@ -2105,32 +2091,34 @@ def main():
     print(f"\n{F.WHITE}{B.RED} NOTE: {S.R} Check that all comments listed above are indeed spam.")
     print()
 
-    ### -------- Decide whether to skip deletion --------
+    ### ---------------- Decide whether to skip deletion ----------------
     # Defaults
-    deletionMode = "heldForReview" # Should be changed later, but if missed it will default to heldForReview
+    deletionEnabled = False
+    deletionMode = None # Should be changed later, but if missed it will default to heldForReview
     confirmDelete = None # If None, will later cause user to be asked to delete
+    filterModesAllowedforNonOwners = ["AutoSmart"]
     
-    if not config:
-      if userNotChannelOwner == True:
-        if filterMode == "ID" or filterMode == "AutoSmart":
-          deletionMode = "reportSpam"
-          deletionEnabled = "Allowed"
+    # If user isn't channel owner and not using allowed filter mode, skip deletion
+    if userNotChannelOwner == True and filterMode not in filterModesAllowedforNonOwners:
+      confirmDelete = False
+      deletionEnabled = False
+    elif not config:
+      deletionEnabled = "Allowed" # If no config, no need to use all the below, skip right to prompt how to process
+
+    # Test skip_deletion preference - If passes both, will either delete or ask user to delete
     elif config['skip_deletion'] == True:
       exit()
     elif config['skip_deletion'] != False:
       print("Error Code C-3: Invalid value for 'skip_deletion' in config file. Must be 'True' or 'False':  " + str(config['skip_deletion']))
       input("\nPress Enter to exit...")
       exit()
+    ### ----------------------------------------------------------------  
 
+    ### ------------- Decide whether to ask before deleting -------------
     # Using config to determine deletion type, block invalid settings
-    # Below is for if skip_deletion is false (user wants to delete, or be asked to delete)
-    # If confirmDelete is None, will display prompt to delete as normal
-
-    # Normal behavior same as no config, except here user can change deletionMode using config file
     elif config['delete_without_reviewing'] == False:
       deletionEnabled = "Allowed"
-      # Check valid deletion mode in config
-      if config['removal_type'] == "reportspam":
+      if config['removal_type'] == "reportspam" or userNotChannelOwner == True:
         deletionMode = "reportSpam"
       elif config['removal_type'] == "heldforreview":
         deletionMode = "heldForReview"
@@ -2143,32 +2131,48 @@ def main():
 
     # User wants to automatically delete with no user intervention
     elif config['delete_without_reviewing'] == True:
-      if config['removal_type'] == "reportSpam" or config['removal_type'] == "heldForReview":
+      if userNotChannelOwner == True:
+          confirmDelete = "REPORT"
+          deletionMode = "reportSpam"
+          deletionEnabled = True
+      elif config['removal_type'] == "reportspam" or config['removal_type'] == "heldforreview":
         if filterMode == "AutoSmart" or filterMode == "ID":
-          deletionEnabled = "True"
-          confirmDelete = "DELETE"
-          deletionMode = "heldForReview"
-        # If non-allowed mode, will require user to confirm deletion as usual
+          deletionEnabled = True
+          if config['removal_type'] == "reportspam":
+            deletionMode = "reportSpam"
+            confirmDelete = "REPORT"
+          elif config['removal_type'] == "heldforreview":
+            deletionMode = "heldForReview"
+            confirmDelete = "DELETE"
         else:
-          print("Error Code C-5: 'delete_without_reviewing' is set to 'True' in config file, so only filter modes 'AutoSmart' and 'ID' allowed..\n")
+          # If non-permitted filter mode with delete_without_reviewing, will allow deletion, but now warns and requires usual confirmation prompt
+          print("Error Code C-5: 'delete_without_reviewing' is set to 'True' in config file. So only filter modes 'AutoSmart' or 'ID' allowed..\n")
           print("Next time use one of those filter modes, or set 'delete_without_reviewing' to 'False'.")
           print("    > For this run, you will be asked to confirm removal of spam comments.")
           input("\nPress Enter to continue...")
           confirmDelete = None
           deletionEnabled = "Allowed"
       else:
-        print("Error Code C-6: 'delete_without_reviewing' is set to 'True' in config file. 'removal_type' must be either 'heldForReview' or 'reportSpam'.\n")
-        print("NExt time, either set one of those removal types, or set 'delete_without_reviewing' to 'False'.")
+        print("Error Code C-6: 'delete_without_reviewing' is set to 'True' in config file. So 'removal_type' must be either 'heldForReview' or 'reportSpam'.\n")
+        print("Next time, either set one of those removal types, or set 'delete_without_reviewing' to 'False'.")
         print("    > For this run, you will be asked to confirm removal of spam comments.")
         input("\nPress Enter to continue...")
         confirmDelete = None
         deletionEnabled = "Allowed"
-
-    # Catch Invalid value    
     else:
+      # Catch Invalid value    
       print("Error C-7: Invalid value for 'delete_without_reviewing' in config file. Must be 'True' or 'False':  " + config['delete_without_reviewing'])
       input("\nPress Enter to exit...")
       exit()
+
+    
+    # Check if deletion is enabled, otherwise block and quit
+    if deletionEnabled != "Allowed" and deletionEnabled != True:
+        print("\nThe deletion functionality was not enabled. Cannot delete or report comments.")
+        print("Possible Cause: You're scanning someone elses video with a non-supported filter mode.\n")
+        print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
+        input("Press Enter to exit...")
+        exit()
 
 
     ### ---------------- Set Up How To Handle Comments  ----------------
@@ -2176,50 +2180,48 @@ def main():
     if confirmDelete == None:
       exclude = False
       # Menu for deletion mode
-      if deletionEnabled == "Allowed":
-        while confirmDelete != "DELETE" and confirmDelete != "REPORT":
-          # Title
-          if exclude == False:
-            print(f"{F.YELLOW}How do you want to handle the matched comments above?{S.R}")
-          elif exclude == True:
-            print(f"{F.YELLOW}How do you want to handle the rest of the comments (not ones you {F.LIGHTGREEN_EX}excluded{F.YELLOW})?{S.R}")
-          if userNotChannelOwner == True:
-            print(f"{F.GREEN}~~ Not Your Channel Mode: Delete Mode Not Available ~~{S.R}")
+      while confirmDelete != "DELETE" and confirmDelete != "REPORT" and confirmDelete != "HOLD":
+        # Title
+        if exclude == False:
+          print(f"{F.YELLOW}How do you want to handle the matched comments above?{S.R}")
+        elif exclude == True:
+          print(f"{F.YELLOW}How do you want to handle the rest of the comments (not ones you {F.LIGHTGREEN_EX}excluded{F.YELLOW})?{S.R}")
+        if userNotChannelOwner == True:
+          print(f"{F.GREEN}~~ Not Your Channel Mode: Only Reporting is Possible ~~{S.R}")
 
-          # Exclude
-          if exclude == False:
-            print(f" > To first {F.LIGHTGREEN_EX}exclude certain authors{S.R}: Type \'{F.LIGHTGREEN_EX}exclude{S.R}\' followed by a list of the numbers {F.LIGHTMAGENTA_EX}in the sample list{S.R} next to those authors.")
-            print("      > Example:  exclude 1, 12, 9")
+        # Exclude
+        if exclude == False:
+          print(f" > To first {F.LIGHTGREEN_EX}exclude certain authors{S.R}: Type \'{F.LIGHTGREEN_EX}exclude{S.R}\' followed by a list of the numbers {F.LIGHTMAGENTA_EX}in the sample list{S.R} next to those authors.")
+          print("      > Example:  exclude 1, 12, 9")
 
-          # Delete Instructions
-          if exclude == False and userNotChannelOwner == False:
-            print(f" > To {F.LIGHTRED_EX}delete ALL of the above comments{S.R}: Type ' {F.LIGHTRED_EX}DELETE{S.R} ' exactly (in all caps), then hit Enter.")
-          elif exclude == True and userNotChannelOwner == False:
-            print(f" > To {F.LIGHTRED_EX}delete the rest of the comments{S.R}: Type ' {F.LIGHTRED_EX}DELETE{S.R} ' exactly (in all caps), then hit Enter.")
-          
-          # Report Instructions
-          print(f" > To {F.LIGHTCYAN_EX}just report the comments for spam{S.R}, type ' {F.LIGHTCYAN_EX}REPORT{S.R} '. (Can be done even if you're not the channel owner)")
+        # Delete Instructions
+        if exclude == False and userNotChannelOwner == False:
+          print(f" > To {F.LIGHTRED_EX}delete ALL of the above comments{S.R}: Type ' {F.LIGHTRED_EX}DELETE{S.R} ' exactly (in all caps), then hit Enter.")
+          print(f" > To {F.LIGHTRED_EX}move ALL comments above to 'Held For Review' in YT Studio{S.R}: Type ' {F.LIGHTRED_EX}HOLD{S.R} ' exactly (in all caps), then hit Enter.")
+        elif exclude == True and userNotChannelOwner == False:
+          print(f" > To {F.LIGHTRED_EX}delete the rest of the comments{S.R}: Type ' {F.LIGHTRED_EX}DELETE{S.R} ' exactly (in all caps), then hit Enter.")
+          print(f" > To {F.LIGHTRED_EX}move rest of comments above to 'Held For Review' in YT Studio{S.R}: Type ' {F.LIGHTRED_EX}HOLD{S.R} ' exactly (in all caps), then hit Enter.")
+        
+        # Report Instructions
+        print(f" > To {F.LIGHTCYAN_EX}just report the comments for spam{S.R}, type ' {F.LIGHTCYAN_EX}REPORT{S.R} '. (Can be done even if you're not the channel owner)")
 
-          confirmDelete = input("\nInput: ")
-          if confirmDelete == "DELETE" and userNotChannelOwner == False:
-            deletionEnabled = True
-          elif "exclude" in confirmDelete.lower():
-            excludedDict, rtfExclude = exclude_authors(confirmDelete)
-            exclude = True
-          elif confirmDelete == "REPORT":
-            deletionEnabled = True
-            confirmDelete = "REPORT"
-            deletionMode = "reportSpam"
-          else:
-            input(f"\nDeletion {F.YELLOW}CANCELLED{S.R} (Because no matching option entered). Press Enter to exit...")
-            exit()
-      # Deletion disabled
-      else:
-        print("\nThe deletion functionality was not enabled. Cannot delete or report comments.")
-        print("Possible Cause: You're scanning someone elses video with a non-supported filter mode.\n")
-        print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
-        input("Press Enter to exit...")
-        exit()
+        confirmDelete = input("\nInput: ")
+        if confirmDelete == "DELETE" and userNotChannelOwner == False:
+          deletionEnabled = True
+          deletionMode = "rejected"
+        elif confirmDelete == "HOLD" and userNotChannelOwner == False:
+          deletionEnabled = True
+          deletionMode = "heldForReview"          
+        elif confirmDelete == "REPORT":
+          deletionEnabled = True
+          deletionMode = "reportSpam" 
+        elif "exclude" in confirmDelete.lower():
+          excludedDict, rtfExclude = exclude_authors(confirmDelete)
+          exclude = True
+        else:
+          input(f"\nDeletion {F.YELLOW}CANCELLED{S.R} (Because no matching option entered). Press Enter to exit...")
+          exit()
+
     
     # Set deletion mode friendly name
     if deletionMode == "rejected":
@@ -2230,7 +2232,7 @@ def main():
       deletionModeFriendlyName = "Reported for spam"
 
     # Set or choose ban mode, check if valid based on deletion mode
-    if (confirmDelete == "DELETE" or confirmDelete == "REPORT") and deletionEnabled == True:  
+    if (confirmDelete == "DELETE" or confirmDelete == "REPORT" or confirmDelete == "HOLD") and deletionEnabled == True:  
       banChoice = False
       if config and config['enable_ban'] != "ask":
         if config['enable_ban'] == False:
@@ -2243,9 +2245,10 @@ def main():
           input("Press Enter to continue...")
       elif deletionMode == "rejected":
         banChoice = choice(f"Also {F.YELLOW}ban{S.R} the spammer(s) ?")
+
       elif deletionMode == "heldForReview":
         pass
-      elif deletionMode == "REPORT":
+      elif deletionMode == "reportSpam":
         pass
       
       ### ---------------- Reporting / Deletion Begins  ----------------
