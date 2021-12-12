@@ -138,20 +138,17 @@ def get_authenticated_service():
 # Then uses print_prepared_comments() to print / log the comments
 def print_comments(check_video_id_localprint, comments, logMode):
   j = 0 # Counting index when going through comments all comment segments
-  correctly_ordered_comments_list =[] # Holds new list correctly ordered matched comments, same order as returned by API and presented to user
+  groupSize = 2500 # Number of comments to process per iteration
 
-  if len(comments) > 50:
-    remainder = len(comments) % 50
-    numDivisions = int((len(comments)-remainder)/50)
+  if len(comments) > groupSize:
+    remainder = len(comments) % groupSize
+    numDivisions = int((len(comments)-remainder)/groupSize)
     for i in range(numDivisions):
-      j, k = print_prepared_comments(check_video_id_localprint,comments[i*50:i*50+50], j, logMode)
-      correctly_ordered_comments_list.extend(k)
+      j = print_prepared_comments(check_video_id_localprint,comments[i*groupSize:i*groupSize+groupSize], j, logMode)
     if remainder > 0:
-      j, k = print_prepared_comments(check_video_id_localprint,comments[numDivisions*50:len(comments)],j, logMode)
-      correctly_ordered_comments_list.extend(k)
+      j = print_prepared_comments(check_video_id_localprint,comments[numDivisions*groupSize:len(comments)],j, logMode)
   else:
-    j, k = print_prepared_comments(check_video_id_localprint,comments, j, logMode)
-    correctly_ordered_comments_list.extend(k)
+    j = print_prepared_comments(check_video_id_localprint,comments, j, logMode)
 
   # Print Sample Match List
   valuesPreparedToWrite = ""
@@ -166,34 +163,22 @@ def print_comments(check_video_id_localprint, comments, logMode):
   print(valuesPreparedToPrint)
   print(f"{F.LIGHTMAGENTA_EX}---------------------------- (See log file for channel IDs of matched authors above) ---------------------------{S.R}")
 
-  return correctly_ordered_comments_list
+  return None
 
 # Uses comments.list YouTube API Request to get text and author of specific set of comments, based on comment ID
 def print_prepared_comments(check_video_id_localprep, comments, j, logMode):
 
-  results = youtube.comments().list(
-    part="snippet",
-    id=comments,  # The API request can take an entire comma separated list of comment IDs (in "id" field) to return info about
-    maxResults=100, # 100 is the max per page, but multiple pages will be scanned
-    fields="items/snippet/authorDisplayName,items/snippet/textDisplay,items/id,items/snippet/authorChannelId/value",
-    textFormat="plainText"
-  ).execute()
-
   # Prints author and comment text for each comment
   i = 0 # Index when going through comments
-  comments_segment_list = [] # Holds list of comments for each segment
   dataPreparedToWrite = ""
 
-  for item in results["items"]:
-    text = item["snippet"]["textDisplay"]
-    author = item["snippet"]["authorDisplayName"]
-    author_id_local = item["snippet"]["authorChannelId"]["value"]
-    comment_id_local = item["id"]
-    # Retrieve video ID from object using comment ID
-    videoID = convert_comment_id_to_video_id(comment_id_local)
-
-    # Update master dictionary of comment info for each comment
-    matchedCommentsDict[comment_id_local] = {'text':text, 'authorName':author, 'authorID':author_id_local, 'videoID':videoID}
+  for comment in comments:
+    metadata = matchedCommentsDict[comment]
+    text = metadata['text']
+    author = metadata['authorName']
+    author_id_local = metadata['authorID']
+    comment_id_local = comment
+    videoID = metadata['videoID']
 
     # Truncates very long comments, and removes excessive multiple lines
     if len(text) > 1500:
@@ -215,10 +200,8 @@ def print_prepared_comments(check_video_id_localprep, comments, j, logMode):
     print(f"     > Author Channel ID: {F.LIGHTBLUE_EX}" + author_id_local + f"{S.R}")
     print("=============================================================================================\n")
 
-
     # If logging enabled, also prints to log file 
     if logMode == True:
-
       # Only print video title info if searching entire channel
       if check_video_id_localprep is None:  
          titleInfoLine = "     > Video: " + title + "\\line " + "\n"
@@ -244,14 +227,15 @@ def print_prepared_comments(check_video_id_localprep, comments, j, logMode):
 
     # Appends comment ID to new list of comments so it's in the correct order going forward, as provided by API and presented to user
     # Must use append here, not extend, or else it would add each character separately
-    comments_segment_list.append(comment_id_local)
     i += 1
     j += 1
 
   if logMode == True:
+    print(" Writing to log file, please wait...", end="\r")
     write_rtf(logFileName, dataPreparedToWrite)
+    print("                                    ")
 
-  return j, comments_segment_list
+  return j
 
 # Adds a sample to matchSamplesDict and preps formatting
 def add_sample(authorID, authorNameRaw, commentText):
@@ -285,21 +269,14 @@ def get_comments(youtube, currentUser, filterMode, filterSubMode, check_video_id
   commentText = None
   parentAuthorChannelID = None
 
-  if filterMode == "ID": # User entered spammer IDs -- Get Extra Info: None
-    fieldsToFetch = "nextPageToken,items/snippet/topLevelComment/id,items/replies/comments,items/snippet/totalReplyCount,items/snippet/topLevelComment/snippet/videoId,items/snippet/topLevelComment/snippet/authorChannelId/value"
-  elif filterMode == "Username" or filterMode == "AutoASCII": # Get Extra Info: Author Display Name
-    fieldsToFetch = "nextPageToken,items/snippet/topLevelComment/id,items/replies/comments,items/snippet/totalReplyCount,items/snippet/topLevelComment/snippet/videoId,items/snippet/topLevelComment/snippet/authorChannelId/value,items/snippet/topLevelComment/snippet/authorDisplayName"
-  elif filterMode == "Text": # Get Extra Info: Comment Text
-    fieldsToFetch = "nextPageToken,items/snippet/topLevelComment/id,items/replies/comments,items/snippet/totalReplyCount,items/snippet/topLevelComment/snippet/videoId,items/snippet/topLevelComment/snippet/authorChannelId/value,items/snippet/topLevelComment/snippet/textDisplay"
-  elif filterMode == "AutoSmart" or filterMode == "NameAndText": # Get Extra Info: Author Display Name, Comment Text
-    fieldsToFetch = "nextPageToken,items/snippet/topLevelComment/id,items/replies/comments,items/snippet/totalReplyCount,items/snippet/topLevelComment/snippet/videoId,items/snippet/topLevelComment/snippet/authorChannelId/value,items/snippet/topLevelComment/snippet/authorDisplayName,items/snippet/topLevelComment/snippet/textDisplay"
+  fieldsToFetch = "nextPageToken,items/snippet/topLevelComment/id,items/replies/comments,items/snippet/totalReplyCount,items/snippet/topLevelComment/snippet/videoId,items/snippet/topLevelComment/snippet/authorChannelId/value,items/snippet/topLevelComment/snippet/authorDisplayName,items/snippet/topLevelComment/snippet/textDisplay"
 
   # Gets all comment threads for a specific video
   if check_video_id is not None:
     results = youtube.commentThreads().list(
       part="snippet, replies",
       videoId=check_video_id, 
-      maxResults=100, # 100 is the max per page allowed by YouTube, but multiple pages will be scanned
+      maxResults=100,
       pageToken=nextPageToken,
       fields=fieldsToFetch,
       textFormat="plainText"
@@ -310,7 +287,7 @@ def get_comments(youtube, currentUser, filterMode, filterSubMode, check_video_id
     results = youtube.commentThreads().list(
       part="snippet, replies",
       allThreadsRelatedToChannelId=check_channel_id,
-      maxResults=100, # 100 is the max per page allowed by YouTube, but multiple pages will be scanned
+      maxResults=100,
       pageToken=nextPageToken,
       fields=fieldsToFetch,
       textFormat="plainText"
@@ -336,24 +313,20 @@ def get_comments(youtube, currentUser, filterMode, filterSubMode, check_video_id
     except KeyError:
       limitedRepliesList = []
       pass
-
     try: 
       parentAuthorChannelID = comment["snippet"]["authorChannelId"]["value"]
     except KeyError:
       parentAuthorChannelID = "[Deleted Channel]"
 
     # Need to be able to catch exceptions because sometimes the API will return a comment from non-existent / deleted channel
-    # Need individual tries because not all are fetched for each mode
-    if filterMode == "Username" or filterMode == "AutoASCII" or filterMode == "AutoSmart" or filterMode == "NameAndText":
-      try:
-        authorChannelName = comment["snippet"]["authorDisplayName"]
-      except KeyError:
-        authorChannelName = "[Deleted Channel]"
-    if filterMode == "Text" or filterMode == "AutoSmart" or filterMode == "NameAndText":
-      try:
-        commentText = comment["snippet"]["textDisplay"]
-      except KeyError:
-        commentText = "[Deleted/Missing Comment]"
+    try:
+      authorChannelName = comment["snippet"]["authorDisplayName"]
+    except KeyError:
+      authorChannelName = "[Deleted Channel]"
+    try:
+      commentText = comment["snippet"]["textDisplay"]
+    except KeyError:
+      commentText = "[Deleted/Missing Comment]"
     
     # Runs check against comment info for whichever filter data is relevant
     check_against_filter(currentUser, filterMode=filterMode, filterSubMode=filterSubMode, commentID=parent_id, videoID=videoID, authorChannelID=parentAuthorChannelID, parentAuthorChannelID=None, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, authorChannelName=authorChannelName, commentText=commentText, regexPattern=regexPattern)
@@ -361,7 +334,7 @@ def get_comments(youtube, currentUser, filterMode, filterSubMode, check_video_id
     
     if numReplies > 0 and len(limitedRepliesList) < numReplies:
       get_replies(currentUser, filterMode, filterSubMode, parent_id, videoID, parentAuthorChannelID, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern)
-    elif numReplies > 0 and len(limitedRepliesList) <= numReplies:
+    elif numReplies > 0 and len(limitedRepliesList) == numReplies: # limitedRepliesList can never be more than numReplies
       get_replies(currentUser, filterMode, filterSubMode, parent_id, videoID, parentAuthorChannelID, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern, limitedRepliesList)
     else:
       print_count_stats(final=False)  # Updates displayed stats if no replies
@@ -381,19 +354,12 @@ def get_replies(currentUser, filterMode, filterSubMode, parent_id, videoID, pare
   commentText = None
   
   if repliesList == None:
-    if filterMode == "ID": # Get Extra Info: None
-      fieldsToFetch = "items/snippet/authorChannelId/value,items/id"
-    elif filterMode == "Username" or filterMode == "AutoASCII": # Get Extra Info: Author Display Name
-      fieldsToFetch = "items/snippet/authorChannelId/value,items/id,items/snippet/authorDisplayName"
-    elif filterMode == "Text": # Get Extra Info: Comment Text
-      fieldsToFetch = "items/snippet/authorChannelId/value,items/id,items/snippet/textDisplay"
-    elif filterMode == "AutoSmart" or filterMode == "NameAndText": # Get Extra Info: Author Display Name, Comment Text
-      fieldsToFetch = "items/snippet/authorChannelId/value,items/id,items/snippet/authorDisplayName,items/snippet/textDisplay"
+    fieldsToFetch = "items/snippet/authorChannelId/value,items/id,items/snippet/authorDisplayName,items/snippet/textDisplay"
 
     results = youtube.comments().list(
       part="snippet",
       parentId=parent_id,
-      maxResults=100, # 100 is the max per page, but multiple pages will be scanned
+      maxResults=100,
       fields=fieldsToFetch,
       textFormat="plainText"
     ).execute()
@@ -402,7 +368,7 @@ def get_replies(currentUser, filterMode, filterSubMode, parent_id, videoID, pare
   else:
     replies = repliesList
  
-  # Create list of author names in current thread, add into list
+  # Create list of author names in current thread, add into list - Only necessary when scanning comment text
   allThreadAuthorNames = []
   if filterMode == "Username" or filterMode == "AutoASCII" or filterMode == "AutoSmart" or filterMode == "NameAndText":
     for reply in replies:
@@ -424,19 +390,16 @@ def get_replies(currentUser, filterMode, filterSubMode, parent_id, videoID, pare
       authorChannelID = "[Deleted Channel]"
 
     # Get author display name
-    if filterMode == "Username" or filterMode == "AutoASCII" or filterMode == "AutoSmart" or filterMode == "NameAndText": 
-      try:
-        authorChannelName = reply["snippet"]["authorDisplayName"]
-      except KeyError:
-        authorChannelName = "[Deleted Channel]"
-    else: authorChannelName = ""
+    try:
+      authorChannelName = reply["snippet"]["authorDisplayName"]
+    except KeyError:
+      authorChannelName = "[Deleted Channel]"
     
     # Comment Text
-    if filterMode == "Text" or filterMode == "AutoSmart" or filterMode == "NameAndText":
-      try:
-        commentText = reply["snippet"]["textDisplay"]
-      except KeyError:
-        commentText = "[Deleted/Missing Comment]"
+    try:
+      commentText = reply["snippet"]["textDisplay"]
+    except KeyError:
+      commentText = "[Deleted/Missing Comment]"
 
     # Runs check against comment info for whichever filter data is relevant
     check_against_filter(currentUser, filterMode=filterMode, filterSubMode=filterSubMode, commentID=replyID, videoID=videoID, authorChannelID=authorChannelID, parentAuthorChannelID=parentAuthorChannelID, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, authorChannelName=authorChannelName, commentText=commentText, regexPattern=regexPattern, allThreadAuthorNames=allThreadAuthorNames)
@@ -452,21 +415,22 @@ def get_replies(currentUser, filterMode, filterSubMode, parent_id, videoID, pare
 def check_against_filter(currentUser, filterMode, filterSubMode, commentID, videoID, authorChannelID, parentAuthorChannelID=None, inputtedSpammerChannelID=None, inputtedUsernameFilter=None, inputtedCommentTextFilter=None,  authorChannelName=None, commentText=None, regexPattern=None, allThreadAuthorNames=None):
   global vidIdDict
   global matchedCommentsDict
+  commentTextOriginal = str(commentText)
 
   # Do not even check comment author ID matches currently logged in user's ID
   if currentUser[0] != authorChannelID:
     # Logic to avoid false positives from replies to spammers
     if allThreadAuthorNames and (filterMode == "AutoSmart" or filterMode == "NameAndText") and len(allThreadAuthorNames) > 0:
       for name in allThreadAuthorNames:
-        if "@"+str(name) in commentText:
+        if "@"+str(name) in commentText[0:75]: #Only bother with first part of comment text
           commentText = commentText.replace("@"+str(name), "")
 
     # If the comment/username matches criteria based on mode, add key/value pair of comment ID and author ID to matchedCommentsDict
     # Also add key-value pair of comment ID and video ID to dictionary
     def add_spam(commentID, videoID):
       global matchedCommentsDict
-      matchedCommentsDict[commentID] = {}
-      vidIdDict[commentID] = videoID
+      matchedCommentsDict[commentID] = {'text':commentTextOriginal, 'authorName':authorChannelName, 'authorID':authorChannelID, 'videoID':videoID}
+      vidIdDict[commentID] = videoID # Probably remove this later, but still being used for now
 
     # Checks author of either parent comment or reply (both passed in as commentID) against channel ID inputted by user
     if filterMode == "ID":
@@ -511,12 +475,12 @@ def check_against_filter(currentUser, filterMode, filterSubMode, commentID, vide
       elif filterSubMode == "string":
         if check_list_against_string(listInput=inputtedUsernameFilter, stringInput=authorChannelName, caseSensitive=False):
           add_spam(commentID, videoID)
-        if check_list_against_string(listInput=inputtedCommentTextFilter, stringInput=commentText, caseSensitive=False):
+        elif check_list_against_string(listInput=inputtedCommentTextFilter, stringInput=commentText, caseSensitive=False):
           add_spam(commentID, videoID)
       elif filterSubMode == "regex":
         if re.search(str(regexPattern), authorChannelName):
           add_spam(commentID, videoID)
-        if re.search(str(regexPattern), commentText):
+        elif re.search(str(regexPattern), commentText):
           add_spam(commentID, videoID)
 
     # Check Modes: Auto ASCII (in username)
@@ -529,13 +493,11 @@ def check_against_filter(currentUser, filterMode, filterSubMode, commentID, vide
     ## Also Check if reply author ID is same as parent comment author ID, if so, ignore (to account for users who reply to spammers)
     elif filterMode == "AutoSmart":
       numberFilterSet = inputtedUsernameFilter['spammerNumbersSet']
-      authorChannelNameSet = make_char_set(str(authorChannelName))
-      commentTextSet = make_char_set(str(commentText))
       compiledRegex = inputtedUsernameFilter['compiledRegex']
       minNumbersMatchCount = inputtedUsernameFilter['minNumbersMatchCount']
       
       combinedString = authorChannelName + commentText
-      combinedSet = set.union(authorChannelNameSet, commentTextSet)
+      combinedSet = make_char_set(combinedString)
       if authorChannelID == parentAuthorChannelID:
         pass
       elif len(numberFilterSet.intersection(combinedSet)) >= minNumbersMatchCount:
@@ -1066,23 +1028,25 @@ def write_rtf(fileName, newText=None, firstWrite=False):
 ######################### Convert string to set of characters#########################
 def make_char_set(stringInput, stripLettersNumbers=False, stripKeyboardSpecialChars=False, stripPunctuation=False):
     # Optional lists of characters to strip from string
-    punctuationChars = ("!?\".,;:'-/()")
-    numbersLettersChars = ("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-    keyboardSpecialChars = ("!@#$%^&*()_+-=[]\{\}|;':,./<>?`~")
-
+    
+    charsToStrip = ""
+    if stripLettersNumbers == True:
+      numbersLettersChars = ("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+      charsToStrip += numbersLettersChars
+    if stripKeyboardSpecialChars == True:
+      keyboardSpecialChars = ("!@#$%^&*()_+-=[]\{\}|;':,./<>?`~")
+      charsToStrip += keyboardSpecialChars
+    if stripPunctuation == True:
+      punctuationChars = ("!?\".,;:'-/()")
+      charsToStrip += punctuationChars
+    
     listedInput = list(stringInput)
     for i in range(len(listedInput)):
-        listedInput[i] =  listedInput[i].strip()
-        if stripLettersNumbers == True:
-            listedInput[i] = listedInput[i].strip(numbersLettersChars)
-        if stripKeyboardSpecialChars == True:
-            listedInput[i] = listedInput[i].strip(keyboardSpecialChars)
-        if stripPunctuation == True:
-            listedInput[i] = listedInput[i].strip(punctuationChars)
+        listedInput[i] = listedInput[i].strip()
+        listedInput[i] = listedInput[i].strip(charsToStrip)
         listedInput[i] = listedInput[i].strip('\ufe0f') # Strips invisible varation selector for emojis
-    listedInput = set(list(filter(None, listedInput)))
     
-    return listedInput
+    return set(filter(None, listedInput))
 
 ######################### Check List Against String #########################    
 # Checks if any items in a list are a substring of a string
@@ -1847,7 +1811,8 @@ def main():
         if config and config['skip_confirm_video'] == True:
           confirm = True
         else:
-          print(f"{F.LIGHTRED_EX}NOTE: This is not your video. Enabling '{F.YELLOW}Not Your Channel Mode{F.LIGHTRED_EX}'. You'll be able to report spam comments, but not delete them.{S.R}")
+          if userNotChannelOwner == True:
+            print(f"{F.LIGHTRED_EX}NOTE: This is not your video. Enabling '{F.YELLOW}Not Your Channel Mode{F.LIGHTRED_EX}'. You'll be able to report spam comments, but not delete them.{S.R}")
           confirm = choice("Is this video correct?", bypass=validConfigSetting)
 
       else:
@@ -2015,12 +1980,17 @@ def main():
     print("\n------------------------------------------------------------------------------")
     print("(Note: If the program appears to freeze, try right clicking within the window)\n")
     print("                          --- Scanning --- \n")
-    nextPageToken = get_comments(youtube, currentUser, filterMode, filterSubMode, check_video_id, check_channel_id, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, regexPattern=regexPattern)
-    print_count_stats(final=False)  # Prints comment scan stats, updates on same line
-    # After getting first page, if there are more pages, goes to get comments for next page
-    while nextPageToken != "End" and scannedCommentsCount < maxScanNumber:
-      nextPageToken = get_comments(youtube, currentUser, filterMode, filterSubMode, check_video_id, check_channel_id, nextPageToken, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, regexPattern=regexPattern)
-    print_count_stats(final=True)  # Prints comment scan stats, finalizes
+    
+    def scan_all(youtube, currentUser, filterMode, filterSubMode, check_video_id, check_channel_id, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern):
+      nextPageToken = get_comments(youtube, currentUser, filterMode, filterSubMode, check_video_id, check_channel_id, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, regexPattern=regexPattern)
+      print_count_stats(final=False)  # Prints comment scan stats, updates on same line
+      # After getting first page, if there are more pages, goes to get comments for next page
+      while nextPageToken != "End" and scannedCommentsCount < maxScanNumber:
+        nextPageToken = get_comments(youtube, currentUser, filterMode, filterSubMode, check_video_id, check_channel_id, nextPageToken, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, regexPattern=regexPattern)
+      print_count_stats(final=True)  # Prints comment scan stats, finalizes
+
+    params = [youtube, currentUser, filterMode, filterSubMode, check_video_id, check_channel_id, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern]
+    scan_all(*params)
   ##########################################################
     bypass = False
     if config and config['enable_logging'] != 'ask':
@@ -2296,6 +2266,21 @@ def main():
 
 # Runs the program
 if __name__ == "__main__":
+  # For speed testing
+  # import cProfile
+  # #cProfile.run('main()', "output.dat")
+
+  # import pstats
+  # from pstats import SortKey
+
+  # with open("output_time.txt", "w") as f:
+  #   p = pstats.Stats("output.dat", stream=f)
+  #   p.sort_stats("time").print_stats()
+  
+  # with open("output_calls.txt", "w") as f:
+  #   p = pstats.Stats("output.dat", stream=f)
+  #   p.sort_stats("calls").print_stats()
+
   main()
 
 
