@@ -20,7 +20,7 @@ body:
         - label: There are **no existing posts relating to my problem**
           required: true
         - label: There are **existing posts relating to my problem, but the solution given, doesn't work for me.**
-          required: true        
+          required: false       
   - type: textarea
     id: what-happened
     attributes:
