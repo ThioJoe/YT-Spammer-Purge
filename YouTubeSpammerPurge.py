@@ -54,6 +54,7 @@ try:
   import traceback
   import platform
   import requests
+  from base64 import b85decode as b64decode
   from configparser import ConfigParser
   from pkg_resources import parse_version
 
@@ -1126,6 +1127,8 @@ def check_for_update(currentVersion, silentCheck=False):
   elif parse_version(latestVersion) == parse_version(currentVersion):
     if silentCheck == False:
       print("\nYou have the latest version: " + currentVersion)
+      input("\nPress enter to Exit...")
+      sys.exit()
   else:
     if silentCheck == False:
       print("\nNo newer release available - Your Version: " + currentVersion + "  --  Latest Version: " + latestVersion)
@@ -1602,6 +1605,7 @@ def prepare_filter_mode_non_ascii(currentUser, scanMode, config):
 # Auto filter for pre-made list of common spammer-used characters in usernames
 def prepare_filter_mode_smart_chars(currentUser, scanMode, config):
   currentUserName = currentUser[1]
+  utf_16 = "utf-8"
   if config and config['filter_mode'] == "autosmart":
     print("Using Auto Smart Mode - Set from config file.")
   else:
@@ -1611,16 +1615,19 @@ def prepare_filter_mode_smart_chars(currentUser, scanMode, config):
     input("Press Enter to continue...")
 
   # Spam Criteria
-  minNumbersMatchCount = 3 # Choice of minimum number of matches from spammerNumbersString before considered spam
-  spammerNumbersString = "０１２３４５６７８９０１２３４５６７８９߁①⑴⒈⓵❶➀➊🄂౽੨②⑵⒉⓶❷➁➋🄃౩③⑶⒊⓷❸➂➌🄄૩④⑷⒋⓸❹➃➍🄅⑤⑸⒌⓹❺➄➎➄➎🄆⑥⑹⒍⓺❻➅➏🄇⑦⑺⒎⓻❼➆➐𑄽🄈႘⑧⑻⒏⓼❽➇➑🄉⑨⑼⒐⓽❾➈➒🄊⓪⓿🄋🄌🄁🄀𝟎𝟘𝟢𝟬𝟏𝟙𝟭𝟣𝟶𝟐𝟚𝟮𝟤𝟷𝟑𝟛𝟯𝟥𝟸𝟒𝟜𝟰𝟦𝟹𝟓𝟝𝟱𝟧𝟺𝟔𝟞𝟲𝟨𝟻𝟕𝟟𝟳𝟩𝟼𝟖𝟠𝟴𝟪𝟽𝟗𝟡𝟵𝟫𝟾𝟿"
-  spammerPlusSignsString = "✚✙➕±˖ᐩ⁺₊∓∔⊕⊞⟴⧺⧻⨁⨄⨢⨣⨤⨥⨦⨧⨨⨭⨮⨹⩱⩲⬲﹢＋᛭⁜☩☨☦♰♱⛨✙✚✛✜✝✞✟✠Ꚛꚛ🕀🕁🕂🕆🕇🕈🞡🞢🞣🞤🞥🞦🞧"
-  spammerOneString = "１𝟏𝟙𝟣𝟭𝟷⒈⓵❶➀➊🄂߁①⑴"
-  
+  minNumbersMatchCount = 3 # Choice of minimum number of matches from spamNums before considered spam
+  spamNums = spamNums = b'@4S%jypiv`lJC5e@4S@nyp`{~mhZfm@4T4ryqWL3kng;a@4S-lyp!*|l<&Ni@4S}pyqE91nD4xq-+|(hpyH9V;*yBsleOZVw&I?E;+~4|pM-+ovAy7_sN#{K;*quDl8NGzw&I<);+}!xo{R9GgoEI*sp65M;*qxEl8WM!x8j|+;+}%yo{aFHgoNO$sp65N;*q!Fl8fS#xZ<6;;+})zo{jLIgoWafq~ejd;*yNwleyxZy5gRM;+~G;o`m9_j_{v^hT@T>;*q)Hl8xe%y5gO?;+}=#o{#XKgoomhrs9#h;*yTyle^-byyBjQ;+~N3k%YbQpM;3vf|%lwr{a;j;*yWzlf2@cz2csS;+~Q4pM;6xk*MO4yyB9O;*-7Noxb9ph~l1-@SlW=;*+Z4lfUqvgp2T>gpBZ?gn{s%gn;m!pN{aIpP2BSpQ7-cpRDkmpO5gJpPBHTpRMqnpQG@dpSJLwpOEmKpPKNUpRVwopQP}epSSRxpONsLpPTTVpRe$ppQZ4fpSbXypOWyMpPcZWpRn+qpQiAgpSkdzpOf&NpPlfXpRw?rpQrGhpStj!pOo;OpPulYpR(|spQ!MipS$p#pOx^PpP%rZpR@3tpQ-SjpS<v$pO)~QpP=xapS19upQ`YkpS|#%pO^5RpP}%bpSAFvpR4elpT6*&pT7'
+  spamPlus = b';+&e|oSEXDmBO*hmf?`8;(@y2f{NmZlj4Y!;)<2xik{-1wBo0_;-|afsDa|BgyN{8;;5tIsHEbkrQ)cj;;5(MsHozot>UPz;;6aesj=dzvf`|=@42Gyyo=$Rt>S^4;+U!8n5g2IrsA2f;+e7Ho2cTPnc|$9;+&h}oSfpEo#LFH;+&u2oS^EOn(CUH@Sl}{@Sl}|@Sl}}@Sl~2@Sl~3@Sl~4@SmQc@SmQd@SmQe@SmQf@SmQg@SmQh@SmQi'
+  spamOne = b'@4S)lou7~Jou8TTou8xdou94nou9Yjl8EAywc?$&;+}xwo{I3Fgo59J;*p@@k+c'
+  x = b64decode(spamNums).decode(utf_16)
+  y = b64decode(spamPlus).decode(utf_16)
+  z = b64decode(spamOne).decode(utf_16)
+
   # Process / Repair for Filter Use
-  spammerNumbersSet = make_char_set(spammerNumbersString, stripLettersNumbers=False, stripKeyboardSpecialChars=False, stripPunctuation=False)
-  regexTest1 = f"[{spammerPlusSignsString}][1]"
-  regexTest2 = f"[+][{spammerOneString}]"
-  regexTest3 = f"[{spammerNumbersString}][{spammerPlusSignsString}]"
+  spammerNumbersSet = make_char_set(x, stripLettersNumbers=False, stripKeyboardSpecialChars=False, stripPunctuation=False)
+  regexTest1 = f"[{y}][1]"
+  regexTest2 = f"[+][{z}]"
+  regexTest3 = f"[{x}][{y}]"
   compiledRegex = re.compile(f"({regexTest1}|{regexTest2}|{regexTest3})")
 
   filterSettings = {'spammerNumbersSet': spammerNumbersSet, 'compiledRegex': compiledRegex, 'minNumbersMatchCount': minNumbersMatchCount}
