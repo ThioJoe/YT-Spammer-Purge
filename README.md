@@ -31,7 +31,11 @@ YouTube offers a functionality to ban a user, but it does NOT delete previous co
 
 3. I'm a total amateur, so if something doesn't work I'll try to fix it but might not even know how, so don't expect too much. Therefore **I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.** I tested it on my own and implemented some failsafes as best as I could, but there could always be some kind of unexpected bug. You should inspect the code yourself.
 
-## Video: Project Explanation, Demonstration, and Setup Walkthrough (Demo'd features are out of date, but updated video coming soon)
+## Video: Project Explanation, Demonstration, and Setup Walkthrough (Demo'd features are out of date, but a updated video is coming soon)
+
+<!-- The updated video will be linked after release with the original video.
+!-->
+
 <p align="center">Regular Link: https://www.youtube.com/watch?v=-vOakOgYLUI</p>
 
 [![Explanation Video Screenshot Link](https://user-images.githubusercontent.com/12518330/140164510-7c886cd9-b9d4-4d6d-a466-fb58dd42ab48.jpg)](https://www.youtube.com/watch?v=-vOakOgYLUI)
