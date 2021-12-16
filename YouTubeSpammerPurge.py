@@ -498,7 +498,7 @@ def check_against_filter(currentUser, filterMode, filterSubMode, commentID, vide
       minNumbersMatchCount = inputtedUsernameFilter['minNumbersMatchCount']
       
       combinedString = authorChannelName + commentText
-      combinedSet = make_char_set(combinedString)
+      combinedSet = make_char_set(combinedString, stripLettersNumbers=True, stripPunctuation=True)
       if authorChannelID == parentAuthorChannelID:
         pass
       elif len(numberFilterSet.intersection(combinedSet)) >= minNumbersMatchCount:
@@ -1043,8 +1043,8 @@ def make_char_set(stringInput, stripLettersNumbers=False, stripKeyboardSpecialCh
     
     # Adds characters to dictionary to use with translate to remove these characters
     for c in charsToStrip:
-      translateDict[c] = None
-    translateDict["\ufe0f"] = None # Strips invisible varation selector for emojis
+      translateDict[ord(c)] = None
+    translateDict[ord("\ufe0f")] = None # Strips invisible varation selector for emojis
     
     # Removes charsToStrip from string
     stringInput = stringInput.translate(translateDict)
