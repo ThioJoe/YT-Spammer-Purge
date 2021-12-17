@@ -1728,7 +1728,7 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData):
     print("Using Auto Smart Mode - Set from config file.")
   else:
     print("\n--------------------------------------------------------------------------------------------------------------")
-    print(f"~~~ This mode is a {F.BRIGHTCYAN_EX}spammer's worst nightmare{S.R}. It automatically scans for multiple spammer techniques ~~~\n")
+    print(f"~~~ This mode is a {F.LIGHTCYAN_EX}spammer's worst nightmare{S.R}. It automatically scans for multiple spammer techniques ~~~\n")
     print(" > Extremely low (near 0%) false positives")
     print(" > Detects whatsapp scammers and '18+ spam' bots")
     print(" > Easily cuts through look-alike characters and obfuscations, including impersonating usernames \n")
@@ -2096,11 +2096,11 @@ def main():
   print(f" 2. Scan {F.LIGHTGREEN_EX}usernames{S.R} for criteria you choose")
   print(f" 3. Scan {F.CYAN}comment text{S.R} for criteria you choose")
   print(f" 4. Scan both {F.BLUE}usernames and comment text{S.R} for criteria you choose")
-  print(f" 5. Auto Mode: Scan usernames for {F.LIGHTMAGENTA_EX}ANY non-ASCII special characters{S.R} (May cause collateral damage!)")
-  print(f" 6. Auto Smart-Mode: Scan usernames and comments for {F.YELLOW}characters often used by scammers{S.R}")
+  print(f" 5. ASCII Mode: Scan usernames for {F.LIGHTMAGENTA_EX}ANY non-ASCII special characters{S.R} (May cause collateral damage!)")
+  print(f" 6. {F.BLACK}{B.YELLOW}RECOMMENDED{S.R} Auto Smart-Mode: Automatically detects {F.YELLOW}multiple spammer techniques{S.R}")
 
   if userNotChannelOwner == True:
-    print(f"    {F.LIGHTRED_EX}Note: With 'Not Your Channel Mode' enabled, you can only report matched comments while using 'Auto Smart' mode.{S.R}") # Based on filterModesAllowedforNonOwners
+    print(f" {F.LIGHTRED_EX}Note: With 'Not Your Channel Mode' enabled, you can only report matched comments while using 'Auto Smart' mode.{S.R}") # Based on filterModesAllowedforNonOwners
   # Make sure input is valid, if not ask again
   validFilterMode = False
   validFilterSubMode = False
