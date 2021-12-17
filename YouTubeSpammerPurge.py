@@ -38,45 +38,34 @@
 version = "2.0.0-Beta2"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
-# Try Imports
-try:
+# GUI Related
+from gui import *
 
-  # GUI Related
-  from gui import *
+# Standard Libraries
+import io
+import os
+import re
+import sys
+import time
+from datetime import datetime
+import traceback
+import platform
+import requests
+from base64 import b85decode as b64decode
+from configparser import ConfigParser
+from pkg_resources import parse_version
 
-  # Standard Libraries
-  import io
-  import os
-  import re
-  import sys
-  import time
-  from datetime import datetime
-  import traceback
-  import platform
-  import requests
-  from base64 import b85decode as b64decode
-  from configparser import ConfigParser
-  from pkg_resources import parse_version
-  from confusables import confusable_regex, normalize
+# Non Standard Modules
+import rtfunicode
+from colorama import init, Fore as F, Back as B, Style as S
+from confusables import confusable_regex, normalize
 
-  # Non Standard Modules
-  import rtfunicode
-  from colorama import init, Fore as F, Back as B, Style as S
-
-  # Google Authentication Modules
-  from googleapiclient.errors import HttpError
-  from googleapiclient.discovery import build
-  from google_auth_oauthlib.flow import InstalledAppFlow
-  from google.oauth2.credentials import Credentials
-  from google.auth.transport.requests import Request
-
-except ModuleNotFoundError as e:
-  print(e)
-  print("\nA module was not found try installing the requirements using either of these:")
-  print("pip3 install -r requirements.txt")
-  print("pip install -r requirements.txt")
-except Exception as e:
-  print(e)
+# Google Authentication Modules
+from googleapiclient.errors import HttpError
+from googleapiclient.discovery import build
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.oauth2.credentials import Credentials
+from google.auth.transport.requests import Request
 
 
 ##########################################################################################
@@ -257,9 +246,9 @@ def add_sample(authorID, authorNameRaw, commentText):
   else: 
     authorName = authorNameRaw[0:20].ljust(20)+": "
 
-  if len(commentText) > 85:
-    commentText = commentText[0:82] + "..."
-  commentText = commentText[0:85].ljust(85)
+  if len(commentText) > 82:
+    commentText = commentText[0:79] + "..."
+  commentText = commentText[0:82].ljust(82)
 
   # Add comment sample, author ID, name, and counter
   matchSamplesDict[authorID] = {'index':index, 'cString':cString, 'iString':iString, 'count':authorNumComments, 'authorID':authorID, 'authorName':authorNameRaw, 'nameAndText':authorName + commentText}
@@ -1730,7 +1719,7 @@ def prepare_filter_mode_non_ascii(currentUser, scanMode, config):
     input("How did you get here? Something very strange went wrong. Press Enter to Exit...")
     sys.exit()
 
-# Auto filter for pre-made list of common spammer-used characters in usernames
+# Auto smart mode
 def prepare_filter_mode_smart(currentUser, scanMode, config, miscData):
   currentUserName = currentUser[1]
   domainList = miscData['domainList']
@@ -1739,9 +1728,11 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData):
     print("Using Auto Smart Mode - Set from config file.")
   else:
     print("\n--------------------------------------------------------------------------------------------------------------")
-    print("~~~ This mode is pre-programmed to search usernames for special characters almost exclusively used by spammers ~~~\n")
-    print(" > Specifically, unicode characters that look like numbers\n")
-    input("Press Enter to continue...")
+    print(f"~~~ This mode is a {F.BRIGHTCYAN_EX}spammer's worst nightmare{S.R}. It automatically scans for multiple spammer techniques ~~~\n")
+    print(" > Extremely low (near 0%) false positives")
+    print(" > Detects whatsapp scammers and '18+ spam' bots")
+    print(" > Easily cuts through look-alike characters and obfuscations, including impersonating usernames \n")
+    input("Press Enter to Begin Scanning...")
 
   # General Spammer Criteria
   spamGenEmoji = '👇👆☝👈👉⤵️🔼🅥♜'
@@ -2055,7 +2046,7 @@ def main():
           confirm = True
         else:
           if userNotChannelOwner == True:
-            print(f"{F.LIGHTRED_EX}NOTE: This is not your video. Enabling '{F.YELLOW}Not Your Channel Mode{F.LIGHTRED_EX}'. You'll be able to report spam comments, but not delete them.{S.R}")
+            print(f"{F.LIGHTRED_EX}NOTE: This is not your video. Enabling '{F.YELLOW}Not Your Channel Mode{F.LIGHTRED_EX}'. You can report spam comments, but not delete them.{S.R}")
           confirm = choice("Is this video correct?", bypass=validConfigSetting)
 
       else:
@@ -2406,7 +2397,7 @@ def main():
 
         # Exclude
         if exclude == False:
-          print(f" > To first {F.LIGHTGREEN_EX}exclude certain authors{S.R}: Type \'{F.LIGHTGREEN_EX}exclude{S.R}\' followed by a list of the numbers {F.LIGHTMAGENTA_EX}in the sample list{S.R} next to those authors.")
+          print(f" > To {F.LIGHTGREEN_EX}exclude certain authors{S.R}: Type \'{F.LIGHTGREEN_EX}exclude{S.R}\' followed by a list of the numbers {F.LIGHTMAGENTA_EX}in the sample list{S.R} next to those authors")
           print("      > Example:  exclude 1, 12, 9")
 
         # Delete Instructions
