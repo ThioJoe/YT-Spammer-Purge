@@ -1731,14 +1731,15 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData):
     print(f"~~~ This mode is a {F.LIGHTCYAN_EX}spammer's worst nightmare{S.R}. It automatically scans for multiple spammer techniques ~~~\n")
     print(" > Extremely low (near 0%) false positives")
     print(" > Detects whatsapp scammers and '18+ spam' bots")
-    print(" > Easily cuts through look-alike characters and obfuscations, including impersonating usernames \n")
+    print(" > Easily cuts through look-alike characters and obfuscations, including impersonating usernames")
+    print(f" > {F.LIGHTRED_EX}NOTE:{S.R} This mode prioritizes a {F.LIGHTGREEN_EX}VERY low false positive rate{S.R}, at the cost of occasionally missing some spammers.\n")
     input("Press Enter to Begin Scanning...")
 
   # General Spammer Criteria
   spamGenEmoji = '👇👆☝👈👉⤵️🔼🅥♜'
   #usernameRedChars =""
   #usernameBlackChars = ""
-  usernameBlackWords_Raw = [b'aA|ICWn^M`', b'aA|ICWn>^?c>']
+  usernameBlackWords_Raw = [b'aA|ICWn^M`', b'aA|ICWn>^?c>', b'Z*CxTWo%_<a$#)']
   usernameBlackWords = []
   for x in usernameBlackWords_Raw: usernameBlackWords.append(b64decode(x).decode(utf_16))
 
@@ -2091,16 +2092,18 @@ def main():
 
   # User inputs filtering mode
   print("\n-------------------------------------------------------")
-  print(f"~~~~~~~ Choose how to identify spammers ~~~~~~~")
-  print(f" 1. Enter Spammer's {F.LIGHTRED_EX}channel ID(s) or link(s){S.R}")
-  print(f" 2. Scan {F.LIGHTGREEN_EX}usernames{S.R} for criteria you choose")
-  print(f" 3. Scan {F.CYAN}comment text{S.R} for criteria you choose")
-  print(f" 4. Scan both {F.BLUE}usernames and comment text{S.R} for criteria you choose")
-  print(f" 5. ASCII Mode: Scan usernames for {F.LIGHTMAGENTA_EX}ANY non-ASCII special characters{S.R} (May cause collateral damage!)")
-  print(f" 6. {F.BLACK}{B.YELLOW}RECOMMENDED{S.R} Auto Smart-Mode: Automatically detects {F.YELLOW}multiple spammer techniques{S.R}")
+  print(f"~~~~~~~~~~~ Choose how to identify spammers ~~~~~~~~~~~")
+  print("-------------------------------------------------------")
+  print(f" 1. {F.BLACK}{B.YELLOW}(RECOMMENDED):{S.R} Auto-Smart Mode: Automatically detects {F.YELLOW}multiple spammer techniques{S.R}")
+  print(f" 2. Enter Spammer's {F.LIGHTRED_EX}channel ID(s) or link(s){S.R}")
+  print(f" 3. Scan {F.LIGHTGREEN_EX}usernames{S.R} for criteria you choose")
+  print(f" 4. Scan {F.CYAN}comment text{S.R} for criteria you choose")
+  print(f" 5. Scan both {F.BLUE}usernames and comment text{S.R} for criteria you choose")
+  print(f" 6. ASCII Mode: Scan usernames for {F.LIGHTMAGENTA_EX}ANY non-ASCII special characters{S.R} (May cause collateral damage!)")
+ 
 
   if userNotChannelOwner == True:
-    print(f" {F.LIGHTRED_EX}Note: With 'Not Your Channel Mode' enabled, you can only report matched comments while using 'Auto Smart' mode.{S.R}") # Based on filterModesAllowedforNonOwners
+    print(f" {F.LIGHTRED_EX}Note: With 'Not Your Channel Mode' enabled, you can only report matched comments while using 'Auto-Smart Mode'.{S.R}") # Based on filterModesAllowedforNonOwners
   # Make sure input is valid, if not ask again
   validFilterMode = False
   validFilterSubMode = False
@@ -2118,17 +2121,17 @@ def main():
     if filterChoice in validChoices:
       validFilterMode = True
       # Set string variable names for filtering modes
-      if filterChoice == "1" or filterChoice == "id":
+      if filterChoice == "2" or filterChoice == "id":
         filterMode = "ID"
-      elif filterChoice == "2" or filterChoice == "username":
+      elif filterChoice == "3" or filterChoice == "username":
         filterMode = "Username"
-      elif filterChoice == "3" or filterChoice == "text":
+      elif filterChoice == "4" or filterChoice == "text":
         filterMode = "Text"
-      elif filterChoice == "4" or filterChoice == "nameandtext":
+      elif filterChoice == "5" or filterChoice == "nameandtext":
         filterMode = "NameAndText"
-      elif filterChoice == "5" or filterChoice == "autoascii":
+      elif filterChoice == "6" or filterChoice == "autoascii":
         filterMode = "AutoASCII"
-      elif filterChoice == "6" or filterChoice == "autosmart":
+      elif filterChoice == "1" or filterChoice == "autosmart":
         filterMode = "AutoSmart"
     else:
       print(f"\nInvalid Filter Mode: {filterChoice} - Enter either 1, 2, 3, 4, 5, or 6 ")
