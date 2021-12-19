@@ -8,15 +8,22 @@
 * (Windows installation not necessary if using exe file. But read below for how to set up required API key)
 
 ## Features
-* Scan comments on a **single video** or across your **entire channel**
-* 11 Different Filtering Methods
+* 15 Different Filtering Methods
+   * **Auto-Smart Mode (Recommended)**: Automatically detects multiple spammer techniques
+   * **Sensitive-Smart Mode**: More likely to catch elusive spammers, but with more false positives
    * **Scan by Channel ID**: Enter a known spammer's channel link or ID directly
    * **Scan Usernames** for: Individual special characters, individual strings, or using a custom Regex expression
-   * **Scan Comment Text for**: Individual special characters, individual strings, or using a custom Regex expression
+   * **Scan Comment Text**: (Same 3 options as above)
+   * **Scan Usernames and Comment Text** simultaneously: (Same 3 options as above)
    * **Auto Mode**: Scan Usernames for non-ASCII special characters (three different sensitivities)
-   * **Auto Smart-Mode**: Scan Usernames for special characters often used only by scammers
+ * Scan comments on a **single video** or across your **entire channel**  
  * Automatic deletion of all found comments (after confirmation), as well as the option to ban them
+ * Options to instead Report spam comments or 'Hold For Review'
+ * Ability to create config file to skip pre-set options
  * Rich text log files
+ * 'Recovery Mode' option to re-instate previously deleted comments
+ * Displays "match samples" after printing comments list to easily spot false positives
+ * Ability to exclude selected authors before deletion / reporting
 
 ## Purpose
 Recently, there has been a massive infestation of spam on YouTube where fake impersonator accounts leave spam/scam replies to hundreds of users on a creator's videos. For some god-forsaken reason, YouTube offers no way to delete all comments by a specific user at once, meaning you must delete them one by one BY HAND.
@@ -38,9 +45,17 @@ YouTube offers a functionality to ban a user, but it does NOT delete previous co
 (Takes you to YouTube, not embedded. See timestamps in video description.)
 
 ## Screenshots
-<p align="center"><img width="615" alt="Screenshot 1 5 2" src="https://user-images.githubusercontent.com/12518330/142356861-b95c3fce-d784-4a98-a732-1c41f8b1ebde.png"></p>
-<p align="center"><img width="762" alt="Screenshot 2" src="https://user-images.githubusercontent.com/12518330/142356872-7720aa8d-3a34-4f74-b75a-e29d13c03d08.png"></p>
-<p align="center"><img width="665" alt="Screenshot 3" src="https://user-images.githubusercontent.com/12518330/142356875-94af0784-4347-460e-8693-f89fc7c9f204.png"></p>
+<p align="center">Opening Menu:</p>
+<p align="center"><img width="624" alt="Opening Menu" src="https://user-images.githubusercontent.com/12518330/146690133-208df9b3-61ba-4b40-bf26-a88708b15f2d.png"></p>
+<p align="center">Filter Mode Selection:</p>
+<p align="center"><img width="770" alt="Filter Mode Selection" src="https://user-images.githubusercontent.com/12518330/146690135-9d05e95a-900e-4c76-9e3c-f3573fa7e8ff.png"></p>
+<p align="center">Scanning (Auto Smart Mode):</p>
+<p align="center"><img width="794" alt="Scanning" src="https://user-images.githubusercontent.com/12518330/146690142-b7abda6f-90bd-4681-9497-46378dcb3d9f.png"></p>
+<p align="center">Matched Comments List:</p>
+<p align="center"><img width="794" alt="Matched Comments List" src="https://user-images.githubusercontent.com/12518330/146690145-e7ca5b32-8213-4075-92d6-0ca3f4cc8d4e.png"></p>
+<p align="center">Match Samples and Deletion Menu:</p>
+<p align="center"><img width="794" alt="Match Samples and Deletion Menu" src="https://user-images.githubusercontent.com/12518330/146690147-e19d8666-68d1-45db-aa13-0e56b68ce7b4.png"></p>
+
 
 
 
