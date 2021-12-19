@@ -505,7 +505,7 @@ def check_against_filter(currentUser, miscData, filterMode, filterSubMode, comme
     # Check Modes: Auto Smart (in username or comment text)
     # Here inputtedComment/Author Filters are tuples of, where 2nd element is list of char-sets to check against
     ## Also Check if reply author ID is same as parent comment author ID, if so, ignore (to account for users who reply to spammers)
-    elif filterMode == "AutoSmart":
+    elif filterMode == "AutoSmart" or filterMode == "SensitiveSmart":
       # Receive Variables
       numberFilterSet = inputtedUsernameFilter['spammerNumbersSet']
       compiledRegex = inputtedUsernameFilter['compiledRegex']
@@ -518,6 +518,13 @@ def check_against_filter(currentUser, miscData, filterMode, filterSubMode, comme
       domainRegex = inputtedUsernameFilter['domainRegex']
       compiledRegexDict = inputtedUsernameFilter['compiledRegexDict']
       languages = inputtedUsernameFilter['languages']
+
+      # Check for sensitive smart mode
+      if inputtedUsernameFilter['sensitive'] == True:
+        sensitive = True
+        domainRegex = inputtedUsernameFilter['sensitiveDomainRegex']
+      else:
+        sensitive = False
 
       # Processed Variables
       combinedString = authorChannelName + commentText
@@ -545,8 +552,8 @@ def check_against_filter(currentUser, miscData, filterMode, filterSubMode, comme
       elif compiledRegex.search(combinedString):
         add_spam(commentID, videoID)
       # Black Tests
-      #elif usernameBlackCharsSet.intersection(usernameSet):
-      #  add_spam(commentID, videoID)
+        #elif usernameBlackCharsSet.intersection(usernameSet):
+        #  add_spam(commentID, videoID)
       elif any(re.search(expression[1], authorChannelName) for expression in compiledRegexDict['usernameBlackWords']):
         add_spam(commentID, videoID)
       elif any(findOnlyObfuscated(expression[1], expression[0], combinedString) for expression in compiledRegexDict['blackAdWords']):
@@ -568,13 +575,19 @@ def check_against_filter(currentUser, miscData, filterMode, filterSubMode, comme
         if any(findOnlyObfuscated(expression[1], expression[0], combinedString) for expression in compiledRegexDict['yellowAdWords']):
           yellowCount += 1
 
-        if len(hrtSet.intersection(combinedSet)) >= 2:
+        hrtTest = len(hrtSet.intersection(combinedSet))
+        if hrtTest >= 2:
+          if sensitive == False:
+            yellowCount += 1
+          if sensitive == True:
+            redCount += 1
+        elif hrtTest >= 1 and sensitive == True:
           yellowCount += 1
 
         if yellowAdEmojiSet.intersection(combinedSet):
           yellowCount += 1
 
-        if spamGenEmojiSet.intersection(combinedSet):
+        if spamGenEmojiSet.intersection(combinedSet) and sensitive == False:
           yellowCount += 1
 
         if combinedString.count('#') >= 5:
@@ -583,10 +596,10 @@ def check_against_filter(currentUser, miscData, filterMode, filterSubMode, comme
         if combinedString.count('\n') >= 10:
           yellowCount += 1
 
-        if re.search(domainRegex, combinedString.lower()):
-          yellowCount += 1
-
         if languageCount >= 2:
+          yellowCount += 1
+          
+        if re.search(domainRegex, combinedString.lower()):
           yellowCount += 1
 
         # Red Tests
@@ -594,15 +607,26 @@ def check_against_filter(currentUser, miscData, filterMode, filterSubMode, comme
         if any(findOnlyObfuscated(expression[1], expression[0], combinedString) for expression in compiledRegexDict['redAdWords']):
           redCount += 1
 
+        if any(re.search(expression[1], combinedString) for expression in compiledRegexDict['exactRedAdWords']):
+          redCount += 1
+
         if redAdEmojiSet.intersection(combinedSet):
           redCount += 1
-                
+        
+        if spamGenEmojiSet.intersection(combinedSet) and sensitive == True:
+          redCount += 1
+
+        if any(re.search(expression[1], authorChannelName) for expression in compiledRegexDict['usernameRedWords']):
+          redCount += 1
+
         # Calculate Score
         if yellowCount >= 3:
           add_spam(commentID, videoID)
         elif redCount >= 2:
           add_spam(commentID, videoID)
         elif redCount >= 1 and yellowCount >= 1:
+          add_spam(commentID, videoID)
+        elif redCount >= 1 and sensitive == True:
           add_spam(commentID, videoID)
 
   else:
@@ -1720,7 +1744,7 @@ def prepare_filter_mode_non_ascii(currentUser, scanMode, config):
     sys.exit()
 
 # Auto smart mode
-def prepare_filter_mode_smart(currentUser, scanMode, config, miscData):
+def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive=False):
   currentUserName = currentUser[1]
   domainList = miscData['domainList']
   utf_16 = "utf-8"
@@ -1732,19 +1756,24 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData):
     print(" > Extremely low (near 0%) false positives")
     print(" > Detects whatsapp scammers and '18+ spam' bots")
     print(" > Easily cuts through look-alike characters and obfuscations, including impersonating usernames")
-    print(f" > {F.LIGHTRED_EX}NOTE:{S.R} This mode prioritizes a {F.LIGHTGREEN_EX}VERY low false positive rate{S.R}, at the cost of occasionally missing some spammers.\n")
+    if sensitive == False:
+      print(f" > {F.LIGHTRED_EX}NOTE:{S.R} This mode prioritizes a {F.LIGHTGREEN_EX}VERY low false positive rate{S.R}, at the cost of occasionally missing some spammers.\n")
+    elif sensitive == True:
+      print(f" > {F.LIGHTRED_EX}NOTE:{S.R} In sensitive mode, expect more false positives. Recommended to run this AFTER regular Auto Smart Mode.\n")
     input("Press Enter to Begin Scanning...")
 
   # General Spammer Criteria
-  spamGenEmoji = '👇👆☝👈👉⤵️🔼🅥♜'
   #usernameRedChars =""
   #usernameBlackChars = ""
+  spamGenEmoji_Raw = b'@Sl-~@Sl-};+UQApOJ|0pOJ~;q_yw3kMN(AyyBUh'
   usernameBlackWords_Raw = [b'aA|ICWn^M`', b'aA|ICWn>^?c>', b'Z*CxTWo%_<a$#)']
+  usernameRedWords = ["whatsapp", "telegram"]
   usernameBlackWords = []
   for x in usernameBlackWords_Raw: usernameBlackWords.append(b64decode(x).decode(utf_16))
+  g = b64decode(spamGenEmoji_Raw).decode(utf_16)
 
   # Prepare General Filters
-  spamGenEmojiSet = make_char_set(spamGenEmoji)
+  spamGenEmojiSet = make_char_set(g)
   #usernameBlackCharsSet = make_char_set(usernameBlackChars)
 
   # Type 1 Spammer Criteria
@@ -1764,16 +1793,20 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData):
   compiledRegex = re.compile(f"({regexTest1}|{regexTest2}|{regexTest3})")
 
   # Type 2 Spammer Criteria
-  blackAdWords, redAdWords, yellowAdWords = [], [], []
+  
   blackAdWords_Raw = [b'V`yb#YanfTAaHVTW@&5', b'Z*XO9AZ>XdaB^>EX>0', b'b7f^9ZFwMYa&Km7Yy', b'V`yb#YanfTAa-eFWp4', b'V`yb#YanoPZ)Rz1', b'V`yb#Yan)MWMyv']
   redAdWords_Raw = [b'W_4q0', b'b7gn', b'WNBk-', b'WFcc~', b'W-4QA', b'W-2OUYX', b'Zgpg3', b'b1HZ', b'F*qv', b'aBp&M']
   yellowAdWords_Raw = [b'Y;SgD', b'Vr5}<bZKUFYy', b'VsB)5', b'XK8Y5a{', b'O~a&QV`yb=', b'Xk}@`pJf', b'Xm4}']
+  exactRedAdWords_Raw = [b'EiElAEiElAEiElAEiElAEiElAEiElAEiElAEiElAEiElAEiElAEiC', b'Wq4s@bZmJbcW7aBAZZ|OWo2Y#WB']
   redAdEmoji = b64decode(b'@Sl{P').decode(utf_16)
   yellowAdEmoji = b64decode(b'@Sl-|@Sm8N@Sm8C@Sl>4@Sl;H@Sly0').decode(utf_16)
   hrt = b64decode(b';+duJpOTpHpOTjFpOTmGpOTaCpOTsIpOTvJpOTyKpOT#LpQoYlpOT&MpO&QJouu%el9lkElAZ').decode(utf_16)
+  
+  blackAdWords, redAdWords, yellowAdWords, exactRedAdWords = [], [], [], []
   for x in blackAdWords_Raw: blackAdWords.append(b64decode(x).decode(utf_16))
   for x in redAdWords_Raw: redAdWords.append(b64decode(x).decode(utf_16))
   for x in yellowAdWords_Raw: yellowAdWords.append(b64decode(x).decode(utf_16))
+  for x in exactRedAdWords_Raw: exactRedAdWords.append(b64decode(x).decode(utf_16))
 
   # Prepare Filters for Type 2 Spammers
   redAdEmojiSet = make_char_set(redAdEmoji)
@@ -1785,10 +1818,12 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData):
     'usernameBlackWords': [],
     'blackAdWords': [],
     'redAdWords': [],
-    'yellowAdWords': []
+    'yellowAdWords': [],
+    'exactRedAdWords': [],
+    'usernameRedWords': []
   }
   # Compile regex with upper case, otherwise many false positive character matches
-  bufferMatch, addBuffers = "*_~|`", "\[\]\(\)" # Add 'buffer' chars to compensate for obfuscation
+  bufferMatch, addBuffers = "*_~|`", "\[\]\(\)'" # Add 'buffer' chars to compensate for obfuscation
   m = bufferMatch
   a = addBuffers
   for word in usernameBlackWords:
@@ -1803,6 +1838,12 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData):
   for word in yellowAdWords:
     value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
     compiledRegexDict['yellowAdWords'].append([word, value])
+  for word in exactRedAdWords:
+    value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
+    compiledRegexDict['exactRedAdWords'].append([word, value])
+  for word in usernameRedWords:
+    value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
+    compiledRegexDict['usernameRedWords'].append([word, value])
   usernameConfuseRegex = re.compile(confusable_regex(miscData['channelOwnerName']))
 
   # Prepare All-domain Regex Expression
@@ -1814,8 +1855,10 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData):
         first = False
     else:
         prepString = prepString + "|" + extension
+  sensitivePrepString = prepString + ")"
   prepString = prepString + ")\/"
   domainRegex = re.compile(prepString)
+  sensitiveDomainRegex = re.compile(sensitivePrepString)
 
   # Prepare Multi Language Detection
   turkish = 'ÇçŞşĞğİ'
@@ -1842,7 +1885,9 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData):
     'domainRegex': domainRegex,
     'compiledRegexDict': compiledRegexDict,
     'usernameConfuseRegex': usernameConfuseRegex,
-    'languages': languages
+    'languages': languages,
+    'sensitive': sensitive,
+    'sensitiveDomainRegex': sensitiveDomainRegex,
     }
   return filterSettings, None
 
@@ -2095,12 +2140,13 @@ def main():
   print(f"~~~~~~~~~~~ Choose how to identify spammers ~~~~~~~~~~~")
   print("-------------------------------------------------------")
   print(f" 1. {F.BLACK}{B.YELLOW}(RECOMMENDED):{S.R} Auto-Smart Mode: Automatically detects {F.YELLOW}multiple spammer techniques{S.R}")
-  print(f" 2. Enter Spammer's {F.LIGHTRED_EX}channel ID(s) or link(s){S.R}")
-  print(f" 3. Scan {F.LIGHTGREEN_EX}usernames{S.R} for criteria you choose")
-  print(f" 4. Scan {F.CYAN}comment text{S.R} for criteria you choose")
-  print(f" 5. Scan both {F.BLUE}usernames and comment text{S.R} for criteria you choose")
-  print(f" 6. ASCII Mode: Scan usernames for {F.LIGHTMAGENTA_EX}ANY non-ASCII special characters{S.R} (May cause collateral damage!)")
- 
+  print(f" 2. Sensitive Smart Mode: Much more likely to catch all spammers, but with slightly more false positives")  
+  print(f" 3. Enter Spammer's {F.LIGHTRED_EX}channel ID(s) or link(s){S.R}")
+  print(f" 4. Scan {F.LIGHTGREEN_EX}usernames{S.R} for criteria you choose")
+  print(f" 5. Scan {F.CYAN}comment text{S.R} for criteria you choose")
+  print(f" 6. Scan both {F.BLUE}usernames and comment text{S.R} for criteria you choose")
+  print(f" 7. ASCII Mode: Scan usernames for {F.LIGHTMAGENTA_EX}ANY non-ASCII special characters{S.R} (May cause collateral damage!)")
+
 
   if userNotChannelOwner == True:
     print(f" {F.LIGHTRED_EX}Note: With 'Not Your Channel Mode' enabled, you can only report matched comments while using 'Auto-Smart Mode'.{S.R}") # Based on filterModesAllowedforNonOwners
@@ -2115,26 +2161,29 @@ def main():
     if validConfigSetting == True and config and config['filter_mode'] != 'ask':
       filterChoice = config['filter_mode']
     else:
-      filterChoice = input("\nChoice (1-6): ")
+      filterChoice = input("\nChoice (1-7): ")
 
-    validChoices = ['1', '2', '3', '4', '5', '6', 'id', 'username', 'text', 'nameandtext', 'autoascii', 'autosmart']
+    validChoices = ['1', '2', '3', '4', '5', '6', '7', 'id', 'username', 'text', 'nameandtext', 'autoascii', 'autosmart', 'sensitivesmart']
     if filterChoice in validChoices:
       validFilterMode = True
       # Set string variable names for filtering modes
-      if filterChoice == "2" or filterChoice == "id":
-        filterMode = "ID"
-      elif filterChoice == "3" or filterChoice == "username":
-        filterMode = "Username"
-      elif filterChoice == "4" or filterChoice == "text":
-        filterMode = "Text"
-      elif filterChoice == "5" or filterChoice == "nameandtext":
-        filterMode = "NameAndText"
-      elif filterChoice == "6" or filterChoice == "autoascii":
-        filterMode = "AutoASCII"
-      elif filterChoice == "1" or filterChoice == "autosmart":
+      if filterChoice == "1" or filterChoice == "autosmart":
         filterMode = "AutoSmart"
+      elif filterChoice == "2" or filterChoice == "sensitivesmart":
+        filterMode = "SensitiveSmart"      
+      elif filterChoice == "3" or filterChoice == "id":
+        filterMode = "ID"
+      elif filterChoice == "4" or filterChoice == "username":
+        filterMode = "Username"
+      elif filterChoice == "5" or filterChoice == "text":
+        filterMode = "Text"
+      elif filterChoice == "6" or filterChoice == "nameandtext":
+        filterMode = "NameAndText"
+      elif filterChoice == "7" or filterChoice == "autoascii":
+        filterMode = "AutoASCII"
+
     else:
-      print(f"\nInvalid Filter Mode: {filterChoice} - Enter either 1, 2, 3, 4, 5, or 6 ")
+      print(f"\nInvalid Filter Mode: {filterChoice} - Enter either 1, 2, 3, 4, 5, 6, or 7")
       validConfigSetting = False
 
   ## Get filter sub-mode to decide if searching characters or string
@@ -2193,6 +2242,10 @@ def main():
 
   elif filterMode == "AutoSmart":
     filterSettings = prepare_filter_mode_smart(currentUser, scanMode, config, miscData)
+    inputtedUsernameFilter = filterSettings[0]
+    inputtedCommentTextFilter = filterSettings[0]
+  elif filterMode == "SensitiveSmart":
+    filterSettings = prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive=True)
     inputtedUsernameFilter = filterSettings[0]
     inputtedCommentTextFilter = filterSettings[0]
 
@@ -2289,6 +2342,8 @@ def main():
         write_rtf(logFileName, "Automatic Search Mode: " + make_rtf_compatible(str(filterSettings[2])) + "\\line\\line " + "\n\n")
       elif filterMode == "AutoSmart":
         write_rtf(logFileName, "Automatic Search Mode: Smart Mode \\line\\line " + "\n\n")
+      elif filterMode == "SensitiveSmart":
+        write_rtf(logFileName, "Automatic Search Mode: Sensitive Smart \\line\\line " + "\n\n")
       write_rtf(logFileName, "Number of Matched Comments Found: " + str(len(matchedCommentsDict)) + "\\line\\line \n\n")
       write_rtf(logFileName, f"IDs of Matched Comments: \n[ {', '.join(matchedCommentsDict)} ] \\line\\line\\line \n\n\n")
     else:
