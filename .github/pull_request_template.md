@@ -1,5 +1,5 @@
 # Related Issue/Addition to code
-- Issue goes here
+- Issue/Addition to code, goes here.
 
 ## Type of change
 
