@@ -1982,6 +1982,10 @@ def main():
   miscData = {}
   domainList = ingest_domain_file()
   miscData['domainList'] = domainList
+  if config:
+    moderator_mode = config['moderator_mode']
+  else:
+    moderator_mode = False
 
   # Check for program updates
   if not config or config['auto_check_update'] == True:
@@ -2091,8 +2095,10 @@ def main():
         if config and config['skip_confirm_video'] == True:
           confirm = True
         else:
-          if userNotChannelOwner == True:
+          if userNotChannelOwner == True and moderator_mode == False:
             print(f"{F.LIGHTRED_EX}NOTE: This is not your video. Enabling '{F.YELLOW}Not Your Channel Mode{F.LIGHTRED_EX}'. You can report spam comments, but not delete them.{S.R}")
+          elif userNotChannelOwner == True and moderator_mode == True:
+            print(f"{F.LIGHTRED_EX}NOTE: {F.YELLOW}Moderator Mode is enabled{F.LIGHTRED_EX}. You can hold comments for review when using certain modes{S.R}")
           confirm = choice("Is this video correct?", bypass=validConfigSetting)
 
       else:
@@ -2148,8 +2154,10 @@ def main():
   print(f" 7. ASCII Mode: Scan usernames for {F.LIGHTMAGENTA_EX}ANY non-ASCII special characters{S.R} (May cause collateral damage!)")
 
 
-  if userNotChannelOwner == True:
+  if userNotChannelOwner == True and moderator_mode == False:
     print(f" {F.LIGHTRED_EX}Note: With 'Not Your Channel Mode' enabled, you can only report matched comments while using 'Auto-Smart Mode'.{S.R}") # Based on filterModesAllowedforNonOwners
+  elif userNotChannelOwner == True and moderator_mode == True:
+    print(f" {F.LIGHTRED_EX}Note: With 'Moderator Mode', you can hold for review using: 'Auto-Smart', 'Sensitive-Smart', and Channel ID modes.{S.R}")
   # Make sure input is valid, if not ask again
   validFilterMode = False
   validFilterSubMode = False
@@ -2360,7 +2368,10 @@ def main():
     deletionEnabled = False
     deletionMode = None # Should be changed later, but if missed it will default to heldForReview
     confirmDelete = None # If None, will later cause user to be asked to delete
-    filterModesAllowedforNonOwners = ["AutoSmart"]
+    if moderator_mode == False:
+      filterModesAllowedforNonOwners = ["AutoSmart"]
+    elif moderator_mode == True:
+      filterModesAllowedforNonOwners = ["AutoSmart", "SensitiveSmart", 'ID']
     
     # If user isn't channel owner and not using allowed filter mode, skip deletion
     if userNotChannelOwner == True and filterMode not in filterModesAllowedforNonOwners:
@@ -2410,7 +2421,7 @@ def main():
             confirmDelete = "DELETE"
         else:
           # If non-permitted filter mode with delete_without_reviewing, will allow deletion, but now warns and requires usual confirmation prompt
-          print("Error Code C-5: 'delete_without_reviewing' is set to 'True' in config file. So only filter modes 'AutoSmart' or 'ID' allowed..\n")
+          print("Error Code C-5: 'delete_without_reviewing' is set to 'True' in config file. So only filter mode 'AutoSmart' allowed..\n")
           print("Next time use one of those filter modes, or set 'delete_without_reviewing' to 'False'.")
           print("    > For this run, you will be asked to confirm removal of spam comments.")
           input("\nPress Enter to continue...")
@@ -2450,8 +2461,10 @@ def main():
           print(f"{F.YELLOW}How do you want to handle the matched comments above?{S.R}")
         elif exclude == True:
           print(f"{F.YELLOW}How do you want to handle the rest of the comments (not ones you {F.LIGHTGREEN_EX}excluded{F.YELLOW})?{S.R}")
-        if userNotChannelOwner == True:
+        if userNotChannelOwner == True and moderator_mode == False:
           print(f"{F.GREEN}~~ Not Your Channel Mode: Only Reporting is Possible ~~{S.R}")
+        if userNotChannelOwner == True and moderator_mode == True:
+          print(f"{F.GREEN}~~ Moderator Mode: Reporting and Holding for Review is possible ~~{S.R}")
 
         # Exclude
         if exclude == False:
@@ -2459,12 +2472,16 @@ def main():
           print("      > Example:  exclude 1, 12, 9")
 
         # Delete Instructions
-        if exclude == False and userNotChannelOwner == False:
-          print(f" > To {F.LIGHTRED_EX}delete ALL of the above comments{S.R}: Type ' {F.LIGHTRED_EX}DELETE{S.R} ' exactly (in all caps), then hit Enter.")
-          print(f" > To {F.LIGHTRED_EX}move ALL comments above to 'Held For Review' in YT Studio{S.R}: Type ' {F.LIGHTRED_EX}HOLD{S.R} ' exactly (in all caps), then hit Enter.")
-        elif exclude == True and userNotChannelOwner == False:
-          print(f" > To {F.LIGHTRED_EX}delete the rest of the comments{S.R}: Type ' {F.LIGHTRED_EX}DELETE{S.R} ' exactly (in all caps), then hit Enter.")
-          print(f" > To {F.LIGHTRED_EX}move rest of comments above to 'Held For Review' in YT Studio{S.R}: Type ' {F.LIGHTRED_EX}HOLD{S.R} ' exactly (in all caps), then hit Enter.")
+        if exclude == False:
+          if userNotChannelOwner == False:
+            print(f" > To {F.LIGHTRED_EX}delete ALL of the above comments{S.R}: Type ' {F.LIGHTRED_EX}DELETE{S.R} ' exactly (in all caps), then hit Enter.")
+          if userNotChannelOwner == False or moderator_mode == True:
+            print(f" > To {F.LIGHTRED_EX}move ALL comments above to 'Held For Review' in YT Studio{S.R}: Type ' {F.LIGHTRED_EX}HOLD{S.R} ' exactly (in all caps), then hit Enter.")
+        elif exclude == True:
+          if userNotChannelOwner == False:
+            print(f" > To {F.LIGHTRED_EX}delete the rest of the comments{S.R}: Type ' {F.LIGHTRED_EX}DELETE{S.R} ' exactly (in all caps), then hit Enter.")
+          if userNotChannelOwner == False or moderator_mode == True:
+            print(f" > To {F.LIGHTRED_EX}move rest of comments above to 'Held For Review' in YT Studio{S.R}: Type ' {F.LIGHTRED_EX}HOLD{S.R} ' exactly (in all caps), then hit Enter.")
         
         # Report Instructions
         print(f" > To {F.LIGHTCYAN_EX}just report the comments for spam{S.R}, type ' {F.LIGHTCYAN_EX}REPORT{S.R} '. (Can be done even if you're not the channel owner)")
@@ -2473,9 +2490,9 @@ def main():
         if confirmDelete == "DELETE" and userNotChannelOwner == False:
           deletionEnabled = True
           deletionMode = "rejected"
-        elif confirmDelete == "HOLD" and userNotChannelOwner == False:
+        elif confirmDelete == "HOLD" and (userNotChannelOwner == False or moderator_mode == True):
           deletionEnabled = True
-          deletionMode = "heldForReview"          
+          deletionMode = "heldForReview"
         elif confirmDelete == "REPORT":
           deletionEnabled = True
           deletionMode = "reportSpam" 
