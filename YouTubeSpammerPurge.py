@@ -111,7 +111,7 @@ def get_authenticated_service():
   # If there are no (valid) credentials available, make the user log in.
   if not creds or not creds.valid:
     if creds and creds.expired and creds.refresh_token:
-      creds.refresh(Request())    
+      creds.refresh(Request())
     else:
       flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRETS_FILE, scopes=YOUTUBE_READ_WRITE_SSL_SCOPE)
       creds = flow.run_local_server(port=0, authorization_prompt_message="Log in using the browser window.")
@@ -2139,12 +2139,12 @@ def main():
   print("\n-------------------------------------------------------")
   print(f"~~~~~~~~~~~ Choose how to identify spammers ~~~~~~~~~~~")
   print("-------------------------------------------------------")
-  print(f" 1. {F.BLACK}{B.YELLOW}(RECOMMENDED):{S.R} Auto-Smart Mode: Automatically detects {F.YELLOW}multiple spammer techniques{S.R}")
-  print(f" 2. Sensitive Smart Mode: Much more likely to catch all spammers, but with significantly more false positives")  
+  print(f" 1. {F.BLACK}{B.LIGHTGREEN_EX}(RECOMMENDED):{S.R} {F.YELLOW}Auto-Smart Mode{S.R}: Automatically detects multiple spammer techniques")
+  print(f" 2. {F.YELLOW}Sensitive-Smart Mode{S.R}: Much more likely to catch all spammers, but with significantly more false positives")  
   print(f" 3. Enter Spammer's {F.LIGHTRED_EX}channel ID(s) or link(s){S.R}")
-  print(f" 4. Scan {F.LIGHTGREEN_EX}usernames{S.R} for criteria you choose")
+  print(f" 4. Scan {F.LIGHTBLUE_EX}usernames{S.R} for criteria you choose")
   print(f" 5. Scan {F.CYAN}comment text{S.R} for criteria you choose")
-  print(f" 6. Scan both {F.BLUE}usernames and comment text{S.R} for criteria you choose")
+  print(f" 6. Scan both {F.LIGHTBLUE_EX}usernames{S.R} and {F.CYAN}comment text{S.R} for criteria you choose")
   print(f" 7. ASCII Mode: Scan usernames for {F.LIGHTMAGENTA_EX}ANY non-ASCII special characters{S.R} (May cause collateral damage!)")
 
 
