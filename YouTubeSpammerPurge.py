@@ -1839,7 +1839,7 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive
     value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
     compiledRegexDict['yellowAdWords'].append([word, value])
   for word in exactRedAdWords:
-    value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
+    value = re.compile(confusable_regex(word.upper(), include_character_padding=False).replace(m, a))
     compiledRegexDict['exactRedAdWords'].append([word, value])
   for word in usernameRedWords:
     value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
@@ -2140,7 +2140,7 @@ def main():
   print(f"~~~~~~~~~~~ Choose how to identify spammers ~~~~~~~~~~~")
   print("-------------------------------------------------------")
   print(f" 1. {F.BLACK}{B.YELLOW}(RECOMMENDED):{S.R} Auto-Smart Mode: Automatically detects {F.YELLOW}multiple spammer techniques{S.R}")
-  print(f" 2. Sensitive Smart Mode: Much more likely to catch all spammers, but with slightly more false positives")  
+  print(f" 2. Sensitive Smart Mode: Much more likely to catch all spammers, but with significantly more false positives")  
   print(f" 3. Enter Spammer's {F.LIGHTRED_EX}channel ID(s) or link(s){S.R}")
   print(f" 4. Scan {F.LIGHTGREEN_EX}usernames{S.R} for criteria you choose")
   print(f" 5. Scan {F.CYAN}comment text{S.R} for criteria you choose")
