@@ -15,7 +15,7 @@
    * **Scan Usernames** for: Individual special characters, individual strings, or using a custom Regex expression
    * **Scan Comment Text**: (Same 3 options as above)
    * **Scan Usernames and Comment Text** simultaneously: (Same 3 options as above)
-   * **Auto Mode**: Scan Usernames for non-ASCII special characters (three different sensitivities)
+   * **ASCII Mode**: Scan Usernames for non-ASCII special characters (three different sensitivities)
  * Scan comments on a **single video** or across your **entire channel**  
  * Automatic deletion of all found comments (after confirmation), as well as the option to ban them
  * Options to instead Report spam comments or 'Hold For Review'
