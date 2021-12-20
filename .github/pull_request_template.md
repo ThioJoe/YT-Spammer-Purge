@@ -3,7 +3,7 @@
 Please delete options that are not relevant.
 
 - Fixes #
-- Issue goes here
+- Issue/Addition to code goes here
 
 ## Type of change
 
