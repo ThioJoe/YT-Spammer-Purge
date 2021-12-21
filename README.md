@@ -1,8 +1,11 @@
 # YouTube Spammer Purge
 
-**What Is This?** - Allows you to filter and search for spammer comments on your channel in many different ways AND delete them all at once (see features below).
+## What is this?
 
-**How to Download:** Click the "[Releases](https://github.com/ThioJoe/YouTube-Spammer-Purge/releases)" link on the right, then on the latest release, under 'Assets' click to download "YouTubeSpammerPurge.exe". NOTE: You may get a warning - See "[Download & Windows Warning](#download--windows-warning)" section below for details.
+I made this program which, allows you to filter and search for spammer comments on your channel in many different ways AND delete them all at once (see features below).
+
+## How to Download
+Click the "[Releases](https://github.com/ThioJoe/YouTube-Spammer-Purge/releases)" link on the right, then on the latest release, under 'Assets' click to download "YouTubeSpammerPurge.exe". NOTE: You may get a warning - See "[Download & Windows Warning](#download--windows-warning)" section below for details.
 * [Linux Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/Linux-Installation-Instructions) 
 * [MacOS Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/MacOS-Instructions)
 * (Windows installation not necessary if using exe file. But read below for how to set up required API key)
@@ -59,9 +62,6 @@ If you feel sketched out about giving the app the required high level permission
 <p align="center">Match Samples and Deletion Menu:</p>
 <p align="center"><img width="794" alt="Match Samples and Deletion Menu" src="https://user-images.githubusercontent.com/12518330/146690147-e19d8666-68d1-45db-aa13-0e56b68ce7b4.png"></p>
 
-
-
-
 ## Installation
 
 If using the python script version (not the exe), there is a requirements.txt with necessary modules. Created with Python 3.9.7
@@ -79,8 +79,6 @@ Because I haven't published software before, web browsers and Windows might bloc
 ![Download Warnings](https://user-images.githubusercontent.com/12518330/139365793-75df4170-24d9-4724-b54a-43eddb64dd53.png)
 
 <img width="814" alt="Unblock Warning" src="https://user-images.githubusercontent.com/12518330/139364886-f1ad4d80-f7f3-459c-a826-16379d5cf004.png">
-
-
 
 ## Instructions - Obtaining YouTube API Key
 
