@@ -300,8 +300,11 @@ def take_input_gui(mode, stripLettersNumbers=False, stripKeyboardSpecialChars=Fa
 
     window.resizable(False, False)
     window.mainloop()
-    window.update()
-
+    try:
+        window.update()
+    except Exception as e:
+        if "destroyed" in str(e):
+            pass
     return returnText
 
 #take_input_gui() # For testing this module in standalone, uncomment

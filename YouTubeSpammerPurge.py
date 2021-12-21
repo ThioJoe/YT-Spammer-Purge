@@ -35,7 +35,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.2.1"
+version = "2.2.2"
 configVersion = 10
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -2499,7 +2499,7 @@ def main():
       elif filterMode == "NameAndText":
         write_rtf(logFileName, "Characters searched in Usernames and Comment Text: " + make_rtf_compatible(", ".join(filterSettings[1])) + "\\line\\line " + "\n\n")
       elif filterMode == "AutoASCII":
-        write_rtf(logFileName, "Automatic Search Mode: " + make_rtf_compatible(str(filterSettings[2])) + "\\line\\line " + "\n\n")
+        write_rtf(logFileName, "Automatic Search Mode: " + make_rtf_compatible(str(filterSettings[1])) + "\\line\\line " + "\n\n")
       elif filterMode == "AutoSmart":
         write_rtf(logFileName, "Automatic Search Mode: Smart Mode \\line\\line " + "\n\n")
       elif filterMode == "SensitiveSmart":
