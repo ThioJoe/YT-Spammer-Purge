@@ -657,12 +657,18 @@ def delete_found_comments(commentsList, banChoice, deletionMode, recoveryMode=Fa
 
   # Local Functions 
   def setStatus(commentIDs): #Does the actual deletion
-    if deletionMode == "heldForReview" or deletionMode == "rejected":
-      youtube.comments().setModerationStatus(id=commentIDs, moderationStatus=deletionMode, banAuthor=banChoice).execute()
-    elif deletionMode == "reportSpam":
+    if deletionMode == "reportSpam":
       result = youtube.comments().markAsSpam(id=commentIDs).execute()
       if len(result) > 0:
-        print("\nSomething may gone wrong when reporting the comments.")
+        print("\nSomething may gone wrong when reporting the comments.")    
+    elif deletionMode == "heldForReview" or deletionMode == "rejected" or deletionMode == "published":
+      youtube.comments().setModerationStatus(id=commentIDs, moderationStatus=deletionMode, banAuthor=banChoice).execute()
+    else:
+      print("Invalid deletion mode. This is definitely a bug, please report it here: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
+      print("Deletion Mode Is: " + deletionMode)
+      input("Press Enter to Exit...")
+      sys.exit()
+
 
   def print_progress(d, t, recoveryMode=False): 
     if recoveryMode == False:
