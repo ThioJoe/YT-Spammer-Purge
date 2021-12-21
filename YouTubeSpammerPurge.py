@@ -1413,12 +1413,13 @@ def load_config_file():
     #configDictRaw = {s:dict(parser.items(s)) for s in parser.sections()}
 
     # Convert raw config dictionary into easier to use dictionary
-    settingsToKeepCase = ["your_channel_id", "video_to_scan", "channel_ids_to_filter", "regex_to_filter"]
+    settingsToKeepCase = ["your_channel_id", "video_to_scan", "channel_ids_to_filter", "regex_to_filter", "channel_to_scan"]
+    validWordVars = ['ask', 'mine']
     configDict = {}
     for section in parser.sections():
       for setting in parser.items(section):
         # Setting[0] is name of the setting, Setting[1] is the value of the setting
-        if setting[0] in settingsToKeepCase and setting[1].lower() != "ask":
+        if setting[0] in settingsToKeepCase and setting[1].lower() not in validWordVars:
           configDict[setting[0]] = setting[1]
         else:
           # Take values out of raw dictionary structure and put into easy dictionary with processed values
