@@ -1790,7 +1790,7 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive
     if sensitive == False:
       print(f" > {F.LIGHTRED_EX}NOTE:{S.R} This mode prioritizes a {F.LIGHTGREEN_EX}VERY low false positive rate{S.R}, at the cost of occasionally missing some spammers.\n")
     elif sensitive == True:
-      print(f" > {F.LIGHTRED_EX}NOTE:{S.R} In sensitive mode, expect more false positives. Recommended to run this AFTER regular Auto Smart Mode.\n")
+      print(f" > {F.LIGHTRED_EX}NOTE:{S.R} In sensitive mode, {F.LIGHTRED_EX}expect more false positives{S.R}. Recommended to run this AFTER regular Auto Smart Mode.\n")
     input("Press Enter to Begin Scanning...")
 
   # General Spammer Criteria
@@ -2174,8 +2174,8 @@ def main():
           else:
             print("Invalid Channel ID or Link in config file!")
 
-      print("\nEnter a channel ID or Link to scan recent videos from")
-      print("   > If scanning your own channel, just hit Enter")
+      print(f"\nEnter a {F.YELLOW}channel ID or Link{S.R} to scan {F.LIGHTCYAN_EX}recent videos{S.R} from")
+      print(f"   > If scanning {F.YELLOW}your own channel{S.R}, just hit {F.LIGHTGREEN_EX}Enter{S.R}")
       inputtedChannel = input("\nEnter Here: ")
       if inputtedChannel == "":
         channelID = currentUser[0]
@@ -2202,7 +2202,7 @@ def main():
           print("Invalid number entered in config file for recent_videos_amount")
           numVideos = None
       else:
-        print("\nEnter the number of your most recent videos to scan back-to-back (up to 5):")
+        print(f"\nEnter the {F.YELLOW}number most recent videos{S.R} to scan back-to-back (up to 5):")
         numVideos = input("\nNumber of Recent Videos (1-5): ")
       try:
         numVideos = int(numVideos)
@@ -2475,7 +2475,7 @@ def main():
 
     if bypass == False:
       # Asks user if they want to save list of spam comments to a file
-      print(f"\nSpam comments ready to display. Also {F.LIGHTGREEN_EX}save a log file?{S.R} {B.GREEN}{F.BLACK}Highly Recommended!{S.R}")
+      print(f"\nSpam comments ready to display. Also {F.LIGHTGREEN_EX}save a log file?{S.R} {B.GREEN}{F.BLACK} Highly Recommended! {S.R}")
       print(f"        (It even allows you to {F.LIGHTGREEN_EX}restore{S.R} deleted comments later)")
       logMode = choice(f"Save Log File (Recommended)?")
 
