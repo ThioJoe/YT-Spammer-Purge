@@ -64,7 +64,7 @@ If you feel sketched out about giving the app the required high level permission
 
 ## Installation
 
-If using the python script version (not the exe), there is a requirements.txt with necessary modules. Created with Python 3.9.7
+If using the python script version (not the exe), there is a requirements.txt with necessary modules. Created with Python 3.9.7. You need to run `pip install -r requirements.txt` first to be able to run the python script, if your not using the exe file.
 
 Either way, you DO need to acquire your own API credentials file to access the YouTube API - [See instructions below](instructions---obtaining-youtube-api-key).
 
