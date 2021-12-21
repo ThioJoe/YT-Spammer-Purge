@@ -35,7 +35,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.2.0"
+version = "2.2.1"
 configVersion = 10
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -1366,7 +1366,7 @@ def create_config_file():
     if os.path.exists(configFileName):
       parser = ConfigParser()
       try:
-        parser.read("SpamPurgeConfig.ini")
+        parser.read("SpamPurgeConfig.ini", encoding="utf-8")
         if parser.get("general", "use_this_config").lower() == "ask":
           print(f"{B.GREEN}{F.BLACK}SUCCESS!{S.R} {F.YELLOW}SpamPurgeConfig.ini{S.R} file created successfully.")
           print("\nYou can now edit the file to your liking.\n")
