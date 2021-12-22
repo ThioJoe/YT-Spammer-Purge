@@ -1804,7 +1804,7 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive
   #usernameRedChars =""
   #usernameBlackChars = ""
   spamGenEmoji_Raw = b'@Sl-~@Sl-};+UQApOJ|0pOJ~;q_yw3kMN(AyyBUh'
-  usernameBlackWords_Raw = [b'aA|ICWn^M`', b'aA|ICWn>^?c>', b'Z*CxTWo%_<a$#)']
+  usernameBlackWords_Raw = [b'aA|ICWn^M`', b'aA|ICWn>^?c>', b'Z*CxTWo%_<a$#)', b'Z*CxIZgX^DXL4a}']
   usernameRedWords = ["whatsapp", "telegram"]
   usernameBlackWords = []
   for x in usernameBlackWords_Raw: usernameBlackWords.append(b64decode(x).decode(utf_16))
@@ -2116,7 +2116,7 @@ def main():
       elif scanMode == "6":
         scanMode = "checkUpdates"
     else:
-      print(f"\nInvalid choice: {scanMode} - Enter either 1, 2, 3, 4, or 5. ")
+      print(f"\nInvalid choice: {scanMode} - Enter either 1, 2, 3, 4, 5, or 6. ")
       validConfigSetting = False
 
   # If chooses to scan single video - Validate Video ID, get title, and confirm with user
