@@ -47,7 +47,7 @@ If you feel sketched out about giving the app the required high level permission
 
 
 [![Demo 1 Video Screenshot Link](https://user-images.githubusercontent.com/12518330/140164510-7c886cd9-b9d4-4d6d-a466-fb58dd42ab48.jpg)](https://www.youtube.com/watch?v=-vOakOgYLUI)
-[![Updated Demo Video Screenshot Link]![2tRppXW_aKo-HD](https://user-images.githubusercontent.com/84712013/147123234-cf2971a3-b42d-4fed-8856-b5a7f374386b.jpg)
+[![Updated Demo Video Screenshot Link](https://user-images.githubusercontent.com/84712013/147123234-cf2971a3-b42d-4fed-8856-b5a7f374386b.jpg)
 ](https://www.youtube.com/watch?v=2tRppXW_aKo)
 (Takes you to YouTube, not embedded. See timestamps in video description.)
 
