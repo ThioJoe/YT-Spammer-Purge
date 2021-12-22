@@ -2097,7 +2097,7 @@ def main():
     if validConfigSetting == True and config and config['scan_mode'] != 'ask':
       scanMode = config['scan_mode']
     else:
-      scanMode = input("Choice (1-5): ")
+      scanMode = input("Choice (1-6): ")
 
     # Set scanMode Variable Names
     validModeValues = ['1', '2', '3', '4', '5', '6', 'chosenvideos', 'recentvideos', 'entirechannel']
