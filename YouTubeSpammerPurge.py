@@ -415,6 +415,12 @@ def check_against_filter(currentUser, miscData, filterMode, filterSubMode, comme
   global matchedCommentsDict
   commentTextOriginal = str(commentText)
 
+  debugSingleComment = False
+  if debugSingleComment == True:
+    authorChannelName = input("Channel Name: ")
+    commentText = input("Comment Text: ")
+    authorChannelID = "x"
+
   # Do not even check comment if author ID matches currently logged in user's ID
   if currentUser[0] != authorChannelID and miscData['channelOwnerID'] != authorChannelID:
     if "@" in commentText:
@@ -446,6 +452,8 @@ def check_against_filter(currentUser, miscData, filterMode, filterSubMode, comme
         authorMatchCountDict[authorChannelID] += 1
       else:
         authorMatchCountDict[authorChannelID] = 1
+      if debugSingleComment == True: 
+        input("--- Match -----")
 
     # Checks author of either parent comment or reply (both passed in as commentID) against channel ID inputted by user
     if filterMode == "ID":
@@ -519,13 +527,15 @@ def check_against_filter(currentUser, miscData, filterMode, filterSubMode, comme
       domainRegex = inputtedUsernameFilter['domainRegex']
       compiledRegexDict = inputtedUsernameFilter['compiledRegexDict']
       languages = inputtedUsernameFilter['languages']
+      sensitive =  inputtedUsernameFilter['sensitive']
 
-      # Check for sensitive smart mode
-      if inputtedUsernameFilter['sensitive'] == True:
-        sensitive = True
+      if debugSingleComment == True: 
+        if input("Sensitive True/False: ").lower() == 'true': sensitive = True
+        else: sensitive = False
+
+      # Check for sensitive smart mode  
+      if sensitive == True:
         domainRegex = inputtedUsernameFilter['sensitiveDomainRegex']
-      else:
-        sensitive = False
 
       # Processed Variables
       combinedString = authorChannelName + commentText
@@ -2174,6 +2184,7 @@ def main():
           channelID = currentUser[0]
           channelTitle = currentUser[1]
           validChannel = True
+          break
         else:
           validChannel, channelID, channelTitle = validate_channel_id(config['channel_to_scan'])
           if validChannel == True:
