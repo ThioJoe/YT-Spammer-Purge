@@ -41,14 +41,17 @@ If you feel sketched out about giving the app the required high level permission
 
 3. I'm a total amateur, so if something doesn't work I'll try to fix it but might not even know how, so don't expect too much. Therefore **I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.** I tested it on my own and implemented some failsafes as best as I could, but there could always be some kind of unexpected bug. You should inspect the code yourself.
 
-## Video: Project Explanation, Demonstration, and Setup Walkthrough (I have two demo videos on my channel.)
-<p align="center">First Demo: https://www.youtube.com/watch?v=-vOakOgYLUI</p>
-<p align="center">Updated Demo: https://www.youtube.com/watch?v=2tRppXW_aKo</p>
+## Video: Project Demonstration Videos
 
+<p align="center">Latest Demonstration Video: https://www.youtube.com/watch?v=2tRppXW_aKo</p>
 
-[![Demo 1 Video Screenshot Link](https://user-images.githubusercontent.com/12518330/140164510-7c886cd9-b9d4-4d6d-a466-fb58dd42ab48.jpg)](https://www.youtube.com/watch?v=-vOakOgYLUI)
 [![Updated Demo Video Screenshot Link](https://user-images.githubusercontent.com/84712013/147123234-cf2971a3-b42d-4fed-8856-b5a7f374386b.jpg)
 ](https://www.youtube.com/watch?v=2tRppXW_aKo)
+
+<p align="center">Original Demo for Context: https://www.youtube.com/watch?v=-vOakOgYLUI</p>
+
+[![Demo 1 Video Screenshot Link](https://user-images.githubusercontent.com/12518330/140164510-7c886cd9-b9d4-4d6d-a466-fb58dd42ab48.jpg)](https://www.youtube.com/watch?v=-vOakOgYLUI)
+
 (Takes you to YouTube, not embedded. See timestamps in video description.)
 
 ## Screenshots
@@ -89,7 +92,7 @@ Because I haven't published software before, web browsers and Windows might bloc
 ## Instructions - Obtaining YouTube API Key
 
 To use this script, you will need an "Oauth2" credential to access the scanning and deletion functions via YouTube's Data API. Otherwise this script won't work at all.  
-**Video walking through these same steps here (Go to 11:33) https://youtu.be/-vOakOgYLUI?t=693**  
+**Video WalkThrough Here: https://www.youtube.com/watch?v=c6ebWvay8dE**  
 
 1. Log into [Google Developer's Console](https://console.cloud.google.com/apis/dashboard) with your Google account that has your YouTube channel.  
 
