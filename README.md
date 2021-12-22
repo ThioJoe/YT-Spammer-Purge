@@ -41,11 +41,11 @@ If you feel sketched out about giving the app the required high level permission
 
 3. I'm a total amateur, so if something doesn't work I'll try to fix it but might not even know how, so don't expect too much. Therefore **I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.** I tested it on my own and implemented some failsafes as best as I could, but there could always be some kind of unexpected bug. You should inspect the code yourself.
 
-## Video: Project Demonstration Videos
+## Video: Project Demonstrations
 
 <p align="center">Latest Demonstration Video: https://www.youtube.com/watch?v=2tRppXW_aKo</p>
 
-[![Updated Demo Video Screenshot Link](https://user-images.githubusercontent.com/84712013/147123234-cf2971a3-b42d-4fed-8856-b5a7f374386b.jpg)
+[![Updated Demo Video Screenshot Link](https://user-images.githubusercontent.com/12518330/147130101-ff84cd0e-c1fb-43d9-a3be-4c9d4b95d7b0.png)
 ](https://www.youtube.com/watch?v=2tRppXW_aKo)
 
 <p align="center">Original Demo for Context: https://www.youtube.com/watch?v=-vOakOgYLUI</p>
