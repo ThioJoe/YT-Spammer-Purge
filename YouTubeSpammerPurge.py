@@ -35,7 +35,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.2.2"
+version = "2.2.3"
 configVersion = 10
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -2735,6 +2735,8 @@ def main():
           print(f"\n !! {F.RED}Processing Error{S.R} - Sometimes this error fixes itself. Try just running the program again. !!")
           print("This issue is often on YouTube's side, so if it keeps happening try again later.")
           print("(This also occurs if you try deleting comments on someone elses video, which is not possible.)")
+        elif reason == "commentsDisabled":
+          print("\n Error: Comments are disabled on this video. This error can also occur if scanning a live stream.")
       input("\n Press Enter to Exit...")
     else:
       print(f"{F.RED}Unknown Error - Code: X-2{S.R} occurred. If this keeps happening, consider posting a bug report on the GitHub issues page, and include the above error info.")
