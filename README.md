@@ -41,10 +41,14 @@ If you feel sketched out about giving the app the required high level permission
 
 3. I'm a total amateur, so if something doesn't work I'll try to fix it but might not even know how, so don't expect too much. Therefore **I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.** I tested it on my own and implemented some failsafes as best as I could, but there could always be some kind of unexpected bug. You should inspect the code yourself.
 
-## Video: Project Explanation, Demonstration, and Setup Walkthrough (Demo'd features are out of date, but updated video coming soon)
-<p align="center">Regular Link: https://www.youtube.com/watch?v=-vOakOgYLUI</p>
+## Video: Project Explanation, Demonstration, and Setup Walkthrough (I have two demo videos on my channel.)
+<p align="center">First Demo: https://www.youtube.com/watch?v=-vOakOgYLUI</p>
+<p align="center">Updated Demo: https://www.youtube.com/watch?v=2tRppXW_aKo</p>
 
-[![Explanation Video Screenshot Link](https://user-images.githubusercontent.com/12518330/140164510-7c886cd9-b9d4-4d6d-a466-fb58dd42ab48.jpg)](https://www.youtube.com/watch?v=-vOakOgYLUI)
+
+[![Demo 1 Video Screenshot Link](https://user-images.githubusercontent.com/12518330/140164510-7c886cd9-b9d4-4d6d-a466-fb58dd42ab48.jpg)](https://www.youtube.com/watch?v=-vOakOgYLUI)
+[![Updated Demo Video Screenshot Link](https://user-images.githubusercontent.com/84712013/147123234-cf2971a3-b42d-4fed-8856-b5a7f374386b.jpg)
+](https://www.youtube.com/watch?v=2tRppXW_aKo)
 (Takes you to YouTube, not embedded. See timestamps in video description.)
 
 ## Screenshots
