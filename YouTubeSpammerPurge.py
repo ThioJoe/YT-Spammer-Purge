@@ -101,6 +101,7 @@ def get_authenticated_service():
     print(" ----- Or: Did you create a Google Cloud Platform Project to access the API? ----- ")
     print(" ------ See section with instructions on obtaining an API Key at this page: ------- ")
     print(" ---------- https://github.com/ThioJoe/YouTube-Spammer-Purge/ ---------- ")
+    webbrowser.open_new_tab("https://github.com/ThioJoe/YouTube-Spammer-Purge")
     input("\n Press Enter to Exit...")
     sys.exit()
 
@@ -867,6 +868,7 @@ def exclude_authors(inputtedString):
     if comment in commentIDExcludeList:
       print("FATAL ERROR: Something went wrong while trying to exclude comments. No comments have been deleted.")
       print("You should report this bug here: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
+      webbrowser.open_new_tab("https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
       print("Provide the error code: X-1")
       input("Press Enter to Exit...")
       sys.exit()
@@ -1296,6 +1298,7 @@ def check_for_update(currentVersion, silentCheck=False):
       print(e + "\n")
       print(f"{B.RED}{F.WHITE}Error Code U-1:{S.R} Problem checking for update! See above error for more details.\n")
       print("If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
+      webbrowser.open_new_tab("https://github.com/ThioJoe/YouTube-Spammer-Purge/issues)
       input("Press enter to Exit...")
       sys.exit()
     elif silentCheck == True:
@@ -1309,6 +1312,7 @@ def check_for_update(currentVersion, silentCheck=False):
       print("  > Current Version: " + currentVersion)
       print("  > Latest Version: " + latestVersion)
       print("\nAvailable Here: https://github.com/ThioJoe/YouTube-Spammer-Purge/releases")
+      webbrowser.open_new_tab("https://github.com/ThioJoe/YouTube-Spammer-Purge/releases)
       print("Note: To copy from windows console: Right Click > Choose 'Mark' > Highlight the text > Use Ctrl-C")
       input("\nPress enter to Exit...")
       sys.exit()
@@ -1370,6 +1374,7 @@ def create_config_file():
         traceback.print_exc()
         print("Error Code F-1: Problem deleting existing existing file! Check if it's gone. The info above may help if it's a bug.")
         print("If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
+        webbrowser.open_new_tab("https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
         input("Press enter to Exit...")
         sys.exit()
     else:
@@ -1601,6 +1606,7 @@ def prepare_filter_mode_chars(currentUser, scanMode, filterMode, config):
         print("                                                                                          ") # Clears the line because of \r on previous print
         print("\nError Code G-1: Something went wrong with the input, or you closed the window improperly.")
         print("If this keeps happening inexplicably, consider filing a bug report here: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
+        webbrowser.open_new_tab("https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")                      
         input("Press Enter to exit...")
         sys.exit()
 
