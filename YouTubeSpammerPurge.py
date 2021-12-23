@@ -35,7 +35,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.2.3"
+version = "2.2.4"
 configVersion = 10
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -569,7 +569,9 @@ def check_against_filter(currentUser, miscData, filterMode, filterSubMode, comme
         add_spam(commentID, videoID)
       elif any(findOnlyObfuscated(expression[1], expression[0], combinedString) for expression in compiledRegexDict['blackAdWords']):
         add_spam(commentID, videoID)
-      elif re.search(inputtedUsernameFilter['usernameConfuseRegex'], authorChannelName):
+      elif sensitive == True and re.search(inputtedUsernameFilter['usernameConfuseRegex'], authorChannelName):
+        add_spam(commentID, videoID)
+      elif sensitive == False and findOnlyObfuscated(inputtedUsernameFilter['usernameConfuseRegex'], miscData['channelOwnerName'], authorChannelName):
         add_spam(commentID, videoID)
       # Multi Criteria Tests
       else:
