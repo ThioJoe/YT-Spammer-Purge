@@ -35,7 +35,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.2.4"
+version = "2.2.5"
 configVersion = 10
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -2739,6 +2739,12 @@ def main():
           print("(This also occurs if you try deleting comments on someone elses video, which is not possible.)")
         elif reason == "commentsDisabled":
           print("\n Error: Comments are disabled on this video. This error can also occur if scanning a live stream.")
+        elif reason == "quotaExceeded":
+          print("\n Error: You have exceeded the YouTube API quota. To do more scanning you must wait until the quota resets.")
+          print("There is a daily limit of 10,000 units/day, which works out to around reporting 10,000 comments/day.")
+          print("You can check your quota by searching 'quota' in the google cloud console.")
+          print(f"{F.YELLOW}Solutions: Either wait until tomorrow, or create additional projects in the cloud console.{S.R}")
+          input("\n Press Enter to Exit...")
       input("\n Press Enter to Exit...")
     else:
       print(f"{F.RED}Unknown Error - Code: X-2{S.R} occurred. If this keeps happening, consider posting a bug report on the GitHub issues page, and include the above error info.")
