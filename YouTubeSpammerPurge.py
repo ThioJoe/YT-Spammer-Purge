@@ -55,6 +55,7 @@ import requests
 from base64 import b85decode as b64decode
 from configparser import ConfigParser
 from pkg_resources import parse_version
+import webbrowser as wb
 
 # Non Standard Modules
 import rtfunicode
