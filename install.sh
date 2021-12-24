@@ -8,5 +8,4 @@ rm yt-spammer.tar.gz
 rm get-pip.py
 cd YouTube-Spammer-Purge-2.2.5/
 pip install -r requirements.txt
-echo "Dependencies installed!"
-echo "Starting Program..."
+echo "Dependencies and Program installed!"
