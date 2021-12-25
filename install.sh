@@ -8,4 +8,4 @@ rm yt-spammer.tar.gz
 rm get-pip.py
 cd YouTube-Spammer-Purge-2.2.5/
 pip install -r requirements.txt
-echo "Dependencies and Program installed!"
+printf "Dependencies and Program installed!\nNow follow these instructions to get a client_secrets.json file!\nhttps://github.com/ThioJoe/YouTube-Spammer-Purge#instructions---obtaining-youtube-api-key"
