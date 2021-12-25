@@ -2,7 +2,7 @@
 1. Download [install_full.sh](https://raw.githubusercontent.com/ThioJoe/YouTube-Spammer-Purge/main/install_full.sh)
 	* This script will install dependencies, and a copy of [YouTube-Spammer-Purge](https://github.com/ThioJoe/YouTube-Spammer-Purge/).
 	* Run: `curl https://raw.githubusercontent.com/ThioJoe/YouTube-Spammer-Purge/main/install_full.sh -o install_full.sh`
-2. Make the shell script executable. Run:
+2. Make the bash script executable. Run:
 	* `chmod +x install_full.sh`
 3. Finally, execute the script. Run:
 	* `./install_full.sh`
@@ -19,7 +19,7 @@
 
 5. Check if pip installed - Run: 
 	* `pip` or `pip3`
-	* If not installed run: `sudo apt install python3-pip`(This is for Ubuntu/Debian-based distributions. For other distributions, try the automatic installation.)
+	* If not installed run: `sudo apt install python3-pip`(This is for Ubuntu/Debian-based distributions. For other distributions, try the automatic installation or use the distribution's own package manger.)
 
 6.  Install dependencies. Run:  
 	* `pip3 install -r requirements.txt`
