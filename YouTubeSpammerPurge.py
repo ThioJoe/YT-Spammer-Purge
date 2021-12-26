@@ -95,7 +95,7 @@ def get_authenticated_service():
 
   # Check if client_secrets.json file exists, if not give error
   if not os.path.exists(CLIENT_SECRETS_FILE):
-    print("\n ------------- ERROR: "+CLIENT_SECRETS_FILE+" file not found! ------------- ")
+    print(f"\n ------------- ERROR: {CLIENT_SECRETS_FILE} file not found! ------------- ")
     print(" Make sure it is placed in the same folder as the program, and is spelled as above \n")
     print(" ----- Or: Did you create a Google Cloud Platform Project to access the API? ----- ")
     print(" ------ See section with instructions on obtaining an API Key at this page: ------- ")
@@ -431,12 +431,6 @@ def check_against_filter(currentUser, miscData, filterMode, filterSubMode, comme
   global matchedCommentsDict
   commentTextOriginal = str(commentText)
 
-  debugSingleComment = False
-  if debugSingleComment == True:
-    authorChannelName = input("Channel Name: ")
-    commentText = input("Comment Text: ")
-    authorChannelID = "x"
-
   # Do not even check comment if author ID matches currently logged in user's ID
   if currentUser[0] != authorChannelID and miscData['channelOwnerID'] != authorChannelID:
     if "@" in commentText:
@@ -460,8 +454,7 @@ def check_against_filter(currentUser, miscData, filterMode, filterSubMode, comme
     # Also add key-value pair of comment ID and video ID to dictionary
     # Also count how many spam comments for each author
     def add_spam(commentID, videoID):
-      global matchedCommentsDict
-      global authorMatchCountDict
+      global matchedCommentsDict, authorMatchCountDict
       matchedCommentsDict[commentID] = {'text':commentTextOriginal, 'authorName':authorChannelName, 'authorID':authorChannelID, 'videoID':videoID}
       vidIdDict[commentID] = videoID # Probably remove this later, but still being used for now
       if authorChannelID in authorMatchCountDict:
@@ -774,9 +767,9 @@ def check_deleted_comments(checkDict):
     if i == 0:
       print("\n\nSuccess: All comments should be gone.")
     elif i > 0:
-      print("\n\nWarning: " + str(i) + " comments may remain. Check links above or try running the program again. An error log file has been created: 'Deletion_Error_Log.txt'")
+      print("\n\nWarning: " + str(i) + " comments may remain. Check links above or try running the program again. An error log file has been created: 'Deletion_Error_Log.log'")
       # Write error log
-      f = open("Deletion_Error_Log.txt", "a")
+      f = open("Deletion_Error_Log.log", "a")
       f.write("----- YT Spammer Purge Error Log: Possible Issue Deleting Comments ------\n\n")
       f.write(str(unsuccessfulResults))
       f.write("\n\n")
@@ -787,8 +780,7 @@ def check_deleted_comments(checkDict):
     return None
 
 # Class for custom exception to throw if a comment is found to remain
-class CommentNotFoundError(Exception):
-  pass
+class CommentNotFoundError(Exception): ...
 
 def check_recovered_comments(commentsList):
   i = 0 # Count number of remaining comments
@@ -961,7 +953,7 @@ def get_current_user(config):
       pass
   except ChannelIDError:
     traceback.print_exc()
-    print("\nError: Still unable to get channel info. Big Bruh Moment. Try deleting token.pickle. The info above might help if you want to report a bug.")
+    print("\nError: Still unable to get channel info. Try deleting token.pickle. The info above might help if you want to report a bug.")
     print("Note: A channel ID was retrieved but is invalid: " + str(channelID))
     input("\nPress Enter to Exit...")
     sys.exit()
