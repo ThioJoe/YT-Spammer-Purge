@@ -1133,7 +1133,7 @@ def process_spammer_ids(rawString):
 
   # Validate each ID in list
   for i in range(len(inputList)):
-    valid, IDList[i] = validate_channel_id(inputList[i])
+    valid, IDList[i], channelTitle = validate_channel_id(inputList[i])
     if valid == False:
       print(f"{B.RED}{F.BLACK}Invalid{S.R} Channel ID or Link: " + str(inputList[i]) + "\n")
       return False, None
