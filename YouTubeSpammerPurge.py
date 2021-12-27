@@ -36,7 +36,7 @@
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
 version = "2.2.6"
-configVersion = 10
+configVersion = 11
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 # GUI Related
@@ -2517,7 +2517,11 @@ def main():
 
     if logMode == True:
       global logFileName
-      logFileName = "Spam_Log_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S" + ".rtf")
+      fileName = "Spam_Log_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S" + ".rtf")
+      if config and config['log_path']:
+          logFileName = os.path.normpath(config['log_path'] + "/" + fileName)
+      else:
+          logFileName = fileName
       print(f"Log file will be called {F.YELLOW}" + logFileName + f"{S.R}\n")
       if bypass == False:
         input(f"Press {F.YELLOW}Enter{S.R} to display comments...")
