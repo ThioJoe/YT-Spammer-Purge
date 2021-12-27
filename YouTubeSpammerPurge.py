@@ -35,7 +35,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.3.0"
+version = "2.3.1"
 configVersion = 11
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -230,7 +230,6 @@ def print_prepared_comments(scanVideoID_localprep, comments, j, logMode):
         + "     > Author Channel ID: \cf6" + author_id_local + r"\cf1 \line "+ "\n"
         + "=============================================================================================\\line\\line\\line" + "\n\n\n"
       )
-      #write_rtf(logFileName, commentInfo)
       dataPreparedToWrite = dataPreparedToWrite + commentInfo
 
     # Appends comment ID to new list of comments so it's in the correct order going forward, as provided by API and presented to user
@@ -1309,6 +1308,7 @@ def check_for_update(currentVersion, silentCheck=False):
       print("  > Latest Version: " + latestVersion)
       print("\nAvailable Here: https://github.com/ThioJoe/YouTube-Spammer-Purge/releases")
       print("Note: To copy from windows console: Right Click > Choose 'Mark' > Highlight the text > Use Ctrl-C")
+      print("      > OR: Depending on your version of Windows, click and drag to highlight, then right click to copy")
       input("\nPress enter to Exit...")
       sys.exit()
     elif silentCheck == True:
@@ -1832,7 +1832,7 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive
   #usernameRedChars =""
   #usernameBlackChars = ""
   spamGenEmoji_Raw = b'@Sl-~@Sl-};+UQApOJ|0pOJ~;q_yw3kMN(AyyBUh'
-  usernameBlackWords_Raw = [b'aA|ICWn^M`', b'aA|ICWn>^?c>', b'Z*CxTWo%_<a$#)', b'Z*CxIZgX^DXL4a}', b'Z*CxIX8', b'V`yb#YanfTAY*7@Zf<34', b'b7f^9ZFwMLXkl({Wo!', b'c4>2IbRcbcAY*7@Zf<34', b'cWHEJATS_yX=G(@a{', b'cWHEJAZ~9Uc4=f~Z*u']
+  usernameBlackWords_Raw = [b'aA|ICWn^M`', b'aA|ICWn>^?c>', b'Z*CxTWo%_<a$#)', b'Z*CxIZgX^DXL4a}', b'Z*CxIX8', b'V`yb#YanfTAY*7@Zf<34', b'b7f^9ZFwMLXkl({Wo!', b'c4>2IbRcbcAY*7@Zf<34', b'cWHEJATS_yX=G(@a{', b'cWHEJAZ~9Uc4=f~Z*u', b'cWHEJZ*_DaVQzUKc4=e']
   usernameRedWords = ["whatsapp", "telegram"]
   usernameBlackWords = []
   for x in usernameBlackWords_Raw: usernameBlackWords.append(b64decode(x).decode(utf_16))
