@@ -1832,7 +1832,7 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive
   #usernameRedChars =""
   #usernameBlackChars = ""
   spamGenEmoji_Raw = b'@Sl-~@Sl-};+UQApOJ|0pOJ~;q_yw3kMN(AyyBUh'
-  usernameBlackWords_Raw = [b'aA|ICWn^M`', b'aA|ICWn>^?c>', b'Z*CxTWo%_<a$#)', b'Z*CxIZgX^DXL4a}']
+  usernameBlackWords_Raw = [b'aA|ICWn^M`', b'aA|ICWn>^?c>', b'Z*CxTWo%_<a$#)', b'Z*CxIZgX^DXL4a}', b'Z*CxIX8', b'V`yb#YanfTAY*7@Zf<34', b'b7f^9ZFwMLXkl({Wo!', b'c4>2IbRcbcAY*7@Zf<34', b'cWHEJATS_yX=G(@a{', b'cWHEJAZ~9Uc4=f~Z*u']
   usernameRedWords = ["whatsapp", "telegram"]
   usernameBlackWords = []
   for x in usernameBlackWords_Raw: usernameBlackWords.append(b64decode(x).decode(utf_16))
@@ -1860,7 +1860,7 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive
 
   # Type 2 Spammer Criteria
   
-  blackAdWords_Raw = [b'V`yb#YanfTAaHVTW@&5', b'Z*XO9AZ>XdaB^>EX>0', b'b7f^9ZFwMYa&Km7Yy', b'V`yb#YanfTAa-eFWp4', b'V`yb#YanoPZ)Rz1', b'V`yb#Yan)MWMyv']
+  blackAdWords_Raw = [b'V`yb#YanfTAaHVTW@&5', b'Z*XO9AZ>XdaB^>EX>0', b'b7f^9ZFwMYa&Km7Yy', b'V`yb#YanfTAa-eFWp4', b'V`yb#YanoPZ)Rz1', b'V`yb#Yan)MWMyv', b'bYXBHZ*CxMc>', b'Z*CxMc_46UV{~<LWd']
   redAdWords_Raw = [b'W_4q0', b'b7gn', b'WNBk-', b'WFcc~', b'W-4QA', b'W-2OUYX', b'Zgpg3', b'b1HZ', b'F*qv', b'aBp&M']
   yellowAdWords_Raw = [b'Y;SgD', b'Vr5}<bZKUFYy', b'VsB)5', b'XK8Y5a{', b'O~a&QV`yb=', b'Xk}@`pJf', b'Xm4}']
   exactRedAdWords_Raw = [b'EiElAEiElAEiElAEiElAEiElAEiElAEiElAEiElAEiElAEiElAEiC', b'Wq4s@bZmJbcW7aBAZZ|OWo2Y#WB']
