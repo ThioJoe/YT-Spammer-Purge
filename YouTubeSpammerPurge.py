@@ -35,8 +35,8 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.2.6"
-configVersion = 10
+version = "2.3.0"
+configVersion = 11
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 # GUI Related
@@ -1447,8 +1447,8 @@ def load_config_file():
     #configDictRaw = {s:dict(parser.items(s)) for s in parser.sections()}
 
     # Convert raw config dictionary into easier to use dictionary
-    settingsToKeepCase = ["your_channel_id", "video_to_scan", "channel_ids_to_filter", "regex_to_filter", "channel_to_scan"]
-    validWordVars = ['ask', 'mine']
+    settingsToKeepCase = ["your_channel_id", "video_to_scan", "channel_ids_to_filter", "regex_to_filter", "channel_to_scan", "log_path"]
+    validWordVars = ['ask', 'mine', 'default']
     configDict = {}
     for section in parser.sections():
       for setting in parser.items(section):
@@ -2517,8 +2517,14 @@ def main():
 
     if logMode == True:
       global logFileName
-      logFileName = "Spam_Log_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S" + ".rtf")
-      print(f"Log file will be called {F.YELLOW}" + logFileName + f"{S.R}\n")
+      fileName = "Spam_Log_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S" + ".rtf")
+      if config and config['log_path'] and config['log_path'] != "default":
+          logFileName = os.path.normpath(config['log_path'] + "/" + fileName)
+          print(f"Log file will be located at {F.YELLOW}" + logFileName + f"{S.R}\n")
+      else:
+          logFileName = fileName
+          print(f"Log file will be called {F.YELLOW}" + logFileName + f"{S.R}\n")
+      
       if bypass == False:
         input(f"Press {F.YELLOW}Enter{S.R} to display comments...")
 
