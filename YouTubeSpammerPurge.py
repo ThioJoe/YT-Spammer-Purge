@@ -939,7 +939,12 @@ def get_current_user(config):
   # Fetch the channel ID and title from the API response
   # Catch exceptions if problems getting info
   if len(results) == 0: # Check if results are empty
-    print("\nError Getting Current User: Channel ID was not retrieved. Sometimes this happens if client_secrets file does not match user authorized with token.pickle file.")
+    print("\n----------------------------------------------------------------------------------------")
+    print(f"{F.YELLOW}Error Getting Current User{S.R}: The YouTube API responded, but did not provide a Channel ID.")
+    print("   Known Possible Causes:")
+    print("    > The client_secrets file does not match user authorized with token.pickle file.")
+    print("    > You are logging in with a Google account that does not have a YouTube channel created yet.")
+    print("    > When choosing the account to log into, you selected the option showing the Google Account's email address, which might not have a channel attached to it.")
     input("\nPress Enter to try logging in again...")
     os.remove(TOKEN_FILE_NAME)
     youtube = get_authenticated_service()
