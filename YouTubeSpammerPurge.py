@@ -61,6 +61,9 @@ import rtfunicode
 from colorama import init, Fore as F, Back as B, Style as S
 from confusables import confusable_regex, normalize
 
+# Local Non Standard Modules
+from community_downloader import main as get_community_comments #Args = post's ID, comment limit
+
 # Google Authentication Modules
 from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
@@ -2114,10 +2117,11 @@ def main():
   print(f"      1. Scan a {F.LIGHTBLUE_EX}Specific video{S.R}")
   print(f"      2. Scan {F.LIGHTCYAN_EX}recent videos{S.R} for a channel")
   print(f"      3. Scan recent comments across your {F.LIGHTMAGENTA_EX}Entire Channel{S.R}")
+  print(f"      4. Scan a {F.LIGHTMAGENTA_EX}community post{S.R} (Experimental)")
   print(f"-------------------------------------- {F.LIGHTRED_EX}Other Options{S.R} -------------")
-  print(f"      4. Create your own config file to quickly run the program with pre-set settings")
-  print(f"      5. Recover deleted comments using log file")
-  print(f"      6. Check For Updates\n")
+  print(f"      5. Create your own config file to quickly run the program with pre-set settings")
+  print(f"      6. Recover deleted comments using log file")
+  print(f"      7. Check For Updates\n")
   
   # Check for updates silently
   
@@ -2133,10 +2137,10 @@ def main():
     if validConfigSetting == True and config and config['scan_mode'] != 'ask':
       scanMode = config['scan_mode']
     else:
-      scanMode = input("Choice (1-6): ")
+      scanMode = input("Choice (1-7): ")
 
     # Set scanMode Variable Names
-    validModeValues = ['1', '2', '3', '4', '5', '6', 'chosenvideos', 'recentvideos', 'entirechannel']
+    validModeValues = ['1', '2', '3', '4', '5', '6', '7', 'chosenvideos', 'recentvideos', 'entirechannel', 'communityPost']
     if scanMode in validModeValues:
       validMode = True
       if scanMode == "1" or scanMode == "chosenvideos":
@@ -2145,14 +2149,16 @@ def main():
         scanMode = "recentVideos"
       elif scanMode == "3" or scanMode == "entirechannel":
         scanMode = "entireChannel"
-      elif scanMode == "4":
-        scanMode = "makeConfig"
+      elif scanMode == "4" or scanMode == "communityPost":
+        scanMode = "communityPost"
       elif scanMode == "5":
-        scanMode = "recoverMode"
+        scanMode = "makeConfig"
       elif scanMode == "6":
+        scanMode = "recoverMode"
+      elif scanMode == "7":
         scanMode = "checkUpdates"
     else:
-      print(f"\nInvalid choice: {scanMode} - Enter either 1, 2, 3, 4, 5, or 6. ")
+      print(f"\nInvalid choice: {scanMode} - Enter either 1, 2, 3, 4, 5, 6, or 7. ")
       validConfigSetting = False
 
   # If chooses to scan single video - Validate Video ID, get title, and confirm with user
@@ -2306,6 +2312,14 @@ def main():
     miscData['channelOwnerID'] = currentUser[0]
     miscData['channelOwnerName'] = currentUser[1]
 
+  elif scanMode == 'communityPost':
+    print("NOTES: This mode is experimental, and not as polished as other features. Expect some janky-ness.")
+    print("   > You should only scan your own community posts, or things might not work right.")
+    print("Input the ID of the communit post:")
+    communityPostID = input("\nEnter ID: ")
+    maxScanNumber = int(input("Max Number of Comments to Scan: "))
+    miscData['channelOwnerID'] = currentUser[0]
+    miscData['channelOwnerName'] = currentUser[1]
   
   # Create config file
   elif scanMode == "makeConfig":
