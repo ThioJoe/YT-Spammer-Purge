@@ -1894,7 +1894,7 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive
     'usernameRedWords': []
   }
   # Compile regex with upper case, otherwise many false positive character matches
-  bufferMatch, addBuffers = "*_~|`", "\[\]\(\)'" # Add 'buffer' chars to compensate for obfuscation
+  bufferMatch, addBuffers = "*_~|`", "*_~|`\[\]\(\)'" # Add 'buffer' chars to compensate for obfuscation
   m = bufferMatch
   a = addBuffers
   for word in usernameBlackWords:
