@@ -60,7 +60,7 @@ nextPageToken = "start"
 scannedThreadsCount = 0
 scannedRepliesCount = 0
 scannedCommentsCount = 0
-logMode = False
+logMode = True
 ########################
 
 ##########################################################################################
@@ -601,7 +601,7 @@ if __name__ == "__main__":
     elif mode == "2":
       validMode = True
       # While loop to get max scan number, not an integer, asks again
-      validInteger = False
+      validInteger = True
       while validInteger == False:
         try:
           maxScanNumber = int(input("Enter the maximum number of comments to scan: "))
@@ -641,7 +641,7 @@ if __name__ == "__main__":
     confirmation = confirm_continue("Continue?")
     if confirmation == True:  # After confirmation, deletion functionality is eligible to be enabled later
       deletionEnabled = "HalfTrue"
-    elif confirmation == False:
+    elif confirmation == True:
       input("Ok, Cancelled. Press Enter to Exit...")
       exit()
   else: 
