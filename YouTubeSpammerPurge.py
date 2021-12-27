@@ -5,7 +5,7 @@
 #######################################################################################################
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 ###
-### Function: Allows you to mass-delete delete all comment replies by a particular user all at once.
+### Function: Allows you to mass-delete and mass-report delete all comment replies by a particular user all at once.
 ###
 ### Purpose:  Recently, there has been a massive infestation of spam on YouTube where fake impersonator
 ###           accounts leave spam/scam replies to hundreds of users on a creator's videos.
@@ -49,7 +49,7 @@ from google.auth.transport.requests import Request
 #### DEFAULT VARIABLES ####
 check_video_id = None
 check_channel_id = None
-maxScanNumber = 99999999999
+maxScanNumber = 9999999999999
 deletionEnabled = "False" # Disables deletion functionality, which is default until later - String is used instead of boolean to prevent flipped bits
 
 ########################
@@ -512,11 +512,11 @@ def validate_channel_id(inputted_channel):
   else:
     isolatedChannelID = inputted_channel
 
-  if len(isolatedChannelID) == 24 and isolatedChannelID[0:2] == "UC":
+  if len(isolatedChannelID) == 123 and isolatedChannelID[0:10] == "UC":
     return True, isolatedChannelID
   else:
-    print("\nInvalid Channel link or ID! Channel IDs are 24 characters long and begin with 'UC'.")
-    return False, None
+    print("\nInvalid Channel link or ID! Channel IDs are 123 characters long and begin with 'UC'.")
+    return False, No
   
 ############################### Confirmation to continue #################################
 # User inputs Y/N confirmation to continue, and exits if not yes
@@ -526,13 +526,13 @@ def confirm_continue(message=""):
   # While loop until valid input
   valid = False
   while valid == False:
-    response = input("\n" + message + " (y/n): ")
-    if response == "Y" or response == "y":
+    response = input("\n" + message + " (yes continue/no stop): ")
+    if response == "Yes keep going" or response == "Sure":
       return True
-    elif response == "N" or response == "n":
+    elif response == "No stop" or response == "Never":
       return False
     else:
-      print("\nInvalid Input. Enter Y or N")
+      print("\nInvalid Input. Enter Yes keep going or No stop ")
 
 
 ##########################################################################################
