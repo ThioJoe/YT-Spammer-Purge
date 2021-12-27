@@ -47,6 +47,15 @@ body:
              3. 
     validations:
       required: true
+   - type: textarea
+    id: additional-info
+    attributes:
+      label: Additional Information
+      description: Please provide us with any other useful information related to this issue
+      placeholder: Additional info
+      value: Please provide additional info here.
+    validations:
+      required: false
   - type: dropdown
     id: platform
     attributes:
