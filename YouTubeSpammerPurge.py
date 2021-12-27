@@ -2029,14 +2029,17 @@ def main():
 
   # Check for config file, load into dictionary 'config'
   config = load_config_file()
-  try:
-    configFileVersion = int(config['config_version'])
-    if configFileVersion < configVersion:
+  if config:
+    try:
+      configFileVersion = int(config['config_version'])
+      if configFileVersion < configVersion:
+        configOutOfDate = True
+      else:
+        configOutOfDate = False
+    except:
       configOutOfDate = True
-    else:
-      configOutOfDate = False
-  except:
-    configOutOfDate = True
+  else:
+    configOutOfDate = False
 
   os.system(clear_command)
   if config != None:
@@ -2115,7 +2118,7 @@ def main():
   
   if updateAvailable == True:
     print(f"{F.LIGHTGREEN_EX}Notice: A new version is available! Choose 'Check For Updates' option for details.{S.R}\n")
-  if configOutOfDate == True:
+  if config and configOutOfDate == True:
     print(f"{F.LIGHTRED_EX}Notice: Your config file is out of date! Choose 'Create your own config file' to generate a new one.{S.R}\n")
 
   # Make sure input is valid, if not ask again

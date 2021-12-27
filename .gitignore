@@ -127,3 +127,6 @@ token.pickle
 # Ignore log files
 Spam_*.txt
 Spam_*.rtf
+
+# Ignore user-generated config file
+SpamPurgeConfig.ini
