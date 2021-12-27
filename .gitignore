@@ -126,4 +126,4 @@ token.pickle
 
 # Ignore log files
 Spam_*.txt
-
+Spam_*.rtf
