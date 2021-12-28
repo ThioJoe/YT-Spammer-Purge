@@ -63,6 +63,7 @@ from confusables import confusable_regex, normalize
 
 # Local Non Standard Modules
 from community_downloader import main as get_community_comments #Args = post's ID, comment limit
+from community_downloader import get_post_channel_url
 
 # Google Authentication Modules
 from googleapiclient.errors import HttpError
@@ -1052,6 +1053,35 @@ def validate_video_id(video_url):
         print(f"\n{B.RED}{F.BLACK}Invalid Video link or ID!{S.R} Video IDs are 11 characters long.")
         return False, None
     return True, match.group('video_id')
+
+############################### VALIDATE COMMUNITY POST ID #################################
+def validate_post_id(post_url):
+  if "/post/" in post_url:
+    startIndex = post_url.rindex("/") + 1
+    endIndex = len(post_url)
+  elif "/channel/" in post_url and "/community?" in post_url and "lb=" in post_url:
+    startIndex = post_url.rindex("lb=") + 3
+    endIndex = len(post_url)
+  else:
+    isolatedPostId = post_url
+  try:
+    if startIndex < endIndex and endIndex <= len(post_url):
+      isolatedPostID = post_url[startIndex:endIndex]
+  except:
+    return False, None, None, None, None
+
+  # Post IDs used to be shorter, but apparently now have a longer format
+  if len(isolatedPostID) == 26 or len(isolatedPostID) == 36:
+    if isolatedPostID[0:2] == "Ug":
+      validatedPostUrl = "https://www.youtube.com/post/" + isolatedPostID
+      postOwnerURL = get_post_channel_url(isolatedPostID)
+      valid, postOwnerID, postOwnerUsername = validate_channel_id(postOwnerURL)
+
+      return valid, isolatedPostID, validatedPostUrl, postOwnerID, postOwnerUsername
+
+  else:
+    return False, None, None, None, None
+  
 
 ##################################### VALIDATE CHANNEL ID ##################################
 # Checks if channel ID / Channel Link is correct length and in correct format - If so returns true and isolated channel ID
@@ -2319,11 +2349,28 @@ def main():
     miscData['channelOwnerName'] = currentUser[1]
 
   elif scanMode == 'communityPost':
-    print("NOTES: This mode is experimental, and not as polished as other features. Expect some janky-ness.")
+    print("\nNOTES: This mode is experimental, and not as polished as other features. Expect some janky-ness.")
     print("   > It is also much slower to retrieve comments, because it does not use the API")
     print(f"   > You should only scan {F.YELLOW}your own{S.R} community posts, or things might not work right")
-    communityPostID = input("\nEnter the ID of the community post: ")
+    confirm = False
+    while confirm == False:
+      communityPostInput = input("\nEnter the ID or link of the community post: ")
 
+      # Validate post ID or link, get additional info about owner, and useable link
+      isValid, communityPostID, postURL, postOwnerID, postOwnerUsername = validate_post_id(communityPostInput)
+      if isValid == True:
+        print("\nCommunity Post By: " + postOwnerUsername)
+        if postOwnerID != currentUser[0]:
+          userNotChannelOwner = True
+          print("\nWarning: You are scanning someone elses post. 'Not Your Channel Mode' Enabled.")
+        confirm = choice("Continue?")
+      else:
+        print("Problem interpreting the post information, please check the link or ID.")
+
+    miscData['channelOwnerID'] = postOwnerID
+    miscData['channelOwnerName'] = postOwnerUsername 
+
+    # Checking config for max comments, or get from user input
     validInteger = False
     if config: validConfigSetting = True
     while validInteger == False:
@@ -2331,8 +2378,7 @@ def main():
         if validConfigSetting == True and config and config['max_comments'] != 'ask':
           maxScanNumber = int(config['max_comments'])
         else:
-          maxScanNumber = int(input(f"Enter the maximum {F.YELLOW}number of comments{S.R} to scan: "))
-
+          maxScanNumber = int(input(f"\nEnter the maximum {F.YELLOW}number of comments{S.R} to scan: "))
         if maxScanNumber > 0:
           validInteger = True # If it gets here, it's an integer, otherwise goes to exception
         else:
@@ -2341,9 +2387,6 @@ def main():
       except:
         print("\nInvalid Input! - Must be a whole number.")
         validConfigSetting = False
-
-    miscData['channelOwnerID'] = currentUser[0]
-    miscData['channelOwnerName'] = currentUser[1]
   
   # Create config file
   elif scanMode == "makeConfig":

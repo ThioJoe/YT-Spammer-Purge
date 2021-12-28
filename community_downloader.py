@@ -44,6 +44,24 @@ def ajax_request(session, endpoint, ytcfg, retries=5, sleep=20):
         else:
             time.sleep(sleep)
 
+# Partial code taken from download_comments, just to get the URL or other info about post
+def get_post_channel_url(youtube_id):
+    session = requests.Session()
+    session.headers['User-Agent'] = USER_AGENT
+    response = session.get(YOUTUBE_VIDEO_URL.format(youtube_id=youtube_id))
+    if 'uxe=' in response.request.url:
+        session.cookies.set('CONSENT', 'YES+cb', domain='.youtube.com')
+        response = session.get(YOUTUBE_VIDEO_URL.format(youtube_id=youtube_id))
+    html = response.text
+    ytcfg = json.loads(regex_search(html, YT_CFG_RE, default=''))
+    if not ytcfg:
+        return None # Unable to extract configuration
+    data = json.loads(regex_search(html, YT_INITIAL_DATA_RE, default=''))
+    try:
+        channelURL = data['microformat']['microformatDataRenderer']['urlCanonical']
+        return channelURL
+    except KeyError:
+        return None
 
 def download_comments(youtube_id, sort_by=SORT_BY_RECENT, language=None, sleep=.1):
     session = requests.Session()
