@@ -56,6 +56,7 @@ import json
 from base64 import b85decode as b64decode
 from configparser import ConfigParser
 from pkg_resources import parse_version
+import unicodedata
 
 # Non Standard Modules
 import rtfunicode
@@ -542,19 +543,20 @@ def check_against_filter(currentUser, miscData, filterMode, filterSubMode, comme
     # Here inputtedComment/Author Filters are tuples of, where 2nd element is list of char-sets to check against
     ## Also Check if reply author ID is same as parent comment author ID, if so, ignore (to account for users who reply to spammers)
     elif filterMode == "AutoSmart" or filterMode == "SensitiveSmart":
+      smartFilter = inputtedUsernameFilter
       # Receive Variables
-      numberFilterSet = inputtedUsernameFilter['spammerNumbersSet']
-      compiledRegex = inputtedUsernameFilter['compiledRegex']
-      minNumbersMatchCount = inputtedUsernameFilter['minNumbersMatchCount']
-      #usernameBlackCharsSet = inputtedUsernameFilter['usernameBlackCharsSet']
-      spamGenEmojiSet = inputtedUsernameFilter['spamGenEmojiSet']
-      redAdEmojiSet = inputtedUsernameFilter['redAdEmojiSet']
-      yellowAdEmojiSet = inputtedUsernameFilter['yellowAdEmojiSet']
-      hrtSet = inputtedUsernameFilter['hrtSet']
-      domainRegex = inputtedUsernameFilter['domainRegex']
-      compiledRegexDict = inputtedUsernameFilter['compiledRegexDict']
-      languages = inputtedUsernameFilter['languages']
-      sensitive =  inputtedUsernameFilter['sensitive']
+      numberFilterSet = smartFilter['spammerNumbersSet']
+      compiledRegex = smartFilter['compiledRegex']
+      minNumbersMatchCount = smartFilter['minNumbersMatchCount']
+      #usernameBlackCharsSet = smartFilter['usernameBlackCharsSet']
+      spamGenEmojiSet = smartFilter['spamGenEmojiSet']
+      redAdEmojiSet = smartFilter['redAdEmojiSet']
+      yellowAdEmojiSet = smartFilter['yellowAdEmojiSet']
+      hrtSet = smartFilter['hrtSet']
+      domainRegex = smartFilter['domainRegex']
+      compiledRegexDict = smartFilter['compiledRegexDict']
+      languages = smartFilter['languages']
+      sensitive =  smartFilter['sensitive']
 
       if debugSingleComment == True: 
         if input("Sensitive True/False: ").lower() == 'true': sensitive = True
@@ -562,7 +564,7 @@ def check_against_filter(currentUser, miscData, filterMode, filterSubMode, comme
 
       # Check for sensitive smart mode  
       if sensitive == True:
-        domainRegex = inputtedUsernameFilter['sensitiveDomainRegex']
+        domainRegex = smartFilter['sensitiveDomainRegex']
 
       # Processed Variables
       combinedString = authorChannelName + commentText
@@ -582,6 +584,17 @@ def check_against_filter(currentUser, miscData, filterMode, filterSubMode, comme
             if match.lower() != lowerWord and match.lower() != lowerWord.translate(ignoredConfusablesConverter):
               return True
 
+      def remove_unicode_categories(string):
+        return "".join(char for char in string if unicodedata.category(char) not in smartFilter['unicodeCategoriesStrip'])
+
+      # Normalize usernames and text, remove multiple whitespace and invisible chars
+      combinedString = re.sub(' +', ' ',combinedString)
+      combinedString = remove_unicode_categories(combinedString)
+      authorChannelName = re.sub(' +', ' ', authorChannelName)
+      authorChannelName = remove_unicode_categories(authorChannelName)
+      commentText = re.sub(' +', ' ', commentText)
+      commentText = remove_unicode_categories(commentText)
+
       # Run Checks
       if authorChannelID == parentAuthorChannelID:
         pass
@@ -596,9 +609,9 @@ def check_against_filter(currentUser, miscData, filterMode, filterSubMode, comme
         add_spam(commentID, videoID)
       elif any(findOnlyObfuscated(expression[1], expression[0], combinedString) for expression in compiledRegexDict['blackAdWords']):
         add_spam(commentID, videoID)
-      elif sensitive == True and re.search(inputtedUsernameFilter['usernameConfuseRegex'], authorChannelName):
+      elif sensitive == True and re.search(smartFilter['usernameConfuseRegex'], authorChannelName):
         add_spam(commentID, videoID)
-      elif sensitive == False and findOnlyObfuscated(inputtedUsernameFilter['usernameConfuseRegex'], miscData['channelOwnerName'], authorChannelName):
+      elif sensitive == False and findOnlyObfuscated(smartFilter['usernameConfuseRegex'], miscData['channelOwnerName'], authorChannelName):
         add_spam(commentID, videoID)
       # Multi Criteria Tests
       else:
@@ -668,11 +681,8 @@ def check_against_filter(currentUser, miscData, filterMode, filterSubMode, comme
           add_spam(commentID, videoID)
         elif redCount >= 1 and sensitive == True:
           add_spam(commentID, videoID)
-
   else:
     pass
-
-
 
 ##########################################################################################
 ################################ DELETE COMMENTS #########################################
@@ -1920,6 +1930,9 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive
   for x in usernameBlackWords_Raw: usernameBlackWords.append(b64decode(x).decode(utf_16))
   g = b64decode(spamGenEmoji_Raw).decode(utf_16)
 
+  # General Settings
+  unicodeCategoriesStrip = ["Mn", "Cc", "Cf", "Cs", "Co", "Cn"] # Categories of unicode characters to strip during normalization
+
   # Prepare General Filters
   spamGenEmojiSet = make_char_set(g)
   #usernameBlackCharsSet = make_char_set(usernameBlackChars)
@@ -1941,7 +1954,6 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive
   compiledRegex = re.compile(f"({regexTest1}|{regexTest2}|{regexTest3})")
 
   # Type 2 Spammer Criteria
-  
   blackAdWords_Raw = [b'V`yb#YanfTAaHVTW@&5', b'Z*XO9AZ>XdaB^>EX>0', b'b7f^9ZFwMYa&Km7Yy', b'V`yb#YanfTAa-eFWp4', b'V`yb#YanoPZ)Rz1', b'V`yb#Yan)MWMyv', b'bYXBHZ*CxMc>', b'Z*CxMc_46UV{~<LWd']
   redAdWords_Raw = [b'W_4q0', b'b7gn', b'WNBk-', b'WFcc~', b'W-4QA', b'W-2OUYX', b'Zgpg3', b'b1HZ', b'F*qv', b'aBp&M']
   yellowAdWords_Raw = [b'Y;SgD', b'Vr5}<bZKUFYy', b'VsB)5', b'XK8Y5a{', b'O~a&QV`yb=', b'Xk}@`pJf', b'Xm4}']
@@ -2036,6 +2048,7 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive
     'languages': languages,
     'sensitive': sensitive,
     'sensitiveDomainRegex': sensitiveDomainRegex,
+    'unicodeCategoriesStrip': unicodeCategoriesStrip
     }
   return filterSettings, None
 
