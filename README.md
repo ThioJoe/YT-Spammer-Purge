@@ -18,7 +18,11 @@
   * **Scan Comment Text**: (Same 3 options as above)
   * **Scan Usernames and Comment Text** simultaneously: (Same 3 options as above)
   * **ASCII Mode**: Scan Usernames for non-ASCII special characters (three different sensitivities)
-* Scan comments on a **single video**, up to your **most recent 5 videos** or across your **whole channel**  
+* 4 Different Scanning Modes
+  * Scan a **single video**
+  * Scan **Recent Videos** (Up to 5)
+  * Scan recent comments across **entire channel** (all videos)
+  * *Experimental*: Scan a **community post**
 * Automatic deletion of all found comments (after confirmation), as well as the option to ban them
 * Options to instead Report spam comments or 'Hold For Review'
 * Ability to create config file to skip pre-set options
