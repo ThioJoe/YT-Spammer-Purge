@@ -147,7 +147,7 @@ def print_exception_reason(reason):
 
 # First prepared comments into segments of 50 to be submitted to API simultaneously
 # Then uses print_prepared_comments() to print / log the comments
-def print_comments(scanVideoID_localprint, comments, logMode):
+def print_comments(scanVideoID_localprint, comments, logMode, scanMode):
   j = 0 # Counting index when going through comments all comment segments
   groupSize = 2500 # Number of comments to process per iteration
 
@@ -155,11 +155,11 @@ def print_comments(scanVideoID_localprint, comments, logMode):
     remainder = len(comments) % groupSize
     numDivisions = int((len(comments)-remainder)/groupSize)
     for i in range(numDivisions):
-      j = print_prepared_comments(scanVideoID_localprint,comments[i*groupSize:i*groupSize+groupSize], j, logMode)
+      j = print_prepared_comments(scanVideoID_localprint,comments[i*groupSize:i*groupSize+groupSize], j, logMode, scanMode)
     if remainder > 0:
-      j = print_prepared_comments(scanVideoID_localprint,comments[numDivisions*groupSize:len(comments)],j, logMode)
+      j = print_prepared_comments(scanVideoID_localprint,comments[numDivisions*groupSize:len(comments)],j, logMode, scanMode)
   else:
-    j = print_prepared_comments(scanVideoID_localprint,comments, j, logMode)
+    j = print_prepared_comments(scanVideoID_localprint,comments, j, logMode, scanMode)
 
   # Print Sample Match List
   valuesPreparedToWrite = ""
@@ -177,7 +177,7 @@ def print_comments(scanVideoID_localprint, comments, logMode):
   return None
 
 # Uses comments.list YouTube API Request to get text and author of specific set of comments, based on comment ID
-def print_prepared_comments(scanVideoID_localprep, comments, j, logMode):
+def print_prepared_comments(scanVideoID_localprep, comments, j, logMode, scanMode):
 
   # Prints author and comment text for each comment
   i = 0 # Index when going through comments
@@ -201,13 +201,19 @@ def print_prepared_comments(scanVideoID_localprep, comments, j, logMode):
     if author_id_local not in matchSamplesDict.keys():
       add_sample(author_id_local, author, text)
 
+    # Build comment direct link
+    if scanMode == "communityPost":
+      directLink = "https://www.youtube.com/post/" + videoID + "?lc=" + comment_id_local
+    else:
+      directLink = "https://www.youtube.com/watch?v=" + videoID + "&lc=" + comment_id_local
+
     # Prints comment info to console
     print(str(j+1) + f". {F.LIGHTCYAN_EX}" + author + f"{S.R}:  {F.YELLOW}" + text + f"{S.R}")
     print("—————————————————————————————————————————————————————————————————————————————————————————————")
     if scanVideoID_localprep is None:  # Only print video title if searching entire channel
       title = get_video_title(videoID) # Get Video Title
       print("     > Video: " + title)
-    print("     > Direct Link: " + "https://www.youtube.com/watch?v=" + videoID + "&lc=" + comment_id_local)
+    print("     > Direct Link: " + directLink)
     print(f"     > Author Channel ID: {F.LIGHTBLUE_EX}" + author_id_local + f"{S.R}")
     print("=============================================================================================\n")
 
@@ -229,7 +235,7 @@ def print_prepared_comments(scanVideoID_localprep, comments, j, logMode):
         + "---------------------------------------------------------------------------------------------\\line " + "\n"
         # Rest of Comment Info
         + titleInfoLine
-        + "     > Direct Link: " + "https://www.youtube.com/watch?v=" + videoID + "&lc=" + comment_id_local + "\\line "+ "\n"
+        + "     > Direct Link: " + directLink + "\\line "+ "\n"
         + "     > Author Channel ID: \cf6" + author_id_local + r"\cf1 \line "+ "\n"
         + "=============================================================================================\\line\\line\\line" + "\n\n\n"
       )
@@ -2140,7 +2146,7 @@ def main():
       scanMode = input("Choice (1-7): ")
 
     # Set scanMode Variable Names
-    validModeValues = ['1', '2', '3', '4', '5', '6', '7', 'chosenvideos', 'recentvideos', 'entirechannel', 'communityPost']
+    validModeValues = ['1', '2', '3', '4', '5', '6', '7', 'chosenvideos', 'recentvideos', 'entirechannel', 'communitypost']
     if scanMode in validModeValues:
       validMode = True
       if scanMode == "1" or scanMode == "chosenvideos":
@@ -2149,7 +2155,7 @@ def main():
         scanMode = "recentVideos"
       elif scanMode == "3" or scanMode == "entirechannel":
         scanMode = "entireChannel"
-      elif scanMode == "4" or scanMode == "communityPost":
+      elif scanMode == "4" or scanMode == "communitypost":
         scanMode = "communityPost"
       elif scanMode == "5":
         scanMode = "makeConfig"
@@ -2608,7 +2614,7 @@ def main():
   if scanMode == "communityPost":
     scanVideoID = communityPostID
   print("\n\nAll Matched Comments: \n")
-  print_comments(scanVideoID, list(matchedCommentsDict.keys()), logMode)
+  print_comments(scanVideoID, list(matchedCommentsDict.keys()), logMode, scanMode)
   print(f"\n{F.WHITE}{B.RED} NOTE: {S.R} Check that all comments listed above are indeed spam.")
   print()
 
