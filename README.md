@@ -1,5 +1,5 @@
 <h1 align="center">
-<img src="https://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/icon.png" alt="Icon"</img>
+<img src="https://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/icon.png" alt="Icon" width="120" height="120" </img>
 <br>
 YouTube Spammer Purge
 <br>
