@@ -35,7 +35,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.3.1"
+version = "2.4.0"
 configVersion = 11
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -2321,9 +2321,8 @@ def main():
   elif scanMode == 'communityPost':
     print("NOTES: This mode is experimental, and not as polished as other features. Expect some janky-ness.")
     print("   > It is also much slower to retrieve comments, because it does not use the API")
-    print("   > You should only scan your own community posts, or things might not work right")
-    print("Input the ID of the communit post:")
-    communityPostID = input("\nEnter ID: ")
+    print(f"   > You should only scan {F.YELLOW}your own{S.R} community posts, or things might not work right")
+    communityPostID = input("\nEnter the ID of the community post: ")
 
     validInteger = False
     if config: validConfigSetting = True
