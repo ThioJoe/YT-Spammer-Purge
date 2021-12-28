@@ -1,6 +1,6 @@
 # YouTube Spammer Purge
 
-**What Is This?** - Allows you to filter and search for spammer comments on your channel and other's channel(s) in many different ways AND delete /report them all at once (see features below).
+**What Is This?** - Allows you to filter and search for spammer comments on your channel and other's channel(s) in many different ways AND delete/report them all at once (see features below).
 
 **How to Download:** Click the "[Releases](https://github.com/ThioJoe/YouTube-Spammer-Purge/releases)" link on the right, then on the latest release, under 'Assets' click to download "YouTubeSpammerPurge.exe". NOTE: You may get a warning - See "[Download & Windows Warning](#download--windows-warning)" section below for details.
 
