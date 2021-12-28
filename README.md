@@ -65,15 +65,15 @@ If you feel sketched out about giving the app the required high level permission
 ## Screenshots
 
 <p align="center">Opening Menu:</p>
-<p align="center"><img width="624" alt="Opening Menu" src="https://user-images.githubusercontent.com/12518330/146690133-208df9b3-61ba-4b40-bf26-a88708b15f2d.png"></p>
+<p align="center"><img width="675" alt="Opening Menu" src="https://user-images.githubusercontent.com/93459510/147557851-6d517280-6e20-4dfd-ab78-1a2357f710a7.png"></p>
 <p align="center">Filter Mode Selection:</p>
-<p align="center"><img width="770" alt="Filter Mode Selection" src="https://user-images.githubusercontent.com/12518330/146690135-9d05e95a-900e-4c76-9e3c-f3573fa7e8ff.png"></p>
+<p align="center"><img width="675" alt="Filter Mode Selection" src="https://user-images.githubusercontent.com/93459510/147558339-28dc9fec-a51b-48be-a1bb-4f8b9e6cb3f6.png"></p>
 <p align="center">Scanning (Auto Smart Mode):</p>
-<p align="center"><img width="794" alt="Scanning" src="https://user-images.githubusercontent.com/12518330/146690142-b7abda6f-90bd-4681-9497-46378dcb3d9f.png"></p>
+<p align="center"><img width="675" alt="Scanning" src="https://user-images.githubusercontent.com/93459510/147558617-b097e342-40bb-48df-ab59-d6a985a2322a.png"></p>
 <p align="center">Matched Comments List:</p>
-<p align="center"><img width="794" alt="Matched Comments List" src="https://user-images.githubusercontent.com/12518330/146690145-e7ca5b32-8213-4075-92d6-0ca3f4cc8d4e.png"></p>
+<p align="center"><img width="675" alt="Matched Comments List" src="https://user-images.githubusercontent.com/93459510/147558790-881b4871-e3de-43fe-be02-2fce6a03304d.png"></p>
 <p align="center">Match Samples and Deletion Menu:</p>
-<p align="center"><img width="794" alt="Match Samples and Deletion Menu" src="https://user-images.githubusercontent.com/12518330/146690147-e19d8666-68d1-45db-aa13-0e56b68ce7b4.png"></p>
+<p align="center"><img width="738" alt="Match Samples and Deletion Menu" src="https://user-images.githubusercontent.com/93459510/147559013-7b1f59c7-4433-4b19-8e2e-7988d5d29ee5.png"></p>
 
 ## Installation
 
