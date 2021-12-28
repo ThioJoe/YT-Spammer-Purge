@@ -1,4 +1,5 @@
-# Automatic Installation (Supports Ubuntu/Debian-based, Arch/Arch-based, and OpenSuse Distributions)
+# Automatic Installation
+- (Supports Ubuntu/Debian-based, Arch/Arch-based, and CentOS Distributions)
 1. Download [install_full.sh](https://raw.githubusercontent.com/ThioJoe/YouTube-Spammer-Purge/main/install_full.sh)
 	* This script will install dependencies, and a copy of [YouTube-Spammer-Purge](https://github.com/ThioJoe/YouTube-Spammer-Purge/).
 	* Run: `curl https://raw.githubusercontent.com/ThioJoe/YouTube-Spammer-Purge/main/install_full.sh -o install_full.sh`
@@ -23,7 +24,8 @@
 
 6.  Install dependencies. Run:  
 	* `pip3 install -r requirements.txt`
-
+7. Install the tkinter library. Run:
+	* `sudo apt-get install python3-tk`
 # Running The YouTube Spammer Purge application
 1. Run the script: 
 	* `python3 YouTubeSpammerPurge.py` (usually case sensitive, you can just rename it)
