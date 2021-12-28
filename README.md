@@ -1,4 +1,10 @@
-# YouTube Spammer Purge
+<h1 align="center">
+<img src="https://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/icon.png" alt="Icon"</img>
+<br>
+YouTube Spammer Purge
+<br>
+</h1>
+
 
 **What Is This?** - Allows you to filter and search for spammer comments on your channel and other's channel(s) in many different ways AND delete/report them all at once (see features below).
 
