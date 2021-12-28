@@ -35,7 +35,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.4.0"
+version = "2.4.2"
 configVersion = 11
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -2355,7 +2355,6 @@ def main():
     confirm = False
     while confirm == False:
       communityPostInput = input("\nEnter the ID or link of the community post: ")
-
       # Validate post ID or link, get additional info about owner, and useable link
       isValid, communityPostID, postURL, postOwnerID, postOwnerUsername = validate_post_id(communityPostInput)
       if isValid == True:
@@ -2366,28 +2365,34 @@ def main():
         confirm = choice("Continue?")
       else:
         print("Problem interpreting the post information, please check the link or ID.")
-
     miscData['channelOwnerID'] = postOwnerID
     miscData['channelOwnerName'] = postOwnerUsername 
 
-    # Checking config for max comments, or get from user input
-    validInteger = False
-    if config: validConfigSetting = True
-    while validInteger == False:
+    # Checking config for max comments in config
+    if config and config['max_comments'] != 'ask':
+      validInteger = False 
       try:
-        if validConfigSetting == True and config and config['max_comments'] != 'ask':
-          maxScanNumber = int(config['max_comments'])
-        else:
-          maxScanNumber = int(input(f"\nEnter the maximum {F.YELLOW}number of comments{S.R} to scan: "))
+        maxScanNumber = int(config['max_comments'])
         if maxScanNumber > 0:
-          validInteger = True # If it gets here, it's an integer, otherwise goes to exception
+          validInteger = True
         else:
-          print("\nInvalid Input! Number must be greater than zero.")
-          validConfigSetting = False
+          pass
       except:
-        print("\nInvalid Input! - Must be a whole number.")
-        validConfigSetting = False
-  
+        pass
+
+      if validInteger == False:
+        print("\nInvalid max_comments setting in config! Number must a whole number be greater than zero.")
+      while validInteger == False:
+        maxScanInput = input(f"\nEnter the maximum {F.YELLOW}number of comments{S.R} to scan: ")
+        try:
+          maxScanNumber = int(maxScanInput)
+          if maxScanNumber > 0:
+            validInteger = True # If it gets here, it's an integer, otherwise goes to exception
+          else:
+            print("\nInvalid Input! Number must a whole number be greater than zero.")
+        except:
+          print("\nInvalid Input! - Must be a whole number greater than zero.")
+      
   # Create config file
   elif scanMode == "makeConfig":
     create_config_file()

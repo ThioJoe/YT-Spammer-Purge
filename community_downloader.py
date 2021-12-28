@@ -151,9 +151,9 @@ def main(communityPostID=None, limit=1000, sort=SORT_BY_RECENT, language=None):
         if not communityPostID:
             raise ValueError('you need to specify a Youtube ID')
 
-        print('Loading Youtube comments for post:', communityPostID)
+        print('\nLoading Youtube comments for post:', communityPostID)
         count = 0
-        sys.stdout.write('Loaded %d comment(s)\r' % count)
+        sys.stdout.write(' Loaded %d comment(s)\r' % count)
         sys.stdout.flush()
         start_time = time.time()
 
@@ -167,7 +167,7 @@ def main(communityPostID=None, limit=1000, sort=SORT_BY_RECENT, language=None):
 
             #comment_json = json.dumps(comment, ensure_ascii=False)
             count += 1
-            sys.stdout.write('Downloaded %d comment(s)\r' % count)
+            sys.stdout.write(' Loaded %d comment(s)\r' % count)
             sys.stdout.flush()
             if limit and count >= limit:
                 break
