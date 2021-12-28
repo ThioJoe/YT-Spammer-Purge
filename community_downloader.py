@@ -151,9 +151,9 @@ def main(communityPostID=None, limit=1000, sort=SORT_BY_RECENT, language=None):
         if not communityPostID:
             raise ValueError('you need to specify a Youtube ID')
 
-        print('Downloading Youtube comments for post:', communityPostID)
+        print('Loading Youtube comments for post:', communityPostID)
         count = 0
-        sys.stdout.write('Downloaded %d comment(s)\r' % count)
+        sys.stdout.write('Loaded %d comment(s)\r' % count)
         sys.stdout.flush()
         start_time = time.time()
 
