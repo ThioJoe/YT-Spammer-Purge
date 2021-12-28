@@ -61,6 +61,9 @@ import rtfunicode
 from colorama import init, Fore as F, Back as B, Style as S
 from confusables import confusable_regex, normalize
 
+# Local Non Standard Modules
+from community_downloader import main as get_community_comments #Args = post's ID, comment limit
+
 # Google Authentication Modules
 from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
@@ -144,7 +147,7 @@ def print_exception_reason(reason):
 
 # First prepared comments into segments of 50 to be submitted to API simultaneously
 # Then uses print_prepared_comments() to print / log the comments
-def print_comments(scanVideoID_localprint, comments, logMode):
+def print_comments(scanVideoID_localprint, comments, logMode, scanMode):
   j = 0 # Counting index when going through comments all comment segments
   groupSize = 2500 # Number of comments to process per iteration
 
@@ -152,11 +155,11 @@ def print_comments(scanVideoID_localprint, comments, logMode):
     remainder = len(comments) % groupSize
     numDivisions = int((len(comments)-remainder)/groupSize)
     for i in range(numDivisions):
-      j = print_prepared_comments(scanVideoID_localprint,comments[i*groupSize:i*groupSize+groupSize], j, logMode)
+      j = print_prepared_comments(scanVideoID_localprint,comments[i*groupSize:i*groupSize+groupSize], j, logMode, scanMode)
     if remainder > 0:
-      j = print_prepared_comments(scanVideoID_localprint,comments[numDivisions*groupSize:len(comments)],j, logMode)
+      j = print_prepared_comments(scanVideoID_localprint,comments[numDivisions*groupSize:len(comments)],j, logMode, scanMode)
   else:
-    j = print_prepared_comments(scanVideoID_localprint,comments, j, logMode)
+    j = print_prepared_comments(scanVideoID_localprint,comments, j, logMode, scanMode)
 
   # Print Sample Match List
   valuesPreparedToWrite = ""
@@ -174,7 +177,7 @@ def print_comments(scanVideoID_localprint, comments, logMode):
   return None
 
 # Uses comments.list YouTube API Request to get text and author of specific set of comments, based on comment ID
-def print_prepared_comments(scanVideoID_localprep, comments, j, logMode):
+def print_prepared_comments(scanVideoID_localprep, comments, j, logMode, scanMode):
 
   # Prints author and comment text for each comment
   i = 0 # Index when going through comments
@@ -198,13 +201,19 @@ def print_prepared_comments(scanVideoID_localprep, comments, j, logMode):
     if author_id_local not in matchSamplesDict.keys():
       add_sample(author_id_local, author, text)
 
+    # Build comment direct link
+    if scanMode == "communityPost":
+      directLink = "https://www.youtube.com/post/" + videoID + "?lc=" + comment_id_local
+    else:
+      directLink = "https://www.youtube.com/watch?v=" + videoID + "&lc=" + comment_id_local
+
     # Prints comment info to console
     print(str(j+1) + f". {F.LIGHTCYAN_EX}" + author + f"{S.R}:  {F.YELLOW}" + text + f"{S.R}")
     print("—————————————————————————————————————————————————————————————————————————————————————————————")
     if scanVideoID_localprep is None:  # Only print video title if searching entire channel
       title = get_video_title(videoID) # Get Video Title
       print("     > Video: " + title)
-    print("     > Direct Link: " + "https://www.youtube.com/watch?v=" + videoID + "&lc=" + comment_id_local)
+    print("     > Direct Link: " + directLink)
     print(f"     > Author Channel ID: {F.LIGHTBLUE_EX}" + author_id_local + f"{S.R}")
     print("=============================================================================================\n")
 
@@ -226,7 +235,7 @@ def print_prepared_comments(scanVideoID_localprep, comments, j, logMode):
         + "---------------------------------------------------------------------------------------------\\line " + "\n"
         # Rest of Comment Info
         + titleInfoLine
-        + "     > Direct Link: " + "https://www.youtube.com/watch?v=" + videoID + "&lc=" + comment_id_local + "\\line "+ "\n"
+        + "     > Direct Link: " + directLink + "\\line "+ "\n"
         + "     > Author Channel ID: \cf6" + author_id_local + r"\cf1 \line "+ "\n"
         + "=============================================================================================\\line\\line\\line" + "\n\n\n"
       )
@@ -2114,10 +2123,11 @@ def main():
   print(f"      1. Scan a {F.LIGHTBLUE_EX}Specific video{S.R}")
   print(f"      2. Scan {F.LIGHTCYAN_EX}recent videos{S.R} for a channel")
   print(f"      3. Scan recent comments across your {F.LIGHTMAGENTA_EX}Entire Channel{S.R}")
+  print(f"      4. Scan a {F.LIGHTMAGENTA_EX}community post{S.R} (Experimental)")
   print(f"-------------------------------------- {F.LIGHTRED_EX}Other Options{S.R} -------------")
-  print(f"      4. Create your own config file to quickly run the program with pre-set settings")
-  print(f"      5. Recover deleted comments using log file")
-  print(f"      6. Check For Updates\n")
+  print(f"      5. Create your own config file to quickly run the program with pre-set settings")
+  print(f"      6. Recover deleted comments using log file")
+  print(f"      7. Check For Updates\n")
   
   # Check for updates silently
   
@@ -2133,10 +2143,10 @@ def main():
     if validConfigSetting == True and config and config['scan_mode'] != 'ask':
       scanMode = config['scan_mode']
     else:
-      scanMode = input("Choice (1-6): ")
+      scanMode = input("Choice (1-7): ")
 
     # Set scanMode Variable Names
-    validModeValues = ['1', '2', '3', '4', '5', '6', 'chosenvideos', 'recentvideos', 'entirechannel']
+    validModeValues = ['1', '2', '3', '4', '5', '6', '7', 'chosenvideos', 'recentvideos', 'entirechannel', 'communitypost']
     if scanMode in validModeValues:
       validMode = True
       if scanMode == "1" or scanMode == "chosenvideos":
@@ -2145,14 +2155,16 @@ def main():
         scanMode = "recentVideos"
       elif scanMode == "3" or scanMode == "entirechannel":
         scanMode = "entireChannel"
-      elif scanMode == "4":
-        scanMode = "makeConfig"
+      elif scanMode == "4" or scanMode == "communitypost":
+        scanMode = "communityPost"
       elif scanMode == "5":
-        scanMode = "recoverMode"
+        scanMode = "makeConfig"
       elif scanMode == "6":
+        scanMode = "recoverMode"
+      elif scanMode == "7":
         scanMode = "checkUpdates"
     else:
-      print(f"\nInvalid choice: {scanMode} - Enter either 1, 2, 3, 4, 5, or 6. ")
+      print(f"\nInvalid choice: {scanMode} - Enter either 1, 2, 3, 4, 5, 6, or 7. ")
       validConfigSetting = False
 
   # If chooses to scan single video - Validate Video ID, get title, and confirm with user
@@ -2306,6 +2318,33 @@ def main():
     miscData['channelOwnerID'] = currentUser[0]
     miscData['channelOwnerName'] = currentUser[1]
 
+  elif scanMode == 'communityPost':
+    print("NOTES: This mode is experimental, and not as polished as other features. Expect some janky-ness.")
+    print("   > It is also much slower to retrieve comments, because it does not use the API")
+    print("   > You should only scan your own community posts, or things might not work right")
+    print("Input the ID of the communit post:")
+    communityPostID = input("\nEnter ID: ")
+
+    validInteger = False
+    if config: validConfigSetting = True
+    while validInteger == False:
+      try:
+        if validConfigSetting == True and config and config['max_comments'] != 'ask':
+          maxScanNumber = int(config['max_comments'])
+        else:
+          maxScanNumber = int(input(f"Enter the maximum {F.YELLOW}number of comments{S.R} to scan: "))
+
+        if maxScanNumber > 0:
+          validInteger = True # If it gets here, it's an integer, otherwise goes to exception
+        else:
+          print("\nInvalid Input! Number must be greater than zero.")
+          validConfigSetting = False
+      except:
+        print("\nInvalid Input! - Must be a whole number.")
+        validConfigSetting = False
+
+    miscData['channelOwnerID'] = currentUser[0]
+    miscData['channelOwnerName'] = currentUser[1]
   
   # Create config file
   elif scanMode == "makeConfig":
@@ -2454,12 +2493,24 @@ def main():
       inputtedCommentTextFilter = filterSettings[0]
 
   ##################### START SCANNING #####################
-  try:
+
+  if scanMode == "communityPost":
+    def scan_community_post(communityPostID, limit):
+      allCommunityCommentsDict = get_community_comments(communityPostID=communityPostID, limit=limit)
+      for key, value in allCommunityCommentsDict.items():
+        commentID = key
+        authorChannelID = value['authorChannelID']
+        authorChannelName = value['authorName']
+        commentText = value['commentText']
+        check_against_filter(currentUser, miscData, filterMode=filterMode, filterSubMode=filterSubMode, commentID=commentID, videoID=communityPostID, authorChannelID=authorChannelID, parentAuthorChannelID=None, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, authorChannelName=authorChannelName, commentText=commentText, regexPattern=regexPattern)
+    scan_community_post(communityPostID, maxScanNumber)
+
+  else:
     # Goes to get comments for first page
     print("\n------------------------------------------------------------------------------")
     print("(Note: If the program appears to freeze, try right clicking within the window)\n")
     print("                          --- Scanning --- \n")
-    
+  
     def scan_video(youtube, miscData, currentUser, filterMode, filterSubMode, videoID, check_channel_id, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern, videoTitle=None, showTitle=False, i=1):
       nextPageToken = get_comments(youtube, miscData, currentUser, filterMode, filterSubMode, videoID, check_channel_id, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, regexPattern=regexPattern)
       if showTitle == True and len(videosToScan) > 0:
@@ -2486,291 +2537,272 @@ def main():
         scan_video(youtube, miscData, currentUser, filterMode, filterSubMode, videoID, check_channel_id, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern, videoTitle=videoTitle, showTitle=True, i=i)
         i += 1
     print_count_stats(final=True)  # Prints comment scan stats, finalizes
-  ##########################################################
-    bypass = False
-    if config and config['enable_logging'] != 'ask':
-      logSetting = config['enable_logging']
-      if logSetting == True:
-        logMode = True
-        bypass = True
-      elif logSetting == False:
-        logMode = False
-        bypass = True
-      elif logSetting == "ask":
-        bypass = False
-      else:
-        bypass = False
-        print("Error Code C-2: Invalid value for 'enable_logging' in config file:  " + logSetting)
-
-    # Counts number of found spam comments and prints list
-    spam_count = len(matchedCommentsDict)
-
-    if spam_count == 0: # If no spam comments found, exits
-      print(f"{B.RED}{F.BLACK}No matched comments or users found!{S.R}\n")
-      print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
-      if bypass == False:
-        input("\nPress Enter to exit...")
-        sys.exit()
-      elif bypass == True:
-        print("Exiting in 5 seconds...")
-        time.sleep(5)
-        sys.exit()
-    print(f"Number of Matched Comments Found: {B.RED}{F.WHITE} " + str(len(matchedCommentsDict)) + f" {S.R}")
-
-    if bypass == False:
-      # Asks user if they want to save list of spam comments to a file
-      print(f"\nSpam comments ready to display. Also {F.LIGHTGREEN_EX}save a log file?{S.R} {B.GREEN}{F.BLACK} Highly Recommended! {S.R}")
-      print(f"        (It even allows you to {F.LIGHTGREEN_EX}restore{S.R} deleted comments later)")
-      logMode = choice(f"Save Log File (Recommended)?")
-
-    if logMode == True:
-      global logFileName
-      fileName = "Spam_Log_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S" + ".rtf")
-      if config and config['log_path'] and config['log_path'] != "default":
-          logFileName = os.path.normpath(config['log_path'] + "/" + fileName)
-          print(f"Log file will be located at {F.YELLOW}" + logFileName + f"{S.R}\n")
-      else:
-          logFileName = fileName
-          print(f"Log file will be called {F.YELLOW}" + logFileName + f"{S.R}\n")
-      
-      if bypass == False:
-        input(f"Press {F.YELLOW}Enter{S.R} to display comments...")
-
-      # Write heading info to log file
-      write_rtf(logFileName, firstWrite=True)
-      write_rtf(logFileName, "\\par----------- YouTube Spammer Purge Log File -----------\\line\\line " + "\n\n")
-      if filterMode == "ID":
-        write_rtf(logFileName, "Channel IDs of spammer searched: " + ", ".join(inputtedSpammerChannelID) + "\\line\\line " + "\n\n")
-      elif filterMode == "Username":
-        write_rtf(logFileName, "Characters searched in Usernames: " + make_rtf_compatible(", ".join(inputtedUsernameFilter)) + "\\line\\line " + "\n\n")
-      elif filterMode == "Text":
-        write_rtf(logFileName, "Characters searched in Comment Text: " + make_rtf_compatible(", ".join(inputtedCommentTextFilter)) + "\\line\\line " + "\n\n")
-      elif filterMode == "NameAndText":
-        write_rtf(logFileName, "Characters searched in Usernames and Comment Text: " + make_rtf_compatible(", ".join(filterSettings[1])) + "\\line\\line " + "\n\n")
-      elif filterMode == "AutoASCII":
-        write_rtf(logFileName, "Automatic Search Mode: " + make_rtf_compatible(str(filterSettings[1])) + "\\line\\line " + "\n\n")
-      elif filterMode == "AutoSmart":
-        write_rtf(logFileName, "Automatic Search Mode: Smart Mode \\line\\line " + "\n\n")
-      elif filterMode == "SensitiveSmart":
-        write_rtf(logFileName, "Automatic Search Mode: Sensitive Smart \\line\\line " + "\n\n")
-      write_rtf(logFileName, "Number of Matched Comments Found: " + str(len(matchedCommentsDict)) + "\\line\\line \n\n")
-      write_rtf(logFileName, f"IDs of Matched Comments: \n[ {', '.join(matchedCommentsDict)} ] \\line\\line\\line \n\n\n")
+  
+##########################################################
+  bypass = False
+  if config and config['enable_logging'] != 'ask':
+    logSetting = config['enable_logging']
+    if logSetting == True:
+      logMode = True
+      bypass = True
+    elif logSetting == False:
+      logMode = False
+      bypass = True
+    elif logSetting == "ask":
+      bypass = False
     else:
-      print("Continuing without logging... \n")
+      bypass = False
+      print("Error Code C-2: Invalid value for 'enable_logging' in config file:  " + logSetting)
 
-    # Prints list of spam comments
-    print("\n\nAll Matched Comments: \n")
-    print_comments(scanVideoID, list(matchedCommentsDict.keys()), logMode)
-    print(f"\n{F.WHITE}{B.RED} NOTE: {S.R} Check that all comments listed above are indeed spam.")
-    print()
+  # Counts number of found spam comments and prints list
+  spam_count = len(matchedCommentsDict)
 
-    ### ---------------- Decide whether to skip deletion ----------------
-    # Defaults
-    deletionEnabled = False
-    deletionMode = None # Should be changed later, but if missed it will default to heldForReview
-    confirmDelete = None # If None, will later cause user to be asked to delete
-    if moderator_mode == False:
-      filterModesAllowedforNonOwners = ["AutoSmart"]
-    elif moderator_mode == True:
-      filterModesAllowedforNonOwners = ["AutoSmart", "SensitiveSmart", 'ID']
-    
-    # If user isn't channel owner and not using allowed filter mode, skip deletion
-    if userNotChannelOwner == True and filterMode not in filterModesAllowedforNonOwners:
-      confirmDelete = False
-      deletionEnabled = False
-    elif not config:
-      deletionEnabled = "Allowed" # If no config, no need to use all the below, skip right to prompt how to process
-
-    # Test skip_deletion preference - If passes both, will either delete or ask user to delete
-    elif config['skip_deletion'] == True:
-      sys.exit()
-    elif config['skip_deletion'] != False:
-      print("Error Code C-3: Invalid value for 'skip_deletion' in config file. Must be 'True' or 'False':  " + str(config['skip_deletion']))
+  if spam_count == 0: # If no spam comments found, exits
+    print(f"{B.RED}{F.BLACK}No matched comments or users found!{S.R}\n")
+    print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
+    if bypass == False:
       input("\nPress Enter to exit...")
       sys.exit()
-    ### ----------------------------------------------------------------  
+    elif bypass == True:
+      print("Exiting in 5 seconds...")
+      time.sleep(5)
+      sys.exit()
+  print(f"Number of Matched Comments Found: {B.RED}{F.WHITE} " + str(len(matchedCommentsDict)) + f" {S.R}")
 
-    ### ------------- Decide whether to ask before deleting -------------
-    # Using config to determine deletion type, block invalid settings
-    elif config['delete_without_reviewing'] == False:
-      deletionEnabled = "Allowed"
-      if config['removal_type'] == "reportspam" or userNotChannelOwner == True:
+  if bypass == False:
+    # Asks user if they want to save list of spam comments to a file
+    print(f"\nSpam comments ready to display. Also {F.LIGHTGREEN_EX}save a log file?{S.R} {B.GREEN}{F.BLACK} Highly Recommended! {S.R}")
+    print(f"        (It even allows you to {F.LIGHTGREEN_EX}restore{S.R} deleted comments later)")
+    logMode = choice(f"Save Log File (Recommended)?")
+
+  if logMode == True:
+    global logFileName
+    fileName = "Spam_Log_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S" + ".rtf")
+    if config and config['log_path'] and config['log_path'] != "default":
+        logFileName = os.path.normpath(config['log_path'] + "/" + fileName)
+        print(f"Log file will be located at {F.YELLOW}" + logFileName + f"{S.R}\n")
+    else:
+        logFileName = fileName
+        print(f"Log file will be called {F.YELLOW}" + logFileName + f"{S.R}\n")
+    
+    if bypass == False:
+      input(f"Press {F.YELLOW}Enter{S.R} to display comments...")
+
+    # Write heading info to log file
+    write_rtf(logFileName, firstWrite=True)
+    write_rtf(logFileName, "\\par----------- YouTube Spammer Purge Log File -----------\\line\\line " + "\n\n")
+    if filterMode == "ID":
+      write_rtf(logFileName, "Channel IDs of spammer searched: " + ", ".join(inputtedSpammerChannelID) + "\\line\\line " + "\n\n")
+    elif filterMode == "Username":
+      write_rtf(logFileName, "Characters searched in Usernames: " + make_rtf_compatible(", ".join(inputtedUsernameFilter)) + "\\line\\line " + "\n\n")
+    elif filterMode == "Text":
+      write_rtf(logFileName, "Characters searched in Comment Text: " + make_rtf_compatible(", ".join(inputtedCommentTextFilter)) + "\\line\\line " + "\n\n")
+    elif filterMode == "NameAndText":
+      write_rtf(logFileName, "Characters searched in Usernames and Comment Text: " + make_rtf_compatible(", ".join(filterSettings[1])) + "\\line\\line " + "\n\n")
+    elif filterMode == "AutoASCII":
+      write_rtf(logFileName, "Automatic Search Mode: " + make_rtf_compatible(str(filterSettings[1])) + "\\line\\line " + "\n\n")
+    elif filterMode == "AutoSmart":
+      write_rtf(logFileName, "Automatic Search Mode: Smart Mode \\line\\line " + "\n\n")
+    elif filterMode == "SensitiveSmart":
+      write_rtf(logFileName, "Automatic Search Mode: Sensitive Smart \\line\\line " + "\n\n")
+    write_rtf(logFileName, "Number of Matched Comments Found: " + str(len(matchedCommentsDict)) + "\\line\\line \n\n")
+    write_rtf(logFileName, f"IDs of Matched Comments: \n[ {', '.join(matchedCommentsDict)} ] \\line\\line\\line \n\n\n")
+  else:
+    print("Continuing without logging... \n")
+
+  # Prints list of spam comments
+  if scanMode == "communityPost":
+    scanVideoID = communityPostID
+  print("\n\nAll Matched Comments: \n")
+  print_comments(scanVideoID, list(matchedCommentsDict.keys()), logMode, scanMode)
+  print(f"\n{F.WHITE}{B.RED} NOTE: {S.R} Check that all comments listed above are indeed spam.")
+  print()
+
+  ### ---------------- Decide whether to skip deletion ----------------
+  # Defaults
+  deletionEnabled = False
+  deletionMode = None # Should be changed later, but if missed it will default to heldForReview
+  confirmDelete = None # If None, will later cause user to be asked to delete
+  if moderator_mode == False:
+    filterModesAllowedforNonOwners = ["AutoSmart"]
+  elif moderator_mode == True:
+    filterModesAllowedforNonOwners = ["AutoSmart", "SensitiveSmart", 'ID']
+  
+  # If user isn't channel owner and not using allowed filter mode, skip deletion
+  if userNotChannelOwner == True and filterMode not in filterModesAllowedforNonOwners:
+    confirmDelete = False
+    deletionEnabled = False
+  elif not config:
+    deletionEnabled = "Allowed" # If no config, no need to use all the below, skip right to prompt how to process
+
+  # Test skip_deletion preference - If passes both, will either delete or ask user to delete
+  elif config['skip_deletion'] == True:
+    sys.exit()
+  elif config['skip_deletion'] != False:
+    print("Error Code C-3: Invalid value for 'skip_deletion' in config file. Must be 'True' or 'False':  " + str(config['skip_deletion']))
+    input("\nPress Enter to exit...")
+    sys.exit()
+  ### ----------------------------------------------------------------  
+
+  ### ------------- Decide whether to ask before deleting -------------
+  # Using config to determine deletion type, block invalid settings
+  elif config['delete_without_reviewing'] == False:
+    deletionEnabled = "Allowed"
+    if config['removal_type'] == "reportspam" or userNotChannelOwner == True:
+      deletionMode = "reportSpam"
+    elif config['removal_type'] == "heldforreview":
+      deletionMode = "heldForReview"
+    elif config['removal_type'] == "rejected":
+      deletionMode = "rejected"
+    else:
+      print("Error Code C-4: Invalid value for 'removal_type' in config file. Must be 'heldforreview', 'rejected', or 'reportSpam':  " + config['removal_type'])
+      input("\nPress Enter to exit...")
+      sys.exit()
+
+  # User wants to automatically delete with no user intervention
+  elif config['delete_without_reviewing'] == True:
+    if userNotChannelOwner == True:
+        confirmDelete = "REPORT"
         deletionMode = "reportSpam"
-      elif config['removal_type'] == "heldforreview":
-        deletionMode = "heldForReview"
-      elif config['removal_type'] == "rejected":
-        deletionMode = "rejected"
-      else:
-        print("Error Code C-4: Invalid value for 'removal_type' in config file. Must be 'heldforreview', 'rejected', or 'reportSpam':  " + config['removal_type'])
-        input("\nPress Enter to exit...")
-        sys.exit()
-
-    # User wants to automatically delete with no user intervention
-    elif config['delete_without_reviewing'] == True:
-      if userNotChannelOwner == True:
-          confirmDelete = "REPORT"
+        deletionEnabled = True
+    elif config['removal_type'] == "reportspam" or config['removal_type'] == "heldforreview":
+      if filterMode == "AutoSmart" or filterMode == "ID":
+        deletionEnabled = True
+        if config['removal_type'] == "reportspam":
           deletionMode = "reportSpam"
-          deletionEnabled = True
-      elif config['removal_type'] == "reportspam" or config['removal_type'] == "heldforreview":
-        if filterMode == "AutoSmart" or filterMode == "ID":
-          deletionEnabled = True
-          if config['removal_type'] == "reportspam":
-            deletionMode = "reportSpam"
-            confirmDelete = "REPORT"
-          elif config['removal_type'] == "heldforreview":
-            deletionMode = "heldForReview"
-            confirmDelete = "DELETE"
-        else:
-          # If non-permitted filter mode with delete_without_reviewing, will allow deletion, but now warns and requires usual confirmation prompt
-          print("Error Code C-5: 'delete_without_reviewing' is set to 'True' in config file. So only filter mode 'AutoSmart' allowed..\n")
-          print("Next time use one of those filter modes, or set 'delete_without_reviewing' to 'False'.")
-          print("    > For this run, you will be asked to confirm removal of spam comments.")
-          input("\nPress Enter to continue...")
-          confirmDelete = None
-          deletionEnabled = "Allowed"
+          confirmDelete = "REPORT"
+        elif config['removal_type'] == "heldforreview":
+          deletionMode = "heldForReview"
+          confirmDelete = "DELETE"
       else:
-        print("Error Code C-6: 'delete_without_reviewing' is set to 'True' in config file. So 'removal_type' must be either 'heldForReview' or 'reportSpam'.\n")
-        print("Next time, either set one of those removal types, or set 'delete_without_reviewing' to 'False'.")
+        # If non-permitted filter mode with delete_without_reviewing, will allow deletion, but now warns and requires usual confirmation prompt
+        print("Error Code C-5: 'delete_without_reviewing' is set to 'True' in config file. So only filter mode 'AutoSmart' allowed..\n")
+        print("Next time use one of those filter modes, or set 'delete_without_reviewing' to 'False'.")
         print("    > For this run, you will be asked to confirm removal of spam comments.")
         input("\nPress Enter to continue...")
         confirmDelete = None
         deletionEnabled = "Allowed"
     else:
-      # Catch Invalid value    
-      print("Error C-7: Invalid value for 'delete_without_reviewing' in config file. Must be 'True' or 'False':  " + config['delete_without_reviewing'])
-      input("\nPress Enter to exit...")
-      sys.exit()
-
-    
-    # Check if deletion is enabled, otherwise block and quit
-    if deletionEnabled != "Allowed" and deletionEnabled != True:
-        print("\nThe deletion functionality was not enabled. Cannot delete or report comments.")
-        print("Possible Cause: You're scanning someone elses video with a non-supported filter mode.\n")
-        print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
-        input("Press Enter to exit...")
-        sys.exit()
-
-
-    ### ---------------- Set Up How To Handle Comments  ----------------
-    # If not skipped by config, ask user what to do
-    if confirmDelete == None:
-      exclude = False
-      # Menu for deletion mode
-      while confirmDelete != "DELETE" and confirmDelete != "REPORT" and confirmDelete != "HOLD":
-        # Title
-        if exclude == False:
-          print(f"{F.YELLOW}How do you want to handle the matched comments above?{S.R}")
-        elif exclude == True:
-          print(f"{F.YELLOW}How do you want to handle the rest of the comments (not ones you {F.LIGHTGREEN_EX}excluded{F.YELLOW})?{S.R}")
-        if userNotChannelOwner == True and moderator_mode == False:
-          print(f"{F.GREEN}~~ Not Your Channel Mode: Only Reporting is Possible ~~{S.R}")
-        if userNotChannelOwner == True and moderator_mode == True:
-          print(f"{F.GREEN}~~ Moderator Mode: Reporting and Holding for Review is possible ~~{S.R}")
-
-        # Exclude
-        if exclude == False:
-          print(f" > To {F.LIGHTGREEN_EX}exclude certain authors{S.R}: Type \'{F.LIGHTGREEN_EX}exclude{S.R}\' followed by a list of the numbers {F.LIGHTMAGENTA_EX}in the sample list{S.R} next to those authors")
-          print("      > Example:  exclude 1, 12, 9")
-
-        # Delete Instructions
-        if exclude == False:
-          if userNotChannelOwner == False:
-            print(f" > To {F.LIGHTRED_EX}delete ALL of the above comments{S.R}: Type ' {F.LIGHTRED_EX}DELETE{S.R} ' exactly (in all caps), then hit Enter.")
-          if userNotChannelOwner == False or moderator_mode == True:
-            print(f" > To {F.LIGHTRED_EX}move ALL comments above to 'Held For Review' in YT Studio{S.R}: Type ' {F.LIGHTRED_EX}HOLD{S.R} ' exactly (in all caps), then hit Enter.")
-        elif exclude == True:
-          if userNotChannelOwner == False:
-            print(f" > To {F.LIGHTRED_EX}delete the rest of the comments{S.R}: Type ' {F.LIGHTRED_EX}DELETE{S.R} ' exactly (in all caps), then hit Enter.")
-          if userNotChannelOwner == False or moderator_mode == True:
-            print(f" > To {F.LIGHTRED_EX}move rest of comments above to 'Held For Review' in YT Studio{S.R}: Type ' {F.LIGHTRED_EX}HOLD{S.R} ' exactly (in all caps), then hit Enter.")
-        
-        # Report Instructions
-        print(f" > To {F.LIGHTCYAN_EX}just report the comments for spam{S.R}, type ' {F.LIGHTCYAN_EX}REPORT{S.R} '. (Can be done even if you're not the channel owner)")
-
-        confirmDelete = input("\nInput: ")
-        if confirmDelete == "DELETE" and userNotChannelOwner == False:
-          deletionEnabled = True
-          deletionMode = "rejected"
-        elif confirmDelete == "HOLD" and (userNotChannelOwner == False or moderator_mode == True):
-          deletionEnabled = True
-          deletionMode = "heldForReview"
-        elif confirmDelete == "REPORT":
-          deletionEnabled = True
-          deletionMode = "reportSpam" 
-        elif "exclude" in confirmDelete.lower():
-          excludedDict, rtfExclude = exclude_authors(confirmDelete)
-          exclude = True
-        else:
-          input(f"\nDeletion {F.YELLOW}CANCELLED{S.R} (Because no matching option entered). Press Enter to exit...")
-          sys.exit()
-
-    
-    # Set deletion mode friendly name
-    if deletionMode == "rejected":
-      deletionModeFriendlyName = "Removed"
-    elif deletionMode == "heldForReview":
-      deletionModeFriendlyName = "Moved to 'Held for Review' Section"
-    elif deletionMode == "reportSpam":
-      deletionModeFriendlyName = "Reported for spam"
-
-    # Set or choose ban mode, check if valid based on deletion mode
-    if (confirmDelete == "DELETE" or confirmDelete == "REPORT" or confirmDelete == "HOLD") and deletionEnabled == True:  
-      banChoice = False
-      if config and config['enable_ban'] != "ask":
-        if config['enable_ban'] == False:
-          pass
-        elif config['enable_ban'] == True:
-          print("Error Code C-8: 'enable_ban' is set to 'True' in config file. Only possible config options are 'ask' or 'False' when using config.\n")
-          input("Press Enter to continue...")
-        else:
-          print("Error Code C-9: 'enable_ban' is set to an invalid value in config file. Only possible config options are 'ask' or 'False' when using config.\n")
-          input("Press Enter to continue...")
-      elif deletionMode == "rejected":
-        banChoice = choice(f"Also {F.YELLOW}ban{S.R} the spammer(s) ?")
-
-      elif deletionMode == "heldForReview":
-        pass
-      elif deletionMode == "reportSpam":
-        pass
-      
-      ### ---------------- Reporting / Deletion Begins  ----------------
-      delete_found_comments(list(matchedCommentsDict), banChoice, deletionMode)
-      if deletionMode != "reportSpam":
-        check_deleted_comments(matchedCommentsDict)
-      if logMode == True:
-        write_rtf(logFileName, "\n\n \\line\\line Spammers Banned: " + str(banChoice)) # Write whether or not spammer is banned to log file
-        write_rtf(logFileName, "\n\n \\line\\line Action Taken on Comments: " + str(deletionModeFriendlyName) + "\n\n"+ "\\line\\line")
-        if exclude == True:
-          write_rtf(logFileName, str(rtfExclude))
-      input(f"\nProgram {F.LIGHTGREEN_EX}Complete{S.R}. Press Enter to Exit...")
-
-    elif config:
-        sys.exit()
-    else:
-      input(f"\nDeletion {F.LIGHTRED_EX}Cancelled{S.R}. Press Enter to exit...")
-      sys.exit()
-
-  # Catches exception errors and prints error info
-  # If possible transient error, tells user to try again
-  except HttpError as e:
-    traceback.print_exc()
-    print("------------------------------------------------")
-    print("Error Message: ")
-    print(e)
-    if e.status_code: # If error code is available, print it
-      print("\nError Info - Code A-2:")
-      print("    Status Code: "+ str(e.status_code))
-      if e.error_details[0]["reason"]: # If error reason is available, print it
-        reason = str(e.error_details[0]["reason"])
-        print_exception_reason(reason)
-      input("\n Press Enter to Exit...")
-    else:
-      print(f"{F.RED}Unknown Error - Code: X-2{S.R} occurred. If this keeps happening, consider posting a bug report on the GitHub issues page, and include the above error info.")
-      input("\n Press Enter to Exit...")
-  except SystemExit:
-    sys.exit()
+      print("Error Code C-6: 'delete_without_reviewing' is set to 'True' in config file. So 'removal_type' must be either 'heldForReview' or 'reportSpam'.\n")
+      print("Next time, either set one of those removal types, or set 'delete_without_reviewing' to 'False'.")
+      print("    > For this run, you will be asked to confirm removal of spam comments.")
+      input("\nPress Enter to continue...")
+      confirmDelete = None
+      deletionEnabled = "Allowed"
   else:
-    print("\nFinished Executing.")
+    # Catch Invalid value    
+    print("Error C-7: Invalid value for 'delete_without_reviewing' in config file. Must be 'True' or 'False':  " + config['delete_without_reviewing'])
+    input("\nPress Enter to exit...")
+    sys.exit()
+
+  
+  # Check if deletion is enabled, otherwise block and quit
+  if deletionEnabled != "Allowed" and deletionEnabled != True:
+      print("\nThe deletion functionality was not enabled. Cannot delete or report comments.")
+      print("Possible Cause: You're scanning someone elses video with a non-supported filter mode.\n")
+      print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
+      input("Press Enter to exit...")
+      sys.exit()
+
+
+  ### ---------------- Set Up How To Handle Comments  ----------------
+  # If not skipped by config, ask user what to do
+  if confirmDelete == None:
+    exclude = False
+    # Menu for deletion mode
+    while confirmDelete != "DELETE" and confirmDelete != "REPORT" and confirmDelete != "HOLD":
+      # Title
+      if exclude == False:
+        print(f"{F.YELLOW}How do you want to handle the matched comments above?{S.R}")
+      elif exclude == True:
+        print(f"{F.YELLOW}How do you want to handle the rest of the comments (not ones you {F.LIGHTGREEN_EX}excluded{F.YELLOW})?{S.R}")
+      if userNotChannelOwner == True and moderator_mode == False:
+        print(f"{F.GREEN}~~ Not Your Channel Mode: Only Reporting is Possible ~~{S.R}")
+      if userNotChannelOwner == True and moderator_mode == True:
+        print(f"{F.GREEN}~~ Moderator Mode: Reporting and Holding for Review is possible ~~{S.R}")
+
+      # Exclude
+      if exclude == False:
+        print(f" > To {F.LIGHTGREEN_EX}exclude certain authors{S.R}: Type \'{F.LIGHTGREEN_EX}exclude{S.R}\' followed by a list of the numbers {F.LIGHTMAGENTA_EX}in the sample list{S.R} next to those authors")
+        print("      > Example:  exclude 1, 12, 9")
+
+      # Delete Instructions
+      if exclude == False:
+        if userNotChannelOwner == False:
+          print(f" > To {F.LIGHTRED_EX}delete ALL of the above comments{S.R}: Type ' {F.LIGHTRED_EX}DELETE{S.R} ' exactly (in all caps), then hit Enter.")
+        if userNotChannelOwner == False or moderator_mode == True:
+          print(f" > To {F.LIGHTRED_EX}move ALL comments above to 'Held For Review' in YT Studio{S.R}: Type ' {F.LIGHTRED_EX}HOLD{S.R} ' exactly (in all caps), then hit Enter.")
+      elif exclude == True:
+        if userNotChannelOwner == False:
+          print(f" > To {F.LIGHTRED_EX}delete the rest of the comments{S.R}: Type ' {F.LIGHTRED_EX}DELETE{S.R} ' exactly (in all caps), then hit Enter.")
+        if userNotChannelOwner == False or moderator_mode == True:
+          print(f" > To {F.LIGHTRED_EX}move rest of comments above to 'Held For Review' in YT Studio{S.R}: Type ' {F.LIGHTRED_EX}HOLD{S.R} ' exactly (in all caps), then hit Enter.")
+      
+      # Report Instructions
+      print(f" > To {F.LIGHTCYAN_EX}just report the comments for spam{S.R}, type ' {F.LIGHTCYAN_EX}REPORT{S.R} '. (Can be done even if you're not the channel owner)")
+
+      confirmDelete = input("\nInput: ")
+      if confirmDelete == "DELETE" and userNotChannelOwner == False:
+        deletionEnabled = True
+        deletionMode = "rejected"
+      elif confirmDelete == "HOLD" and (userNotChannelOwner == False or moderator_mode == True):
+        deletionEnabled = True
+        deletionMode = "heldForReview"
+      elif confirmDelete == "REPORT":
+        deletionEnabled = True
+        deletionMode = "reportSpam" 
+      elif "exclude" in confirmDelete.lower():
+        excludedDict, rtfExclude = exclude_authors(confirmDelete)
+        exclude = True
+      else:
+        input(f"\nDeletion {F.YELLOW}CANCELLED{S.R} (Because no matching option entered). Press Enter to exit...")
+        sys.exit()
+
+  
+  # Set deletion mode friendly name
+  if deletionMode == "rejected":
+    deletionModeFriendlyName = "Removed"
+  elif deletionMode == "heldForReview":
+    deletionModeFriendlyName = "Moved to 'Held for Review' Section"
+  elif deletionMode == "reportSpam":
+    deletionModeFriendlyName = "Reported for spam"
+
+  # Set or choose ban mode, check if valid based on deletion mode
+  if (confirmDelete == "DELETE" or confirmDelete == "REPORT" or confirmDelete == "HOLD") and deletionEnabled == True:  
+    banChoice = False
+    if config and config['enable_ban'] != "ask":
+      if config['enable_ban'] == False:
+        pass
+      elif config['enable_ban'] == True:
+        print("Error Code C-8: 'enable_ban' is set to 'True' in config file. Only possible config options are 'ask' or 'False' when using config.\n")
+        input("Press Enter to continue...")
+      else:
+        print("Error Code C-9: 'enable_ban' is set to an invalid value in config file. Only possible config options are 'ask' or 'False' when using config.\n")
+        input("Press Enter to continue...")
+    elif deletionMode == "rejected":
+      banChoice = choice(f"Also {F.YELLOW}ban{S.R} the spammer(s) ?")
+
+    elif deletionMode == "heldForReview":
+      pass
+    elif deletionMode == "reportSpam":
+      pass
+    
+    ### ---------------- Reporting / Deletion Begins  ----------------
+    delete_found_comments(list(matchedCommentsDict), banChoice, deletionMode)
+    if deletionMode != "reportSpam":
+      check_deleted_comments(matchedCommentsDict)
+    if logMode == True:
+      write_rtf(logFileName, "\n\n \\line\\line Spammers Banned: " + str(banChoice)) # Write whether or not spammer is banned to log file
+      write_rtf(logFileName, "\n\n \\line\\line Action Taken on Comments: " + str(deletionModeFriendlyName) + "\n\n"+ "\\line\\line")
+      if exclude == True:
+        write_rtf(logFileName, str(rtfExclude))
+    input(f"\nProgram {F.LIGHTGREEN_EX}Complete{S.R}. Press Enter to Exit...")
+
+  elif config:
+      sys.exit()
+  else:
+    input(f"\nDeletion {F.LIGHTRED_EX}Cancelled{S.R}. Press Enter to exit...")
+    sys.exit()
 
 # Runs the program
 if __name__ == "__main__":
@@ -2797,6 +2829,12 @@ if __name__ == "__main__":
       if e.error_details[0]["reason"]: # If error reason is available, print it
           reason = str(e.error_details[0]["reason"])
           print_exception_reason(reason)
-    input("\nPress Enter to Exit...")
-
+      input("\nPress Enter to Exit...")
+    else:
+      print(f"{F.RED}Unknown Error - Code: X-2{S.R} occurred. If this keeps happening, consider posting a bug report on the GitHub issues page, and include the above error info.")
+      input("\n Press Enter to Exit...")
+  except SystemExit:
+    sys.exit()
+  else:
+    print("\nFinished Executing.")      
 
