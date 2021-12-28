@@ -52,6 +52,7 @@ from datetime import datetime
 import traceback
 import platform
 import requests
+import json
 from base64 import b85decode as b64decode
 from configparser import ConfigParser
 from pkg_resources import parse_version
@@ -60,6 +61,7 @@ from pkg_resources import parse_version
 import rtfunicode
 from colorama import init, Fore as F, Back as B, Style as S
 from confusables import confusable_regex, normalize
+from tqdm import tqdm
 
 # Local Non Standard Modules
 from community_downloader import main as get_community_comments #Args = post's ID, comment limit
@@ -99,12 +101,10 @@ def get_authenticated_service():
 
   # Check if client_secrets.json file exists, if not give error
   if not os.path.exists(CLIENT_SECRETS_FILE):
-    print("\n ------------- ERROR: "+CLIENT_SECRETS_FILE+" file not found! ------------- ")
-    print(" Make sure it is placed in the same folder as the program, and is spelled as above \n")
-    print(" ----- Or: Did you create a Google Cloud Platform Project to access the API? ----- ")
-    print(" ------ See section with instructions on obtaining an API Key at this page: ------- ")
-    print(" ---------- https://github.com/ThioJoe/YouTube-Spammer-Purge/ ---------- ")
-    input("\n Press Enter to Exit...")
+    print(f"{F.RED}[!!!] Error:{S.R} I was unable to find the client_secrets.json file in the current directory.")
+    print(f"{F.YELLOW}Did you create a Google Cloud Platform Project to access the API?{S.R}")
+    print(f"{F.YELLOW}For more information and how to get an API key, visit: https://github.com/ThioJoe/YT-Spammer-Purge#instructions---obtaining-youtube-api-key{S.R}")
+    input("Press Enter to Exit...")
     sys.exit()
 
   creds = None
@@ -118,8 +118,10 @@ def get_authenticated_service():
     if creds and creds.expired and creds.refresh_token:
       creds.refresh(Request())
     else:
+      print(f"{F.YELLOW}[!] No credentials (or you signed out manually).{S.R} Please login using the browser window that opened just now.\n")
       flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRETS_FILE, scopes=YOUTUBE_READ_WRITE_SSL_SCOPE)
-      creds = flow.run_local_server(port=0, authorization_prompt_message="Log in using the browser window.")
+      creds = flow.run_local_server(port=0, authorization_prompt_message="Waiting for authorization.. Please see the message above.")
+      print(f"{F.GREEN}[OK] Authorization Complete.{S.R}")
       # Save the credentials for the next run
     with open(TOKEN_FILE_NAME, 'w') as token:
       token.write(creds.to_json())
@@ -951,10 +953,10 @@ def get_current_user(config):
   if len(results) == 0: # Check if results are empty
     print("\n----------------------------------------------------------------------------------------")
     print(f"{F.YELLOW}Error Getting Current User{S.R}: The YouTube API responded, but did not provide a Channel ID.")
-    print("   Known Possible Causes:")
-    print("    > The client_secrets file does not match user authorized with token.pickle file.")
-    print("    > You are logging in with a Google account that does not have a YouTube channel created yet.")
-    print("    > When choosing the account to log into, you selected the option showing the Google Account's email address, which might not have a channel attached to it.")
+    print("Known Possible Causes:")
+    print("> The client_secrets file does not match user authorized with token.pickle file.")
+    print("> You are logging in with a Google account that does not have a YouTube channel created yet.")
+    print("> When choosing the account to log into, you selected the option showing the Google Account's email address, which might not have a channel attached to it.")
     input("\nPress Enter to try logging in again...")
     os.remove(TOKEN_FILE_NAME)
     youtube = get_authenticated_service()
@@ -969,7 +971,7 @@ def get_current_user(config):
       channelTitle = results["items"][0]["snippet"]["title"] # If channel ID was found, but not channel title/name
     except KeyError:
       print("Error Getting Current User: Channel ID was found, but channel title was not retrieved. If this occurs again, try deleting 'token.pickle' file and re-running. If that doesn't work, consider filing a bug report on the GitHub project 'issues' page.")
-      print("    > NOTE: The program may still work - You can try continuing. Just check the channel ID is correct: " + str(channelID))
+      print("> NOTE: The program may still work - You can try continuing. Just check the channel ID is correct: " + str(channelID))
       channelTitle = ""
       input("Press Enter to Continue...")
       pass
@@ -1307,20 +1309,20 @@ def safety_check_username_against_filter(currentUserName, scanMode, filterCharsS
     if filterCharsSet:
       if any(x in filterCharsSet for x in currentUsernameChars):
         print(f"\n{B.LIGHTRED_EX}{F.BLACK}NOTE!{S.R} Character(s) you entered are within {F.LIGHTRED_EX}your own username{S.R}, ' " + currentUserName + " '! : " + str(filterCharsSet & currentUsernameChars))
-        print("       (Some symbols above may not show in windows console)")
-        print(f"\n  This program will {F.YELLOW}ignore{S.R} any comments made by you (by checking the author channel ID)")
+        print("      (Some symbols above may not show in windows console)")
+        print(f"\nThis program will {F.YELLOW}ignore{S.R} any comments made by you (by checking the author channel ID)")
         input("\nPress enter to continue...")    
     
     elif filterStringList:
       if check_list_against_string(listInput=filterStringList, stringInput=currentUserName, caseSensitive=False):
         print(f"\n{B.LIGHTRED_EX}{F.BLACK}NOTE!{S.R} A string you entered is within {F.LIGHTRED_EX}your own username{S.R}!")
-        print(f"\n  This program will {F.YELLOW}ignore{S.R} any comments made by you (by checking the author channel ID)")
+        print(f"\nThis program will {F.YELLOW}ignore{S.R} any comments made by you (by checking the author channel ID)")
         input("\nPress enter to continue...")
 
     elif regexPattern:
       if re.search(regexPattern, currentUserName):
         print(f"{B.RED}{F.WHITE}NOTE!{S.R} This search mode / pattern would detect {F.LIGHTRED_EX}your own username{S.R}!")
-        print(f"\n  This program will {F.YELLOW}ignore{S.R} any comments made by you (by checking the author channel ID)")
+        print(f"\nThis program will {F.YELLOW}ignore{S.R} any comments made by you (by checking the author channel ID)")
         input("\nPress enter to continue...")
 
   proceed = True
@@ -1332,11 +1334,22 @@ def check_for_update(currentVersion, silentCheck=False):
   isUpdateAvailable = False
   try:
     response = requests.get("https://api.github.com/repos/ThioJoe/YouTube-Spammer-Purge/releases/latest")
-    latestVersion = response.json()["name"]
+    if response.status_code != 200:
+       if response.status_code == 403:
+         print(f"{B.RED}{F.WHITE}Error [U-2]:{S.R} Got an 403 (ratelimit_reached) when attempting to check for update.\n")
+         print(f"This means you have been {F.YELLOW}rate limited by github.com{S.R}. Please try again in a while.")
+         sys.exit()
+       else:
+         print(f"{B.RED}{F.WHITE}Error [U-3]:{S.R} Got non 200 status code (got: {response.status_code}) when attempting to check for update.\n")
+         print(f"If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
+         sys.exit()
+    else:
+      # assume 200 response
+      latestVersion = response.json()["name"]
   except Exception as e:
     if silentCheck == False:
       print(e + "\n")
-      print(f"{B.RED}{F.WHITE}Error Code U-1:{S.R} Problem checking for update! See above error for more details.\n")
+      print(f"{B.RED}{F.WHITE}Error [U-4]:{S.R} Problem while checking for updates. See above error for more details.\n")
       print("If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
       input("Press enter to Exit...")
       sys.exit()
@@ -1347,21 +1360,46 @@ def check_for_update(currentVersion, silentCheck=False):
     isUpdateAvailable = True
     if silentCheck == False:
       print("--------------------------------------------------------------------------------")
-      print(f"\nA {F.LIGHTGREEN_EX}new version{S.R} is available!")
-      print("  > Current Version: " + currentVersion)
-      print("  > Latest Version: " + latestVersion)
-      print("\nAvailable Here: https://github.com/ThioJoe/YouTube-Spammer-Purge/releases")
-      print("Note: To copy from windows console: Right Click > Choose 'Mark' > Highlight the text > Use Ctrl-C")
-      print("      > OR: Depending on your version of Windows, click and drag to highlight, then right click to copy")
-      input("\nPress enter to Exit...")
-      sys.exit()
+      print(f" A {F.LIGHTGREEN_EX}new version{S.R} is available!")
+      print(f" > {F.LIGHTGREEN_EX}Current{S.R} Version: " + currentVersion)
+      print(f" > {F.LIGHTGREEN_EX}Latest{S.R} Version: " + latestVersion)
+      print("--------------------------------------------------------------------------------")
+      if choice("Update Now?") == True:
+        print(f"> {F.LIGHTGREEN_EX} Starting Update. Please wait...")
+        print(f"> {F.LIGHTGREEN_EX} Checking OS Version...")
+        if sys.platform == 'win32' or sys.platform == 'win64':
+           print(f"> {F.LIGHTGREEN_EX} Downloading Latest Version...")
+           jsondata = json.dumps(response.json()["assets"])
+           dict_json = json.loads(jsondata)
+           filedownload = requests.get(dict_json[0]['browser_download_url'], stream=True)
+           total_size_in_bytes= int(filedownload.headers.get('content-length', 0))
+           block_size =  dict_json[0]['size']
+           progress_bar = tqdm(total=total_size_in_bytes, unit='iB', unit_scale=True, ncols=47, ascii=True, desc="file")
+           with open(dict_json[0]['name'], 'wb') as file:
+                for data in filedownload.iter_content(block_size):
+                  progress_bar.update(len(data))
+                  file.write(data)
+           progress_bar.close()
+           if total_size_in_bytes != 0 and progress_bar.n != total_size_in_bytes:
+              print(f"> {F.RED} File did not pass validation. Please try again later.")
+              sys.exit()
+           else:
+              print(f"> {F.LIGHTGREEN_EX} Download Complete! Please delete this old version and run the new one!")
+              sys.exit()
+        else:
+          # We do this because we pull the .exe for windows, but maybe we could use os.system('git pull')? Because this is a GIT repo, unlike the windows version
+          print(f"> {F.RED} Error:{S.R} You are using an unsupported os for the autoupdater (macos/linux). \n This updater only supports Windows (right now) Feel free to get the files from github: https://github.com/ThioJoe/YouTube-Spammer-Purge")
+        sys.exit()
+      else:
+        print("Aborted. Exiting...")
+        sys.exit()
     elif silentCheck == True:
       isUpdateAvailable = True
       return isUpdateAvailable
 
   elif parse_version(latestVersion) == parse_version(currentVersion):
     if silentCheck == False:
-      print("\nYou have the latest version: " + currentVersion)
+      print(f"\nYou have the {F.LIGHTGREEN_EX}latest{S.R} version: {F.LIGHTGREEN_EX}" + currentVersion)
       input("\nPress enter to Exit...")
       sys.exit()
   else:
@@ -2053,22 +2091,23 @@ def main():
   F.R = F.RESET
   B.R = B.RESET
 
-  print("\n   Loading...\n")
+  print("\nLoading YT Spammer Purge @ " + str(version) + "...")
 
   # Authenticate with the Google API - If token expired and invalid, deletes and re-authenticates
   try:
     youtube = get_authenticated_service() # Set easier name for API function
   except Exception as e:
     if "invalid_grant" in str(e):
-      print("Invalid token - Requires Re-Authentication")
+      print(f"{F.YELLOW}[!] Invalid token{S.R} - Requires Re-Authentication")
       os.remove(TOKEN_FILE_NAME)
       youtube = get_authenticated_service()
     else:
+      print('\n')
       traceback.print_exc() # Prints traceback
       print("----------------")
-      print("\nError: " + str(e))
+      print(f"{F.RED}[!!!] Error: {S.R}" + str(e))
       print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
-      input("\nError Code A-1: Something went wrong during authentication. Try deleting token.pickle file. Press Enter to exit...")
+      input(f"\nError Code A-1: {F.RED}Something went wrong during authentication.{S.R} {F.YELLOW}Try deleting the token.pickle file.{S.R} \nPress Enter to exit...")
       sys.exit()
 
   # Check for config file, load into dictionary 'config'
@@ -2103,7 +2142,7 @@ def main():
       sys.exit()
 
   # Load any other data
-  print("\n   Loading...\n")
+  print(f"{F.GREEN}Loading other assets.. almost there!{S.R}\n")
   miscData = {}
   domainList = ingest_domain_file()
   miscData['domainList'] = domainList
@@ -2118,21 +2157,20 @@ def main():
       updateAvailable = check_for_update(version, silentCheck=True)
       os.system(clear_command)
     except:
-      print(f"{F.LIGHTRED_EX}Error Code U-3 occurred while checking for updates. (Checking can be disabled using the config file setting) Continuing...{S.R}\n")
       updateAvailable = False
   else:
     updateAvailable = False
     os.system(clear_command)
 
   #----------------------------------- Begin Showing Program ---------------------------------
-  print(f"{F.YELLOW}\n===================== YOUTUBE SPAMMER PURGE v" + version + f" ====================={S.R}")
+  print(f"{F.GREEN}\n===================== YOUTUBE SPAMMER PURGE v" + version + f" ====================={S.R}")
   print("=========== https://github.com/ThioJoe/YouTube-Spammer-Purge ===========")
   print("================= Author: ThioJoe - YouTube.com/ThioJoe ================ \n")
 
   # Instructions
   print("Purpose: Lets you scan for spam comments and mass-delete them all at once \n")
   print("NOTE: It's probably better to scan a single video, because you can scan all those comments,")
-  print("       but scanning your entire channel must be limited and might miss older spam comments.")
+  print("      but scanning your entire channel must be limited and might miss older spam comments.")
   print("You will be shown the comments to confirm before they are deleted.")
 
   # While loop until user confirms they are logged into the correct account
@@ -2140,8 +2178,8 @@ def main():
   while confirmedCorrectLogin == False:
     # Get channel ID and title of current user, confirm with user
     currentUser = get_current_user(config) # Returns [channelID, channelTitle]
-    print("\n    >  Currently logged in user: " + f"{F.LIGHTGREEN_EX}" + str(currentUser[1]) + f"{S.R} (Channel ID: {F.LIGHTGREEN_EX}" + str(currentUser[0]) + f"{S.R} )")
-    if choice("       Continue as this user?", currentUser[2]) == True:
+    print("\n>  Currently logged in user: " + f"{F.LIGHTGREEN_EX}" + str(currentUser[1]) + f"{S.R} (Channel ID: {F.LIGHTGREEN_EX}" + str(currentUser[0]) + f"{S.R} )")
+    if choice("Continue as this user?", currentUser[2]) == True:
       check_channel_id = currentUser[0]
       confirmedCorrectLogin = True
     else:
@@ -2149,12 +2187,12 @@ def main():
       youtube = get_authenticated_service()
   
   # User selects scanning mode,  while Loop to get scanning mode, so if invalid input, it will keep asking until valid input
-  print(f"\n---------- {F.YELLOW}Scanning Options{S.R} --------------------------------------")
+  print(f"\n---------- {F.YELLOW}Scanning Options{S.R} ----------")
   print(f"      1. Scan a {F.LIGHTBLUE_EX}Specific video{S.R}")
   print(f"      2. Scan {F.LIGHTCYAN_EX}recent videos{S.R} for a channel")
   print(f"      3. Scan recent comments across your {F.LIGHTMAGENTA_EX}Entire Channel{S.R}")
-  print(f"      4. Scan a {F.LIGHTMAGENTA_EX}community post{S.R} (Experimental)")
-  print(f"-------------------------------------- {F.LIGHTRED_EX}Other Options{S.R} -------------")
+  print(f"      4. Scan a {F.LIGHTMAGENTA_EX}community post{S.R} {F.YELLOW}(experimental) {S.R}")
+  print(f"---------- {F.LIGHTRED_EX}Other Options{S.R} ----------")
   print(f"      5. Create your own config file to quickly run the program with pre-set settings")
   print(f"      6. Recover deleted comments using log file")
   print(f"      7. Check For Updates\n")
@@ -2261,7 +2299,7 @@ def main():
             print("Invalid Channel ID or Link in config file!")
 
       print(f"\nEnter a {F.YELLOW}channel ID or Link{S.R} to scan {F.LIGHTCYAN_EX}recent videos{S.R} from")
-      print(f"   > If scanning {F.YELLOW}your own channel{S.R}, just hit {F.LIGHTGREEN_EX}Enter{S.R}")
+      print(f"> If scanning {F.YELLOW}your own channel{S.R}, just hit {F.LIGHTGREEN_EX}Enter{S.R}")
       inputtedChannel = input("\nEnter Here: ")
       if inputtedChannel == "":
         channelID = currentUser[0]
@@ -2349,9 +2387,9 @@ def main():
     miscData['channelOwnerName'] = currentUser[1]
 
   elif scanMode == 'communityPost':
-    print("\nNOTES: This mode is experimental, and not as polished as other features. Expect some janky-ness.")
-    print("   > It is also much slower to retrieve comments, because it does not use the API")
-    print(f"   > You should only scan {F.YELLOW}your own{S.R} community posts, or things might not work right")
+    print(f"\nNOTES: This mode is {F.YELLOW}experimental{S.R}, and not as polished as other features. {F.YELLOW}Expect some janky-ness.{S.R}")
+    print("> It is also much slower to retrieve comments, because it does not use the API")
+    print(f"> You should only scan {F.YELLOW}your own{S.R} community posts, or things might not work right")
     confirm = False
     while confirm == False:
       communityPostInput = input("\nEnter the ID or link of the community post: ")
