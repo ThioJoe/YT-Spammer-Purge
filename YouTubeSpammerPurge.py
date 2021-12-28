@@ -2314,10 +2314,29 @@ def main():
 
   elif scanMode == 'communityPost':
     print("NOTES: This mode is experimental, and not as polished as other features. Expect some janky-ness.")
-    print("   > You should only scan your own community posts, or things might not work right.")
+    print("   > It is also much slower to retrieve comments, because it does not use the API")
+    print("   > You should only scan your own community posts, or things might not work right")
     print("Input the ID of the communit post:")
     communityPostID = input("\nEnter ID: ")
-    maxScanNumber = int(input("Max Number of Comments to Scan: "))
+
+    validInteger = False
+    if config: validConfigSetting = True
+    while validInteger == False:
+      try:
+        if validConfigSetting == True and config and config['max_comments'] != 'ask':
+          maxScanNumber = int(config['max_comments'])
+        else:
+          maxScanNumber = int(input(f"Enter the maximum {F.YELLOW}number of comments{S.R} to scan: "))
+
+        if maxScanNumber > 0:
+          validInteger = True # If it gets here, it's an integer, otherwise goes to exception
+        else:
+          print("\nInvalid Input! Number must be greater than zero.")
+          validConfigSetting = False
+      except:
+        print("\nInvalid Input! - Must be a whole number.")
+        validConfigSetting = False
+
     miscData['channelOwnerID'] = currentUser[0]
     miscData['channelOwnerName'] = currentUser[1]
   
@@ -2469,37 +2488,49 @@ def main():
 
   ##################### START SCANNING #####################
 
-  # Goes to get comments for first page
-  print("\n------------------------------------------------------------------------------")
-  print("(Note: If the program appears to freeze, try right clicking within the window)\n")
-  print("                          --- Scanning --- \n")
+  if scanMode == "communityPost":
+    def scan_community_post(communityPostID, limit):
+      allCommunityCommentsDict = get_community_comments(communityPostID=communityPostID, limit=limit)
+      for key, value in allCommunityCommentsDict.items():
+        commentID = key
+        authorChannelID = value['authorChannelID']
+        authorChannelName = value['authorName']
+        commentText = value['commentText']
+        check_against_filter(currentUser, miscData, filterMode=filterMode, filterSubMode=filterSubMode, commentID=commentID, videoID=communityPostID, authorChannelID=authorChannelID, parentAuthorChannelID=None, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, authorChannelName=authorChannelName, commentText=commentText, regexPattern=regexPattern)
+    scan_community_post(communityPostID, maxScanNumber)
+
+  else:
+    # Goes to get comments for first page
+    print("\n------------------------------------------------------------------------------")
+    print("(Note: If the program appears to freeze, try right clicking within the window)\n")
+    print("                          --- Scanning --- \n")
   
-  def scan_video(youtube, miscData, currentUser, filterMode, filterSubMode, videoID, check_channel_id, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern, videoTitle=None, showTitle=False, i=1):
-    nextPageToken = get_comments(youtube, miscData, currentUser, filterMode, filterSubMode, videoID, check_channel_id, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, regexPattern=regexPattern)
-    if showTitle == True and len(videosToScan) > 0:
-      # Prints video title, progress count, adds enough spaces to cover up previous stat print line
-      offset = 82 - len(videoTitle)
-      if offset > 0:
-        spacesStr = " " * offset
-      else:
-        spacesStr = ""
-      print(f"Scanning {i}/{len(videosToScan)}: " + videoTitle + spacesStr + "\n")
+    def scan_video(youtube, miscData, currentUser, filterMode, filterSubMode, videoID, check_channel_id, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern, videoTitle=None, showTitle=False, i=1):
+      nextPageToken = get_comments(youtube, miscData, currentUser, filterMode, filterSubMode, videoID, check_channel_id, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, regexPattern=regexPattern)
+      if showTitle == True and len(videosToScan) > 0:
+        # Prints video title, progress count, adds enough spaces to cover up previous stat print line
+        offset = 82 - len(videoTitle)
+        if offset > 0:
+          spacesStr = " " * offset
+        else:
+          spacesStr = ""
+        print(f"Scanning {i}/{len(videosToScan)}: " + videoTitle + spacesStr + "\n")
 
-    print_count_stats(final=False)  # Prints comment scan stats, updates on same line
-    # After getting first page, if there are more pages, goes to get comments for next page
-    while nextPageToken != "End" and scannedCommentsCount < maxScanNumber:
-      nextPageToken = get_comments(youtube, miscData, currentUser, filterMode, filterSubMode, videoID, check_channel_id, nextPageToken, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, regexPattern=regexPattern)
+      print_count_stats(final=False)  # Prints comment scan stats, updates on same line
+      # After getting first page, if there are more pages, goes to get comments for next page
+      while nextPageToken != "End" and scannedCommentsCount < maxScanNumber:
+        nextPageToken = get_comments(youtube, miscData, currentUser, filterMode, filterSubMode, videoID, check_channel_id, nextPageToken, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, regexPattern=regexPattern)
 
-  if scanMode == "entireChannel":
-    scan_video(youtube, miscData, currentUser, filterMode, filterSubMode, scanVideoID, check_channel_id, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern)
-  elif scanMode == "recentVideos" or scanMode == "chosenVideos":
-    i = 1
-    for video in videosToScan:
-      videoID = str(video['videoID'])
-      videoTitle = str(video['videoTitle'])
-      scan_video(youtube, miscData, currentUser, filterMode, filterSubMode, videoID, check_channel_id, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern, videoTitle=videoTitle, showTitle=True, i=i)
-      i += 1
-  print_count_stats(final=True)  # Prints comment scan stats, finalizes
+    if scanMode == "entireChannel":
+      scan_video(youtube, miscData, currentUser, filterMode, filterSubMode, scanVideoID, check_channel_id, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern)
+    elif scanMode == "recentVideos" or scanMode == "chosenVideos":
+      i = 1
+      for video in videosToScan:
+        videoID = str(video['videoID'])
+        videoTitle = str(video['videoTitle'])
+        scan_video(youtube, miscData, currentUser, filterMode, filterSubMode, videoID, check_channel_id, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern, videoTitle=videoTitle, showTitle=True, i=i)
+        i += 1
+    print_count_stats(final=True)  # Prints comment scan stats, finalizes
   
 ##########################################################
   bypass = False
@@ -2574,6 +2605,8 @@ def main():
     print("Continuing without logging... \n")
 
   # Prints list of spam comments
+  if scanMode == "communityPost":
+    scanVideoID = communityPostID
   print("\n\nAll Matched Comments: \n")
   print_comments(scanVideoID, list(matchedCommentsDict.keys()), logMode)
   print(f"\n{F.WHITE}{B.RED} NOTE: {S.R} Check that all comments listed above are indeed spam.")
