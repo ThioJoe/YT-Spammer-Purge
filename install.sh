@@ -1,8 +1,30 @@
 #!/bin/bash
-#checks for python; if not installed will install it
-command -v python >/dev/null 2>&1 || { pacman -S python; dnf install python3; apt install python3; zypper install python3; emerge python;}
+#checks for python; if not installed will install it 
+command -v python >/dev/null 2>&1 || { py_installed = false;}
+if [ "$py_installed" = false ] ; then
+	if [[ -e /etc/debian_version ]]; then
+    apt install python3
+	elif [[ -e /etc/fedora-release ]]; then
+    dnf install python3
+  elif [[ -e /etc/centos-release ]]; then
+		yum install tkinter
+	elif [[ -e /etc/arch-release ]]; then
+		pacman -Syu python3
+	else
+		echo "Looks like you aren't running this installer on a Debian, Ubuntu, Fedora, CentOS, Arch Linux system."
+		exit 1
+	fi
+fi
 #install tkinter, a dependency
-apt-get install python3-tk; pacman -Syu tk; dnf install python3-tkinter; zypper install python3-tk
+if [[ -e /etc/debian_version ]]; then
+  apt-get install python3-tk
+elif [[ -e /etc/fedora-release ]]; then
+  dnf install python3
+elif [[ -e /etc/centos-release ]]; then
+	yum install tkinter
+elif [[ -e /etc/arch-release ]]; then
+	pacman -Syu python3
+fi
 curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 python3 get-pip.py
 # Uncomment if running this script alone, to also install the files for Youtube-Spammer-Purge
