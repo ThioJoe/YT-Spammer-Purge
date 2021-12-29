@@ -3,10 +3,10 @@
 command -v python >/dev/null 2>&1 || { py_installed = false;}
 if [ "$py_installed" = false ] ; then
 	if [[ -e /etc/debian_version ]]; then
-    apt install python3
+    		apt install python3
 	elif [[ -e /etc/fedora-release ]]; then
-    dnf install python3
-  elif [[ -e /etc/centos-release ]]; then
+    		dnf install python3
+  	elif [[ -e /etc/centos-release ]]; then
 		yum install tkinter
 	elif [[ -e /etc/arch-release ]]; then
 		pacman -Syu python3
@@ -17,9 +17,9 @@ if [ "$py_installed" = false ] ; then
 fi
 #install tkinter, a dependency
 if [[ -e /etc/debian_version ]]; then
-  apt-get install python3-tk
+	apt-get install python3-tk
 elif [[ -e /etc/fedora-release ]]; then
-  dnf install python3
+	dnf install python3
 elif [[ -e /etc/centos-release ]]; then
 	yum install tkinter
 elif [[ -e /etc/arch-release ]]; then
