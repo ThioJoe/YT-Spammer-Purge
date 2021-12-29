@@ -443,7 +443,7 @@ def check_against_filter(currentUser, miscData, filterMode, filterSubMode, comme
   global matchedCommentsDict
   commentTextOriginal = str(commentText)
 
-  debugSingleComment = False
+  debugSingleComment = False #Debug usage
   if debugSingleComment == True:
     authorChannelName = input("Channel Name: ")
     commentText = input("Comment Text: ")
@@ -481,7 +481,7 @@ def check_against_filter(currentUser, miscData, filterMode, filterSubMode, comme
       else:
         authorMatchCountDict[authorChannelID] = 1
       if debugSingleComment == True: 
-        input("--- Match -----")
+        input("--- Yes, Matched -----")
 
     # Checks author of either parent comment or reply (both passed in as commentID) against channel ID inputted by user
     if filterMode == "ID":
@@ -608,6 +608,8 @@ def check_against_filter(currentUser, miscData, filterMode, filterSubMode, comme
       elif any(re.search(expression[1], authorChannelName) for expression in compiledRegexDict['usernameBlackWords']):
         add_spam(commentID, videoID)
       elif any(findOnlyObfuscated(expression[1], expression[0], combinedString) for expression in compiledRegexDict['blackAdWords']):
+        add_spam(commentID, videoID)
+      elif any(findOnlyObfuscated(expression[1], expression[0], commentText) for expression in compiledRegexDict['textObfuBlackWords']):
         add_spam(commentID, videoID)
       elif sensitive == True and re.search(smartFilter['usernameConfuseRegex'], authorChannelName):
         add_spam(commentID, videoID)
@@ -1924,9 +1926,10 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive
   #usernameRedChars =""
   #usernameBlackChars = ""
   spamGenEmoji_Raw = b'@Sl-~@Sl-};+UQApOJ|0pOJ~;q_yw3kMN(AyyBUh'
-  usernameBlackWords_Raw = [b'aA|ICWn^M`', b'aA|ICWn>^?c>', b'Z*CxTWo%_<a$#)', b'Z*CxIZgX^DXL4a}', b'Z*CxIX8', b'V`yb#YanfTAY*7@Zf<34', b'b7f^9ZFwMLXkl({Wo!', b'c4>2IbRcbcAY*7@Zf<34', b'cWHEJATS_yX=G(@a{', b'cWHEJAZ~9Uc4=f~Z*u', b'cWHEJZ*_DaVQzUKc4=e']
+  usernameBlackWords_Raw = [b'aA|ICWn^M`', b'aA|ICWn>^?c>', b'Z*CxTWo%_<a$#)', b'c4=WCbY*O1XL4a}', b'Z*CxIZgX^DXL4a}', b'Z*CxIX8', b'V`yb#YanfTAY*7@Zf<34', b'b7f^9ZFwMLXkl({Wo!', b'c4>2IbRcbcAY*7@Zf<34', b'cWHEJATS_yX=G(@a{', b'cWHEJAZ~9Uc4=f~Z*u', b'cWHEJZ*_DaVQzUKc4=e']
   usernameRedWords = ["whatsapp", "telegram"]
   usernameBlackWords = []
+  textObfuBlackWords = ['telegram']
   for x in usernameBlackWords_Raw: usernameBlackWords.append(b64decode(x).decode(utf_16))
   g = b64decode(spamGenEmoji_Raw).decode(utf_16)
 
@@ -1980,7 +1983,8 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive
     'redAdWords': [],
     'yellowAdWords': [],
     'exactRedAdWords': [],
-    'usernameRedWords': []
+    'usernameRedWords': [],
+    'textObfuBlackWords': []
   }
   # Compile regex with upper case, otherwise many false positive character matches
   bufferMatch, addBuffers = "*_~|`", "*_~|`\[\]\(\)'" # Add 'buffer' chars to compensate for obfuscation
@@ -2004,6 +2008,9 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive
   for word in usernameRedWords:
     value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
     compiledRegexDict['usernameRedWords'].append([word, value])
+  for word in textObfuBlackWords:
+    value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
+    compiledRegexDict['textObfuBlackWords'].append([word, value])  
   usernameConfuseRegex = re.compile(confusable_regex(miscData['channelOwnerName']))
 
   # Prepare All-domain Regex Expression
@@ -2048,7 +2055,7 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive
     'languages': languages,
     'sensitive': sensitive,
     'sensitiveDomainRegex': sensitiveDomainRegex,
-    'unicodeCategoriesStrip': unicodeCategoriesStrip
+    'unicodeCategoriesStrip': unicodeCategoriesStrip,
     }
   return filterSettings, None
 
