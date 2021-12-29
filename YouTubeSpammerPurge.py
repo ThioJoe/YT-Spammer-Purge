@@ -132,15 +132,15 @@ def get_authenticated_service():
 def print_exception_reason(reason):
   print("    Reason: " + str(reason))
   if reason == "processingFailure":
-    print(f"\n !! {F.RED}Processing Error{S.R} - Sometimes this error fixes itself. Try just running the program again. !!")
+    print(f"\n [!!] {F.RED}Processing Error{S.R} - Sometimes this error fixes itself. Try just running the program again. !!")
     print("This issue is often on YouTube's side, so if it keeps happening try again later.")
     print("(This also occurs if you try deleting comments on someone elses video, which is not possible.)")
   elif reason == "commentsDisabled":
-    print(f"\n{F.LIGHTRED_EX}Error:{S.R} Comments are disabled on this video. This error can also occur if scanning a live stream.")
+    print(f"\n{F.LIGHTRED_EX}[!] Error:{S.R} Comments are disabled on this video. This error can also occur if scanning a live stream.")
   elif reason == "quotaExceeded":
     print(f"\n{F.LIGHTRED_EX}Error:{S.R} You have exceeded the YouTube API quota. To do more scanning you must wait until the quota resets.")
-    print("   There is a daily limit of 10,000 units/day, which works out to around reporting 10,000 comments/day.")
-    print("   You can check your quota by searching 'quota' in the google cloud console.")
+    print(" > There is a daily limit of 10,000 units/day, which works out to around reporting 10,000 comments/day.")
+    print(" > You can check your quota by searching 'quota' in the google cloud console.")
     print(f"{F.YELLOW}Solutions: Either wait until tomorrow, or create additional projects in the cloud console.{S.R}")
     input("\n Press Enter to Exit...")
 
@@ -2182,8 +2182,10 @@ def main():
     if choice("Continue as this user?", currentUser[2]) == True:
       check_channel_id = currentUser[0]
       confirmedCorrectLogin = True
+      os.system(clear_command)
     else:
       os.remove(TOKEN_FILE_NAME)
+      os.system(clear_command)
       youtube = get_authenticated_service()
   
   # User selects scanning mode,  while Loop to get scanning mode, so if invalid input, it will keep asking until valid input
@@ -2595,6 +2597,7 @@ def main():
     print("\n------------------------------------------------------------------------------")
     print("(Note: If the program appears to freeze, try right clicking within the window)\n")
     print("                          --- Scanning --- \n")
+    starttime = time.time()
   
     def scan_video(youtube, miscData, currentUser, filterMode, filterSubMode, videoID, check_channel_id, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern, videoTitle=None, showTitle=False, i=1):
       nextPageToken = get_comments(youtube, miscData, currentUser, filterMode, filterSubMode, videoID, check_channel_id, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, regexPattern=regexPattern)
@@ -2641,8 +2644,9 @@ def main():
 
   # Counts number of found spam comments and prints list
   spam_count = len(matchedCommentsDict)
-
+  stoptime = time.time()
   if spam_count == 0: # If no spam comments found, exits
+    print(f"{F.YELLOW}Operation completed with warnings in {round(stoptime - starttime, 3)} seconds. {S.R}")
     print(f"{B.RED}{F.BLACK}No matched comments or users found!{S.R}\n")
     print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
     if bypass == False:
@@ -2652,6 +2656,7 @@ def main():
       print("Exiting in 5 seconds...")
       time.sleep(5)
       sys.exit()
+  print(f"{F.GREEN}Operation completed successfully in {round(stoptime - starttime, 3)} seconds. {S.R}")
   print(f"Number of Matched Comments Found: {B.RED}{F.WHITE} " + str(len(matchedCommentsDict)) + f" {S.R}")
 
   if bypass == False:
