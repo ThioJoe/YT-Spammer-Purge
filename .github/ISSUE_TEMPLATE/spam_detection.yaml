@@ -38,7 +38,7 @@ body:
   - type: input
     id: other-detail
     attributes:
-      label: (Optional) If 'Other': Enter Very Short Description
+      label: (Optional) If 'Other', Enter Very Short Description
       description: Using only a few words, describe the problem or suggestion related to spammer detection.
   - type: textarea
     id: spammer-sample
