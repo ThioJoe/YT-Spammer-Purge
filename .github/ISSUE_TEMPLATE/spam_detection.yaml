@@ -1,5 +1,5 @@
 name: Spammer Detection Suggestion or Problem
-description: Report problems or possible improvements related to spam detection.
+description: Report problems or possible improvements related to detection of **specific** comments or types of comments. (For general suggestions or ideas, use the discussion section.)
 title: "(Enter short summary here)"
 labels: ["filtering"]
 body:
