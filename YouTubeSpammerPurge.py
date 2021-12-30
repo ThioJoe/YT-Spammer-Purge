@@ -2886,7 +2886,17 @@ if __name__ == "__main__":
   #   p = pstats.Stats("output.dat", stream=f)
   #   p.sort_stats("calls").print_stats()
   try:
-    main()
+    isRunning = True
+    while isRunning:
+      main()
+      goAgain = input("Do you want to go through again? [Y/n] ").lower()
+      if goAgain == "n":
+        isRunning = False
+        break
+      elif goAgain == "y":
+        continue
+      else:
+        print("Invalid Response")
   except HttpError as e:
     traceback.print_exc()
     print("------------------------------------------------")
