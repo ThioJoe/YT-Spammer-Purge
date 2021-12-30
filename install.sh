@@ -16,7 +16,7 @@ else
 	exit 1
 fi
 sudo -u $USER curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-sudo -u $USER python3 get-pip.py
+sudo -u $USER python3 get-pip.py --no-warn-script-location
 # Uncomment if running this script alone, to also install the files for Youtube-Spammer-Purge
 : 'sudo -u $USER curl https://codeload.github.com/ThioJoe/YouTube-Spammer-Purge/tar.gz/refs/tags/v2.2.5 -o yt-spammer.tar.gz
 sudo -u $USER tar -xzf yt-spammer.tar.gz
