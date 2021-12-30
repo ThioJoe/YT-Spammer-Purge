@@ -1,13 +1,11 @@
 name: Spammer Detection Suggestion or Problem
 description: Report problems or possible improvements related to detection of **specific** comments or types of comments. (For general suggestions or ideas, use the discussion section.)
-title: "(Enter short summary here)"
+title: "Filtering: "
 labels: ["filtering"]
 body:
   - type: markdown
     attributes:
-      value: |
-        Thanks for taking the time to fill out this spammer report!
-        
+      value: |      
         IS THIS A FEATURE REQUEST OR IDEA? SUBMIT A DISCUSSION POST INSTEAD HERE: https://github.com/ThioJoe/YouTube-Spammer-Purge/discussions
   - type: dropdown
     id: filter-mode
@@ -45,9 +43,7 @@ body:
     attributes:
       label: Spammer Example / Sample
       description: Please provide a screenshot of the comment(s) in question, and/or a direct link to an example comment.
-      placeholder: Sample of the comment(s)
-      value: |
-             (Screenshots can be attached by dragging and dropping image files here)
+      placeholder: (Screenshots can be attached by dragging and dropping image files here)
     validations:
       required: true
   - type: input
@@ -60,6 +56,4 @@ body:
     attributes:
       label: (Optional) Additional Info / Context
       description: Other info that might be helpful, such as a description of why a comment is or is not spam.
-      placeholder: Extra info
-      value: |
-             Enter any extra info here
+      placeholder: Enter any extra info here
