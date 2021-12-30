@@ -1,0 +1,59 @@
+name: Spammer Detection Suggestion or Problem
+description: Report problems or possible improvements related to detection of **specific** comments or types of comments. (For general suggestions or ideas, use the discussion section.)
+title: "Filtering: "
+labels: ["filtering"]
+body:
+  - type: markdown
+    attributes:
+      value: |      
+        IS THIS A FEATURE REQUEST OR IDEA? SUBMIT A DISCUSSION POST INSTEAD HERE: https://github.com/ThioJoe/YouTube-Spammer-Purge/discussions
+  - type: dropdown
+    id: filter-mode
+    attributes:
+      label: Filter Mode
+      description: What filter mode are you using?
+      options:
+        - Auto-Smart Mode
+        - Sensitive-Smart Mode
+        - Individual Character Search
+        - String search
+        - Regex Search
+        - ASCII Mode
+    validations:
+      required: true
+  - type: dropdown
+    id: problem-category
+    attributes:
+      label: Select the Problem
+      description: Which best describes the problem?
+      options:
+        - A type of spammer is not detected at all
+        - Some spammers not detected
+        - False Positive
+        - Other (add details below)
+    validations:
+      required: true
+  - type: input
+    id: other-detail
+    attributes:
+      label: (Optional) If 'Other', Enter Very Short Description
+      description: Using only a few words, describe the problem or suggestion related to spammer detection.
+  - type: textarea
+    id: spammer-sample
+    attributes:
+      label: Spammer Example / Sample
+      description: Please provide a screenshot of the comment(s) in question, and/or a direct link to an example comment.
+      placeholder: (Screenshots can be attached by dragging and dropping image files here)
+    validations:
+      required: true
+  - type: input
+    id: video-link
+    attributes:
+      label: Video / Post Link
+      description: A link to the video or post on which the relevant comments can be found.
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: (Optional) Additional Info / Context
+      description: Other info that might be helpful, such as a description of why a comment is or is not spam.
+      placeholder: Enter any extra info here
