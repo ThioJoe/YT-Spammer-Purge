@@ -36,7 +36,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.5.0"
+version = "2.5.1"
 configVersion = 11
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -1573,6 +1573,14 @@ def check_lists_update(currentListVersion, silentCheck = False):
   else:
     input("Press enter to Exit...")
     sys.exit()
+    
+  if os.path.isdir("spam_lists"):
+    pass
+  else:
+    try:
+      os.mkdir("spam_lists")
+    except:
+      print("Error: Could not create folder. Try creating a folder called 'spam_lists' to update the spam lists.")
   
   listUpdateDateTime = response.json()[0]['commit']['committer']['date']
   date = datetime.strptime(listUpdateDateTime, '%Y-%m-%dT%H:%M:%SZ')
@@ -1592,7 +1600,7 @@ def check_lists_update(currentListVersion, silentCheck = False):
       pass
     elif total_size_in_bytes != 0 and os.stat(downloadFilePath).st_size != total_size_in_bytes:
       os.remove(downloadFilePath)
-      print(f"\n> {F.RED} File did not fully download. Please try again later.") # Add back!
+      print(f"\n> {F.RED} File did not fully download. Please try again later.")
 
 ############################# Ingest Other Files ##############################
 def ingest_asset_file(fileName):
@@ -2379,15 +2387,17 @@ def main():
   if not config or config['auto_check_update'] == True:
     try:
       updateAvailable = check_for_update(version, silentCheck=True)
-      spamDomainListVersion = get_list_file_version(spamDomainListPath)      
-      check_lists_update(spamDomainListVersion)
-      spamDomainList = ingest_list_file(spamDomainListPath)
     except:
       print(f"{F.LIGHTRED_EX}Error Code U-3 occurred while checking for updates. (Checking can be disabled using the config file setting) Continuing...{S.R}\n")      
       updateAvailable = False
+    try:
+      spamDomainListVersion = get_list_file_version(spamDomainListPath)
+      check_lists_update(spamDomainListVersion)
+      spamDomainList = ingest_list_file(spamDomainListPath)      
+    except Exception as e:
+      print(e)
       spamDomainList = ingest_asset_file(spamDomainListFileName)
   else:
-    updateAvailable = False
     spamDomainList = ingest_asset_file(spamDomainListFileName)
   os.system(clear_command)
 
