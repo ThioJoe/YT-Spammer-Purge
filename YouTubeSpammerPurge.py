@@ -17,20 +17,21 @@
 ###           YouTube offers a functionality to ban a user, but it does NOT delete previous comments.
 ###           Therefore I created this script to allow you to instantly purge their spam comments.
 ###
-### NOTES:    1. The script also scans top level comments from the spammer
-###
-###           2. To use this script, you will need to obtain your own API credentials file by making
+### NOTES:    1. To use this script, you will need to obtain your own API credentials file by making
 ###				       a project via the Google Developers Console (aka 'Google Cloud Platform').
 ###              The credential file should be re-named 'client_secret.json' and be placed in the 
 ###              same directory as this script.
 ###				            >>> See the Readme for instructions on this.
 ###
-###           3. I suck at programming so if something doesn't work I'll try to fix it but might not
+###           2. I suck at programming so if something doesn't work I'll try to fix it but might not
 ###              even know how, so don't expect too much.
-###
 ###
 ### Author:   ThioJoe - YouTube.com/ThioJoe
 ###                     Twitter.com/ThioJoe
+###
+### GitHub:   https://github.com/ThioJoe/YT-Spammer-Purge/
+###
+### License:  GPL-3.0
 ###
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
@@ -57,6 +58,7 @@ from base64 import b85decode as b64decode
 from configparser import ConfigParser
 from pkg_resources import parse_version
 import unicodedata
+import hashlib
 
 # Non Standard Modules
 import rtfunicode
@@ -1385,25 +1387,99 @@ def check_for_update(currentVersion, silentCheck=False):
           print(f"\n> {F.LIGHTCYAN_EX} Downloading Latest Version...{S.R}")
           jsondata = json.dumps(response.json()["assets"])
           dict_json = json.loads(jsondata)
-          filedownload = requests.get(dict_json[0]['browser_download_url'], stream=True)
+
+          # Get files in release, get exe and hash info
+          i,j,k = 0,0,0 # i = index of all, j = index of exe, k = index of hash
+          for asset in dict_json:
+            i+=1
+            name = str(asset['name'])
+            if '.exe' in name.lower():
+              filedownload = requests.get(dict_json[0]['browser_download_url'], stream=True)
+              j+=1 # Count number of exe files in release, in case future has multiple exe's, can cause warning
+            if '.sha256' in name.lower():
+              #First removes .sha256 file extension, then removes all non-alphanumeric characters
+              downloadHashSHA256 = re.sub(r'[^a-zA-Z0-9]', '', name.lower().replace('.sha256', ''))
+              k += 1
+
+          ignoreHash = False
+          # Validate Retrieved Info    
+          if j > 1: # More than one exe file in release
+            print(f"{S.YELLOW}Warning!{S.R} Multiple exe files found in release. You must be updating from the future when that was not anticipated.")
+            print("You should instead manually download the latest version from: https://github.com/ThioJoe/YT-Spammer-Purge/releases")
+            print("You can try continuing anyway, but it might not be successful, or might download the wrong exe file.")
+            input("\nPress enter to continue...")
+          elif j == 0: # No exe file in release
+            print(f"{S.LIGHTRED_EX}Warning!{S.R} No exe file found in release. You'll have to manually download the latest version from:")
+            print("https://github.com/ThioJoe/YT-Spammer-Purge/releases")
+            input("\nPress Enter to Exit...")
+            sys.exit()
+          if k == 0: # No hash file in release
+            print(f"{S.YELLOW}Warning!{S.R} No verification sha256 hash found in release. If download fails, you can manually download latest version here:")
+            print("https://github.com/ThioJoe/YT-Spammer-Purge/releases")
+            input("\nPress Enter to Exit...")
+            ignoreHash = True
+          elif k>0 and k!=j:
+            print(f"{S.YELLOW}Warning!{S.R} Too many or too few sha256 files found in release. If download fails, you should manually download latest version here:")
+            print("https://github.com/ThioJoe/YT-Spammer-Purge/releases")
+            input("\nPress Enter to Exit...")
+            sys.exit()
+
+          # Get and Set Download Info
           total_size_in_bytes= int(filedownload.headers.get('content-length', 0))
           block_size =  1048576 #1 MiB in bytes
           downloadFileName = dict_json[0]['name']
+
+          # Check if file exists already, ask to overwrite if it does
+          if os.path.exists(downloadFileName):
+            print(f"{B.RED}{F.WHITE}WARNING!{S.R} '{F.YELLOW}{downloadFileName}{S.R}' file already exists. This would overwrite the existing file.")
+            confirm = choice("Overwrite this existing file?")
+            if confirm == True:
+              try:
+                os.remove(downloadFileName)
+              except:
+                traceback.print_exc()
+                print(f"\n{F.LIGHTRED_EX}Error F-6:{S.R} Problem deleting existing existing file! Check if it's gone, or delete it yourself, then try again.")
+                print("The info above may help if it's a bug, which you can report here: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
+                input("Press enter to Exit...")
+                sys.exit()
+
+          # Download File
           with open(downloadFileName, 'wb') as file:
             numProgressBars = 30
             for data in filedownload.iter_content(block_size):
               progress = os.stat(downloadFileName).st_size/total_size_in_bytes * numProgressBars
-              print("<[" + '='*round(progress) + ' '*(numProgressBars-round(progress)) + "]>\r", end="") #Print Progress bar
+              print(f"{F.LIGHTGREEN_EX}<[{F.LIGHTCYAN_EX}" + '='*round(progress) + ' '*(numProgressBars-round(progress)) + f"{F.LIGHTGREEN_EX}]>{S.R}\r", end="") #Print Progress bar
               file.write(data)
-          print("")
+          print(f"\n>  {F.LIGHTCYAN_EX}Verifying Download Integrity...{S.R}                       ")
+
+          # Verify Download Size
           if os.stat(downloadFileName).st_size == total_size_in_bytes:
-            print(f"\n>  Download Complete: {F.LIGHTGREEN_EX}{downloadFileName}{S.R}")
-            input("\nYou can now delete the old version. Press Enter to Exit...")
-            sys.exit()
+            pass
           elif total_size_in_bytes != 0 and os.stat(downloadFileName).st_size != total_size_in_bytes:
+            os.remove(downloadFileName)
             print(f"\n> {F.RED} File did not fully download. Please try again later.")
             input("\nPress enter to Exit...")
             sys.exit()
+          elif total_size_in_bytes == 0:
+            print("Something is wrong with the download on the remote end. You should manually download latest version here:")
+            print("https://github.com/ThioJoe/YT-Spammer-Purge/releases")
+
+          # Verify hash
+          if ignoreHash == False:
+            if downloadHashSHA256 == hashlib.sha256(open(downloadFileName, 'rb').read()).hexdigest().lower():
+              pass
+            else:
+              os.remove(downloadFileName)
+              print(f"\n> {F.RED} Hash did not match. Please try again later.")
+              print("Or download the latest version manually from here: https://github.com/ThioJoe/YT-Spammer-Purge/releases")
+              input("\nPress enter to Exit...")
+              sys.exit()
+              
+          # Print Success    
+          print(f"\n>  Download Completed: {F.LIGHTGREEN_EX}{downloadFileName}{S.R}")
+          input("\nYou can now delete the old version. Press Enter to Exit...")
+          sys.exit()
+
         else:
           # We do this because we pull the .exe for windows, but maybe we could use os.system('git pull')? Because this is a GIT repo, unlike the windows version
           print(f"> {F.RED} Error:{S.R} You are using an unsupported os for the autoupdater (macos/linux). \n This updater only supports Windows (right now) Feel free to get the files from github: https://github.com/ThioJoe/YouTube-Spammer-Purge")
