@@ -1062,12 +1062,13 @@ def print_count_stats(final):
 
 ##################################### VALIDATE VIDEO ID #####################################
 # Checks if video ID / video Link is correct length and in correct format - If so returns true and isolated video ID
-def validate_video_id(video_url):
+def validate_video_id(video_url, silent=False):
     youtube_video_link_regex = r"^\s*(?P<video_url>(?:(?:https?:)?\/\/)?(?:(?:www|m)\.)?(?:youtube\.com|youtu.be)(?:\/(?:[\w\-]+\?v=|embed\/|v\/)?))?(?P<video_id>[\w\-]{11})(?:(?(video_url)\S+|$))?\s*$"
     match = re.match(youtube_video_link_regex, video_url)
     if match == None:
+      if silent == False:
         print(f"\n{B.RED}{F.BLACK}Invalid Video link or ID!{S.R} Video IDs are 11 characters long.")
-        return False, None
+      return False, None
     return True, match.group('video_id')
 
 ############################### VALIDATE COMMUNITY POST ID #################################
@@ -1103,6 +1104,14 @@ def validate_post_id(post_url):
 # Checks if channel ID / Channel Link is correct length and in correct format - If so returns true and isolated channel ID
 def validate_channel_id(inputted_channel):
   isolatedChannelID = "Invalid" # Default value
+  inputted_channel = inputted_channel.strip()
+  notChannelList = ['?v', 'v=', '/embed/', '/vi/', '?feature=', '/v/', '/e/']
+
+  # Check if link is actually a video link / ID
+  isVideo = validate_video_id(inputted_channel, silent=True)
+  if isVideo[0] == True:
+    print(f"\n{F.BLACK}{B.LIGHTRED_EX} Invalid Channel ID / Link! {S.R} Looks like you entered a Video ID / Link by mistake.")
+    return False, None, None
 
   # Get id from channel link
   if "/channel/" in inputted_channel:
@@ -1115,8 +1124,12 @@ def validate_channel_id(inputted_channel):
     if startIndex < endIndex and endIndex <= len(inputted_channel):
       isolatedChannelID = inputted_channel[startIndex:endIndex]
 
-  elif "/c/" in inputted_channel:
-    startIndex = inputted_channel.rindex("/c/") + 3 #Start index at at character after /c/
+  elif "/c/" in inputted_channel or "/user/" in inputted_channel:
+    if "/c/" in inputted_channel:
+      startIndex = inputted_channel.rindex("/c/") + 3 #Start index at at character after /c/
+    elif "/user/" in inputted_channel:
+      startIndex = inputted_channel.rindex("/user/") + 6
+
     endIndex = len(inputted_channel)
 
     # If there is a / after the username scoot the endIndex over
@@ -1130,18 +1143,28 @@ def validate_channel_id(inputted_channel):
         isolatedChannelID = response.get("items")[0]["snippet"]["channelId"] # Get channel ID from custom channel URL username
   
   # Handle legacy style custom URL (no /c/ for custom URL)
-  elif ("youtube.com" in inputted_channel) and ("/c/" and "/channel/" not in inputted_channel):
+  elif "youtube.com" in inputted_channel and not any(x in inputted_channel for x in notChannelList):
     startIndex = inputted_channel.rindex("/") + 1
     endIndex = len(inputted_channel)
 
     if startIndex < endIndex and endIndex <= len(inputted_channel):
       customURL = inputted_channel[startIndex:endIndex]
+      # First check if actually video ID (video ID regex expression from: https://webapps.stackexchange.com/a/101153)
+      if re.match(r'[0-9A-Za-z_-]{10}[048AEIMQUYcgkosw]', customURL):
+        print(f"{F.LIGHTRED_EX}Invalid Channel ID / Link!{S.R} Looks like you entered a Video ID / Link by mistake.)")
+        return False, None, None
+
       response = youtube.search().list(part="snippet",q=customURL, maxResults=1).execute()
       if response.get("items"):
         isolatedChannelID = response.get("items")[0]["snippet"]["channelId"] # Get channel ID from custom channel URL username
 
-  else:
+  # Channel ID regex expression from: https://webapps.stackexchange.com/a/101153
+  elif re.match(r'UC[0-9A-Za-z_-]{21}[AQgw]', inputted_channel):
     isolatedChannelID = inputted_channel
+
+  else:
+    print(f"\n{B.RED}{F.BLACK}Error:{S.R} Invalid Channel link or ID!")
+    return False, None, None
 
   if len(isolatedChannelID) == 24 and isolatedChannelID[0:2] == "UC":
     response = youtube.channels().list(part="snippet", id=isolatedChannelID).execute()
@@ -1474,8 +1497,8 @@ def check_for_update(currentVersion, silentCheck=False):
               print("Or download the latest version manually from here: https://github.com/ThioJoe/YT-Spammer-Purge/releases")
               input("\nPress enter to Exit...")
               sys.exit()
-              
-          # Print Success    
+
+          # Print Success
           print(f"\n>  Download Completed: {F.LIGHTGREEN_EX}{downloadFileName}{S.R}")
           input("\nYou can now delete the old version. Press Enter to Exit...")
           sys.exit()
@@ -2198,7 +2221,7 @@ def main():
 
   # Authenticate with the Google API - If token expired and invalid, deletes and re-authenticates
   try:
-    youtube = get_authenticated_service() # Set easier name for API function
+    youtube = get_authenticated_service() # Create authentication object
   except Exception as e:
     if "invalid_grant" in str(e):
       print(f"{F.YELLOW}[!] Invalid token{S.R} - Requires Re-Authentication")
