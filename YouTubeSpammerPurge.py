@@ -613,6 +613,8 @@ def check_against_filter(currentUser, miscData, filterMode, filterSubMode, comme
         add_spam(commentID, videoID)
       elif any(findOnlyObfuscated(expression[1], expression[0], commentText) for expression in compiledRegexDict['textObfuBlackWords']):
         add_spam(commentID, videoID)
+      elif any(findOnlyObfuscated(expression[1], expression[0], authorChannelName) for expression in compiledRegexDict['usernameObfuBlackWords']):
+        add_spam(commentID, videoID)
       elif sensitive == True and re.search(smartFilter['usernameConfuseRegex'], authorChannelName):
         add_spam(commentID, videoID)
       elif sensitive == False and findOnlyObfuscated(smartFilter['usernameConfuseRegex'], miscData['channelOwnerName'], authorChannelName):
@@ -2029,22 +2031,22 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive
     input("Press Enter to Begin Scanning...")
 
   # General Spammer Criteria
-  #usernameRedChars =""
   #usernameBlackChars = ""
   spamGenEmoji_Raw = b'@Sl-~@Sl-};+UQApOJ|0pOJ~;q_yw3kMN(AyyBUh'
   usernameBlackWords_Raw = [b'aA|ICWn^M`', b'aA|ICWn>^?c>', b'Z*CxTWo%_<a$#)', b'c4=WCbY*O1XL4a}', b'Z*CxIZgX^DXL4a}', b'Z*CxIX8', b'V`yb#YanfTAY*7@Zf<34', b'b7f^9ZFwMLXkl({Wo!', b'c4>2IbRcbcAY*7@Zf<34', b'cWHEJATS_yX=G(@a{', b'cWHEJAZ~9Uc4=f~Z*u', b'cWHEJZ*_DaVQzUKc4=e']
+  usernameObfuBlackWords_Raw = [b'c4Bp7YjX', b'b|7MPV{3B']
   usernameRedWords = ["whatsapp", "telegram"]
-  usernameBlackWords = []
   textObfuBlackWords = ['telegram']
-  for x in usernameBlackWords_Raw: usernameBlackWords.append(b64decode(x).decode(utf_16))
-  g = b64decode(spamGenEmoji_Raw).decode(utf_16)
-
+  
   # General Settings
   unicodeCategoriesStrip = ["Mn", "Cc", "Cf", "Cs", "Co", "Cn"] # Categories of unicode characters to strip during normalization
 
-  # Prepare General Filters
-  spamGenEmojiSet = make_char_set(g)
-  #usernameBlackCharsSet = make_char_set(usernameBlackChars)
+  # Create General Lists
+  usernameBlackWords, usernameObfuBlackWords = [], []
+  spamGenEmojiSet = make_char_set(b64decode(spamGenEmoji_Raw).decode(utf_16))
+    #usernameBlackCharsSet = make_char_set(usernameBlackChars)
+  for x in usernameBlackWords_Raw: usernameBlackWords.append(b64decode(x).decode(utf_16))
+  for x in usernameObfuBlackWords_Raw: usernameObfuBlackWords.append(b64decode(x).decode(utf_16))
 
   # Type 1 Spammer Criteria
   minNumbersMatchCount = 3 # Choice of minimum number of matches from spamNums before considered spam
@@ -2071,11 +2073,13 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive
   yellowAdEmoji = b64decode(b'@Sl-|@Sm8N@Sm8C@Sl>4@Sl;H@Sly0').decode(utf_16)
   hrt = b64decode(b';+duJpOTpHpOTjFpOTmGpOTaCpOTsIpOTvJpOTyKpOT#LpQoYlpOT&MpO&QJouu%el9lkElAZ').decode(utf_16)
   
-  blackAdWords, redAdWords, yellowAdWords, exactRedAdWords = [], [], [], []
+  # Create Type 2 Lists
+  blackAdWords, redAdWords, yellowAdWords, exactRedAdWords, usernameBlackWords = [], [], [], [], []
   for x in blackAdWords_Raw: blackAdWords.append(b64decode(x).decode(utf_16))
   for x in redAdWords_Raw: redAdWords.append(b64decode(x).decode(utf_16))
   for x in yellowAdWords_Raw: yellowAdWords.append(b64decode(x).decode(utf_16))
   for x in exactRedAdWords_Raw: exactRedAdWords.append(b64decode(x).decode(utf_16))
+  
 
   # Prepare Filters for Type 2 Spammers
   redAdEmojiSet = make_char_set(redAdEmoji)
@@ -2094,6 +2098,7 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive
   }
   # Compile regex with upper case, otherwise many false positive character matches
   bufferMatch, addBuffers = "*_~|`", "*_~|`\[\]\(\)'" # Add 'buffer' chars to compensate for obfuscation
+  usernameConfuseRegex = re.compile(confusable_regex(miscData['channelOwnerName']))
   m = bufferMatch
   a = addBuffers
   for word in usernameBlackWords:
@@ -2116,8 +2121,10 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive
     compiledRegexDict['usernameRedWords'].append([word, value])
   for word in textObfuBlackWords:
     value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
-    compiledRegexDict['textObfuBlackWords'].append([word, value])  
-  usernameConfuseRegex = re.compile(confusable_regex(miscData['channelOwnerName']))
+    compiledRegexDict['textObfuBlackWords'].append([word, value])
+  for word in usernameObfuBlackWords:
+    value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
+    compiledRegexDict['usernameObfuBlackWords'].append([word, value])
 
   # Prepare All-domain Regex Expression
   prepString = "\.("
