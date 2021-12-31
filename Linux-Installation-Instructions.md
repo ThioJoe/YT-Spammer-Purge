@@ -6,7 +6,7 @@
 2. Make the bash script executable. Run:
 	* `chmod +x install_full.sh`
 3. Finally, execute the script. Run:
-	* `./install_full.sh`
+	* `sudo ./install_full.sh`
 # Manual Installation
 1. Download the source code `tar.gz` from the latest release 
 
