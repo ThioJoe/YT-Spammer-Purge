@@ -2,6 +2,8 @@ name: Spammer Detection Suggestion or Problem
 description: Report problems or possible improvements related to detection of **specific** comments or types of comments. (For general suggestions or ideas, use the discussion section.)
 title: "Filtering: "
 labels: ["filtering"]
+assignees:
+- ThioJoe
 body:
   - type: markdown
     attributes:
