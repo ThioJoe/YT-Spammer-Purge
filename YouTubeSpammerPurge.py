@@ -36,8 +36,8 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.5.1"
-configVersion = 11
+version = "2.5.2"
+configVersion = 12
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 # GUI Related
@@ -796,6 +796,7 @@ def check_deleted_comments(checkDict):
           fields="items",
           textFormat="plainText"
         ).execute()
+        print("    (Note: You can disable deletion success checking in the config file, to save time and API quota)\n")
         print("Verifying Deleted Comments: [" + str(j) + " / " + str(total) + "]", end="\r")
         j += 1
 
@@ -3168,7 +3169,11 @@ def main():
     ### ---------------- Reporting / Deletion Begins  ----------------
     delete_found_comments(list(matchedCommentsDict), banChoice, deletionMode)
     if deletionMode != "reportSpam":
-      check_deleted_comments(matchedCommentsDict)
+      if not config or config and config['check_deletion_success'] == True:
+        check_deleted_comments(matchedCommentsDict)
+      elif config and config['check_deletion_success'] == False:
+        print("\nSkipped checking if deletion was successful.\n")
+
     if logMode == True:
       write_rtf(logFileName, "\n\n \\line\\line Spammers Banned: " + str(banChoice)) # Write whether or not spammer is banned to log file
       write_rtf(logFileName, "\n\n \\line\\line Action Taken on Comments: " + str(deletionModeFriendlyName) + "\n\n"+ "\\line\\line")
