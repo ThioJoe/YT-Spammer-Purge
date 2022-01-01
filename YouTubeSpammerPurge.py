@@ -575,7 +575,7 @@ def check_against_filter(currentUser, miscData, filterMode, filterSubMode, comme
       combinedSet = make_char_set(combinedString, stripLettersNumbers=True, stripPunctuation=True)
       usernameSet = make_char_set(authorChannelName)
 
-      # Functions
+      # Functions --------------------------------------------------------------
       def findOnlyObfuscated(regexExpression, originalWord, stringToSearch):
         # Confusable thinks s and f look similar, have to compensate to avoid false positive
         ignoredConfusablesConverter = {ord('f'):ord('s'),ord('s'):ord('f')} 
@@ -590,6 +590,16 @@ def check_against_filter(currentUser, miscData, filterMode, filterSubMode, comme
 
       def remove_unicode_categories(string):
         return "".join(char for char in string if unicodedata.category(char) not in smartFilter['unicodeCategoriesStrip'])
+      
+      def check_if_only_a_link(string):
+        result = re.match(compiledRegexDict['onlyVideoLinkRegex'], string)
+        if result == None:
+          return False
+        elif result.group(0) and len(result.group(0)) == len(string):
+          return True
+        else:
+          return False
+      # ------------------------------------------------------------------------
 
       # Normalize usernames and text, remove multiple whitespace and invisible chars
       combinedString = re.sub(' +', ' ',combinedString)
@@ -618,6 +628,8 @@ def check_against_filter(currentUser, miscData, filterMode, filterSubMode, comme
       elif any(findOnlyObfuscated(expression[1], expression[0], authorChannelName) for expression in compiledRegexDict['usernameObfuBlackWords']):
         add_spam(commentID, videoID)
       elif any(re.search(expression, combinedString) for expression in spamDomainRegex):
+        add_spam(commentID, videoID)
+      elif check_if_only_a_link(commentText.strip()):
         add_spam(commentID, videoID)
       elif sensitive == True and re.search(smartFilter['usernameConfuseRegex'], authorChannelName):
         add_spam(commentID, videoID)
@@ -2202,6 +2214,11 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive
     'textObfuBlackWords': [],
     'usernameObfuBlackWords': [],
   }
+
+  # Prepare Regex to detect nothing but video link in comment
+  onlyVideoLinkRegex = re.compile(r"^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$")
+  compiledRegexDict['onlyVideoLinkRegex'] = onlyVideoLinkRegex
+
   # Compile regex with upper case, otherwise many false positive character matches
   bufferMatch, addBuffers = "*_~|`", "*_~|`\[\]\(\)'" # Add 'buffer' chars to compensate for obfuscation
   usernameConfuseRegex = re.compile(confusable_regex(miscData['channelOwnerName']))
