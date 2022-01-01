@@ -36,7 +36,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.5.2"
+version = "2.5.3"
 configVersion = 12
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -2439,6 +2439,7 @@ def main():
     spamDomainList = ingest_list_file(spamDomainListPath)
     if spamDomainList == None:
       spamDomainList = ingest_asset_file(spamDomainListFileName)
+    updateAvailable = False
   os.system(clear_command)
 
   # Load any other data
