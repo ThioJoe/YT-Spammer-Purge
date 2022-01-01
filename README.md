@@ -84,6 +84,9 @@ If you feel sketched out about giving the app the required high level permission
 # Scam Websites in Comments
 I have a [repo](https://github.com/ThioJoe/YT-Spam-Domains-List), where you can create a issue with scam website domains you saw in comments, and if you want, can even add the site to the [SpamDomainsList.txt](https://github.com/ThioJoe/YT-Spam-Domains-List/blob/main/SpamDomainsList.txt) file and create a Pull Request. Although, I do not recommend you go to that site whatsoever, VISIT IT AT YOUR **OWN RISK**. I even have the file listed in this repo, under the assets folder, but it is preferable that you link the scam website in that repo, instead of listing it here.
 
+If you are a content creator, you can check your "Held for review" section in the "Creator Studio" and see if you got any scam links there, and if you do you can follow the above steps to help the efficience of this bot.
+
+
 ## Installation
 
 If using the python script version (not the exe), there is a requirements.txt with necessary modules. Created with Python 3.9.7
