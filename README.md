@@ -1,5 +1,5 @@
 <h1 align="center">
-<img src="/assets/icon.png" alt="Icon" width="120" height="120" </img>
+<img src="/assets/icon.png" alt="Icon" width="100" height="100" </img>
 <br>
 YouTube Spammer Purge
 <br>
@@ -13,6 +13,8 @@ YouTube Spammer Purge
 * [Linux Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/Linux-Installation-Instructions)
 * [MacOS Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/MacOS-Instructions)
 * (Windows installation not necessary if using exe file. But read below for how to set up required API key)
+
+**Detailed Info & Documentation**: Visit the wiki [(Click Here)](https://github.com/ThioJoe/YT-Spammer-Purge/wiki) for more detailed writeups on using the program
 
 ## Features
 
