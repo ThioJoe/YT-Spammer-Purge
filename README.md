@@ -81,6 +81,9 @@ If you feel sketched out about giving the app the required high level permission
 <p align="center">Match Samples and Deletion Menu:</p>
 <p align="center"><img width="738" alt="Match Samples and Deletion Menu" src="https://user-images.githubusercontent.com/93459510/147559013-7b1f59c7-4433-4b19-8e2e-7988d5d29ee5.png"></p>
 
+# Scam Websites in Comments
+I have a [repo](https://github.com/ThioJoe/YT-Spam-Domains-List), where you can create a issue with scam website domains you saw in comments, and if you want, can even add the site to the [SpamDomainsList.txt](https://github.com/ThioJoe/YT-Spam-Domains-List/blob/main/SpamDomainsList.txt) file and create a Pull Request. Although, I do not recommend you go to that site whatsoever. DO IT AT YOUR **OWN RISK**. I even have the file listed in this repo, under the assets folder, but it is preferable that you link the scam website in that repo, instead of listing it here.
+
 ## Installation
 
 If using the python script version (not the exe), there is a requirements.txt with necessary modules. Created with Python 3.9.7
