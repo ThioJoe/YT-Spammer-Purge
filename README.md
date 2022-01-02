@@ -1,5 +1,5 @@
 <h1 align="center">
-<img src="/assets/icon.png" alt="Icon" width="95" height="95" </img>
+<img src="/assets/icon.png" alt="Icon" width="75" height="75" </img>
 <br>
 YouTube Spammer Purge
 <br>
