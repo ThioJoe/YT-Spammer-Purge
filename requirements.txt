@@ -5,4 +5,4 @@ colorama==0.4.4
 rtfunicode==2.0
 confusables==1.2.0
 certifi>=2021.10.8
-tqdm<=4.62.3
+six>=1.16.0
