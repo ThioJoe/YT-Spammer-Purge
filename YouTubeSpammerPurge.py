@@ -622,7 +622,7 @@ def check_against_filter(currentUser, miscData, filterMode, filterSubMode, comme
         #  add_spam(commentID, videoID)
       elif any(re.search(expression[1], authorChannelName) for expression in compiledRegexDict['usernameBlackWords']):
         add_spam(commentID, videoID)
-      elif any(findOnlyObfuscated(expression[1], expression[0], combinedString) for expression in compiledRegexDict['blackAdWords']):
+      elif any(findOnlyObfuscated(expression[1], expression[0], combinedString) for expression in compiledRegexDict['blackObfuAdWords']):
         add_spam(commentID, videoID)
       elif any(findOnlyObfuscated(expression[1], expression[0], commentText) for expression in compiledRegexDict['textObfuBlackWords']):
         add_spam(commentID, videoID)
@@ -2241,7 +2241,7 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive
   compiledRegex = re.compile(f"({regexTest1}|{regexTest2}|{regexTest3})")
 
   # Type 2 Spammer Criteria
-  blackAdWords_Raw = [b'V`yb#YanfTAaHVTW@&5', b'Z*XO9AZ>XdaB^>EX>0', b'b7f^9ZFwMYa&Km7Yy', b'V`yb#YanfTAa-eFWp4', b'V`yb#YanoPZ)Rz1', b'V`yb#Yan)MWMyv', b'bYXBHZ*CxMc>', b'Z*CxMc_46UV{~<LWd']
+  blackObfuAdWords_Raw = [b'V`yb#YanfTAaHVTW@&5', b'Z*XO9AZ>XdaB^>EX>0', b'b7f^9ZFwMYa&Km7Yy', b'V`yb#YanfTAa-eFWp4', b'V`yb#YanoPZ)Rz1', b'V`yb#Yan)MWMyv', b'bYXBHZ*CxMc>', b'Z*CxMc_46UV{~<LWd']
   redAdWords_Raw = [b'W_4q0', b'b7gn', b'WNBk-', b'WFcc~', b'W-4QA', b'W-2OUYX', b'Zgpg3', b'b1HZ', b'F*qv', b'aBp&M']
   yellowAdWords_Raw = [b'Y;SgD', b'Vr5}<bZKUFYy', b'VsB)5', b'XK8Y5a{', b'O~a&QV`yb=', b'Xk}@`pJf', b'Xm4}']
   exactRedAdWords_Raw = [b'EiElAEiElAEiElAEiElAEiElAEiElAEiElAEiElAEiElAEiElAEiC', b'Wq4s@bZmJbcW7aBAZZ|OWo2Y#WB']
@@ -2250,8 +2250,8 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive
   hrt = b64decode(b';+duJpOTpHpOTjFpOTmGpOTaCpOTsIpOTvJpOTyKpOT#LpQoYlpOT&MpO&QJouu%el9lkElAZ').decode(utf_16)
   
   # Create Type 2 Lists
-  blackAdWords, redAdWords, yellowAdWords, exactRedAdWords, usernameBlackWords = [], [], [], [], []
-  for x in blackAdWords_Raw: blackAdWords.append(b64decode(x).decode(utf_16))
+  blackObfuAdWords, redAdWords, yellowAdWords, exactRedAdWords, usernameBlackWords = [], [], [], [], []
+  for x in blackObfuAdWords_Raw: blackObfuAdWords.append(b64decode(x).decode(utf_16))
   for x in redAdWords_Raw: redAdWords.append(b64decode(x).decode(utf_16))
   for x in yellowAdWords_Raw: yellowAdWords.append(b64decode(x).decode(utf_16))
   for x in exactRedAdWords_Raw: exactRedAdWords.append(b64decode(x).decode(utf_16))
@@ -2265,7 +2265,7 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive
   # Prepare Regex for Type 2 and General Spammers
   compiledRegexDict = {
     'usernameBlackWords': [],
-    'blackAdWords': [],
+    'blackObfuAdWords': [],
     'redAdWords': [],
     'yellowAdWords': [],
     'exactRedAdWords': [],
@@ -2286,9 +2286,9 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive
   for word in usernameBlackWords:
     value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
     compiledRegexDict['usernameBlackWords'].append([word, value])
-  for word in blackAdWords:
+  for word in blackObfuAdWords:
     value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
-    compiledRegexDict['blackAdWords'].append([word, value])
+    compiledRegexDict['blackObfuAdWords'].append([word, value])
   for word in redAdWords:
     value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
     compiledRegexDict['redAdWords'].append([word, value])
@@ -2341,7 +2341,7 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive
     'spammerNumbersSet': spammerNumbersSet, 
     'compiledRegex': compiledRegex, 
     'minNumbersMatchCount': minNumbersMatchCount, 
-    'blackAdWords': blackAdWords, 
+    'blackObfuAdWords': blackObfuAdWords, 
     'redAdWords': redAdWords, 
     'yellowAdWords': yellowAdWords, 
     #'usernameBlackCharsSet': usernameBlackCharsSet, 
