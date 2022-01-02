@@ -1523,7 +1523,8 @@ def check_for_update(currentVersion, silentCheck=False):
 
           # Print Success
           print(f"\n>  Download Completed: {F.LIGHTGREEN_EX}{downloadFileName}{S.R}")
-          input("\nYou can now delete the old version. Press Enter to Exit...")
+          print("You can now delete the old version. (Or keep it around in case you encounter any issues with the new version)")
+          input("\nPress Enter to Exit...")
           sys.exit()
 
         else:
