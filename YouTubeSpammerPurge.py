@@ -292,7 +292,7 @@ def add_sample(authorID, authorNameRaw, commentText):
 ##########################################################################################
 
 # Call the API's commentThreads.list method to list the existing comments.
-def get_comments(youtube, miscData, currentUser, filterMode, filterSubMode, scanVideoID=None, check_channel_id=None, nextPageToken=None, inputtedSpammerChannelID=None, inputtedUsernameFilter=None, inputtedCommentTextFilter=None, regexPattern=None):  # None are set as default if no parameters passed into function
+def get_comments(youtube, currentUser, miscData, filterMode, filterSubMode, scanVideoID=None, check_channel_id=None, nextPageToken=None, inputtedSpammerChannelID=None, inputtedUsernameFilter=None, inputtedCommentTextFilter=None, regexPattern=None, videosToScan=None):  # None are set as default if no parameters passed into function
   global scannedCommentsCount
   # Initialize some variables
   authorChannelName = None
@@ -363,11 +363,11 @@ def get_comments(youtube, miscData, currentUser, filterMode, filterSubMode, scan
     scannedCommentsCount += 1  # Counts number of comments scanned, add to global count
     
     if numReplies > 0 and len(limitedRepliesList) < numReplies:
-      get_replies(currentUser, miscData, filterMode, filterSubMode, parent_id, videoID, parentAuthorChannelID, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern)
+      get_replies(youtube, currentUser, miscData, filterMode, filterSubMode, parent_id, videoID, parentAuthorChannelID, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern, videosToScan)
     elif numReplies > 0 and len(limitedRepliesList) == numReplies: # limitedRepliesList can never be more than numReplies
-      get_replies(currentUser, miscData, filterMode, filterSubMode, parent_id, videoID, parentAuthorChannelID, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern, limitedRepliesList)
+      get_replies(youtube, currentUser, miscData, filterMode, filterSubMode, parent_id, videoID, parentAuthorChannelID, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern, videosToScan, repliesList=limitedRepliesList)
     else:
-      print_count_stats(final=False)  # Updates displayed stats if no replies
+      print_count_stats(miscData, videosToScan, final=False)  # Updates displayed stats if no replies
 
   return RetrievedNextPageToken
 
@@ -377,7 +377,7 @@ def get_comments(youtube, miscData, currentUser, filterMode, filterSubMode, scan
 ##########################################################################################
 
 # Call the API's comments.list method to list the existing comment replies.
-def get_replies(currentUser, miscData, filterMode, filterSubMode, parent_id, videoID, parentAuthorChannelID, inputtedSpammerChannelID=None, inputtedUsernameFilter=None, inputtedCommentTextFilter=None, regexPattern=None, repliesList=None):
+def get_replies(youtube, currentUser, miscData, filterMode, filterSubMode, parent_id, videoID, parentAuthorChannelID, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern, videosToScan, repliesList=None, ):
   global scannedRepliesCount
   # Initialize some variables
   authorChannelName = None
@@ -436,7 +436,7 @@ def get_replies(currentUser, miscData, filterMode, filterSubMode, parent_id, vid
 
     # Update latest stats
     scannedRepliesCount += 1  # Count number of replies scanned, add to global count
-    print_count_stats(final=False) # Prints out current count stats
+    print_count_stats(miscData, videosToScan, final=False) # Prints out current count stats
 
   return True
 
@@ -949,6 +949,15 @@ def get_video_title(video_id):
 
   return title
 
+
+def get_comment_count(video_id):
+  result = youtube.videos().list(
+    part="statistics",
+    id=video_id,
+    fields='items/statistics/commentCount',
+    ).execute()
+  return result['items'][0]['statistics']['commentCount']
+
 ############################# GET CHANNEL ID FROM VIDEO ID #####################################
 # Get channel ID from video ID using YouTube API request
 def get_channel_id(video_id):
@@ -1057,7 +1066,7 @@ def get_recent_videos(channel_id, numVideos):
     maxResults=numVideos,
     ).execute()
 
-  recentVideos = []
+  recentVideos = [] #List of dictionaries
   i=0
   for item in result['items']:
     recentVideos.append({})
@@ -1065,6 +1074,10 @@ def get_recent_videos(channel_id, numVideos):
     videoTitle = str(item['snippet']['title']).replace("&quot;", "\"")
     recentVideos[i]['videoID'] = videoID
     recentVideos[i]['videoTitle'] = videoTitle
+
+    commentCount = get_comment_count(videoID)
+    recentVideos[i]['commentCount'] = commentCount
+
     i+=1
 
   return recentVideos
@@ -1072,11 +1085,24 @@ def get_recent_videos(channel_id, numVideos):
 ##################################### PRINT STATS ##########################################
 
 # Prints Scanning Statistics, can be version that overwrites itself or one that finalizes and moves to next line
-def print_count_stats(final):
-  if final == True:
-    print(f"Top Level Comments Scanned: {F.YELLOW}" + str(scannedCommentsCount) + f"{S.R} | Replies Scanned: {F.YELLOW}" + str(scannedRepliesCount) + f"{S.R} | Matches Found So Far: {F.LIGHTRED_EX}" +  str(len(matchedCommentsDict)) + f"{S.R}\n")
+def print_count_stats(miscData, videosToScan, final):
+  # Use videosToScan (list of dictionaries) to retrieve total number of comments
+  if videosToScan:
+    totalComments = miscData['totalCommentCount']
+    totalScanned = scannedRepliesCount + scannedCommentsCount
+    percent = ((totalScanned / totalComments) * 100)
+    progress = f"Total: [{str(totalScanned)}/{str(totalComments)}] ({percent:.0f}%) ".ljust(27, " ") + "|" #Formats percentage to 0 decimal places
   else:
-    print(f"Top Level Comments Scanned: {F.YELLOW}" + str(scannedCommentsCount) + f"{S.R} | Replies Scanned: {F.YELLOW}" + str(scannedRepliesCount) + f"{S.R} | Matches Found So Far: {F.LIGHTRED_EX}" +  str(len(matchedCommentsDict)) + f"{S.R}", end = "\r")
+    progress = ""
+  
+  comScanned = str(scannedCommentsCount)
+  repScanned = str(scannedRepliesCount)
+  matchCount = str(len(matchedCommentsDict))
+
+  if final == True:
+    print(f" {progress} Comments Scanned: {F.YELLOW}{comScanned}{S.R} | Replies Scanned: {F.YELLOW}{repScanned}{S.R} | Matches Found So Far: {F.LIGHTRED_EX}{matchCount}{S.R}\n")
+  else:
+    print(f" {progress} Comments Scanned: {F.YELLOW}{comScanned}{S.R} | Replies Scanned: {F.YELLOW}{repScanned}{S.R} | Matches Found So Far: {F.LIGHTRED_EX}{matchCount}{S.R}", end = "\r")
   
   return None
 
@@ -2376,7 +2402,7 @@ def main():
   logMode = False
   userNotChannelOwner = False
   spamListPathsDict = {}
-
+  
   # Checks system platform to set correct console clear command
   # Clears console otherwise the windows terminal doesn't work with colorama for some reason  
   clear_command = "cls" if platform.system() == "Windows" else "clear"
@@ -2587,6 +2613,13 @@ def main():
       if validVideoIDResult[0] == True:  #validVideoID now contains True/False and video ID
         videosToScan[0]['videoID'] = str(validVideoIDResult[1])
         videosToScan[0]['videoTitle'] = get_video_title(videosToScan[0]['videoID'])
+        videosToScan[0]['commentCount'] = get_comment_count(videosToScan[0]['videoID'])
+
+        # Add to comment overall comment count
+        miscData['totalCommentCount'] = 0
+        for video in videosToScan:
+          miscData['totalCommentCount'] += int(video['commentCount'])
+
         print(f"\n{F.BLUE}Chosen Video:{S.R}  " + videosToScan[0]['videoTitle'])
 
         channelOwner = get_channel_id(videosToScan[0]['videoID'])
@@ -2674,6 +2707,11 @@ def main():
       if validEntry == True:
         # Fetch recent videos and print titles to user for confirmation
         videosToScan = get_recent_videos(channelID, numVideos)
+
+        # Get total comment count
+        miscData['totalCommentCount'] = 0
+        for video in videosToScan:
+          miscData['totalCommentCount'] += int(video['commentCount'])
 
         if len(videosToScan) < numVideos:
           print(f"\n{F.YELLOW}WARNING:{S.R} Only {len(videosToScan)} videos found.")
@@ -2928,21 +2966,21 @@ def main():
     print("(Note: If the program appears to freeze, try right clicking within the window)\n")
     print("                          --- Scanning --- \n")
   
-    def scan_video(youtube, miscData, currentUser, filterMode, filterSubMode, videoID, check_channel_id, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern, videoTitle=None, showTitle=False, i=1):
-      nextPageToken = get_comments(youtube, miscData, currentUser, filterMode, filterSubMode, videoID, check_channel_id, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, regexPattern=regexPattern)
+    def scan_video(youtube, miscData, currentUser, filterMode, filterSubMode, videoID, check_channel_id, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern, videosToScan=None, videoTitle=None, showTitle=False, i=1):
+      nextPageToken = get_comments(youtube, currentUser, miscData, filterMode, filterSubMode, videoID, check_channel_id, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, regexPattern=regexPattern, videosToScan=videosToScan)
       if showTitle == True and len(videosToScan) > 0:
         # Prints video title, progress count, adds enough spaces to cover up previous stat print line
-        offset = 82 - len(videoTitle)
+        offset = 95 - len(videoTitle)
         if offset > 0:
           spacesStr = " " * offset
         else:
           spacesStr = ""
         print(f"Scanning {i}/{len(videosToScan)}: " + videoTitle + spacesStr + "\n")
 
-      print_count_stats(final=False)  # Prints comment scan stats, updates on same line
+      print_count_stats(miscData, videosToScan, final=False)  # Prints comment scan stats, updates on same line
       # After getting first page, if there are more pages, goes to get comments for next page
       while nextPageToken != "End" and scannedCommentsCount < maxScanNumber:
-        nextPageToken = get_comments(youtube, miscData, currentUser, filterMode, filterSubMode, videoID, check_channel_id, nextPageToken, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, regexPattern=regexPattern)
+        nextPageToken = get_comments(youtube, currentUser, miscData, filterMode, filterSubMode, videoID, check_channel_id, nextPageToken, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, regexPattern=regexPattern, videosToScan=videosToScan)
 
     if scanMode == "entireChannel":
       scan_video(youtube, miscData, currentUser, filterMode, filterSubMode, scanVideoID, check_channel_id, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern)
@@ -2951,9 +2989,9 @@ def main():
       for video in videosToScan:
         videoID = str(video['videoID'])
         videoTitle = str(video['videoTitle'])
-        scan_video(youtube, miscData, currentUser, filterMode, filterSubMode, videoID, check_channel_id, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern, videoTitle=videoTitle, showTitle=True, i=i)
+        scan_video(youtube, miscData, currentUser, filterMode, filterSubMode, videoID, check_channel_id, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern, videosToScan=videosToScan, videoTitle=videoTitle, showTitle=True, i=i)
         i += 1
-    print_count_stats(final=True)  # Prints comment scan stats, finalizes
+    print_count_stats(miscData, videosToScan, final=True)  # Prints comment scan stats, finalizes
   
 ##########################################################
   bypass = False
