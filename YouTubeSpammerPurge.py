@@ -105,12 +105,22 @@ def get_authenticated_service():
 
   # Check if client_secrets.json file exists, if not give error
   if not os.path.exists(CLIENT_SECRETS_FILE):
-    print(f"\n         ----- {F.WHITE}{B.RED}[!] Error:{S.R} client_secrets.json file not found -----")
-    print(f" ----- Did you create a {F.YELLOW}Google Cloud Platform Project{S.R} to access the API? ----- ")
-    print(f"  > For instructions on how to get an API key, visit: {F.YELLOW}www.TJoe.io/api-setup{S.R}")
-    print(f"\n  > (Non-shortened Link: https://github.com/ThioJoe/YT-Spammer-Purge#instructions---obtaining-youtube-api-key)")
-    input("\nPress Enter to Exit...")
-    sys.exit()
+    CURR_DIR = os.path.dirname(os.path.realpath(__file__)) #current directory
+    LIST_DIR = os.listdir(CURR_DIR) #list current directory, array.
+    for dir in LIST_DIR:
+      if dir.endswith('.json'):
+        print(f'{F.GREEN} RENAMING, \'{dir}\'')
+        os.rename(dir, 'client_secrets.json') #rename if file with extension '.json' is found.
+        break
+    if os.path.exists(CLIENT_SECRETS_FILE):
+      print('FILE [RENAMED]...')
+    else:
+      print(f"\n         ----- {F.WHITE}{B.RED}[!] Error:{S.R} client_secrets.json file not found -----")
+      print(f" ----- Did you create a {F.YELLOW}Google Cloud Platform Project{S.R} to access the API? ----- ")
+      print(f"  > For instructions on how to get an API key, visit: {F.YELLOW}www.TJoe.io/api-setup{S.R}")
+      print(f"\n  > (Non-shortened Link: https://github.com/ThioJoe/YT-Spammer-Purge#instructions---obtaining-youtube-api-key)")
+      input("\nPress Enter to Exit...")
+      sys.exit()
 
   creds = None
   # The file token.pickle stores the user's access and refresh tokens, and is
