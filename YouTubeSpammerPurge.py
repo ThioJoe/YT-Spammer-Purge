@@ -115,18 +115,15 @@ def get_authenticated_service():
         file = dir
         num +=1
  
-    if num > 1:
-        pass
+    if num < 2:
+      os.rename(file, CLIENT_SECRETS_FILE)                      
     else:
-        os.rename(file, CLIENT_SECRETS_FILE)
-        print('RENAME.')
-else:
-    print(f"\n         ----- {F.WHITE}{B.RED}[!] Error:{S.R} client_secrets.json file not found -----")
-    print(f" ----- Did you create a {F.YELLOW}Google Cloud Platform Project{S.R} to access the API? ----- ")
-    print(f"  > For instructions on how to get an API key, visit: {F.YELLOW}www.TJoe.io/api-setup{S.R}")
-    print(f"\n  > (Non-shortened Link: https://github.com/ThioJoe/YT-Spammer-Purge#instructions---obtaining-youtube-api-key)")
-    input("\nPress Enter to Exit...")
-    sys.exit()
+      print(f"\n         ----- {F.WHITE}{B.RED}[!] Error:{S.R} client_secrets.json file not found -----")
+      print(f" ----- Did you create a {F.YELLOW}Google Cloud Platform Project{S.R} to access the API? ----- ")
+      print(f"  > For instructions on how to get an API key, visit: {F.YELLOW}www.TJoe.io/api-setup{S.R}")
+      print(f"\n  > (Non-shortened Link: https://github.com/ThioJoe/YT-Spammer-Purge#instructions---obtaining-youtube-api-key)")
+      input("\nPress Enter to Exit...")
+      sys.exit()
 
   creds = None
   # The file token.pickle stores the user's access and refresh tokens, and is
