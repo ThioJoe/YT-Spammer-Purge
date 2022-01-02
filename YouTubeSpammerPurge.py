@@ -60,6 +60,7 @@ from pkg_resources import parse_version
 import unicodedata
 import hashlib
 from itertools import islice
+import zipfile
 
 # Non Standard Modules
 import rtfunicode
@@ -1386,9 +1387,11 @@ def safety_check_username_against_filter(currentUserName, scanMode, filterCharsS
   return proceed
   
   
-############################# Check For Update ##############################
+############################# Check For App Update ##############################
 def check_for_update(currentVersion, silentCheck=False):
   isUpdateAvailable = False
+  print("\nGetting info about latest updates...")
+
   try:
     response = requests.get("https://api.github.com/repos/ThioJoe/YouTube-Spammer-Purge/releases/latest")
     if response.status_code != 200:
@@ -1573,53 +1576,81 @@ def getRemoteFile(url, stream, silent=False, headers=None):
 ########################### Check Lists Updates ###########################
 def check_lists_update(currentListVersion, silentCheck = False):
   isListUpdateAvailable = False
-  spamDomainListLatestCommit = 'https://api.github.com/repos/ThioJoe/YT-Spam-Domains-List/commits?path=SpamDomainsList.txt&page=1&per_page=1'
-  spamDomainListRawLink = 'https://raw.githubusercontent.com/ThioJoe/YT-Spam-Domains-List/main/SpamDomainsList.txt'
+  #spamDomainListLatestCommit = 'https://api.github.com/repos/ThioJoe/YT-Spam-Domains-List/commits?path=SpamDomainsList.txt&page=1&per_page=1'
+  #spamDomainListRawLink = 'https://raw.githubusercontent.com/ThioJoe/YT-Spam-Domains-List/main/SpamDomainsList.txt'
   #otherlink = 'https://api.github.com/repos/ThioJoe/YT-Spam-Domains-List/contents/SpamDomainsList.txt'
   #spamDomainHostedLocation = "https://cdn.jsdelivr.net/gh/thiojoe/YT-Spam-Domains-List/SpamDomainsList.txt"
+  listDirectory = "spam_lists/"
+  
+  if silentCheck == False:
+    print("\nChecking for updates to spam lists...")
 
-  if os.path.isdir("spam_lists"):
+  if os.path.isdir(listDirectory):
     pass
   else:
     try:
-      os.mkdir("spam_lists")
+      os.mkdir(listDirectory)
     except:
       print("Error: Could not create folder. Try creating a folder called 'spam_lists' to update the spam lists.")
 
-  if os.path.exists("spam_lists/SpamDomainsList.txt"):
-    currentListVersion = get_list_file_version("spam_lists/SpamDomainsList.txt")
-
-  response = getRemoteFile(spamDomainListLatestCommit, silentCheck)
-  if response != None:
-    pass
-  elif silentCheck == True:
-    return isListUpdateAvailable
+  if os.path.exists(listDirectory + "SpamDomainsList.txt"):
+    currentListVersion = get_list_file_version(listDirectory + "SpamDomainsList.txt")
   else:
-    input("Press enter to Exit...")
-    sys.exit()
-
-
+    currentListVersion = None
   
-  # Get latest update time on github as proxy for latest file version
-  listUpdateDateTime = response.json()[0]['commit']['committer']['date']
-  listUpdateDateTime = datetime.strptime(listUpdateDateTime, '%Y-%m-%dT%H:%M:%SZ')
-  latestVersion = listUpdateDateTime.strftime('%Y.%m.%d')
+  # Get latest version based on release tag - In format: 2022.01.01 (YYYY.MM.DD)
+  try:
+    response = requests.get("https://api.github.com/repos/ThioJoe/YT-Spam-Domains-List/releases/latest")
+    latestVersion = response.json()["tag_name"]
+
+  except:
+    if silentCheck == True:
+      return isListUpdateAvailable
+    else:
+      print("Error: Could not get latest release info from GitHub. Please try again later.")
+      input("\nPress enter to Exit...")
+      sys.exit()
 
   if currentListVersion == None or (parse_version(latestVersion) > parse_version(currentListVersion)):
-    downloadFilePath = "spam_lists/SpamDomainsList.txt"
-    filedownload = getRemoteFile(spamDomainListRawLink, headers={'Accept-Encoding': 'identity'}, stream=True) # These headers required to get correct file size
-    total_size_in_bytes= int(filedownload.headers.get('content-length', 0))
+    fileName = response.json()["assets"][0]['name']
+    total_size_in_bytes = response.json()["assets"][0]['size']
+    downloadFilePath = listDirectory + fileName
+    downloadURL = response.json()["assets"][0]['browser_download_url']
+    filedownload = getRemoteFile(downloadURL, stream=True) # These headers required to get correct file size
+    #total_size_in_bytes= int(filedownload.headers.get('content-length', 0))
     block_size =  1048576 #1 MiB in bytes
 
     with open(downloadFilePath, 'wb') as file:
       for data in filedownload.iter_content(block_size):
         file.write(data)
-
+  
     if os.stat(downloadFilePath).st_size == total_size_in_bytes:
-      pass
+      # Unzip files into folder and delete zip file
+      attempts = 0
+      print("Extracting updated lists...")
+      while True:
+        try:
+          attempts += 1
+          time.sleep(0.5)
+          with zipfile.ZipFile(downloadFilePath,"r") as zip_ref:
+            zip_ref.extractall(listDirectory)
+          os.remove(downloadFilePath)
+        except PermissionError as e:
+          if attempts <= 10:
+            continue
+          else:
+            traceback.print_exc()
+            print(f"\n> {F.RED}Error:{S.R} The zip file containing the spam lists was downloaded, but there was a problem extracting the files because of a permission error. ")
+            print(f"This can happen if an antivirus takes a while to scan the file. You may need to manually extract the zip file.")
+            input("\nPress enter to Continue anyway...")
+            break
+        except FileNotFoundError:
+          break
+
     elif total_size_in_bytes != 0 and os.stat(downloadFilePath).st_size != total_size_in_bytes:
       os.remove(downloadFilePath)
-      print(f"\n> {F.RED} File did not fully download. Please try again later.")
+      print(f" > {F.RED} File did not fully download. Please try again later.\n")
+
 
 ############################# Ingest Other Files ##############################
 def ingest_asset_file(fileName):
@@ -2343,6 +2374,7 @@ def main():
   nextPageToken = "start"
   logMode = False
   userNotChannelOwner = False
+  spamListPathsDict = {}
 
   # Checks system platform to set correct console clear command
   # Clears console otherwise the windows terminal doesn't work with colorama for some reason  
@@ -2410,6 +2442,7 @@ def main():
   spamListFolder = "spam_lists"
   spamDomainListFileName = "SpamDomainsList.txt"
   spamDomainListPath = os.path.join(spamListFolder, spamDomainListFileName) # Path to version included in packaged assets folder
+  spamListPathsDict['spamDomainListPath'] = spamDomainListPath
   if not config or config['auto_check_update'] == True:
     try:
       updateAvailable = check_for_update(version, silentCheck=True)
@@ -2419,27 +2452,28 @@ def main():
     
     # Check if spam list file exists, see if out of date based on today's date
     # Therefore should only need to use GitHub api once a day
-    if os.path.exists(spamDomainListPath):
-      spamDomainListVersion = get_list_file_version(spamDomainListPath)
+    if os.path.exists(spamListPathsDict['spamDomainListPath']):
+      spamDomainListVersion = get_list_file_version(spamListPathsDict['spamDomainListPath'])
     else:
       spamDomainListVersion = None
 
     # Check if today or tomorrow's date is later than the last update date (add day to account for time zones)
     if spamDomainListVersion and (datetime.today()+timedelta(days=1) >= datetime.strptime(spamDomainListVersion, '%Y.%m.%d')):
-      spamDomainList = ingest_list_file(spamDomainListPath)
+      spamDomainList = ingest_list_file(spamListPathsDict['spamDomainListPath'])
     else:
       try:
-        check_lists_update(spamDomainListVersion)
-        spamDomainList = ingest_list_file(spamDomainListPath)
+        check_lists_update(spamDomainListVersion, silentCheck=True)
+        spamDomainList = ingest_list_file(spamListPathsDict['spamDomainListPath'])
       except Exception as e:
         # Get backup from asset folder
         spamDomainList = ingest_asset_file(spamDomainListFileName)
 
   else:
-    spamDomainList = ingest_list_file(spamDomainListPath)
+    spamDomainList = ingest_list_file(spamListPathsDict['spamDomainListPath'])
     if spamDomainList == None:
       spamDomainList = ingest_asset_file(spamDomainListFileName)
     updateAvailable = False
+    spamDomainListVersion = get_list_file_version(spamListPathsDict['spamDomainListPath'])
   os.system(clear_command)
 
   # Load any other data
@@ -2734,6 +2768,7 @@ def main():
 
   # Check for latest version
   elif scanMode == "checkUpdates":
+    check_lists_update(spamDomainListVersion)
     check_for_update(version)
 
   # Recove deleted comments mode
