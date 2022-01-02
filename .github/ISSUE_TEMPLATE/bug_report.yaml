@@ -65,3 +65,9 @@ body:
       label: Relevant log output
       description: Copy and paste from tracebacks, aka any error message text that appears during a program crash
       render: shell
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: (Screenshots can be uploaded by simply dragging an image file into this box)
+      render: shell
