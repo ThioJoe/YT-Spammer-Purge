@@ -2889,7 +2889,7 @@ if __name__ == "__main__":
     isRunning = True
     while isRunning:
       main()
-      goAgain = input("Do you want to go through again? [Y/n] ").lower()
+      goAgain = input("Do you want to go run this program again? [Y/n] ").lower()
       if goAgain == "n":
         isRunning = False
         break
