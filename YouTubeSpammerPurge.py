@@ -105,6 +105,7 @@ def get_authenticated_service():
 
   # Check if client_secrets.json file exists, if not give error
   if not os.path.exists(CLIENT_SECRETS_FILE):
+    CURR_DIR = os.path.dirname(os.path.realpath(__file__)
     LIST_DIR = os.listdir(CURR_DIR) #list current directory, array.
     for dir in LIST_DIR:
       if dir.endswith('.json'):
