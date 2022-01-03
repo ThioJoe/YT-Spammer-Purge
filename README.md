@@ -50,7 +50,7 @@ If you feel sketched out about giving the app the required high level permission
 
 ## Usage Notes -READ THIS
 
-1. To use this script, you will need to obtain your own API credentials file by making a project via the Google Developers Console (aka 'Google Cloud Platform'). The credential file should be re-named `client_secret.json` and be placed in the same directory as this script. [See Instructions below](#instructions---obtaining-youtube-api-key).
+1. To use this script, you will need to obtain your own API credentials file by making a project via the Google Developers Console (aka 'Google Cloud Platform'). The credential file should be re-named `client_secret.json` and be placed in the same directory as this script. [See Instructions Here](https://github.com/ThioJoe/YT-Spammer-Purge/wiki/Instructions:-Obtaining-an-API-Key).
 
 2. **IF IT FREEZES** while scanning, it is probably because you clicked within the command prompt window and entered "selection mode" which pauses everything. **To unfreeze it, simply right click within the window, or press the Escape key.**
 
@@ -86,7 +86,7 @@ If you feel sketched out about giving the app the required high level permission
 
 If using the python script version (not the exe), there is a requirements.txt with necessary modules. Created with Python 3.9.7
 
-Either way, you DO need to acquire your own API credentials file to access the YouTube API - [See instructions below](instructions---obtaining-youtube-api-key).
+Either way, you DO need to acquire your own API credentials file to access the YouTube API - [See Instructions Here](https://github.com/ThioJoe/YT-Spammer-Purge/wiki/Instructions:-Obtaining-an-API-Key).
 
 **Operating System Specific Instructions:**
 
@@ -101,7 +101,7 @@ Because I haven't published software before, web browsers and Windows might bloc
 
 <img width="814" alt="Unblock Warning" src="https://user-images.githubusercontent.com/12518330/139364886-f1ad4d80-f7f3-459c-a826-16379d5cf004.png">
 
-## Required: Obtaining YouTube API Key
+## Instructions - Obtaining YouTube API Key
 To use this script, you will need an "Oauth2" credential to access the scanning and deletion functions via YouTube's Data API. Otherwise this script won't work at all. 
 * #### Instructions can be found on this page: [Instructions: Obtaining an API Key](https://github.com/ThioJoe/YT-Spammer-Purge/wiki/Instructions:-Obtaining-an-API-Key)
 * #### **Or, follow a video WalkThrough Here: <https://www.youtube.com/watch?v=c6ebWvay8dE>**  
