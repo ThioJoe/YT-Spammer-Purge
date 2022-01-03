@@ -86,7 +86,7 @@ If you feel sketched out about giving the app the required high level permission
 
 If using the python script version (not the exe), there is a requirements.txt with necessary modules. Created with Python 3.9.7
 
-Either way, you DO need to acquire your own API credentials file to access the YouTube API - [See instructions below](#instructions---obtaining-youtube-api-key).
+Either way, you DO need to acquire your own API credentials file to access the YouTube API - [See Instructions Here](https://github.com/ThioJoe/YT-Spammer-Purge/wiki/Instructions:-Obtaining-an-API-Key).
 
 **Operating System Specific Instructions:**
 
