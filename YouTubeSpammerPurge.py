@@ -36,7 +36,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.5.5"
+version = "2.6.0"
 configVersion = 12
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -49,6 +49,7 @@ import os
 import re
 import sys
 import time
+import ast
 from datetime import datetime, date, timedelta
 import traceback
 import platform
@@ -109,7 +110,7 @@ def get_authenticated_service():
     print(f"\n         ----- {F.WHITE}{B.RED}[!] Error:{S.R} client_secrets.json file not found -----")
     print(f" ----- Did you create a {F.YELLOW}Google Cloud Platform Project{S.R} to access the API? ----- ")
     print(f"  > For instructions on how to get an API key, visit: {F.YELLOW}www.TJoe.io/api-setup{S.R}")
-    print(f"\n  > (Non-shortened Link: https://github.com/ThioJoe/YT-Spammer-Purge#instructions---obtaining-youtube-api-key)")
+    print(f"\n  > (Non-shortened Link: https://github.com/ThioJoe/YT-Spammer-Purge/wiki/Instructions:-Obtaining-an-API-Key)")
     input("\nPress Enter to Exit...")
     sys.exit()
 
@@ -1624,17 +1625,17 @@ def getRemoteFile(url, stream, silent=False, headers=None):
 
 ########################### Check Lists Updates ###########################
 def check_lists_update(spamListDict, silentCheck = False):
-  listDirectory = "spam_lists/"
+  SpamListFolder = spamListDict['Meta']['SpamListFolder']
   currentListVersion = spamListDict['Meta']['VersionInfo']['LatestLocalVersion']
   
   if silentCheck == False:
     print("\nChecking for updates to spam lists...")
 
-  if os.path.isdir(listDirectory):
+  if os.path.isdir(SpamListFolder):
     pass
   else:
     try:
-      os.mkdir(listDirectory)
+      os.mkdir(SpamListFolder)
     except:
       print("Error: Could not create folder. Try creating a folder called 'spam_lists' to update the spam lists.")
 
@@ -1672,7 +1673,7 @@ def check_lists_update(spamListDict, silentCheck = False):
     print("\n>  A new spam list update is available. Downloading...")
     fileName = response.json()["assets"][0]['name']
     total_size_in_bytes = response.json()["assets"][0]['size']
-    downloadFilePath = listDirectory + fileName
+    downloadFilePath = SpamListFolder + fileName
     downloadURL = response.json()["assets"][0]['browser_download_url']
     filedownload = getRemoteFile(downloadURL, stream=True) # These headers required to get correct file size
     block_size =  1048576 #1 MiB in bytes
@@ -1690,7 +1691,7 @@ def check_lists_update(spamListDict, silentCheck = False):
           attempts += 1
           time.sleep(0.5)
           with zipfile.ZipFile(downloadFilePath,"r") as zip_ref:
-            zip_ref.extractall(listDirectory)
+            zip_ref.extractall(SpamListFolder)
           os.remove(downloadFilePath)
         except PermissionError as e:
           if attempts <= 10:
@@ -1744,7 +1745,7 @@ def copy_asset_file(fileName, destination):
     if hasattr(sys, '_MEIPASS'): # If running as a pyinstaller bundle
       return os.path.join(sys._MEIPASS, relative_path)
     return os.path.join(os.path.abspath("assets"), relative_path) # If running as script, specifies resource folder as /assets
-  copyfile(assetFilesPath(fileName), destination)
+  copyfile(assetFilesPath(fileName), os.path.abspath(destination))
 
 def ingest_list_file(relativeFilePath):
   if os.path.exists(relativeFilePath):
@@ -2537,23 +2538,32 @@ def main():
         'Threads':  {'FileName': "SpamThreadsList.txt"}
       },
       'Meta': {
-        'VersionInfo': {'FileName': "SpamVersionInfo.json"}
+        'VersionInfo': {'FileName': "SpamVersionInfo.json"},
+        'SpamListFolder': spamListFolder
         #'LatestLocalVersion': {}
       }
   }
 
-  for x,list in spamListDict['Lists'].items():
-    list['Path'] = os.path.join(spamListFolder, list['FileName'])
+  # Check if spam list folder exists, and create it
+  if not os.path.isdir(spamListFolder):
+    try:
+      os.mkdir(spamListFolder)
+    except:
+      print("Error: Could not create folder. Try creating a folder called 'spam_lists' to update the spam lists.")
+
+  # Iterate and get paths of each list
+  for x,spamList in spamListDict['Lists'].items():
+    spamList['Path'] = os.path.join(spamListFolder, spamList['FileName'])
   spamListDict['Meta']['VersionInfo']['Path'] = os.path.join(spamListFolder, spamListDict['Meta']['VersionInfo']['FileName']) # Path to version included in packaged assets folder
 
   # Check if each spam list exists, if not copy from assets, then get local version number, calculate latest version number
   latestLocalSpamListVersion = "1900.12.31"
-  for x, list in spamListDict['Lists'].items():
-    if not os.path.exists(list['Path']):
-      copy_asset_file(list['FileName'], list['Path'])
+  for x, spamList in spamListDict['Lists'].items():
+    if not os.path.exists(spamList['Path']):
+      copy_asset_file(spamList['FileName'], spamList['Path'])
 
-    listVersion = get_list_file_version(list['Path'])
-    list['Version'] = listVersion
+    listVersion = get_list_file_version(spamList['Path'])
+    spamList['Version'] = listVersion
     if parse_version(listVersion) > parse_version(latestLocalSpamListVersion):
       latestLocalSpamListVersion = listVersion
 
@@ -2564,10 +2574,11 @@ def main():
     copy_asset_file(spamListDict['Meta']['VersionInfo']['FileName'], spamListDict['Meta']['VersionInfo']['Path'])
 
   # Get stored spam list version data from json file
-  with open(spamListDict['Meta']['VersionInfo']['Path'], 'r', encoding="utf-8") as file:
-    versionInfoJson = json.loads(json.load(file)) # Requires to do both for some reason to parse out of file, then out of string
-    spamListDict['Meta']['VersionInfo']['LatestRelease'] = versionInfoJson['LatestRelease']
-    spamListDict['Meta']['VersionInfo']['LastChecked'] = versionInfoJson['LastChecked']
+  jsonData = open(spamListDict['Meta']['VersionInfo']['Path'], 'r', encoding="utf-8")
+  versionInfoJson = str(json.load(jsonData)) # Parses json file into a string
+  versionInfo = ast.literal_eval(versionInfoJson) # Parses json string into a dictionary
+  spamListDict['Meta']['VersionInfo']['LatestRelease'] = versionInfo['LatestRelease']
+  spamListDict['Meta']['VersionInfo']['LastChecked'] = versionInfo['LastChecked']
 
   # Check for program and list updates if auto updates enabled in config
   if not config or config['auto_check_update'] == True:
@@ -2580,15 +2591,15 @@ def main():
     # Check if today or tomorrow's date is later than the last update date (add day to account for time zones)
     if datetime.today()+timedelta(days=1) >= datetime.strptime(spamListDict['Meta']['VersionInfo']['LatestLocalVersion'], '%Y.%m.%d'):
       # Only check for updates until the next day
-      if datetime.today() > datetime.strptime(spamListDict['Meta']['VersionInfo']['LastChecked'], '%Y.%m.%d.%H.%M'):#+timedelta(days=1):
+      if datetime.today() > datetime.strptime(spamListDict['Meta']['VersionInfo']['LastChecked'], '%Y.%m.%d.%H.%M')+timedelta(days=1):
         spamListDict = check_lists_update(spamListDict, silentCheck=True)
 
   else:
     updateAvailable = False
 
   # In all scenarios, load spam lists into memory  
-  for x, list in spamListDict['Lists'].items():
-    list['FilterContents'] = ingest_list_file(list['Path'])
+  for x, spamList in spamListDict['Lists'].items():
+    spamList['FilterContents'] = ingest_list_file(spamList['Path'])
   os.system(clear_command)
 
   # Load any other data
