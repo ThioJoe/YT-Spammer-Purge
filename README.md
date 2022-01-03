@@ -95,7 +95,7 @@ Either way, you DO need to acquire your own API credentials file to access the Y
 
 ## Download & Windows Warning
 
-Because I haven't published software before, web browsers and Windows might block the exe from downloading / running as "unrecognized" until it builds a reputation as being safe. In the meantime, you can simply unblock the program by Right Clicking > Properties > Check 'Unblock' > Click Apply. You can confirm the download by selecting "keep". (If you see these warnings at all)
+Because I haven't published software before, web browsers and Windows/Antivirus software's might block the exe from downloading / running as "unrecognized" until it builds a reputation as being safe. In the meantime, you can simply unblock the program by Right Clicking > Properties > Check 'Unblock' > Click Apply. You can confirm the download by selecting "keep". (If you see these warnings at all)
 
 ![Download Warnings](https://user-images.githubusercontent.com/12518330/139365793-75df4170-24d9-4724-b54a-43eddb64dd53.png)
 
