@@ -1439,17 +1439,22 @@ def check_for_update(currentVersion, silentCheck=False):
     response = requests.get("https://api.github.com/repos/ThioJoe/YouTube-Spammer-Purge/releases/latest")
     if response.status_code != 200:
       if response.status_code == 403:
-        print(f"\n{B.RED}{F.WHITE}Error [U-4]:{S.R} Got an 403 (ratelimit_reached) when attempting to check for update.")
-        print(f"This means you have been {F.YELLOW}rate limited by github.com{S.R}. Please try again in a while.\n")
         if silentCheck == False:
+          print(f"\n{B.RED}{F.WHITE}Error [U-4]:{S.R} Got an 403 (ratelimit_reached) when attempting to check for update.")
+          print(f"This means you have been {F.YELLOW}rate limited by github.com{S.R}. Please try again in a while.\n")
           input("\nPress enter to exit...")
           sys.exit()
+        else:
+          return isUpdateAvailable
       else:
-        print(f"{B.RED}{F.WHITE}Error [U-3]:{S.R} Got non 200 status code (got: {response.status_code}) when attempting to check for update.\n")
-        print(f"If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
         if silentCheck == False:
-          input("\nPress enter to exit...")
-          sys.exit()
+          print(f"{B.RED}{F.WHITE}Error [U-3]:{S.R} Got non 200 status code (got: {response.status_code}) when attempting to check for update.\n")
+          print(f"If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
+          if silentCheck == False:
+            input("\nPress enter to exit...")
+            sys.exit()
+        else:
+          return isUpdateAvailable
     else:
       # assume 200 response
       latestVersion = response.json()["name"]
@@ -1619,7 +1624,6 @@ def getRemoteFile(url, stream, silent=False, headers=None):
 
 ########################### Check Lists Updates ###########################
 def check_lists_update(spamListDict, silentCheck = False):
-  isListUpdateAvailable = False
   listDirectory = "spam_lists/"
   currentListVersion = spamListDict['Meta']['VersionInfo']['LatestLocalVersion']
   
@@ -1634,19 +1638,30 @@ def check_lists_update(spamListDict, silentCheck = False):
     except:
       print("Error: Could not create folder. Try creating a folder called 'spam_lists' to update the spam lists.")
 
-  # if os.path.exists(listDirectory + "SpamDomainsList.txt"):
-  #   currentListVersion = get_list_file_version(listDirectory + "SpamDomainsList.txt")
-  # else:
-  #   currentListVersion = None
-  
-  # Get latest version based on release tag - In format: 2022.12.31 (YYYY.MM.DD)
   try:
     response = requests.get("https://api.github.com/repos/ThioJoe/YT-Spam-Domains-List/releases/latest")
+    if response.status_code != 200:
+      if response.status_code == 403:
+        if silentCheck == False:
+          print(f"\n{B.RED}{F.WHITE}Error [U-4L]:{S.R} Got an 403 (ratelimit_reached) when attempting to check for spam list update.")
+          print(f"This means you have been {F.YELLOW}rate limited by github.com{S.R}. Please try again in a while.\n")
+          input("\nPress enter to exit...")
+          sys.exit()
+        else:
+          return spamListDict
+      else:
+        if silentCheck == False:
+          print(f"{B.RED}{F.WHITE}Error [U-3L]:{S.R} Got non 200 status code (got: {response.status_code}) when attempting to check for spam list update.\n")
+          print(f"If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
+          if silentCheck == False:
+            input("\nPress enter to exit...")
+            sys.exit()
+        else:
+          return spamListDict
     latestRelease = response.json()["tag_name"]
-
   except:
     if silentCheck == True:
-      return isListUpdateAvailable
+      return spamListDict
     else:
       print("Error: Could not get latest release info from GitHub. Please try again later.")
       input("\nPress enter to Exit...")
@@ -1688,7 +1703,7 @@ def check_lists_update(spamListDict, silentCheck = False):
             break
         # This means success, the zip file was deleted after extracting
         except FileNotFoundError:
-          currentDate = datetime.today().strftime('%Y.%m.%d')
+          currentDate = datetime.today().strftime('%Y.%m.%d.%H.%M')
           #Update Dictionary with latest release gotten from API
           spamListDict['Meta']['VersionInfo'].update({'LatestLocalVersion': 'latestRelease'})
           spamListDict['Meta']['VersionInfo'].update({'LastChecked': currentDate})
@@ -1703,7 +1718,9 @@ def check_lists_update(spamListDict, silentCheck = False):
     elif total_size_in_bytes != 0 and os.stat(downloadFilePath).st_size != total_size_in_bytes:
       os.remove(downloadFilePath)
       print(f" > {F.RED} File did not fully download. Please try again later.\n")
-
+      return spamListDict
+  else:
+    return spamListDict
 
 ############################# Ingest Other Files ##############################
 def ingest_asset_file(fileName):
@@ -1735,8 +1752,8 @@ def ingest_list_file(relativeFilePath):
       listData = listFile.readlines()
     processedList = []
     for line in listData:
-      if not line.startswith('#'):
-        line = line.strip()
+      line = line.strip()
+      if not line.startswith('#') and line !="":
         processedList.append(line.lower())
     return processedList
   else:
@@ -2525,18 +2542,18 @@ def main():
       }
   }
 
-  for list in spamListDict['Lists']:
+  for x,list in spamListDict['Lists'].items():
     list['Path'] = os.path.join(spamListFolder, list['FileName'])
   spamListDict['Meta']['VersionInfo']['Path'] = os.path.join(spamListFolder, spamListDict['Meta']['VersionInfo']['FileName']) # Path to version included in packaged assets folder
 
   # Check if each spam list exists, if not copy from assets, then get local version number, calculate latest version number
   latestLocalSpamListVersion = "1900.12.31"
-  for spamList in spamListDict['Lists']:
-    if not os.path.exists(spamList['Path']):
-      copy_asset_file(spamList['FileName'], spamList['Path'])
+  for x, list in spamListDict['Lists'].items():
+    if not os.path.exists(list['Path']):
+      copy_asset_file(list['FileName'], list['Path'])
 
-    listVersion = get_list_file_version(spamList['Path'])
-    spamList['Version'] = listVersion
+    listVersion = get_list_file_version(list['Path'])
+    list['Version'] = listVersion
     if parse_version(listVersion) > parse_version(latestLocalSpamListVersion):
       latestLocalSpamListVersion = listVersion
 
@@ -2548,7 +2565,7 @@ def main():
 
   # Get stored spam list version data from json file
   with open(spamListDict['Meta']['VersionInfo']['Path'], 'r', encoding="utf-8") as file:
-    versionInfoJson = json.load(file)
+    versionInfoJson = json.loads(json.load(file)) # Requires to do both for some reason to parse out of file, then out of string
     spamListDict['Meta']['VersionInfo']['LatestRelease'] = versionInfoJson['LatestRelease']
     spamListDict['Meta']['VersionInfo']['LastChecked'] = versionInfoJson['LastChecked']
 
@@ -2556,22 +2573,22 @@ def main():
   if not config or config['auto_check_update'] == True:
     try:
       updateAvailable = check_for_update(version, silentCheck=True)
-    except:
+    except Exception as e:
       print(f"{F.LIGHTRED_EX}Error Code U-3 occurred while checking for updates. (Checking can be disabled using the config file setting) Continuing...{S.R}\n")      
       updateAvailable = False
     
     # Check if today or tomorrow's date is later than the last update date (add day to account for time zones)
-    if datetime.today()+timedelta(days=1) <= datetime.strptime(spamListDict['Meta']['VersionInfo']['LatestLocalVersion'], '%Y.%m.%d'):
+    if datetime.today()+timedelta(days=1) >= datetime.strptime(spamListDict['Meta']['VersionInfo']['LatestLocalVersion'], '%Y.%m.%d'):
       # Only check for updates until the next day
-      if datetime.today() > datetime.strptime(spamListDict['Meta']['VersionInfo']['LastChecked'], '%Y.%m.%d'):
+      if datetime.today() > datetime.strptime(spamListDict['Meta']['VersionInfo']['LastChecked'], '%Y.%m.%d.%H.%M'):#+timedelta(days=1):
         spamListDict = check_lists_update(spamListDict, silentCheck=True)
 
   else:
     updateAvailable = False
 
   # In all scenarios, load spam lists into memory  
-  for spamList in spamListDict['Lists']:
-    spamList['FilterContents'] = ingest_list_file(spamList['Path'])
+  for x, list in spamListDict['Lists'].items():
+    list['FilterContents'] = ingest_list_file(list['Path'])
   os.system(clear_command)
 
   # Load any other data
@@ -2880,7 +2897,7 @@ def main():
 
   # Check for latest version
   elif scanMode == "checkUpdates":
-    check_lists_update(spamListDict['Meta']['VersionInfo']['LatestLocalVersion'])
+    check_lists_update(spamListDict)
     check_for_update(version)
 
   # Recove deleted comments mode
