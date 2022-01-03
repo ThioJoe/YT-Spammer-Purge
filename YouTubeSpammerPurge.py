@@ -61,6 +61,7 @@ import unicodedata
 import hashlib
 from itertools import islice
 import zipfile
+from shutil import copyfile
 
 # Non Standard Modules
 import rtfunicode
@@ -549,6 +550,7 @@ def check_against_filter(currentUser, miscData, filterMode, filterSubMode, comme
     elif filterMode == "AutoSmart" or filterMode == "SensitiveSmart":
       smartFilter = inputtedUsernameFilter
       # Receive Variables
+      compiledRegexDict = smartFilter['compiledRegexDict']
       numberFilterSet = smartFilter['spammerNumbersSet']
       compiledRegex = smartFilter['compiledRegex']
       minNumbersMatchCount = smartFilter['minNumbersMatchCount']
@@ -560,8 +562,11 @@ def check_against_filter(currentUser, miscData, filterMode, filterSubMode, comme
       languages = smartFilter['languages']
       sensitive =  smartFilter['sensitive']
       rootDomainRegex = smartFilter['rootDomainRegex']
-      spamDomainRegex = smartFilter['spamDomainRegex']
-      compiledRegexDict = smartFilter['compiledRegexDict']
+      # Spam Lists
+      spamDomainsRegex = smartFilter['spamListsRegex']['spamDomainsRegex']
+      spamAccountsRegex = smartFilter['spamListsRegex']['spamAccountsRegex']
+      spamThreadsRegex = smartFilter['spamListsRegex']['spamThreadsRegex']
+      
 
       if debugSingleComment == True: 
         if input("Sensitive True/False: ").lower() == 'true': sensitive = True
@@ -600,6 +605,18 @@ def check_against_filter(currentUser, miscData, filterMode, filterSubMode, comme
           return True
         else:
           return False
+
+      # Check all spam lists
+      def check_spam_lists(spamDomainsRegex, spamAccountsRegex, spamThreadsRegex):
+        if any(re.search(expression, combinedString) for expression in spamDomainsRegex):
+          return True
+        elif any(re.search(expression, combinedString) for expression in spamAccountsRegex):
+          return True
+        elif any(re.search(expression, combinedString) for expression in spamThreadsRegex):
+          return True
+        else:
+          return False
+
       # ------------------------------------------------------------------------
 
       # Normalize usernames and text, remove multiple whitespace and invisible chars
@@ -628,7 +645,7 @@ def check_against_filter(currentUser, miscData, filterMode, filterSubMode, comme
         add_spam(commentID, videoID)
       elif any(findOnlyObfuscated(expression[1], expression[0], authorChannelName) for expression in compiledRegexDict['usernameObfuBlackWords']):
         add_spam(commentID, videoID)
-      elif any(re.search(expression, combinedString) for expression in spamDomainRegex):
+      elif check_spam_lists(spamDomainsRegex, spamAccountsRegex, spamThreadsRegex) == True:
         add_spam(commentID, videoID)
       elif check_if_only_a_link(commentText.strip()):
         add_spam(commentID, videoID)
@@ -1601,13 +1618,10 @@ def getRemoteFile(url, stream, silent=False, headers=None):
     return None
 
 ########################### Check Lists Updates ###########################
-def check_lists_update(currentListVersion, silentCheck = False):
+def check_lists_update(spamListDict, silentCheck = False):
   isListUpdateAvailable = False
-  #spamDomainListLatestCommit = 'https://api.github.com/repos/ThioJoe/YT-Spam-Domains-List/commits?path=SpamDomainsList.txt&page=1&per_page=1'
-  #spamDomainListRawLink = 'https://raw.githubusercontent.com/ThioJoe/YT-Spam-Domains-List/main/SpamDomainsList.txt'
-  #otherlink = 'https://api.github.com/repos/ThioJoe/YT-Spam-Domains-List/contents/SpamDomainsList.txt'
-  #spamDomainHostedLocation = "https://cdn.jsdelivr.net/gh/thiojoe/YT-Spam-Domains-List/SpamDomainsList.txt"
   listDirectory = "spam_lists/"
+  currentListVersion = spamListDict['Meta']['VersionInfo']['LatestLocalVersion']
   
   if silentCheck == False:
     print("\nChecking for updates to spam lists...")
@@ -1620,15 +1634,15 @@ def check_lists_update(currentListVersion, silentCheck = False):
     except:
       print("Error: Could not create folder. Try creating a folder called 'spam_lists' to update the spam lists.")
 
-  if os.path.exists(listDirectory + "SpamDomainsList.txt"):
-    currentListVersion = get_list_file_version(listDirectory + "SpamDomainsList.txt")
-  else:
-    currentListVersion = None
+  # if os.path.exists(listDirectory + "SpamDomainsList.txt"):
+  #   currentListVersion = get_list_file_version(listDirectory + "SpamDomainsList.txt")
+  # else:
+  #   currentListVersion = None
   
-  # Get latest version based on release tag - In format: 2022.01.01 (YYYY.MM.DD)
+  # Get latest version based on release tag - In format: 2022.12.31 (YYYY.MM.DD)
   try:
     response = requests.get("https://api.github.com/repos/ThioJoe/YT-Spam-Domains-List/releases/latest")
-    latestVersion = response.json()["tag_name"]
+    latestRelease = response.json()["tag_name"]
 
   except:
     if silentCheck == True:
@@ -1638,13 +1652,14 @@ def check_lists_update(currentListVersion, silentCheck = False):
       input("\nPress enter to Exit...")
       sys.exit()
 
-  if currentListVersion == None or (parse_version(latestVersion) > parse_version(currentListVersion)):
+  # If update available
+  if currentListVersion == None or (parse_version(latestRelease) > parse_version(currentListVersion)):
+    print("\n>  A new spam list update is available. Downloading...")
     fileName = response.json()["assets"][0]['name']
     total_size_in_bytes = response.json()["assets"][0]['size']
     downloadFilePath = listDirectory + fileName
     downloadURL = response.json()["assets"][0]['browser_download_url']
     filedownload = getRemoteFile(downloadURL, stream=True) # These headers required to get correct file size
-    #total_size_in_bytes= int(filedownload.headers.get('content-length', 0))
     block_size =  1048576 #1 MiB in bytes
 
     with open(downloadFilePath, 'wb') as file:
@@ -1671,8 +1686,19 @@ def check_lists_update(currentListVersion, silentCheck = False):
             print(f"This can happen if an antivirus takes a while to scan the file. You may need to manually extract the zip file.")
             input("\nPress enter to Continue anyway...")
             break
+        # This means success, the zip file was deleted after extracting
         except FileNotFoundError:
-          break
+          currentDate = datetime.today().strftime('%Y.%m.%d')
+          #Update Dictionary with latest release gotten from API
+          spamListDict['Meta']['VersionInfo'].update({'LatestLocalVersion': 'latestRelease'})
+          spamListDict['Meta']['VersionInfo'].update({'LastChecked': currentDate})
+
+          # Prepare data for json file update, so only have to check once a day automatically
+          newJsonContents = json.dumps({'LatestRelease': latestRelease, 'LastChecked' : currentDate})
+          with open(spamListDict['Meta']['VersionInfo']['Path'], 'w', encoding="utf-8") as file:
+            json.dump(newJsonContents, file, indent=4)
+          
+          return spamListDict
 
     elif total_size_in_bytes != 0 and os.stat(downloadFilePath).st_size != total_size_in_bytes:
       os.remove(downloadFilePath)
@@ -1696,6 +1722,13 @@ def ingest_asset_file(fileName):
       dataList.append(line.lower())
   return dataList
 
+def copy_asset_file(fileName, destination):
+  def assetFilesPath(relative_path):
+    if hasattr(sys, '_MEIPASS'): # If running as a pyinstaller bundle
+      return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath("assets"), relative_path) # If running as script, specifies resource folder as /assets
+  copyfile(assetFilesPath(fileName), destination)
+
 def ingest_list_file(relativeFilePath):
   if os.path.exists(relativeFilePath):
     with open(relativeFilePath, 'r', encoding="utf-8") as listFile:
@@ -1713,7 +1746,7 @@ def get_list_file_version(relativeFilePath):
   if os.path.exists(relativeFilePath):
     matchBetweenBrackets = '(?<=\[)(.*?)(?=\])' # Matches text between first set of two square brackets
     with open(relativeFilePath, 'r', encoding="utf-8") as file:
-      for line in islice(file, 0, 2):
+      for line in islice(file, 0, 5):
         try:
           listVersion = str(re.search(matchBetweenBrackets, line).group(0))
         except AttributeError:
@@ -2190,7 +2223,9 @@ def prepare_filter_mode_non_ascii(currentUser, scanMode, config):
 def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive=False):
   currentUserName = currentUser[1]
   rootDomainList = miscData['rootDomainList']
-  spamDomainList = miscData['spamDomainList']
+  spamDomainsList = miscData['spamDomainsList'] # List of domains from crowd sourced list
+  spamThreadsList = miscData['spamThreadsList'] # List of filters associated with spam threads from crowd sourced list
+  spamAccountsList = miscData['spamAccountsList'] # List of mentioned instagram/telegram scam accounts from crowd sourced list
   utf_16 = "utf-8"
   if config and config['filter_mode'] == "autosmart":
     pass
@@ -2323,10 +2358,17 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive
   sensitiveRootDomainRegex = re.compile(sensitivePrepString)
 
   # Prepare spam domain regex
-  spamDomainRegex = []
-  for domain in spamDomainList:
+  spamDomainsRegex, spamAccountsRegex, spamThreadsRegex = [], [], []
+
+  for domain in spamDomainsList:
     expression = re.compile(confusable_regex(domain.upper(), include_character_padding=False))
-    spamDomainRegex.append(expression)
+    spamDomainsRegex.append(expression)
+  for account in spamAccountsList:
+    expression = re.compile(confusable_regex(account.upper(), include_character_padding=True))
+    spamAccountsRegex.append(expression)
+  for thread in spamThreadsList:
+    expression = re.compile(confusable_regex(thread.upper(), include_character_padding=True))
+    spamThreadsRegex.append(expression)
 
   # Prepare Multi Language Detection
   turkish = 'ÇçŞşĞğİ'
@@ -2357,7 +2399,12 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive
     'sensitive': sensitive,
     'sensitiveRootDomainRegex': sensitiveRootDomainRegex,
     'unicodeCategoriesStrip': unicodeCategoriesStrip,
-    'spamDomainRegex': spamDomainRegex,
+    'spamListsRegex': {
+        'spamDomainsRegex':spamDomainsRegex, 
+        'spamAccountsRegex':spamAccountsRegex,
+        'spamThreadsRegex':spamThreadsRegex
+        },
+    'spamDomainsRegex': spamDomainsRegex,
     }
   return filterSettings, None
 
@@ -2401,7 +2448,6 @@ def main():
   nextPageToken = "start"
   logMode = False
   userNotChannelOwner = False
-  spamListPathsDict = {}
   
   # Checks system platform to set correct console clear command
   # Clears console otherwise the windows terminal doesn't work with colorama for some reason  
@@ -2464,12 +2510,49 @@ def main():
       input("Press Enter to exit...")
       sys.exit()
 
-  # Check for program and list updates
+  # Prepare to check and ingest spammer list files
   print("Checking for updates to program and spam lists...")
   spamListFolder = "spam_lists"
-  spamDomainListFileName = "SpamDomainsList.txt"
-  spamDomainListPath = os.path.join(spamListFolder, spamDomainListFileName) # Path to version included in packaged assets folder
-  spamListPathsDict['spamDomainListPath'] = spamDomainListPath
+  spamListDict = {
+      'Lists': {
+        'Domains':  {'FileName': "SpamDomainsList.txt"},
+        'Accounts': {'FileName': "SpamAccountsList.txt"},
+        'Threads':  {'FileName': "SpamThreadsList.txt"}
+      },
+      'Meta': {
+        'VersionInfo': {'FileName': "SpamVersionInfo.json"}
+        #'LatestLocalVersion': {}
+      }
+  }
+
+  for list in spamListDict['Lists']:
+    list['Path'] = os.path.join(spamListFolder, list['FileName'])
+  spamListDict['Meta']['VersionInfo']['Path'] = os.path.join(spamListFolder, spamListDict['Meta']['VersionInfo']['FileName']) # Path to version included in packaged assets folder
+
+  # Check if each spam list exists, if not copy from assets, then get local version number, calculate latest version number
+  latestLocalSpamListVersion = "1900.12.31"
+  for spamList in spamListDict['Lists']:
+    if not os.path.exists(spamList['Path']):
+      copy_asset_file(spamList['FileName'], spamList['Path'])
+
+    listVersion = get_list_file_version(spamList['Path'])
+    spamList['Version'] = listVersion
+    if parse_version(listVersion) > parse_version(latestLocalSpamListVersion):
+      latestLocalSpamListVersion = listVersion
+
+  spamListDict['Meta']['VersionInfo']['LatestLocalVersion'] = latestLocalSpamListVersion
+
+  # Check for version info file, if it doesn't exist, get from assets folder
+  if not os.path.exists(spamListDict['Meta']['VersionInfo']['Path']):
+    copy_asset_file(spamListDict['Meta']['VersionInfo']['FileName'], spamListDict['Meta']['VersionInfo']['Path'])
+
+  # Get stored spam list version data from json file
+  with open(spamListDict['Meta']['VersionInfo']['Path'], 'r', encoding="utf-8") as file:
+    versionInfoJson = json.load(file)
+    spamListDict['Meta']['VersionInfo']['LatestRelease'] = versionInfoJson['LatestRelease']
+    spamListDict['Meta']['VersionInfo']['LastChecked'] = versionInfoJson['LastChecked']
+
+  # Check for program and list updates if auto updates enabled in config
   if not config or config['auto_check_update'] == True:
     try:
       updateAvailable = check_for_update(version, silentCheck=True)
@@ -2477,30 +2560,18 @@ def main():
       print(f"{F.LIGHTRED_EX}Error Code U-3 occurred while checking for updates. (Checking can be disabled using the config file setting) Continuing...{S.R}\n")      
       updateAvailable = False
     
-    # Check if spam list file exists, see if out of date based on today's date
-    # Therefore should only need to use GitHub api once a day
-    if os.path.exists(spamListPathsDict['spamDomainListPath']):
-      spamDomainListVersion = get_list_file_version(spamListPathsDict['spamDomainListPath'])
-    else:
-      spamDomainListVersion = None
-
     # Check if today or tomorrow's date is later than the last update date (add day to account for time zones)
-    if spamDomainListVersion and (datetime.today()+timedelta(days=1) >= datetime.strptime(spamDomainListVersion, '%Y.%m.%d')):
-      spamDomainList = ingest_list_file(spamListPathsDict['spamDomainListPath'])
-    else:
-      try:
-        check_lists_update(spamDomainListVersion, silentCheck=True)
-        spamDomainList = ingest_list_file(spamListPathsDict['spamDomainListPath'])
-      except Exception as e:
-        # Get backup from asset folder
-        spamDomainList = ingest_asset_file(spamDomainListFileName)
+    if datetime.today()+timedelta(days=1) <= datetime.strptime(spamListDict['Meta']['VersionInfo']['LatestLocalVersion'], '%Y.%m.%d'):
+      # Only check for updates until the next day
+      if datetime.today() > datetime.strptime(spamListDict['Meta']['VersionInfo']['LastChecked'], '%Y.%m.%d'):
+        spamListDict = check_lists_update(spamListDict, silentCheck=True)
 
   else:
-    spamDomainList = ingest_list_file(spamListPathsDict['spamDomainListPath'])
-    if spamDomainList == None:
-      spamDomainList = ingest_asset_file(spamDomainListFileName)
     updateAvailable = False
-    spamDomainListVersion = get_list_file_version(spamListPathsDict['spamDomainListPath'])
+
+  # In all scenarios, load spam lists into memory  
+  for spamList in spamListDict['Lists']:
+    spamList['FilterContents'] = ingest_list_file(spamList['Path'])
   os.system(clear_command)
 
   # Load any other data
@@ -2509,7 +2580,9 @@ def main():
   miscData = {}
   rootDomainList = ingest_asset_file(rootDomainListAssetFile)
   miscData['rootDomainList'] = rootDomainList
-  miscData['spamDomainList'] = spamDomainList
+  miscData['spamDomainsList'] = spamListDict['Lists']['Domains']['FilterContents']
+  miscData['spamAccountsList'] = spamListDict['Lists']['Accounts']['FilterContents']
+  miscData['spamThreadsList'] = spamListDict['Lists']['Threads']['FilterContents']
   os.system(clear_command)
 
   if config:
@@ -2807,7 +2880,7 @@ def main():
 
   # Check for latest version
   elif scanMode == "checkUpdates":
-    check_lists_update(spamDomainListVersion)
+    check_lists_update(spamListDict['Meta']['VersionInfo']['LatestLocalVersion'])
     check_for_update(version)
 
   # Recove deleted comments mode
