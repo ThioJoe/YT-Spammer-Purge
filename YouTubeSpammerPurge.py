@@ -640,7 +640,7 @@ def check_against_filter(currentUser, miscData, filterMode, filterSubMode, comme
         #  add_spam(commentID, videoID)
       elif any(re.search(expression[1], authorChannelName) for expression in compiledRegexDict['usernameBlackWords']):
         add_spam(commentID, videoID)
-      elif any(findOnlyObfuscated(expression[1], expression[0], combinedString) for expression in compiledRegexDict['blackAdWords']):
+      elif any(findOnlyObfuscated(expression[1], expression[0], combinedString.upper()) for expression in compiledRegexDict['blackAdWords']):
         add_spam(commentID, videoID)
       elif any(findOnlyObfuscated(expression[1], expression[0], commentText) for expression in compiledRegexDict['textObfuBlackWords']):
         add_spam(commentID, videoID)
@@ -2293,6 +2293,21 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive
       print(f" > {F.LIGHTRED_EX}NOTE:{S.R} In sensitive mode, {F.LIGHTRED_EX}expect more false positives{S.R}. Recommended to run this AFTER regular Auto Smart Mode.\n")
     input("Press Enter to Begin Scanning...")
 
+  # Create Variables
+  blackAdWords, redAdWords, yellowAdWords, exactRedAdWords, usernameBlackWords = [], [], [], [], []
+  usernameBlackWords, usernameObfuBlackWords = [], []
+  spamDomainsRegex, spamAccountsRegex, spamThreadsRegex = [], [], []
+  compiledRegexDict = {
+    'usernameBlackWords': [],
+    'blackAdWords': [],
+    'redAdWords': [],
+    'yellowAdWords': [],
+    'exactRedAdWords': [],
+    'usernameRedWords': [],
+    'textObfuBlackWords': [],
+    'usernameObfuBlackWords': [],
+  }
+
   # General Spammer Criteria
   #usernameBlackChars = ""
   spamGenEmoji_Raw = b'@Sl-~@Sl-};+UQApOJ|0pOJ~;q_yw3kMN(AyyBUh'
@@ -2305,7 +2320,6 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive
   unicodeCategoriesStrip = ["Mn", "Cc", "Cf", "Cs", "Co", "Cn"] # Categories of unicode characters to strip during normalization
 
   # Create General Lists
-  usernameBlackWords, usernameObfuBlackWords = [], []
   spamGenEmojiSet = make_char_set(b64decode(spamGenEmoji_Raw).decode(utf_16))
     #usernameBlackCharsSet = make_char_set(usernameBlackChars)
   for x in usernameBlackWords_Raw: usernameBlackWords.append(b64decode(x).decode(utf_16))
@@ -2337,7 +2351,6 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive
   hrt = b64decode(b';+duJpOTpHpOTjFpOTmGpOTaCpOTsIpOTvJpOTyKpOT#LpQoYlpOT&MpO&QJouu%el9lkElAZ').decode(utf_16)
   
   # Create Type 2 Lists
-  blackAdWords, redAdWords, yellowAdWords, exactRedAdWords, usernameBlackWords = [], [], [], [], []
   for x in blackAdWords_Raw: blackAdWords.append(b64decode(x).decode(utf_16))
   for x in redAdWords_Raw: redAdWords.append(b64decode(x).decode(utf_16))
   for x in yellowAdWords_Raw: yellowAdWords.append(b64decode(x).decode(utf_16))
@@ -2349,18 +2362,6 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive
   yellowAdEmojiSet = make_char_set(yellowAdEmoji)
   hrtSet = make_char_set(hrt)
   
-  # Prepare Regex for Type 2 and General Spammers
-  compiledRegexDict = {
-    'usernameBlackWords': [],
-    'blackAdWords': [],
-    'redAdWords': [],
-    'yellowAdWords': [],
-    'exactRedAdWords': [],
-    'usernameRedWords': [],
-    'textObfuBlackWords': [],
-    'usernameObfuBlackWords': [],
-  }
-
   # Prepare Regex to detect nothing but video link in comment
   onlyVideoLinkRegex = re.compile(r"^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$")
   compiledRegexDict['onlyVideoLinkRegex'] = onlyVideoLinkRegex
@@ -2410,8 +2411,6 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive
   sensitiveRootDomainRegex = re.compile(sensitivePrepString)
 
   # Prepare spam domain regex
-  spamDomainsRegex, spamAccountsRegex, spamThreadsRegex = [], [], []
-
   for domain in spamDomainsList:
     expression = re.compile(confusable_regex(domain.upper(), include_character_padding=False))
     spamDomainsRegex.append(expression)
