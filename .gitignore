@@ -125,8 +125,12 @@ token.pickle
 .dccache
 
 # Ignore log files
+logs/
 Spam_*.txt
 Spam_*.rtf
 
 # Ignore user-generated config file
 SpamPurgeConfig.ini
+
+# Ignore Spam Lists
+spam_lists/
