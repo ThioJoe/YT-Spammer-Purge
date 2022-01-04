@@ -36,7 +36,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.6.0"
+version = "2.6.1"
 configVersion = 12
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -1125,7 +1125,7 @@ def print_count_stats(miscData, videosToScan, final):
   return None
 
 ##################################### VALIDATE VIDEO ID #####################################
-# Checks if video ID / video Link is correct length and in correct format - If so returns true and isolated video ID
+# Regex matches putting video id into a match group. Then queries youtube API to verify it exists - If so returns true and isolated video ID
 def validate_video_id(video_url, silent=False):
     youtube_video_link_regex = r"^\s*(?P<video_url>(?:(?:https?:)?\/\/)?(?:(?:www|m)\.)?(?:youtube\.com|youtu.be)(?:\/(?:[\w\-]+\?v=|embed\/|v\/)?))?(?P<video_id>[\w\-]{11})(?:(?(video_url)\S+|$))?\s*$"
     match = re.match(youtube_video_link_regex, video_url)
@@ -1133,7 +1133,29 @@ def validate_video_id(video_url, silent=False):
       if silent == False:
         print(f"\n{B.RED}{F.BLACK}Invalid Video link or ID!{S.R} Video IDs are 11 characters long.")
       return False, None
-    return True, match.group('video_id')
+    else:
+      try:
+        possibleVideoID = match.group('video_id')
+        result = youtube.videos().list(
+          part="id",
+          id=possibleVideoID,
+          fields='items/id',
+          ).execute()
+        if possibleVideoID == result['items'][0]['id']:
+          return True, possibleVideoID
+        else:
+          if silent == False:
+            print("Something very odd happened. YouTube returned a video ID, but it is not equal to what was queried!")
+          return False, None
+      except AttributeError:
+        if silent == False:
+          print(f"\n{B.RED}{F.BLACK}Invalid Video link or ID!{S.R} Video IDs are 11 characters long.")
+        return False, None
+      except IndexError:
+        if silent == False:
+          print(f"\n{B.RED}{F.BLACK}Invalid Video link or ID!{S.R} Video IDs are 11 characters long.")
+        return False, None
+    
 
 ############################### VALIDATE COMMUNITY POST ID #################################
 def validate_post_id(post_url):
@@ -1215,7 +1237,7 @@ def validate_channel_id(inputted_channel):
       customURL = inputted_channel[startIndex:endIndex]
       # First check if actually video ID (video ID regex expression from: https://webapps.stackexchange.com/a/101153)
       if re.match(r'[0-9A-Za-z_-]{10}[048AEIMQUYcgkosw]', customURL):
-        print(f"{F.LIGHTRED_EX}Invalid Channel ID / Link!{S.R} Looks like you entered a Video ID / Link by mistake.)")
+        print(f"{F.LIGHTRED_EX}Invalid Channel ID / Link!{S.R} Did you enter a video ID / link by mistake?")
         return False, None, None
 
       response = youtube.search().list(part="snippet",q=customURL, maxResults=1).execute()
