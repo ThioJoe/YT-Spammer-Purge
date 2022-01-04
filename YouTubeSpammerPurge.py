@@ -36,8 +36,8 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.6.1"
-configVersion = 12
+version = "2.6.2"
+configVersion = 13
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 # GUI Related
@@ -1354,6 +1354,18 @@ def make_rtf_compatible(text):
 # Writes properly to rtf file, also can prepare with necessary header information and formatting settings
 def write_rtf(fileName, newText=None, firstWrite=False):
   if firstWrite == True:
+    # If directory does not exist for desired log file path, create it
+    logFolderPath = os.path.dirname(os.path.realpath(fileName))
+    if not os.path.isdir(logFolderPath):
+      try:
+        os.mkdir(logFolderPath)
+        # If relative path, make it absolute
+        if not os.path.isabs(fileName):
+          fileName = os.path.join(logFolderPath, os.path.basename(fileName))
+      except:
+        print(f"{F.LIGHTREX_EX}Error:{S.R} Could not create desired directory for log files. Will place them in current directory.")
+        fileName = os.path.basename(fileName)
+
     file = open(fileName, "w", encoding="utf-8") # Opens log file in write mode
     # Some header information for RTF file, sets courier as font
     file.write(r"{\rtf1\ansi\deff0 {\fonttbl {\f0 Courier;}}"+"\n")
@@ -3155,11 +3167,16 @@ def main():
   if logMode == True:
     global logFileName
     fileName = "Spam_Log_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S" + ".rtf")
-    if config and config['log_path'] and config['log_path'] != "default":
-        logFileName = os.path.normpath(config['log_path'] + "/" + fileName)
+    defaultLogPath = "logs"
+    if config and config['log_path']:
+        if config['log_path'] == "default": # For backwards compatibility, can remove later on
+          logPath = defaultLogPath
+        else:
+          logPath = config['log_path']
+        logFileName = os.path.normpath(logPath + "/" + fileName)
         print(f"Log file will be located at {F.YELLOW}" + logFileName + f"{S.R}\n")
     else:
-        logFileName = fileName
+        logFileName = logFileName = os.path.normpath(defaultLogPath + "/" + fileName)
         print(f"Log file will be called {F.YELLOW}" + logFileName + f"{S.R}\n")
     
     if bypass == False:
