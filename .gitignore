@@ -132,5 +132,6 @@ Spam_*.rtf
 # Ignore user-generated config file
 SpamPurgeConfig.ini
 
-# Ignore Spam Lists
+# Ignore Resources Folders
 spam_lists/
+SpamPurge_Resources/

@@ -449,8 +449,8 @@ def check_against_filter(currentUser, miscData, filterMode, filterSubMode, comme
     commentText = input("Comment Text: ")
     authorChannelID = "x"
 
-  # Do not even check comment if author ID matches currently logged in user's ID
-  if currentUser[0] != authorChannelID and miscData['channelOwnerID'] != authorChannelID:
+  # Do not even check comment if: Author is Current User, Author is Channel Owner, or Author is in whitelist
+  if currentUser[0] != authorChannelID and miscData['channelOwnerID'] != authorChannelID and authorChannelID not in miscData['Resources']['Whitelist']['WhitelistContents']:
     if "@" in commentText:
       # Logic to avoid false positives from replies to spammers
       if allThreadAuthorNames and (filterMode == "AutoSmart" or filterMode == "NameAndText"):
@@ -886,7 +886,7 @@ def check_recovered_comments(commentsList):
   sys.exit()
 
 # Removes comments by user-selected authors from list of comments to delete
-def exclude_authors(inputtedString):
+def exclude_authors(inputtedString, miscData):
   global matchSamplesDict
 
   expression = r"(?<=exclude ).*" # Match everything after 'exclude '
@@ -913,6 +913,7 @@ def exclude_authors(inputtedString):
     if comment in matchedCommentsDict.keys():
       excludedCommentsDict[comment] = matchedCommentsDict.pop(comment)
 
+  # Write excluded comments to log file
   rtfFormattedExcludes += f"Comments Excluded From Deletion: \\line \n"
   rtfFormattedExcludes += f"(Values = Comment ID | Author ID | Author Name | Comment Text) \\line \n"
   for commentID, meta in excludedCommentsDict.items():
@@ -930,6 +931,10 @@ def exclude_authors(inputtedString):
   # Get author names and IDs from dictionary, and display them
   for author in authorIDsToExclude:
     displayString += f"    User ID: {author}   |   User Name: {matchSamplesDict[author]['authorName']}\n"
+    with open(miscData['Resources']['Whitelist']['PathWithName'], "a") as f:
+      f.write(f"# [Excluded]  Channel Name: {matchSamplesDict[author]['authorName']}  |  Channel ID: " + "\n")
+      f.write(f"{author}\n")
+
   print(f"\n{F.CYAN}All {len(excludedCommentsDict)} comments{S.R} from the {F.CYAN}following {len(authorIDsToExclude)} users{S.R} are now {F.LIGHTGREEN_EX}excluded{S.R} from deletion:")
   print(displayString+"\n")
   input("Press Enter to decide what to do with the rest...")
@@ -1763,7 +1768,7 @@ def ingest_asset_file(fileName):
     data = file.readlines()
   dataList = []
   for line in data:
-    if not line.startswith('#'):
+    if not line.strip().startswith('#'):
       line = line.strip()
       dataList.append(line.lower())
   return dataList
@@ -1775,15 +1780,25 @@ def copy_asset_file(fileName, destination):
     return os.path.join(os.path.abspath("assets"), relative_path) # If running as script, specifies resource folder as /assets
   copyfile(assetFilesPath(fileName), os.path.abspath(destination))
 
-def ingest_list_file(relativeFilePath):
+def ingest_list_file(relativeFilePath, keepCase = True):
   if os.path.exists(relativeFilePath):
     with open(relativeFilePath, 'r', encoding="utf-8") as listFile:
+      # If file doesn't end with newline, add one
       listData = listFile.readlines()
+      lastline = listData[-1]
+      
+    with open(relativeFilePath, 'a', encoding="utf-8") as listFile:
+      if not lastline.endswith('\n'):
+        listFile.write('\n')
+
     processedList = []
     for line in listData:
       line = line.strip()
       if not line.startswith('#') and line !="":
-        processedList.append(line.lower())
+        if keepCase == False:
+          processedList.append(line.lower())
+        else: 
+          processedList.append(line)
     return processedList
   else:
     return None
@@ -2269,9 +2284,9 @@ def prepare_filter_mode_non_ascii(currentUser, scanMode, config):
 def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive=False):
   currentUserName = currentUser[1]
   rootDomainList = miscData['rootDomainList']
-  spamDomainsList = miscData['spamDomainsList'] # List of domains from crowd sourced list
-  spamThreadsList = miscData['spamThreadsList'] # List of filters associated with spam threads from crowd sourced list
-  spamAccountsList = miscData['spamAccountsList'] # List of mentioned instagram/telegram scam accounts from crowd sourced list
+  spamDomainsList = miscData['SpamLists']['spamDomainsList'] # List of domains from crowd sourced list
+  spamThreadsList = miscData['SpamLists']['spamThreadsList'] # List of filters associated with spam threads from crowd sourced list
+  spamAccountsList = miscData['SpamLists']['spamAccountsList'] # List of mentioned instagram/telegram scam accounts from crowd sourced list
   utf_16 = "utf-8"
   if config and config['filter_mode'] == "autosmart":
     pass
@@ -2558,9 +2573,10 @@ def main():
       input("Press Enter to exit...")
       sys.exit()
 
-  # Prepare to check and ingest spammer list files
-  print("Checking for updates to program and spam lists...")
-  spamListFolder = "spam_lists"
+           #### Prepare Resources ####
+  resourceFolder = "SpamPurge_Resources"
+  whitelistPathWithName = os.path.join(resourceFolder, "whitelist.txt")
+  spamListFolder = os.path.join(resourceFolder, "Spam_Lists")
   spamListDict = {
       'Lists': {
         'Domains':  {'FileName': "SpamDomainsList.txt"},
@@ -2573,14 +2589,37 @@ def main():
         #'LatestLocalVersion': {}
       }
   }
+  resourcesDict = {
+    'Whitelist': {
+      'PathWithName': whitelistPathWithName,
+      'FileName': "whitelist.txt",
+    }
+  }
 
-  # Check if spam list folder exists, and create it
-  if not os.path.isdir(spamListFolder):
+  print("Checking for updates to program and spam lists...")
+  # Check if resources and spam list folders exist, and create them
+  if not os.path.isdir(resourceFolder):
+    try:
+      os.mkdir(resourceFolder)
+      # Create readme
+      with open(os.path.join(resourceFolder, "_What_Is_This_Folder.txt"), "w") as f:
+        f.write("# This Resources folder is used to store resources required for the YT Spammer Purge program.\n")
+        f.write("# Note: If you had a previous spam_lists folder that was created in the same folder as \n")
+        f.write("# the .exe file, you can delete that old spam_lists folder. The resources folder is the \n")
+        f.write("# new location they will be stored.\n")
+                
+    except:
+      print("\nError: Could not create folder. To update the spam lists, try creating a folder called 'SpamPurge_Resources',")
+      print("       then inside that, create another folder called 'Spam_Lists'.")
+
+  if os.path.isdir(resourceFolder) and not os.path.isdir(spamListFolder):
     try:
       os.mkdir(spamListFolder)
     except:
-      print("Error: Could not create folder. Try creating a folder called 'spam_lists' to update the spam lists.")
+      print("\nError: Could not create folder. To update the spam lists, go into the 'SpamPurge_Resources' folder,")
+      print("       then inside that, create another folder called 'Spam_Lists'.")
 
+  # Prepare to check and ingest spammer list files
   # Iterate and get paths of each list
   for x,spamList in spamListDict['Lists'].items():
     spamList['Path'] = os.path.join(spamListFolder, spamList['FileName'])
@@ -2629,19 +2668,33 @@ def main():
 
   # In all scenarios, load spam lists into memory  
   for x, spamList in spamListDict['Lists'].items():
-    spamList['FilterContents'] = ingest_list_file(spamList['Path'])
+    spamList['FilterContents'] = ingest_list_file(spamList['Path'], keepCase=False)
   os.system(clear_command)
 
-  # Load any other data
+  ####### Load Other Data into MiscData #######
   print("Loading other assets..\n")
+  miscData = {
+    'Resources': {},
+    'SpamLists':{}
+  }
   rootDomainListAssetFile = "rootZoneDomainList.txt"
-  miscData = {}
   rootDomainList = ingest_asset_file(rootDomainListAssetFile)
   miscData['rootDomainList'] = rootDomainList
-  miscData['spamDomainsList'] = spamListDict['Lists']['Domains']['FilterContents']
-  miscData['spamAccountsList'] = spamListDict['Lists']['Accounts']['FilterContents']
-  miscData['spamThreadsList'] = spamListDict['Lists']['Threads']['FilterContents']
-  os.system(clear_command)
+  miscData['SpamLists']['spamDomainsList'] = spamListDict['Lists']['Domains']['FilterContents']
+  miscData['SpamLists']['spamAccountsList'] = spamListDict['Lists']['Accounts']['FilterContents']
+  miscData['SpamLists']['spamThreadsList'] = spamListDict['Lists']['Threads']['FilterContents']
+  miscData['Resources'] = resourcesDict
+
+  # Create Whitelist if it doesn't exist, 
+  if not os.path.exists(whitelistPathWithName):
+    with open(whitelistPathWithName, "a") as f:
+      f.write("# Commenters whose channel IDs are in this list will always be ignored. You can add or remove IDs (one per line) from this list as you wish.\n")
+      f.write("# Channel IDs for a channel can be found in the URL after clicking a channel's name while on the watch page or where they've left a comment.\n")
+      f.write("# - Channels that were 'excluded' will also appear in this list.\n")
+      f.write("# - Lines beginning with a '#' are comments and aren't read by the program. (But do not put a '#' on the same line as actual data)\n")
+    miscData['Resources']['Whitelist']['WhitelistContents'] = []
+  else:
+    miscData['Resources']['Whitelist']['WhitelistContents'] = ingest_list_file(whitelistPathWithName, keepCase=True)
 
   if config:
     moderator_mode = config['moderator_mode']
@@ -3342,7 +3395,7 @@ def main():
         deletionEnabled = True
         deletionMode = "reportSpam" 
       elif "exclude" in confirmDelete.lower():
-        excludedDict, rtfExclude = exclude_authors(confirmDelete)
+        excludedDict, rtfExclude = exclude_authors(inputtedString=confirmDelete, miscData=miscData)
         exclude = True
       else:
         input(f"\nDeletion {F.YELLOW}CANCELLED{S.R} (Because no matching option entered). Press Enter to exit...")
