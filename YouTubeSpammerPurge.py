@@ -214,7 +214,6 @@ def print_prepared_comments(scanVideoID_localprep, comments, j, loggingEnabled, 
     comment_id_local = comment
     videoID = metadata['videoID']
    
-
     # Truncates very long comments, and removes excessive multiple lines
     if len(text) > 1500:
       text = text[0:1500] + "[Comment Truncated by YT SPammer Purge]"
@@ -3305,6 +3304,7 @@ def main():
   logMode = None
   logFileType = None
   jsonSettingsDict = {}
+  jsonLogging = False
   if loggingEnabled == True:
     if config and config['log_mode']:
       logMode = config['log_mode']
@@ -3343,7 +3343,7 @@ def main():
         jsonLogging = False
     else:
       jsonLogging = False
-    jsonSettingsDict['jsonLogging'] = jsonLogging
+    
 
     # Set where to put log files      
     defaultLogPath = "logs"
@@ -3401,7 +3401,7 @@ def main():
   else:
     print("Continuing without logging... \n")
 
-  
+  jsonSettingsDict['jsonLogging'] = jsonLogging
 
   # Prints list of spam comments
   if scanMode == "communityPost":
