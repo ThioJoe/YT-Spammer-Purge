@@ -36,8 +36,8 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.6.2"
-configVersion = 13
+version = "2.7.0"
+configVersion = 14
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 # GUI Related
@@ -157,7 +157,7 @@ def print_exception_reason(reason):
 
 # First prepared comments into segments of 50 to be submitted to API simultaneously
 # Then uses print_prepared_comments() to print / log the comments
-def print_comments(scanVideoID_localprint, comments, logMode, scanMode):
+def print_comments(scanVideoID_localprint, comments, loggingEnabled, scanMode, logMode):
   j = 0 # Counting index when going through comments all comment segments
   groupSize = 2500 # Number of comments to process per iteration
 
@@ -165,29 +165,37 @@ def print_comments(scanVideoID_localprint, comments, logMode, scanMode):
     remainder = len(comments) % groupSize
     numDivisions = int((len(comments)-remainder)/groupSize)
     for i in range(numDivisions):
-      j = print_prepared_comments(scanVideoID_localprint,comments[i*groupSize:i*groupSize+groupSize], j, logMode, scanMode)
+      j = print_prepared_comments(scanVideoID_localprint,comments[i*groupSize:i*groupSize+groupSize], j, loggingEnabled, scanMode, logMode)
     if remainder > 0:
-      j = print_prepared_comments(scanVideoID_localprint,comments[numDivisions*groupSize:len(comments)],j, logMode, scanMode)
+      j = print_prepared_comments(scanVideoID_localprint,comments[numDivisions*groupSize:len(comments)],j, loggingEnabled, scanMode, logMode)
   else:
-    j = print_prepared_comments(scanVideoID_localprint,comments, j, logMode, scanMode)
+    j = print_prepared_comments(scanVideoID_localprint,comments, j, loggingEnabled, scanMode, logMode)
 
   # Print Sample Match List
   valuesPreparedToWrite = ""
   valuesPreparedToPrint = ""
   print(f"{F.LIGHTMAGENTA_EX}---------------------------- Match Samples: One comment per matched-comment author ----------------------------{S.R}")
   for value in matchSamplesDict.values():
-    valuesPreparedToWrite = valuesPreparedToWrite + value['iString'] + value['cString'] + f"{str(value['authorID'])} | {make_rtf_compatible(str(value['nameAndText']))} \\line \n"
+    if loggingEnabled == True and logMode == "rtf":
+      valuesPreparedToWrite = valuesPreparedToWrite + value['iString'] + value['cString'] + f"{str(value['authorID'])} | {make_rtf_compatible(str(value['nameAndText']))} \\line \n"
+    elif loggingEnabled == True and logMode == "plaintext":
+      valuesPreparedToWrite = valuesPreparedToWrite + value['iString'] + value['cString'] + f"{str(value['authorID'])} | {str(value['nameAndText'])}\n"
     valuesPreparedToPrint = valuesPreparedToPrint + value['iString'] + value['cString'] + f"{str(value['nameAndText'])}\n"
-  if logMode == True:
-    write_rtf(logFileName, "-------------------- Match Samples: One comment per matched-comment author -------------------- \\line\\line \n")
-    write_rtf(logFileName, valuesPreparedToWrite)
+  
+  if loggingEnabled == True:
+    if logMode == "rtf":
+      write_rtf(logFileName, "-------------------- Match Samples: One comment per matched-comment author -------------------- \\line\\line \n")
+      write_rtf(logFileName, valuesPreparedToWrite)
+    elif logMode == "plaintext":
+      write_plaintext_log(logFileName, "-------------------- Match Samples: One comment per matched-comment author --------------------\n")
+      write_plaintext_log(logFileName, valuesPreparedToWrite)
   print(valuesPreparedToPrint)
   print(f"{F.LIGHTMAGENTA_EX}---------------------------- (See log file for channel IDs of matched authors above) ---------------------------{S.R}")
 
   return None
 
 # Uses comments.list YouTube API Request to get text and author of specific set of comments, based on comment ID
-def print_prepared_comments(scanVideoID_localprep, comments, j, logMode, scanMode):
+def print_prepared_comments(scanVideoID_localprep, comments, j, loggingEnabled, scanMode, logMode):
 
   # Prints author and comment text for each comment
   i = 0 # Index when going through comments
@@ -228,27 +236,46 @@ def print_prepared_comments(scanVideoID_localprep, comments, j, logMode, scanMod
     print("=============================================================================================\n")
 
     # If logging enabled, also prints to log file 
-    if logMode == True:
+    if loggingEnabled == True:
       # Only print video title info if searching entire channel
       if scanVideoID_localprep is None:  
+        if logMode == "rtf":
          titleInfoLine = "     > Video: " + title + "\\line " + "\n"
+        elif logMode == "plaintext":
+          titleInfoLine = "     > Video: " + title + "\n"
       else:
         titleInfoLine = ""
 
-      commentInfo = (
-        # Author Info
-        str(j+1) + r". \cf4"
-        + make_rtf_compatible(author)
-        + r"\cf1 :  \cf5"
-        + make_rtf_compatible(text)
-        + r"\cf1 \line " + "\n"
-        + "---------------------------------------------------------------------------------------------\\line " + "\n"
-        # Rest of Comment Info
-        + titleInfoLine
-        + "     > Direct Link: " + directLink + "\\line "+ "\n"
-        + "     > Author Channel ID: \cf6" + author_id_local + r"\cf1 \line "+ "\n"
-        + "=============================================================================================\\line\\line\\line" + "\n\n\n"
-      )
+      if logMode == "rtf":
+        commentInfo = (
+          # Author Info
+          str(j+1) + r". \cf4"
+          + make_rtf_compatible(author)
+          + r"\cf1 :  \cf5"
+          + make_rtf_compatible(text)
+          + r"\cf1 \line " + "\n"
+          + "---------------------------------------------------------------------------------------------\\line " + "\n"
+          # Rest of Comment Info
+          + titleInfoLine
+          + "     > Direct Link: " + directLink + "\\line "+ "\n"
+          + "     > Author Channel ID: \cf6" + author_id_local + r"\cf1 \line "+ "\n"
+          + "=============================================================================================\\line\\line\\line" + "\n\n\n"
+        )
+      elif logMode == "plaintext":
+        commentInfo = (
+          # Author Info
+          str(j+1) + ". "
+          + author
+          + ":  "
+          + text
+          + "\n"
+          + "---------------------------------------------------------------------------------------------\n"
+          # Rest of Comment Info
+          + titleInfoLine
+          + "     > Direct Link: " + directLink + "\n"
+          + "     > Author Channel ID: " + author_id_local + "\n"
+          + "=============================================================================================\n\n\n"
+        )
       dataPreparedToWrite = dataPreparedToWrite + commentInfo
 
     # Appends comment ID to new list of comments so it's in the correct order going forward, as provided by API and presented to user
@@ -256,9 +283,12 @@ def print_prepared_comments(scanVideoID_localprep, comments, j, logMode, scanMod
     i += 1
     j += 1
 
-  if logMode == True:
+  if loggingEnabled == True:
     print(" Writing to log file, please wait...", end="\r")
-    write_rtf(logFileName, dataPreparedToWrite)
+    if logMode == "rtf":
+      write_rtf(logFileName, dataPreparedToWrite)
+    elif logMode == "plaintext":
+      write_plaintext_log(logFileName, dataPreparedToWrite)
     print("                                    ")
 
   return j
@@ -800,6 +830,7 @@ def check_deleted_comments(checkDict):
     print("Preparing...", end="\r")
     time.sleep(1)
     print("                               ")
+    print("    (Note: You can disable deletion success checking in the config file, to save time and API quota)\n")
     for commentID, metadata in checkDict.items():
       try:
         results = youtube.comments().list(
@@ -809,7 +840,7 @@ def check_deleted_comments(checkDict):
           fields="items",
           textFormat="plainText"
         ).execute()
-        print("    (Note: You can disable deletion success checking in the config file, to save time and API quota)\n")
+
         print("Verifying Deleted Comments: [" + str(j) + " / " + str(total) + "]", end="\r")
         j += 1
 
@@ -897,6 +928,7 @@ def exclude_authors(inputtedString, miscData):
   displayString = ""
   excludedCommentsDict = {}
   rtfFormattedExcludes = ""
+  plaintextFormattedExcludes = ""
   commentIDExcludeList = []
 
   # Get authorIDs for selected sample comments
@@ -913,11 +945,15 @@ def exclude_authors(inputtedString, miscData):
     if comment in matchedCommentsDict.keys():
       excludedCommentsDict[comment] = matchedCommentsDict.pop(comment)
 
-  # Write excluded comments to log file
+  # Create strings that can be used in log files
   rtfFormattedExcludes += f"Comments Excluded From Deletion: \\line \n"
   rtfFormattedExcludes += f"(Values = Comment ID | Author ID | Author Name | Comment Text) \\line \n"
+  plaintextFormattedExcludes += f"Comments Excluded From Deletion:\n"
+  plaintextFormattedExcludes += f"(Values = Comment ID | Author ID | Author Name | Comment Text)\n"
   for commentID, meta in excludedCommentsDict.items():
     rtfFormattedExcludes += f"{str(commentID)}  |  {str(excludedCommentsDict[commentID]['authorID'])}  |  {str(excludedCommentsDict[commentID]['authorName'])}  |   {str(excludedCommentsDict[commentID]['text'])} \\line \n"
+  for commentID, meta in excludedCommentsDict.items():
+    plaintextFormattedExcludes += f"{str(commentID)}  |  {str(excludedCommentsDict[commentID]['authorID'])}  |  {str(excludedCommentsDict[commentID]['authorName'])}  |   {str(excludedCommentsDict[commentID]['text'])}\n"
 
   # Verify removal
   for comment in matchedCommentsDict.keys():
@@ -939,7 +975,7 @@ def exclude_authors(inputtedString, miscData):
   print(displayString+"\n")
   input("Press Enter to decide what to do with the rest...")
   
-  return excludedCommentsDict, rtfFormattedExcludes # May use excludedCommentsDict later for printing them to log file
+  return excludedCommentsDict, rtfFormattedExcludes, plaintextFormattedExcludes # May use excludedCommentsDict later for printing them to log file
 
   
 
@@ -1362,7 +1398,7 @@ def write_rtf(fileName, newText=None, firstWrite=False):
         if not os.path.isabs(fileName):
           fileName = os.path.join(logFolderPath, os.path.basename(fileName))
       except:
-        print(f"{F.LIGHTREX_EX}Error:{S.R} Could not create desired directory for log files. Will place them in current directory.")
+        print(f"{F.LIGHTRED_EX}Error:{S.R} Could not create desired directory for log files. Will place them in current directory.")
         fileName = os.path.basename(fileName)
 
     file = open(fileName, "w", encoding="utf-8") # Opens log file in write mode
@@ -1394,6 +1430,30 @@ def write_rtf(fileName, newText=None, firstWrite=False):
           line.replace("{", "\\{")
           file.write(line)
       file.write("\n}") # Re-write new line with ending bracket again. Could put prev_text in here if being dynamic
+      file.close()
+
+############################ Plaintext Log & File Handling ###############################
+
+def write_plaintext_log(fileName, newText=None, firstWrite=False):
+  if firstWrite == True:
+    # If directory does not exist for desired log file path, create it
+    logFolderPath = os.path.dirname(os.path.realpath(fileName))
+    if not os.path.isdir(logFolderPath):
+      try:
+        os.mkdir(logFolderPath)
+        # If relative path, make it absolute
+        if not os.path.isabs(fileName):
+          fileName = os.path.join(logFolderPath, os.path.basename(fileName))
+      except:
+        print(f"{F.LIGHTRED_EX}Error:{S.R} Could not create desired directory for log files. Will place them in current directory.")
+        fileName = os.path.basename(fileName)
+    with open(fileName, "w", encoding="utf-8") as file:
+      file.write("")
+      file.close()
+  else:
+    with open(fileName, 'a', encoding="utf-8") as file:
+      for line in newText:
+        file.write(line)
       file.close()
 
 ######################### Convert string to set of characters#########################
@@ -2509,7 +2569,7 @@ def main():
   scanVideoID = None
   videosToScan = []
   nextPageToken = "start"
-  logMode = False
+  loggingEnabled = False
   userNotChannelOwner = False
   
   # Checks system platform to set correct console clear command
@@ -2691,7 +2751,7 @@ def main():
       f.write("# Commenters whose channel IDs are in this list will always be ignored. You can add or remove IDs (one per line) from this list as you wish.\n")
       f.write("# Channel IDs for a channel can be found in the URL after clicking a channel's name while on the watch page or where they've left a comment.\n")
       f.write("# - Channels that were 'excluded' will also appear in this list.\n")
-      f.write("# - Lines beginning with a '#' are comments and aren't read by the program. (But do not put a '#' on the same line as actual data)\n")
+      f.write("# - Lines beginning with a '#' are comments and aren't read by the program. (But do not put a '#' on the same line as actual data)\n\n")
     miscData['Resources']['Whitelist']['WhitelistContents'] = []
   else:
     miscData['Resources']['Whitelist']['WhitelistContents'] = ingest_list_file(whitelistPathWithName, keepCase=True)
@@ -3182,10 +3242,10 @@ def main():
   if config and config['enable_logging'] != 'ask':
     logSetting = config['enable_logging']
     if logSetting == True:
-      logMode = True
+      loggingEnabled = True
       bypass = True
     elif logSetting == False:
-      logMode = False
+      loggingEnabled = False
       bypass = True
     elif logSetting == "ask":
       bypass = False
@@ -3211,11 +3271,22 @@ def main():
     # Asks user if they want to save list of spam comments to a file
     print(f"\nSpam comments ready to display. Also {F.LIGHTGREEN_EX}save a log file?{S.R} {B.GREEN}{F.BLACK} Highly Recommended! {F.R}{B.R}{S.R}")
     print(f"        (It even allows you to {F.LIGHTGREEN_EX}restore{S.R} deleted comments later)")
-    logMode = choice(f"Save Log File (Recommended)?")
+    loggingEnabled = choice(f"Save Log File (Recommended)?")
 
-  if logMode == True:
+  # Prepare logging
+  if loggingEnabled == True:
+    logMode = config['log_mode']
+    if logMode == "rtf":
+      logFileType = ".rtf"
+    elif logMode == "plaintext":
+      logFileType = ".txt"
+    else:
+      print("Invalid value for 'log_mode' in config file:  " + logMode)
+      print("Defaulting to .rtf file")
+      logMode = "rtf"
+
     global logFileName
-    fileName = "Spam_Log_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S" + ".rtf")
+    fileName = "Spam_Log_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S" + logFileType)
     defaultLogPath = "logs"
     if config and config['log_path']:
         if config['log_path'] == "default": # For backwards compatibility, can remove later on
@@ -3231,25 +3302,40 @@ def main():
     if bypass == False:
       input(f"Press {F.YELLOW}Enter{S.R} to display comments...")
 
+
     # Write heading info to log file
-    write_rtf(logFileName, firstWrite=True)
-    write_rtf(logFileName, "\\par----------- YouTube Spammer Purge Log File -----------\\line\\line " + "\n\n")
+    def write_func(logFileName, string, logMode, numLines):
+      rtfLineEnd = ("\\line"*numLines) + " "
+      newLines = "\n"*numLines
+      if logMode == "rtf":
+        write_rtf(logFileName, make_rtf_compatible(string) + rtfLineEnd)
+      elif logMode == "plaintext":
+        write_plaintext_log(logFileName, string + newLines)
+
+    # Creates log file and writes first line
+    if config['log_mode'] == "rtf":
+      write_rtf(logFileName, firstWrite=True)
+      write_func(logFileName, "\\par----------- YouTube Spammer Purge Log File -----------", config['log_mode'], 2)
+    elif config['log_mode'] == "plaintext":
+      write_plaintext_log(logFileName, firstWrite=True)
+      write_func(logFileName, "----------- YouTube Spammer Purge Log File -----------", config['log_mode'], 2)
+
     if filterMode == "ID":
-      write_rtf(logFileName, "Channel IDs of spammer searched: " + ", ".join(inputtedSpammerChannelID) + "\\line\\line " + "\n\n")
+      write_func(logFileName, "Channel IDs of spammer searched: " + ", ".join(inputtedSpammerChannelID), config['log_mode'], 2)
     elif filterMode == "Username":
-      write_rtf(logFileName, "Characters searched in Usernames: " + make_rtf_compatible(", ".join(inputtedUsernameFilter)) + "\\line\\line " + "\n\n")
+      write_func(logFileName, "Characters searched in Usernames: " + ", ".join(inputtedUsernameFilter), config['log_mode'], 2)
     elif filterMode == "Text":
-      write_rtf(logFileName, "Characters searched in Comment Text: " + make_rtf_compatible(", ".join(inputtedCommentTextFilter)) + "\\line\\line " + "\n\n")
+      write_func(logFileName, "Characters searched in Comment Text: " + ", ".join(inputtedCommentTextFilter), config['log_mode'], 2)
     elif filterMode == "NameAndText":
-      write_rtf(logFileName, "Characters searched in Usernames and Comment Text: " + make_rtf_compatible(", ".join(filterSettings[1])) + "\\line\\line " + "\n\n")
+      write_func(logFileName, "Characters searched in Usernames and Comment Text: " + ", ".join(filterSettings[1]), config['log_mode'], 2)
     elif filterMode == "AutoASCII":
-      write_rtf(logFileName, "Automatic Search Mode: " + make_rtf_compatible(str(filterSettings[1])) + "\\line\\line " + "\n\n")
+      write_func(logFileName, "Automatic Search Mode: " + str(filterSettings[1]), config['log_mode'], 2)
     elif filterMode == "AutoSmart":
-      write_rtf(logFileName, "Automatic Search Mode: Smart Mode \\line\\line " + "\n\n")
+      write_func(logFileName, "Automatic Search Mode: Smart Mode ", config['log_mode'], 2)
     elif filterMode == "SensitiveSmart":
-      write_rtf(logFileName, "Automatic Search Mode: Sensitive Smart \\line\\line " + "\n\n")
-    write_rtf(logFileName, "Number of Matched Comments Found: " + str(len(matchedCommentsDict)) + "\\line\\line \n\n")
-    write_rtf(logFileName, f"IDs of Matched Comments: \n[ {', '.join(matchedCommentsDict)} ] \\line\\line\\line \n\n\n")
+      write_func(logFileName, "Automatic Search Mode: Sensitive Smart ", config['log_mode'], 2)
+    write_func(logFileName, "Number of Matched Comments Found: " + str(len(matchedCommentsDict)), config['log_mode'], 2)
+    write_func(logFileName, f"IDs of Matched Comments: \n[ {', '.join(matchedCommentsDict)} ] ", config['log_mode'], 3)
   else:
     print("Continuing without logging... \n")
 
@@ -3257,7 +3343,7 @@ def main():
   if scanMode == "communityPost":
     scanVideoID = communityPostID
   print("\n\nAll Matched Comments: \n")
-  print_comments(scanVideoID, list(matchedCommentsDict.keys()), logMode, scanMode)
+  print_comments(scanVideoID, list(matchedCommentsDict.keys()), loggingEnabled, scanMode, logMode)
   print(f"\n{F.WHITE}{B.RED} NOTE: {S.R} Check that all comments listed above are indeed spam.")
   print()
 
@@ -3395,7 +3481,7 @@ def main():
         deletionEnabled = True
         deletionMode = "reportSpam" 
       elif "exclude" in confirmDelete.lower():
-        excludedDict, rtfExclude = exclude_authors(inputtedString=confirmDelete, miscData=miscData)
+        excludedDict, rtfExclude, plaintextExclude = exclude_authors(inputtedString=confirmDelete, miscData=miscData)
         exclude = True
       else:
         input(f"\nDeletion {F.YELLOW}CANCELLED{S.R} (Because no matching option entered). Press Enter to exit...")
@@ -3438,11 +3524,18 @@ def main():
       elif config and config['check_deletion_success'] == False:
         print("\nSkipped checking if deletion was successful.\n")
 
-    if logMode == True:
-      write_rtf(logFileName, "\n\n \\line\\line Spammers Banned: " + str(banChoice)) # Write whether or not spammer is banned to log file
-      write_rtf(logFileName, "\n\n \\line\\line Action Taken on Comments: " + str(deletionModeFriendlyName) + "\n\n"+ "\\line\\line")
-      if exclude == True:
-        write_rtf(logFileName, str(rtfExclude))
+    if loggingEnabled == True:
+      if config['log_mode'] == "rtf":
+        write_rtf(logFileName, "\n\n \\line\\line Spammers Banned: " + str(banChoice)) # Write whether or not spammer is banned to log file
+        write_rtf(logFileName, "\n\n \\line\\line Action Taken on Comments: " + str(deletionModeFriendlyName) + " \\line\\line \n\n")
+        if exclude == True:
+          write_rtf(logFileName, str(rtfExclude))
+      elif config['log_mode'] == "plaintext":
+        write_plaintext_log(logFileName, "\n\n Spammers Banned: " + str(banChoice) + "\n\n") # Write whether or not spammer is banned to log file
+        write_plaintext_log(logFileName, "Action Taken on Comments: " + str(deletionModeFriendlyName) + "\n\n")
+        if exclude == True:
+          write_plaintext_log(logFileName, str(plaintextExclude))
+
     input(f"\nProgram {F.LIGHTGREEN_EX}Complete{S.R}. Press Enter to Exit...")
 
   elif config:

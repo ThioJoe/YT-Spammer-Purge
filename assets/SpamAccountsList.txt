@@ -3,3 +3,8 @@
 #version=[2022.1.2]
 cyberhackingsage
 brtt_hack
+grindtechie
+skimlord
+tomas_temos
+teecracks
+babsrecovery
