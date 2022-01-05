@@ -107,6 +107,6 @@ To use this script, you will need an "Oauth2" credential to access the scanning 
 * #### **Or, follow a video WalkThrough Here: <https://www.youtube.com/watch?v=c6ebWvay8dE>**
 
 ## Spam Detection
-See spam that isn't being caught? Learn more about contributing to the spam lists at the dedicated repository!
+See spam that isn't being caught? You can help this bot detect spam domains, accounts and threads, by creating a issue in this repo!
 https://github.com/ThioJoe/YT-Spam-Domains-List
 
