@@ -3257,7 +3257,7 @@ def main():
   spam_count = len(matchedCommentsDict)
   if spam_count == 0: # If no spam comments found, exits
     print(f"{B.RED}{F.BLACK}No matched comments or users found!{S.R}\n")
-    print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
+    print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
     if bypass == False:
       input("\nPress Enter to exit...")
       sys.exit()
@@ -3275,28 +3275,32 @@ def main():
 
   # Prepare logging
   if loggingEnabled == True:
-    logMode = config['log_mode']
-    if logMode == "rtf":
-      logFileType = ".rtf"
-    elif logMode == "plaintext":
-      logFileType = ".txt"
+    if config and config['log_mode']:
+      logMode = config['log_mode']
+      if logMode == "rtf":
+        logFileType = ".rtf"
+      elif logMode == "plaintext":
+        logFileType = ".txt"
+      else:
+        print("Invalid value for 'log_mode' in config file:  " + logMode)
+        print("Defaulting to .rtf file")
+        logMode = "rtf"
     else:
-      print("Invalid value for 'log_mode' in config file:  " + logMode)
-      print("Defaulting to .rtf file")
-      logMode = "rtf"
+      logMode =  "rtf"
+      logFileType = ".rtf"
 
     global logFileName
     fileName = "Spam_Log_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S" + logFileType)
     defaultLogPath = "logs"
     if config and config['log_path']:
-        if config['log_path'] == "default": # For backwards compatibility, can remove later on
-          logPath = defaultLogPath
-        else:
-          logPath = config['log_path']
-        logFileName = os.path.normpath(logPath + "/" + fileName)
-        print(f"Log file will be located at {F.YELLOW}" + logFileName + f"{S.R}\n")
+      if config['log_path'] == "default": # For backwards compatibility, can remove later on
+        logPath = defaultLogPath
+      else:
+        logPath = config['log_path']
+      logFileName = os.path.normpath(logPath + "/" + fileName)
+      print(f"Log file will be located at {F.YELLOW}" + logFileName + f"{S.R}\n")
     else:
-        logFileName = logFileName = os.path.normpath(defaultLogPath + "/" + fileName)
+        logFileName = os.path.normpath(defaultLogPath + "/" + fileName)
         print(f"Log file will be called {F.YELLOW}" + logFileName + f"{S.R}\n")
     
     if bypass == False:
@@ -3313,29 +3317,29 @@ def main():
         write_plaintext_log(logFileName, string + newLines)
 
     # Creates log file and writes first line
-    if config['log_mode'] == "rtf":
+    if logMode == "rtf":
       write_rtf(logFileName, firstWrite=True)
-      write_func(logFileName, "\\par----------- YouTube Spammer Purge Log File -----------", config['log_mode'], 2)
-    elif config['log_mode'] == "plaintext":
+      write_func(logFileName, "\\par----------- YouTube Spammer Purge Log File -----------", logMode, 2)
+    elif logMode == "plaintext":
       write_plaintext_log(logFileName, firstWrite=True)
-      write_func(logFileName, "----------- YouTube Spammer Purge Log File -----------", config['log_mode'], 2)
+      write_func(logFileName, "----------- YouTube Spammer Purge Log File -----------", logMode, 2)
 
     if filterMode == "ID":
-      write_func(logFileName, "Channel IDs of spammer searched: " + ", ".join(inputtedSpammerChannelID), config['log_mode'], 2)
+      write_func(logFileName, "Channel IDs of spammer searched: " + ", ".join(inputtedSpammerChannelID), logMode, 2)
     elif filterMode == "Username":
-      write_func(logFileName, "Characters searched in Usernames: " + ", ".join(inputtedUsernameFilter), config['log_mode'], 2)
+      write_func(logFileName, "Characters searched in Usernames: " + ", ".join(inputtedUsernameFilter), logMode, 2)
     elif filterMode == "Text":
-      write_func(logFileName, "Characters searched in Comment Text: " + ", ".join(inputtedCommentTextFilter), config['log_mode'], 2)
+      write_func(logFileName, "Characters searched in Comment Text: " + ", ".join(inputtedCommentTextFilter), logMode, 2)
     elif filterMode == "NameAndText":
-      write_func(logFileName, "Characters searched in Usernames and Comment Text: " + ", ".join(filterSettings[1]), config['log_mode'], 2)
+      write_func(logFileName, "Characters searched in Usernames and Comment Text: " + ", ".join(filterSettings[1]), logMode, 2)
     elif filterMode == "AutoASCII":
-      write_func(logFileName, "Automatic Search Mode: " + str(filterSettings[1]), config['log_mode'], 2)
+      write_func(logFileName, "Automatic Search Mode: " + str(filterSettings[1]), logMode, 2)
     elif filterMode == "AutoSmart":
-      write_func(logFileName, "Automatic Search Mode: Smart Mode ", config['log_mode'], 2)
+      write_func(logFileName, "Automatic Search Mode: Smart Mode ", logMode, 2)
     elif filterMode == "SensitiveSmart":
-      write_func(logFileName, "Automatic Search Mode: Sensitive Smart ", config['log_mode'], 2)
-    write_func(logFileName, "Number of Matched Comments Found: " + str(len(matchedCommentsDict)), config['log_mode'], 2)
-    write_func(logFileName, f"IDs of Matched Comments: \n[ {', '.join(matchedCommentsDict)} ] ", config['log_mode'], 3)
+      write_func(logFileName, "Automatic Search Mode: Sensitive Smart ", logMode, 2)
+    write_func(logFileName, "Number of Matched Comments Found: " + str(len(matchedCommentsDict)), logMode, 2)
+    write_func(logFileName, f"IDs of Matched Comments: \n[ {', '.join(matchedCommentsDict)} ] ", logMode, 3)
   else:
     print("Continuing without logging... \n")
 
@@ -3525,12 +3529,12 @@ def main():
         print("\nSkipped checking if deletion was successful.\n")
 
     if loggingEnabled == True:
-      if config['log_mode'] == "rtf":
+      if logMode == "rtf":
         write_rtf(logFileName, "\n\n \\line\\line Spammers Banned: " + str(banChoice)) # Write whether or not spammer is banned to log file
         write_rtf(logFileName, "\n\n \\line\\line Action Taken on Comments: " + str(deletionModeFriendlyName) + " \\line\\line \n\n")
         if exclude == True:
           write_rtf(logFileName, str(rtfExclude))
-      elif config['log_mode'] == "plaintext":
+      elif logMode == "plaintext":
         write_plaintext_log(logFileName, "\n\n Spammers Banned: " + str(banChoice) + "\n\n") # Write whether or not spammer is banned to log file
         write_plaintext_log(logFileName, "Action Taken on Comments: " + str(deletionModeFriendlyName) + "\n\n")
         if exclude == True:
@@ -3572,6 +3576,7 @@ if __name__ == "__main__":
       input("\nPress Enter to Exit...")
     else:
       print(f"{F.RED}Unknown Error - Code: X-2{S.R} occurred. If this keeps happening, consider posting a bug report on the GitHub issues page, and include the above error info.")
+      print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
       input("\n Press Enter to Exit...")
   except SystemExit:
     sys.exit()
