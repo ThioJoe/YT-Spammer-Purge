@@ -203,9 +203,9 @@ def print_prepared_comments(scanVideoID_localprep, comments, j, logMode, scanMod
 
     # Truncates very long comments, and removes excessive multiple lines
     if len(text) > 1500:
-      text = text[0:1500] + "  ...[YT Spammer Purge Note: Long Comment Truncated - Visit Link to See Full Comment]"
+      text = text[0:1500] + "[Comment Truncated by YT SPammer Purge]"
     if text.count("\n") > 0:
-      text = text.replace("\n", " ") + "  ...[YT Spammer Purge Note: Comment converted from multiple lines to single line]"
+      text = text.replace("\n", " ")
 
     # Add one sample from each matching author to matchSamplesDict, containing author ID, name, and text
     if author_id_local not in matchSamplesDict.keys():
@@ -352,11 +352,11 @@ def get_comments(youtube, currentUser, miscData, filterMode, filterSubMode, scan
 
     # Need to be able to catch exceptions because sometimes the API will return a comment from non-existent / deleted channel
     try:
-      authorChannelName = comment["snippet"]["authorDisplayName"]
+      authorChannelName = comment["snippet"]["authorDisplayName"].replace("\r", " ")
     except KeyError:
       authorChannelName = "[Deleted Channel]"
     try:
-      commentText = comment["snippet"]["textDisplay"]
+      commentText = comment["snippet"]["textDisplay"].replace("\r","") # Remove Return carriages
     except KeyError:
       commentText = "[Deleted/Missing Comment]"
     
@@ -402,14 +402,6 @@ def get_replies(youtube, currentUser, miscData, filterMode, filterSubMode, paren
  
   # Create list of author names in current thread, add into list - Only necessary when scanning comment text
   allThreadAuthorNames = []
-  if filterMode == "Username" or filterMode == "AutoASCII" or filterMode == "AutoSmart" or filterMode == "NameAndText":
-    for reply in replies:
-      try:
-        authorChannelName = reply["snippet"]["authorDisplayName"]
-      except KeyError:
-        authorChannelName = "[Deleted Channel]"
-      # Add authorchannelname to list
-      allThreadAuthorNames.append(authorChannelName)
 
   # Iterates through items in results
   # Need to be able to catch exceptions because sometimes the API will return a comment from non-existent / deleted channel
@@ -423,13 +415,15 @@ def get_replies(youtube, currentUser, miscData, filterMode, filterSubMode, paren
 
     # Get author display name
     try:
-      authorChannelName = reply["snippet"]["authorDisplayName"]
+      authorChannelName = reply["snippet"]["authorDisplayName"].replace("\r", " ")
+      if filterMode == "Username" or filterMode == "AutoASCII" or filterMode == "AutoSmart" or filterMode == "NameAndText":
+        allThreadAuthorNames.append(authorChannelName)
     except KeyError:
       authorChannelName = "[Deleted Channel]"
     
     # Comment Text
     try:
-      commentText = reply["snippet"]["textDisplay"]
+      commentText = reply["snippet"]["textDisplay"].replace("\r", " ") # Remove Return carriages
     except KeyError:
       commentText = "[Deleted/Missing Comment]"
 
@@ -2292,6 +2286,8 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive
     elif sensitive == True:
       print(f" > {F.LIGHTRED_EX}NOTE:{S.R} In sensitive mode, {F.LIGHTRED_EX}expect more false positives{S.R}. Recommended to run this AFTER regular Auto Smart Mode.\n")
     input("Press Enter to Begin Scanning...")
+    print ("\033[A                                     \033[A") # Erases previous line
+    print(" Loading Filters...              ", end="\r")
 
   # Create Variables
   blackAdWords, redAdWords, yellowAdWords, exactRedAdWords, usernameBlackWords = [], [], [], [], []
@@ -2311,7 +2307,7 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive
   # General Spammer Criteria
   #usernameBlackChars = ""
   spamGenEmoji_Raw = b'@Sl-~@Sl-};+UQApOJ|0pOJ~;q_yw3kMN(AyyBUh'
-  usernameBlackWords_Raw = [b'aA|ICWn^M`', b'aA|ICWn>^?c>', b'Z*CxTWo%_<a$#)', b'c4=WCbY*O1XL4a}', b'Z*CxIZgX^DXL4a}', b'Z*CxIX8', b'V`yb#YanfTAY*7@Zf<34', b'b7f^9ZFwMLXkl({Wo!', b'c4>2IbRcbcAY*7@Zf<34', b'cWHEJATS_yX=G(@a{', b'cWHEJAZ~9Uc4=f~Z*u', b'cWHEJZ*_DaVQzUKc4=e']
+  usernameBlackWords_Raw = [b'aA|ICWn^M`', b'aA|ICWn>^?c>', b'Z*CxTWo%_<a$#)', b'c4=WCbY*O1XL4a}', b'Z*CxIZgX^DXL4a}', b'Z*CxIX8', b'V`yb#YanfTAY*7@', b'b7f^9ZFwMLXkh', b'c4>2IbRcbcAY*7@', b'cWHEJATS_yX=D', b'cWHEJAZ~9Uc4=e', b'cWHEJZ*_DaVQzUKc4=e']
   usernameObfuBlackWords_Raw = [b'c4Bp7YjX', b'b|7MPV{3B']
   usernameRedWords = ["whatsapp", "telegram"]
   textObfuBlackWords = ['telegram']
@@ -2457,6 +2453,7 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive
         },
     'spamDomainsRegex': spamDomainsRegex,
     }
+  print("                                ") # Erases line that says "loading filters"  
   return filterSettings, None
 
 ##########################################################################################
@@ -3155,11 +3152,11 @@ def main():
       print("Exiting in 5 seconds...")
       time.sleep(5)
       sys.exit()
-  print(f"Number of Matched Comments Found: {B.RED}{F.WHITE} " + str(len(matchedCommentsDict)) + f" {S.R}")
+  print(f"Number of Matched Comments Found: {B.RED}{F.WHITE} {str(len(matchedCommentsDict))} {F.R}{B.R}{S.R}")
 
   if bypass == False:
     # Asks user if they want to save list of spam comments to a file
-    print(f"\nSpam comments ready to display. Also {F.LIGHTGREEN_EX}save a log file?{S.R} {B.GREEN}{F.BLACK} Highly Recommended! {S.R}")
+    print(f"\nSpam comments ready to display. Also {F.LIGHTGREEN_EX}save a log file?{S.R} {B.GREEN}{F.BLACK} Highly Recommended! {F.R}{B.R}{S.R}")
     print(f"        (It even allows you to {F.LIGHTGREEN_EX}restore{S.R} deleted comments later)")
     logMode = choice(f"Save Log File (Recommended)?")
 
