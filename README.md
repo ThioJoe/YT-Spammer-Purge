@@ -11,7 +11,7 @@ YouTube Spammer Purge
 **How to Download:** Click the "[Releases](https://github.com/ThioJoe/YouTube-Spammer-Purge/releases)" link on the right, then on the latest release, under 'Assets' click to download "YTSpammerPurge.exe".
 > * [Linux Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/Linux-Installation-Instructions)
 > * [MacOS Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/MacOS-Instructions)
-> * (Windows installation not necessary if using exe file. But read below for how to set up required API key)
+> * (Windows installation not necessary if using exe file. But read below for how to [set up required API key](https://github.com/ThioJoe/YT-Spammer-Purge#instructions---obtaining-youtube-api-key))
 
 **Detailed Info & Documentation**: Visit the wiki [(Click Here)](https://github.com/ThioJoe/YT-Spammer-Purge/wiki) for more detailed writeups on using the program
 
