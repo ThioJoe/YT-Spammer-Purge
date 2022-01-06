@@ -36,7 +36,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.8.0-Beta"
+version = "2.8.0-Beta2"
 configVersion = 15
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -2757,13 +2757,19 @@ def main():
   spamListDict['Meta']['VersionInfo']['LastChecked'] = versionInfo['LastChecked']
 
   # Check for program and list updates if auto updates enabled in config
-  if not config or config['release_channel'] == "all":
-    updateReleaseChannel = "all"
-  elif config['release_channel'] == "stable":
-    updateReleaseChannel = "stable"
-  else:
-    print("Invalid value for 'release_channel' in config file. Must be 'All' or 'Stable'")
-    print("Defaulting to 'All'")
+  try:
+    if not config or config['release_channel'] == "all":
+      updateReleaseChannel = "all"
+    elif config['release_channel'] == "stable":
+      updateReleaseChannel = "stable"
+    else:
+      print("Invalid value for 'release_channel' in config file. Must be 'All' or 'Stable'")
+      print("Defaulting to 'All'")
+      input("Press Enter to continue...")
+      updateReleaseChannel = "all"
+  except KeyError:
+    print("Your version of the config file does not specify a release channel. Defaulting to 'All'")
+    print("Re-create your config to get the latest version.")
     input("Press Enter to continue...")
     updateReleaseChannel = "all"
 
