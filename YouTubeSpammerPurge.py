@@ -3320,7 +3320,7 @@ def main():
   spam_count = len(matchedCommentsDict)
   if spam_count == 0: # If no spam comments found, exits
     print(f"{B.RED}{F.BLACK}No matched comments or users found!{S.R}\n")
-    print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
+    print(f"If you see missed spam or false positives, you can submit a filter suggestion here: {F.YELLOW}TJoe.io/filter-feedback{S.R}")
     if bypass == False:
       input("\nPress Enter to exit...")
       sys.exit()
@@ -3446,6 +3446,8 @@ def main():
   print("\n\nAll Matched Comments: \n")
   print_comments(scanVideoID, list(matchedCommentsDict.keys()), loggingEnabled, scanMode, logMode, jsonSettingsDict)
   print(f"\n{F.WHITE}{B.RED} NOTE: {S.R} Check that all comments listed above are indeed spam.")
+  print(f" > If you see missed spam or false positives, you can submit a filter suggestion here: {F.YELLOW}TJoe.io/filter-feedback{S.R}")
+
   print()
 
   ### ---------------- Decide whether to skip deletion ----------------
