@@ -36,7 +36,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.7.2"
+version = "2.7.3"
 configVersion = 15
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -1575,15 +1575,15 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
   if parse_version(latestVersion) > parse_version(currentVersion):
     isUpdateAvailable = True
     if silentCheck == False:
-      print("----------------------------------------------------------------------------------------")
+      print("------------------------------------------------------------------------------------------")
       if isBeta == True:
         print(f" {F.YELLOW}A new{F.LIGHTGREEN_EX}beta{F.YELLOW} version{S.R} is available!")
       else:
         print(f" A {F.LIGHTGREEN_EX}new version{S.R} is available!")
       print(f" > Current Version: {currentVersion}")
       print(f" > Latest Version: {F.LIGHTGREEN_EX}{latestVersion}{S.R}")
-      print("(To stop receiving beta releases, change the release_channel setting in the config file)")
-      print("----------------------------------------------------------------------------------------")
+      print("(To stop receiving beta releases, change the 'release_channel' setting in the config file)")
+      print("------------------------------------------------------------------------------------------")
       if choice("Update Now?") == True:
         if sys.platform == 'win32' or sys.platform == 'win64':
           print(f"\n> {F.LIGHTCYAN_EX} Downloading Latest Version...{S.R}")
