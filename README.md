@@ -11,7 +11,7 @@ YouTube Spammer Purge
 **How to Download:** Click the "[Releases](https://github.com/ThioJoe/YouTube-Spammer-Purge/releases)" link on the right, then on the latest release, under 'Assets' click to download "YTSpammerPurge.exe".
 > * [Linux Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/Linux-Installation-Instructions)
 > * [MacOS Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/MacOS-Instructions)
-> * (Windows installation not necessary if using exe file. But read below for how to set up required API key)
+> * (Windows installation not necessary if using exe file. But see how to set up required API key [on this page](https://github.com/ThioJoe/YT-Spammer-Purge/wiki/Instructions:-Obtaining-an-API-Key))
 
 **Detailed Info & Documentation**: Visit the wiki [(Click Here)](https://github.com/ThioJoe/YT-Spammer-Purge/wiki) for more detailed writeups on using the program
 
@@ -42,11 +42,15 @@ YouTube Spammer Purge
 
 Recently, there has been a massive infestation of spam on YouTube where fake impersonator accounts leave spam/scam replies to hundreds of users on a creator's videos. For some god-forsaken reason, YouTube offers no way to delete all comments by a specific user at once, meaning you must delete them one by one BY HAND.
 
-YouTube offers a functionality to ban a user, but it does NOT delete previous comments. Therefore I created this script to allow you to instantly purge their spam replies. **IT DOES NOT PREVENT SPAMMERS - It only makes it easier to delete them when they show up!** YouTube still must implement better native tools for dealing with spammers.
+YouTube offers a functionality to ban a user, but it does NOT delete previous comments. Therefore I created this script to allow you to instantly purge their spam replies, and since then it has evolved into a fully featured spam scanner as well. **IT DOES NOT PREVENT SPAMMERS - It only makes it easier to delete them when they show up!** YouTube still must implement better native tools for dealing with spammers.
 
-## 🤔 Pro-Tip If This Seems Sketchy 🤔
+## 🤔 Pro-Tip If This Seems Sketchy: Limiting The App's Access 🤔
 
-If you feel sketched out about giving the app the required high level permissions to your channel (very understandable), you could instead use the app in 'moderator mode' (set in the config file). When you grant access to another channel to be a moderator for your channel, they are able to mark comments for 'held for review', and this permission works through the API as well. **Therefore**, what you could do is create an blank dummy-google-account with nothing on it except a empty new channel. Then you can grant that channel permission to be a moderator, and use the app through the dummy moderator account. This way, you know that the app will never have the ability to do more than mark comments as held for review (which the app supports) on your main channel. You just won't be able to ban the spammers through this app directly, but you can still remove/hide their comments instead of deleting them. Just make sure to create the google cloud API project on the dummy account instead.
+If you feel sketched out about giving the app the required high level permissions to your channel (very understandable), you could instead use the app in 'moderator mode' (set in the config file). First, some context: When you grant access to another channel to be a moderator for your channel, they are able to mark comments for 'held for review', and this permission works through the API as well. 
+
+_Therefore,_ what you could do is create an _blank dummy-google-account_ with nothing on it except a empty new channel. Then you can grant _that_ channel permission to be a moderator, and use the app through _the dummy moderator account_. **This way, you know that the app will never have the ability to do more than mark comments as held for review** (which the app supports) on your main channel, and have no other access to your account's data. You just won't be able to ban the spammers through this app directly, but you can still remove/hide their comments instead of deleting them. Just make sure to create the google cloud API project on the dummy account instead.
+
+Read some additional details about 'moderator mode' on the [wiki page here](https://github.com/ThioJoe/YT-Spammer-Purge/wiki/Moderator-Mode-&-Limiting-Permissions).
 
 ## Usage Notes -READ THIS
 
