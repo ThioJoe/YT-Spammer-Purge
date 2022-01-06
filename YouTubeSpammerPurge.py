@@ -36,8 +36,8 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.7.2"
-configVersion = 14
+version = "2.7.3"
+configVersion = 15
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 # GUI Related
@@ -1525,12 +1525,16 @@ def safety_check_username_against_filter(currentUserName, scanMode, filterCharsS
   
   
 ############################# Check For App Update ##############################
-def check_for_update(currentVersion, silentCheck=False):
+def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
   isUpdateAvailable = False
   print("\nGetting info about latest updates...")
 
   try:
-    response = requests.get("https://api.github.com/repos/ThioJoe/YouTube-Spammer-Purge/releases/latest")
+    if updateReleaseChannel == "stable":
+      response = requests.get("https://api.github.com/repos/ThioJoe/YouTube-Spammer-Purge/releases/latest")
+    elif updateReleaseChannel == "all":
+      response = requests.get("https://api.github.com/repos/ThioJoe/YouTube-Spammer-Purge/releases")
+
     if response.status_code != 200:
       if response.status_code == 403:
         if silentCheck == False:
@@ -1539,7 +1543,7 @@ def check_for_update(currentVersion, silentCheck=False):
           input("\nPress enter to exit...")
           sys.exit()
         else:
-          return isUpdateAvailable
+          return False
       else:
         if silentCheck == False:
           print(f"{B.RED}{F.WHITE}Error [U-3]:{S.R} Got non 200 status code (got: {response.status_code}) when attempting to check for update.\n")
@@ -1548,10 +1552,16 @@ def check_for_update(currentVersion, silentCheck=False):
             input("\nPress enter to exit...")
             sys.exit()
         else:
-          return isUpdateAvailable
+          return False
     else:
       # assume 200 response
-      latestVersion = response.json()["name"]
+      if updateReleaseChannel == "stable":
+        latestVersion = response.json()["name"]
+        isBeta = False
+      elif updateReleaseChannel == "all":
+        latestVersion = response.json()[0]["name"]
+        isBeta = response.json()[0]["prerelease"]
+      
   except Exception as e:
     if silentCheck == False:
       print(e + "\n")
@@ -1560,20 +1570,27 @@ def check_for_update(currentVersion, silentCheck=False):
       input("Press enter to Exit...")
       sys.exit()
     elif silentCheck == True:
-      return isUpdateAvailable
+      return False
 
   if parse_version(latestVersion) > parse_version(currentVersion):
     isUpdateAvailable = True
     if silentCheck == False:
-      print("--------------------------------------------------------------------------------")
-      print(f" A {F.LIGHTGREEN_EX}new version{S.R} is available!")
+      print("------------------------------------------------------------------------------------------")
+      if isBeta == True:
+        print(f" {F.YELLOW}A new{F.LIGHTGREEN_EX}beta{F.YELLOW} version{S.R} is available!")
+      else:
+        print(f" A {F.LIGHTGREEN_EX}new version{S.R} is available!")
       print(f" > Current Version: {currentVersion}")
       print(f" > Latest Version: {F.LIGHTGREEN_EX}{latestVersion}{S.R}")
-      print("--------------------------------------------------------------------------------")
+      print("(To stop receiving beta releases, change the 'release_channel' setting in the config file)")
+      print("------------------------------------------------------------------------------------------")
       if choice("Update Now?") == True:
         if sys.platform == 'win32' or sys.platform == 'win64':
           print(f"\n> {F.LIGHTCYAN_EX} Downloading Latest Version...{S.R}")
-          jsondata = json.dumps(response.json()["assets"])
+          if updateReleaseChannel == "stable":
+            jsondata = json.dumps(response.json()["assets"])
+          elif updateReleaseChannel == "all":
+            jsondata = json.dumps(response.json()[0]["assets"])
           dict_json = json.loads(jsondata)
 
           # Get files in release, get exe and hash info
@@ -1665,7 +1682,11 @@ def check_for_update(currentVersion, silentCheck=False):
 
           # Print Success
           print(f"\n>  Download Completed: {F.LIGHTGREEN_EX}{downloadFileName}{S.R}")
-          print("You can now delete the old version. (Or keep it around in case you encounter any issues with the new version)")
+          if isBeta == False:
+            print("You can now delete the old version. (Or keep it around in case you encounter any issues with the new version)")
+          else:
+            print(f"Because this is a {F.CYAN}beta release{S.R}, you should keep the old version around in case you encounter any issues")
+            print(f" > And don't forget to report any problems you encounter here: {F.YELLOW}TJoe.io/bug-report{S.R}")
           input("\nPress Enter to Exit...")
           sys.exit()
 
@@ -2710,9 +2731,19 @@ def main():
   spamListDict['Meta']['VersionInfo']['LastChecked'] = versionInfo['LastChecked']
 
   # Check for program and list updates if auto updates enabled in config
+  if not config or config['release_channel'] == "all":
+    updateReleaseChannel = "all"
+  elif config['release_channel'] == "stable":
+    updateReleaseChannel = "stable"
+  else:
+    print("Invalid value for 'release_channel' in config file. Must be 'All' or 'Stable'")
+    print("Defaulting to 'All'")
+    input("Press Enter to continue...")
+    updateReleaseChannel = "all"
+
   if not config or config['auto_check_update'] == True:
     try:
-      updateAvailable = check_for_update(version, silentCheck=True)
+      updateAvailable = check_for_update(version, updateReleaseChannel, silentCheck=True, )
     except Exception as e:
       print(f"{F.LIGHTRED_EX}Error Code U-3 occurred while checking for updates. (Checking can be disabled using the config file setting) Continuing...{S.R}\n")      
       updateAvailable = False
@@ -3052,7 +3083,7 @@ def main():
   # Check for latest version
   elif scanMode == "checkUpdates":
     check_lists_update(spamListDict)
-    check_for_update(version)
+    check_for_update(version, updateReleaseChannel)
 
   # Recove deleted comments mode
   elif scanMode == "recoverMode":
