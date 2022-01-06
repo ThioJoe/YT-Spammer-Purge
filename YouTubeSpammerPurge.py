@@ -2981,6 +2981,12 @@ def main():
             print(f"{F.LIGHTRED_EX}NOTE: This is not your video. Enabling '{F.YELLOW}Not Your Channel Mode{F.LIGHTRED_EX}'. You can report spam comments, but not delete them.{S.R}")
           elif userNotChannelOwner == True and moderator_mode == True:
             print(f"{F.LIGHTRED_EX}NOTE: {F.YELLOW}Moderator Mode is enabled{F.LIGHTRED_EX}. You can hold comments for review when using certain modes{S.R}")
+          print("Total number of comments to scan: " + str(miscData['totalCommentCount']))
+          if miscData['totalCommentCount'] > 100000:
+            print(f"{B.YELLOW}{F.BLACK}WARNING:{S.R}You have chosen to scan a large amount of comments. The default API quota limit")
+            print("is about 10,000 comment deletions. If you find more spam than that you will go over the limit.")
+            if userNotChannelOwner == True or moderator_mode == True:
+              print(f"{F.LIGHTCYAN_EX}> Note:{S.R} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")
           confirm = choice("Is this video list correct?", bypass=validConfigSetting)
 
   elif scanMode == "recentVideos":
