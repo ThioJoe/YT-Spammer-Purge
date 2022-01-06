@@ -2768,9 +2768,9 @@ def main():
       input("Press Enter to continue...")
       updateReleaseChannel = "all"
   except KeyError:
-    print("Your version of the config file does not specify a release channel. Defaulting to 'All'")
-    print("Re-create your config to get the latest version.")
-    input("Press Enter to continue...")
+    print("\nYour version of the config file does not specify a release channel. Defaulting to 'All'")
+    print(f"{F.YELLOW}Re-create your config{S.R} to get the latest version.")
+    input("\nPress Enter to continue...")
     updateReleaseChannel = "all"
 
   if not config or config['auto_check_update'] == True:
