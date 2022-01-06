@@ -1007,30 +1007,6 @@ def get_video_title(video_id):
 
   return title
 
-
-def get_comment_count(video_id):
-  result = youtube.videos().list(
-    part="statistics",
-    id=video_id,
-    fields='items/statistics/commentCount',
-    ).execute()
-  return result['items'][0]['statistics']['commentCount']
-
-############################# GET CHANNEL ID FROM VIDEO ID #####################################
-# Get channel ID from video ID using YouTube API request
-def get_channel_id(video_id):
-  results = youtube.videos().list(
-    part="snippet",
-    id=video_id,
-    fields="items/snippet/channelId,items/snippet/channelTitle",
-    maxResults=1
-  ).execute()
-  
-  channelID = results["items"][0]["snippet"]["channelId"]
-  channelTitle = results["items"][0]["snippet"]["channelTitle"]
-
-  return channelID, channelTitle
-
 ############################# GET CURRENTLY LOGGED IN USER #####################################
 # Class for custom exception to throw if a comment if invalid channel ID returned
 class ChannelIDError(Exception):
@@ -1133,7 +1109,7 @@ def get_recent_videos(channel_id, numVideos):
     recentVideos[i]['videoID'] = videoID
     recentVideos[i]['videoTitle'] = videoTitle
 
-    commentCount = get_comment_count(videoID)
+    commentCount = validate_video_id(videoID)[3]
     recentVideos[i]['commentCount'] = commentCount
 
     i+=1
@@ -1166,35 +1142,39 @@ def print_count_stats(miscData, videosToScan, final):
 
 ##################################### VALIDATE VIDEO ID #####################################
 # Regex matches putting video id into a match group. Then queries youtube API to verify it exists - If so returns true and isolated video ID
-def validate_video_id(video_url, silent=False):
+def validate_video_id(video_url_or_id, silent=False):
     youtube_video_link_regex = r"^\s*(?P<video_url>(?:(?:https?:)?\/\/)?(?:(?:www|m)\.)?(?:youtube\.com|youtu.be)(?:\/(?:[\w\-]+\?v=|embed\/|v\/)?))?(?P<video_id>[\w\-]{11})(?:(?(video_url)\S+|$))?\s*$"
-    match = re.match(youtube_video_link_regex, video_url)
+    match = re.match(youtube_video_link_regex, video_url_or_id)
     if match == None:
       if silent == False:
         print(f"\n{B.RED}{F.BLACK}Invalid Video link or ID!{S.R} Video IDs are 11 characters long.")
-      return False, None
+      return False, None, None, None, None
     else:
       try:
         possibleVideoID = match.group('video_id')
         result = youtube.videos().list(
-          part="id",
+          part="snippet,id,statistics",
           id=possibleVideoID,
-          fields='items/id',
+          fields='items/id,items/snippet/channelId,items/snippet/channelTitle,items/statistics/commentCount,items/snippet/title',
           ).execute()
         if possibleVideoID == result['items'][0]['id']:
-          return True, possibleVideoID
+          channelID = result['items'][0]['snippet']['channelId']
+          channelTitle = result["items"][0]["snippet"]["channelTitle"]
+          commentCount = result['items'][0]['statistics']['commentCount']
+          videoTitle = result["items"][0]["snippet"]["title"]
+          return True, possibleVideoID, videoTitle, commentCount, channelID, channelTitle
         else:
           if silent == False:
             print("Something very odd happened. YouTube returned a video ID, but it is not equal to what was queried!")
-          return False, None
+          return False, None, None, None, None
       except AttributeError:
         if silent == False:
           print(f"\n{B.RED}{F.BLACK}Invalid Video link or ID!{S.R} Video IDs are 11 characters long.")
-        return False, None
+        return False, None, None, None, None
       except IndexError:
         if silent == False:
           print(f"\n{B.RED}{F.BLACK}Invalid Video link or ID!{S.R} Video IDs are 11 characters long.")
-        return False, None
+        return False, None, None, None, None
     
 
 ############################### VALIDATE COMMUNITY POST ID #################################
@@ -1316,7 +1296,7 @@ def choice(message="", bypass=False):
   # While loop until valid input
   valid = False
   while valid == False:
-    response = input("\n" + message + f" ({F.LIGHTCYAN_EX}y{S.R}/{F.LIGHTRED_EX}n{S.R}): ")
+    response = input("\n" + message + f" ({F.LIGHTCYAN_EX}y{S.R}/{F.LIGHTRED_EX}n{S.R}): ").strip()
     if response == "Y" or response == "y":
       return True
     elif response == "N" or response == "n":
@@ -2902,40 +2882,98 @@ def main():
   # If chooses to scan single video - Validate Video ID, get title, and confirm with user
   if scanMode == "chosenVideos":  
     # While loop to get video ID and if invalid ask again
-    validVideoIDResult = (False, None) # Tuple, first element is status of validity of video ID, second element is video ID
     confirm = False
     validConfigSetting = True
-    numVideos = 1
-    videosToScan = [{}]
+    while confirm == False:
+      numVideos = 1
+      allVideosMatchBool = True
+      miscData['totalCommentCount'] = 0
 
-    while validVideoIDResult[0] == False or confirm == False:
-      if validConfigSetting == True and config and config['video_to_scan'] != 'ask':
-        enteredVideos = config['video_to_scan']
-      else:
-        enteredVideos = input(F"Enter {F.YELLOW}Video Link{S.R} or {F.YELLOW}Video ID{S.R} to scan: ")
-        validConfigSetting = False
+      # Checks if input list is empty and if contains only valid video IDs
+      listNotEmpty = False
+      validVideoIDs = False # False just to get into the loop
+      while listNotEmpty == False or validVideoIDs == False:
+        if validConfigSetting == True and config and config['video_to_scan'] != 'ask':
+          enteredVideosList = string_to_list(config['video_to_scan'])
+          if len(enteredVideosList) == 0:
+            validConfigSetting = False
+            listNotEmpty = False
+            print(f"{F.LIGHTRED_EX}\nError: Video list is empty!{S.R}")
+          else:
+            listNotEmpty = True
+        else:
+          print(f"\nEnter a list of {F.YELLOW}Video Links{S.R} or {F.YELLOW}Video IDs{S.R} to scan, separated by commas.")
+          print(" > Note: All videos must be from the same channel.")
+          enteredVideosList = string_to_list(input("Enter here: "))
+          validConfigSetting = False
+          if len(enteredVideosList) == 0:
+            listNotEmpty = False
+            print(f"{F.LIGHTRED_EX}\nError: Video list is empty!{S.R}")
+          else:
+            listNotEmpty = True
 
-      validVideoIDResult = validate_video_id(enteredVideos) # Sends link or video ID for isolation and validation
-      
-      if validVideoIDResult[0] == True:  #validVideoID now contains True/False and video ID
-        videosToScan[0]['videoID'] = str(validVideoIDResult[1])
-        videosToScan[0]['videoTitle'] = get_video_title(videosToScan[0]['videoID'])
-        videosToScan[0]['commentCount'] = get_comment_count(videosToScan[0]['videoID'])
+        # Validates all video IDs/Links, gets necessary info about them
+        validVideoIDs = True
+        videosToScan = []
+        videoListResult = [] # True/False, video ID, videoTitle, commentCount, channelID, channelTitle
+        for i in range(len(enteredVideosList)):
+          videoListResult.append([])
+          videosToScan.append({})
+          videoListResult[i] = validate_video_id(enteredVideosList[i]) # Sends link or video ID for isolation and validation
+          if videoListResult[i][0] == False:
+            validVideoIDs = False
+            confirm = False
+            break
 
-        # Add to comment overall comment count
-        miscData['totalCommentCount'] = 0
-        for video in videosToScan:
-          miscData['totalCommentCount'] += int(video['commentCount'])
-
-        print(f"\n{F.BLUE}Chosen Video:{S.R}  " + videosToScan[0]['videoTitle'])
-
-        channelOwner = get_channel_id(videosToScan[0]['videoID'])
-        if currentUser[0] != channelOwner[0]:
-          userNotChannelOwner = True
-        miscData['channelOwnerID'] = channelOwner[0]
-        miscData['channelOwnerName'] = channelOwner[1]
+      for i in range(len(videoListResult)): # Change this
+        if videoListResult[i][0] == True:
+          videosToScan[i]['videoID'] = str(videoListResult[i][1])
+          videosToScan[i]['videoTitle'] = str(videoListResult[i][2])
+          videosToScan[i]['commentCount'] = int(videoListResult[i][3])
+          videosToScan[i]['channelOwnerID'] = str(videoListResult[i][4])
+          videosToScan[i]['channelOwnerName'] = str(videoListResult[i][5])
+          miscData['totalCommentCount'] += int(videoListResult[i][3])
+        else:
+          print(f"\nInvalid Video: {enteredVideosList[i]}  |  Video ID = {videoListResult[1]}")
+          validConfigSetting = False
+          break
         
-        # Ask if correct video, or skip if config
+        # Check each video against first to ensure all on same channel
+        if allVideosMatchBool == True:
+          misMatchVidIndex = 0
+        if videosToScan[0]['channelOwnerID'] != videosToScan[i]['channelOwnerID']:
+          misMatchVidIndex += 1
+          if allVideosMatchBool == True:
+            print(f"\n {F.LIGHTRED_EX}ERROR: Videos scanned together all must be from the same channel.{S.R}")
+            print("  The following videos do not match the channel owner of the first video in the list: ")
+          if misMatchVidIndex == 11 and len(enteredVideosList) > 10:
+            remainingCount = str(len(enteredVideosList) - 10)
+            if choice(f"There are {remainingCount} more mis-matched videos, do you want to see the rest?") == False:
+              break
+          print(f"  {misMatchVidIndex}. {str(videosToScan[i]['videoTitle'])}")
+          validConfigSetting = False
+          allVideosMatchBool = False
+
+      # If videos not from same channel, skip and re-prompt    
+      if allVideosMatchBool == True:       
+        # Print video titles, if there are many, ask user to see all if more than 5
+        i = 0
+        print(f"\n{F.BLUE}Chosen Videos:{S.R}")
+        for video in videosToScan:
+          i += 1
+          if i==6 and len(enteredVideosList) > 5:
+            remainingCount = str(len(enteredVideosList) - 5)
+            if choice(f"You have entered many videos, do you need to see the rest (x{remainingCount})?") == False:
+              break
+          print(f" {i}. {video['videoTitle']}")
+
+        if currentUser[0] != videosToScan[0]['channelOwnerID']:
+          userNotChannelOwner = True
+
+        miscData['channelOwnerID'] = videosToScan[0]['channelOwnerID']
+        miscData['channelOwnerName'] = videosToScan[0]['channelOwnerName']
+        
+        # Ask if correct videos, or skip if config
         if config and config['skip_confirm_video'] == True:
           confirm = True
         else:
@@ -2943,11 +2981,7 @@ def main():
             print(f"{F.LIGHTRED_EX}NOTE: This is not your video. Enabling '{F.YELLOW}Not Your Channel Mode{F.LIGHTRED_EX}'. You can report spam comments, but not delete them.{S.R}")
           elif userNotChannelOwner == True and moderator_mode == True:
             print(f"{F.LIGHTRED_EX}NOTE: {F.YELLOW}Moderator Mode is enabled{F.LIGHTRED_EX}. You can hold comments for review when using certain modes{S.R}")
-          confirm = choice("Is this video correct?", bypass=validConfigSetting)
-
-      else:
-        print("\nInvalid Video ID or Link: " + str(validVideoIDResult[1]))
-        validConfigSetting = False
+          confirm = choice("Is this video list correct?", bypass=validConfigSetting)
 
   elif scanMode == "recentVideos":
     confirm = False
@@ -3664,61 +3698,62 @@ if __name__ == "__main__":
   try:
     main()
   except SystemExit:
-    sys.exit()    
-  except HttpError as hx:
-    traceback.print_exc()
-    print("------------------------------------------------")
-    print("Error Message: " + str(hx))
-    if hx.status_code:
-      print("Status Code: " + str(hx.status_code))
-      if hx.error_details[0]["reason"]: # If error reason is available, print it
-          reason = str(hx.error_details[0]["reason"])
-          print_exception_reason(reason)
-      print(f"\nAn {F.LIGHTRED_EX}'HttpError'{S.R} was raised. This is sometimes caused by a remote server error. See the error info above.")
-      print(f"If this keeps happening, consider posting a bug report on the GitHub issues page, and include the above error info.")
-      print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
-      input("\nPress Enter to Exit...")
-    else:
-      print(f"{F.LIGHTRED_EX}Unknown Error - Code: Z-1{S.R} occurred. If this keeps happening, consider posting a bug report on the GitHub issues page, and include the above error info.")
-      print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
-      input("\n Press Enter to Exit...")
-  except UnboundLocalError as ux:
-    traceback.print_exc()
-    print("------------------------------------------------")
-    print("Error Message: " + str(ux))
-    if "referenced before assignment" in str(ux):
-      print(f"\n{F.LIGHTRED_EX}Error - Code: X-2{S.R} occurred. This is almost definitely {F.YELLOW}my fault and requires patching{S.R} (big bruh moment)")
-      print(f"Please post a bug report on the GitHub issues page, and include the above error info.")
-      print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
-      print("    (In the mean time, try using a previous release of the program.)")
-      input("\n Press Enter to Exit...")
-    else:
-      traceback.print_exc()
-      print("------------------------------------------------")
-      print(f"\n{F.LIGHTRED_EX}Unknown Error - Code: Z-2{S.R} occurred. If this keeps happening,")
-      print("consider posting a bug report on the GitHub issues page, and include the above error info.")
-      print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
-      input("\n Press Enter to Exit...")
-  except KeyError as kx:
-    traceback.print_exc()
-    print("------------------------------------------------")
-    if "config" in str(kx):
-      print(f"{F.LIGHTRED_EX}Unknown Error - Code: X-3{S.R}")
-      print("Are you using an outdated version of the config file? Try re-creating the config file to get the latest version.")
-      print(f"{F.LIGHTYELLOW_EX}If that doesn't work{S.R}, consider posting a {F.LIGHTYELLOW_EX}bug report{S.R} on the GitHub issues page, and include the above error info.")
-    else:
-      print(f"{F.RED}Unknown Error - Code: X-4{S.R} occurred. This is {F.YELLOW}probably my fault{S.R},")
-      print(f"please a {F.LIGHTYELLOW_EX}bug report{S.R} on the GitHub issues page, and include the above error info.")
-    print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
-    input("\n Press Enter to Exit...")
-  except Exception as x:
-    traceback.print_exc()
-    print("------------------------------------------------")
-    print("Error Message: " + str(x))
-    print(f"\n{F.LIGHTRED_EX}Unknown Error - Code: Z-3{S.R} occurred. If this keeps happening, consider posting a bug report")
-    print("on the GitHub issues page, and include the above error info.")
-    print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
-    input("\n Press Enter to Exit...")
-  else:
-    print("\nFinished Executing.")      
+    sys.exit()
+
+  # except HttpError as hx:
+  #   traceback.print_exc()
+  #   print("------------------------------------------------")
+  #   print("Error Message: " + str(hx))
+  #   if hx.status_code:
+  #     print("Status Code: " + str(hx.status_code))
+  #     if hx.error_details[0]["reason"]: # If error reason is available, print it
+  #         reason = str(hx.error_details[0]["reason"])
+  #         print_exception_reason(reason)
+  #     print(f"\nAn {F.LIGHTRED_EX}'HttpError'{S.R} was raised. This is sometimes caused by a remote server error. See the error info above.")
+  #     print(f"If this keeps happening, consider posting a bug report on the GitHub issues page, and include the above error info.")
+  #     print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+  #     input("\nPress Enter to Exit...")
+  #   else:
+  #     print(f"{F.LIGHTRED_EX}Unknown Error - Code: Z-1{S.R} occurred. If this keeps happening, consider posting a bug report on the GitHub issues page, and include the above error info.")
+  #     print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+  #     input("\n Press Enter to Exit...")
+  # except UnboundLocalError as ux:
+  #   traceback.print_exc()
+  #   print("------------------------------------------------")
+  #   print("Error Message: " + str(ux))
+  #   if "referenced before assignment" in str(ux):
+  #     print(f"\n{F.LIGHTRED_EX}Error - Code: X-2{S.R} occurred. This is almost definitely {F.YELLOW}my fault and requires patching{S.R} (big bruh moment)")
+  #     print(f"Please post a bug report on the GitHub issues page, and include the above error info.")
+  #     print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+  #     print("    (In the mean time, try using a previous release of the program.)")
+  #     input("\n Press Enter to Exit...")
+  #   else:
+  #     traceback.print_exc()
+  #     print("------------------------------------------------")
+  #     print(f"\n{F.LIGHTRED_EX}Unknown Error - Code: Z-2{S.R} occurred. If this keeps happening,")
+  #     print("consider posting a bug report on the GitHub issues page, and include the above error info.")
+  #     print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+  #     input("\n Press Enter to Exit...")
+  # except KeyError as kx:
+  #   traceback.print_exc()
+  #   print("------------------------------------------------")
+  #   if "config" in str(kx):
+  #     print(f"{F.LIGHTRED_EX}Unknown Error - Code: X-3{S.R}")
+  #     print("Are you using an outdated version of the config file? Try re-creating the config file to get the latest version.")
+  #     print(f"{F.LIGHTYELLOW_EX}If that doesn't work{S.R}, consider posting a {F.LIGHTYELLOW_EX}bug report{S.R} on the GitHub issues page, and include the above error info.")
+  #   else:
+  #     print(f"{F.RED}Unknown Error - Code: X-4{S.R} occurred. This is {F.YELLOW}probably my fault{S.R},")
+  #     print(f"please a {F.LIGHTYELLOW_EX}bug report{S.R} on the GitHub issues page, and include the above error info.")
+  #   print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+  #   input("\n Press Enter to Exit...")
+  # except Exception as x:
+  #   traceback.print_exc()
+  #   print("------------------------------------------------")
+  #   print("Error Message: " + str(x))
+  #   print(f"\n{F.LIGHTRED_EX}Unknown Error - Code: Z-3{S.R} occurred. If this keeps happening, consider posting a bug report")
+  #   print("on the GitHub issues page, and include the above error info.")
+  #   print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+  #   input("\n Press Enter to Exit...")
+  # else:
+  #   print("\nFinished Executing.")      
 
