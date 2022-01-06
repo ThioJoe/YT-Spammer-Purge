@@ -36,7 +36,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.7.3"
+version = "2.8.0"
 configVersion = 15
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -157,7 +157,7 @@ def print_exception_reason(reason):
 
 # First prepared comments into segments of 50 to be submitted to API simultaneously
 # Then uses print_prepared_comments() to print / log the comments
-def print_comments(scanVideoID_localprint, comments, loggingEnabled, scanMode, logMode):
+def print_comments(scanVideoID_localprint, comments, loggingEnabled, scanMode, logMode, jsonSettingsDict):
   j = 0 # Counting index when going through comments all comment segments
   groupSize = 2500 # Number of comments to process per iteration
 
@@ -165,11 +165,11 @@ def print_comments(scanVideoID_localprint, comments, loggingEnabled, scanMode, l
     remainder = len(comments) % groupSize
     numDivisions = int((len(comments)-remainder)/groupSize)
     for i in range(numDivisions):
-      j = print_prepared_comments(scanVideoID_localprint,comments[i*groupSize:i*groupSize+groupSize], j, loggingEnabled, scanMode, logMode)
+      j = print_prepared_comments(scanVideoID_localprint,comments[i*groupSize:i*groupSize+groupSize], j, loggingEnabled, scanMode, logMode, jsonSettingsDict)
     if remainder > 0:
-      j = print_prepared_comments(scanVideoID_localprint,comments[numDivisions*groupSize:len(comments)],j, loggingEnabled, scanMode, logMode)
+      j = print_prepared_comments(scanVideoID_localprint,comments[numDivisions*groupSize:len(comments)],j, loggingEnabled, scanMode, logMode, jsonSettingsDict)
   else:
-    j = print_prepared_comments(scanVideoID_localprint,comments, j, loggingEnabled, scanMode, logMode)
+    j = print_prepared_comments(scanVideoID_localprint,comments, j, loggingEnabled, scanMode, logMode, jsonSettingsDict)
 
   # Print Sample Match List
   valuesPreparedToWrite = ""
@@ -192,10 +192,13 @@ def print_comments(scanVideoID_localprint, comments, loggingEnabled, scanMode, l
   print(valuesPreparedToPrint)
   print(f"{F.LIGHTMAGENTA_EX}---------------------------- (See log file for channel IDs of matched authors above) ---------------------------{S.R}")
 
+  if jsonSettingsDict['jsonLogging']:
+    write_json_log(jsonSettingsDict, matchedCommentsDict, firstWrite=True)
+
   return None
 
 # Uses comments.list YouTube API Request to get text and author of specific set of comments, based on comment ID
-def print_prepared_comments(scanVideoID_localprep, comments, j, loggingEnabled, scanMode, logMode):
+def print_prepared_comments(scanVideoID_localprep, comments, j, loggingEnabled, scanMode, logMode, jsonSettingsDict):
 
   # Prints author and comment text for each comment
   i = 0 # Index when going through comments
@@ -203,12 +206,14 @@ def print_prepared_comments(scanVideoID_localprep, comments, j, loggingEnabled, 
 
   for comment in comments:
     metadata = matchedCommentsDict[comment]
+
+    # For printing and regular logging
     text = metadata['text']
     author = metadata['authorName']
     author_id_local = metadata['authorID']
     comment_id_local = comment
     videoID = metadata['videoID']
-
+   
     # Truncates very long comments, and removes excessive multiple lines
     if len(text) > 1500:
       text = text[0:1500] + "[Comment Truncated by YT SPammer Purge]"
@@ -958,8 +963,8 @@ def exclude_authors(inputtedString, miscData):
   # Verify removal
   for comment in matchedCommentsDict.keys():
     if comment in commentIDExcludeList:
-      print("FATAL ERROR: Something went wrong while trying to exclude comments. No comments have been deleted.")
-      print("You should report this bug here: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
+      print(f"{F.LIGHTRED_EX}FATAL ERROR{S.R}: Something went wrong while trying to exclude comments. No comments have been deleted.")
+      print(f"You should {F.YELLOW}DEFINITELY{S.R} report this bug here: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
       print("Provide the error code: X-1")
       input("Press Enter to Exit...")
       sys.exit()
@@ -1455,6 +1460,27 @@ def write_plaintext_log(fileName, newText=None, firstWrite=False):
       for line in newText:
         file.write(line)
       file.close()
+
+############################ JSON Log & File Handling ###############################
+def write_json_log(jsonSettingsDict, dictionaryToWrite, firstWrite=True):
+  fileName = jsonSettingsDict['jsonLogFileName']
+  jsonEncoding = jsonSettingsDict['encoding']
+  if firstWrite == True:
+    # If directory does not exist for desired log file path, create it
+    logFolderPath = os.path.dirname(os.path.realpath(fileName))
+    if not os.path.isdir(logFolderPath):
+      try:
+        os.mkdir(logFolderPath)
+        # If relative path, make it absolute
+        if not os.path.isabs(fileName):
+          fileName = os.path.join(logFolderPath, os.path.basename(fileName))
+      except:
+        print(f"{F.LIGHTRED_EX}Error:{S.R} Could not create desired directory for log files. Will place them in current directory.")
+        fileName = os.path.basename(fileName)
+    with open(fileName, "w", encoding=jsonEncoding) as file:
+      file.write(json.dumps(dictionaryToWrite))
+      file.close()
+
 
 ######################### Convert string to set of characters#########################
 def make_char_set(stringInput, stripLettersNumbers=False, stripKeyboardSpecialChars=False, stripPunctuation=False):
@@ -3303,10 +3329,13 @@ def main():
     print(f"\nSpam comments ready to display. Also {F.LIGHTGREEN_EX}save a log file?{S.R} {B.GREEN}{F.BLACK} Highly Recommended! {F.R}{B.R}{S.R}")
     print(f"        (It even allows you to {F.LIGHTGREEN_EX}restore{S.R} deleted comments later)")
     loggingEnabled = choice(f"Save Log File (Recommended)?")
+    print("")
 
   # Prepare logging
   logMode = None
   logFileType = None
+  jsonSettingsDict = {}
+  jsonLogging = False
   if loggingEnabled == True:
     if config and config['log_mode']:
       logMode = config['log_mode']
@@ -3322,8 +3351,32 @@ def main():
       logMode =  "rtf"
       logFileType = ".rtf"
 
+    # Prepare log file names
     global logFileName
-    fileName = "Spam_Log_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S" + logFileType)
+    fileNameBase = "Spam_Log_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    fileName = fileNameBase + logFileType
+
+    if config and config['json_log']:
+      if config['json_log'] == True:
+        jsonLogging = True
+        jsonLogFileName = fileNameBase + ".json"
+
+        #Encoding
+        allowedEncodingModes = ['utf-8', 'utf-16', 'utf-32', 'rtfunicode']
+        if config['json_encoding'] in allowedEncodingModes:
+          jsonSettingsDict['encoding'] = config['json_encoding']
+
+      elif config['json_log'] == False:
+        jsonLogging = False
+      else:
+        print("Invalid value for 'json_log' in config file:  " + config['json_log'])
+        print("Defaulting to False (no json log file will be created)")
+        jsonLogging = False
+    else:
+      jsonLogging = False
+    
+
+    # Set where to put log files      
     defaultLogPath = "logs"
     if config and config['log_path']:
       if config['log_path'] == "default": # For backwards compatibility, can remove later on
@@ -3332,13 +3385,16 @@ def main():
         logPath = config['log_path']
       logFileName = os.path.normpath(logPath + "/" + fileName)
       print(f"Log file will be located at {F.YELLOW}" + logFileName + f"{S.R}\n")
+      if jsonLogging == True:
+        jsonLogFileName = os.path.normpath(logPath + "/" + jsonLogFileName)
+        jsonSettingsDict['jsonLogFileName'] = jsonLogFileName
+        print(f"JSON log file will be located at {F.YELLOW}" + jsonLogFileName + f"{S.R}\n")
     else:
-        logFileName = os.path.normpath(defaultLogPath + "/" + fileName)
-        print(f"Log file will be called {F.YELLOW}" + logFileName + f"{S.R}\n")
-    
+      logFileName = os.path.normpath(defaultLogPath + "/" + fileName)
+      print(f"Log file will be called {F.YELLOW}" + logFileName + f"{S.R}\n")
+
     if bypass == False:
       input(f"Press {F.YELLOW}Enter{S.R} to display comments...")
-
 
     # Write heading info to log file
     def write_func(logFileName, string, logMode, numLines):
@@ -3376,11 +3432,13 @@ def main():
   else:
     print("Continuing without logging... \n")
 
+  jsonSettingsDict['jsonLogging'] = jsonLogging
+
   # Prints list of spam comments
   if scanMode == "communityPost":
     scanVideoID = communityPostID
   print("\n\nAll Matched Comments: \n")
-  print_comments(scanVideoID, list(matchedCommentsDict.keys()), loggingEnabled, scanMode, logMode)
+  print_comments(scanVideoID, list(matchedCommentsDict.keys()), loggingEnabled, scanMode, logMode, jsonSettingsDict)
   print(f"\n{F.WHITE}{B.RED} NOTE: {S.R} Check that all comments listed above are indeed spam.")
   print()
 
@@ -3597,22 +3655,50 @@ if __name__ == "__main__":
   #   p.sort_stats("calls").print_stats()
   try:
     main()
-  except HttpError as e:
+  except SystemExit:
+    sys.exit()    
+  except HttpError as hx:
     traceback.print_exc()
     print("------------------------------------------------")
-    print("Error Message: " + str(e))
-    if e.status_code:
-      print("Status Code: " + str(e.status_code))
-      if e.error_details[0]["reason"]: # If error reason is available, print it
-          reason = str(e.error_details[0]["reason"])
+    print("Error Message: " + str(hx))
+    if hx.status_code:
+      print("Status Code: " + str(hx.status_code))
+      if hx.error_details[0]["reason"]: # If error reason is available, print it
+          reason = str(hx.error_details[0]["reason"])
           print_exception_reason(reason)
+      print("\nAn {F.RED}'HttpError'{S.R} was raised. This is sometimes caused by a remote server error. See the error info above.")
+      print(f"If this keeps happening, consider posting a bug report on the GitHub issues page, and include the above error info.")
+      print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
       input("\nPress Enter to Exit...")
     else:
-      print(f"{F.RED}Unknown Error - Code: X-2{S.R} occurred. If this keeps happening, consider posting a bug report on the GitHub issues page, and include the above error info.")
+      print(f"{F.RED}Unknown Error - Code: Z-1{S.R} occurred. If this keeps happening, consider posting a bug report on the GitHub issues page, and include the above error info.")
       print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
       input("\n Press Enter to Exit...")
-  except SystemExit:
-    sys.exit()
+  except UnboundLocalError as ux:
+    traceback.print_exc()
+    print("------------------------------------------------")
+    print("Error Message: " + str(ux))
+    if "referenced before assignment" in str(ux):
+      print(f"\n{F.RED}Error - Code: X-2{S.R} occurred. This is almost definitely {F.YELLOW}my fault and requires patching{S.R} (big bruh moment)")
+      print(f"Please post a bug report on the GitHub issues page, and include the above error info.")
+      print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+      print("    (In the mean time, try using a previous release of the program.)")
+      input("\n Press Enter to Exit...")
+    else:
+      traceback.print_exc()
+      print("------------------------------------------------")
+      print(f"\n{F.RED}Unknown Error - Code: Z-2{S.R} occurred. If this keeps happening,")
+      print("consider posting a bug report on the GitHub issues page, and include the above error info.")
+      print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+      input("\n Press Enter to Exit...")
+  except Exception as x:
+    traceback.print_exc()
+    print("------------------------------------------------")
+    print("Error Message: " + str(x))
+    print(f"\n{F.RED}Unknown Error - Code: Z-3{S.R} occurred. If this keeps happening, consider posting a bug report")
+    print("on the GitHub issues page, and include the above error info.")
+    print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+    input("\n Press Enter to Exit...")
   else:
     print("\nFinished Executing.")      
 
