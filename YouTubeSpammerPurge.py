@@ -2811,7 +2811,7 @@ def main():
 
   # Instructions
   print("Purpose: Lets you scan for spam comments and mass-delete them all at once \n")
-  print("NOTE: It's probably better to scan a single video, because you can scan all those comments,")
+  print("NOTE: It's probably better to scan individual videos, because you can scan all those comments,")
   print("      but scanning your entire channel must be limited and might miss older spam comments.")
   print("You will be shown the comments to confirm before they are deleted.")
 
@@ -2832,7 +2832,7 @@ def main():
   
   # User selects scanning mode,  while Loop to get scanning mode, so if invalid input, it will keep asking until valid input
   print(f"\n---------- {F.YELLOW}Scanning Options{S.R} ----------")
-  print(f"      1. Scan a {F.LIGHTBLUE_EX}Specific video{S.R}")
+  print(f"      1. Scan {F.LIGHTBLUE_EX}specific videos{S.R}")
   print(f"      2. Scan {F.LIGHTCYAN_EX}recent videos{S.R} for a channel")
   print(f"      3. Scan recent comments across your {F.LIGHTMAGENTA_EX}Entire Channel{S.R}")
   print(f"      4. Scan a {F.LIGHTMAGENTA_EX}community post{S.R} (Experimental)")
