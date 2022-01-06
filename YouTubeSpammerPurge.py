@@ -2842,9 +2842,12 @@ def main():
   print(f"      7. Check For Updates\n")
   
   # Check for updates silently
-  
   if updateAvailable == True:
-    print(f"{F.LIGHTGREEN_EX}Notice: A new version is available! Choose 'Check For Updates' option for details.{S.R}\n")
+    if updateReleaseChannel == "stable":
+      print(f"{F.LIGHTGREEN_EX}Notice: A new version is available! Choose 'Check For Updates' option for details.{S.R}\n")
+    else:
+      print(f"{F.LIGHTGREEN_EX}Notice: A new {F.CYAN}beta{F.LIGHTGREEN_EX} version is available! Choose 'Check For Updates' option for details.{S.R}\n")
+      
   if config and configOutOfDate == True:
     print(f"{F.LIGHTRED_EX}Notice: Your config file is out of date! Choose 'Create your own config file' to generate a new one.{S.R}\n")
 
