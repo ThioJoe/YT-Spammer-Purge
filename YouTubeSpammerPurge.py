@@ -2983,8 +2983,8 @@ def main():
             print(f"{F.LIGHTRED_EX}NOTE: {F.YELLOW}Moderator Mode is enabled{F.LIGHTRED_EX}. You can hold comments for review when using certain modes{S.R}")
           print("Total number of comments to scan: " + str(miscData['totalCommentCount']))
           if miscData['totalCommentCount'] > 100000:
-            print(f"{B.YELLOW}{F.BLACK}WARNING:{S.R}You have chosen to scan a large amount of comments. The default API quota limit")
-            print("is about 10,000 comment deletions. If you find more spam than that you will go over the limit.")
+            print(f"{B.YELLOW}{F.BLACK}WARNING: {S.R}You have chosen to scan a large amount of comments. The default API quota limit")
+            print(f"ends up around {F.YELLOW}10,000 comment deletions per day{S.R}. If you find more spam than that you will go over the limit.")
             if userNotChannelOwner == True or moderator_mode == True:
               print(f"{F.LIGHTCYAN_EX}> Note:{S.R} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")
           confirm = choice("Is this video list correct?", bypass=validConfigSetting)
@@ -3073,6 +3073,12 @@ def main():
             print(f"{F.LIGHTRED_EX}NOTE: These aren't your videos. Enabling '{F.YELLOW}Not Your Channel Mode{F.LIGHTRED_EX}'. You can report spam comments, but not delete them.{S.R}")
           elif userNotChannelOwner == True and moderator_mode == True:
             print(f"{F.LIGHTRED_EX}NOTE: {F.YELLOW}Moderator Mode is enabled{F.LIGHTRED_EX}. You can hold comments for review when using certain modes{S.R}")
+          print("\nTotal number of comments to scan: " + str(miscData['totalCommentCount']))
+          if miscData['totalCommentCount'] > 100000:
+            print(f"{B.YELLOW}{F.BLACK}WARNING: {S.R}You have chosen to scan a large amount of comments. The default API quota limit")
+            print(f"ends up around {F.YELLOW}10,000 comment deletions per day{S.R}. If you find more spam than that you will go over the limit.")
+            if userNotChannelOwner == True or moderator_mode == True:
+              print(f"{F.LIGHTCYAN_EX}> Note:{S.R} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")  
           confirm = choice("Is everything correct?", bypass=validConfigSetting)  
 
     miscData['channelOwnerID'] = channelID
@@ -3091,6 +3097,14 @@ def main():
         else:
           maxScanNumber = int(input(f"Enter the maximum {F.YELLOW}number of comments{S.R} to scan: "))
 
+          if maxScanNumber > 100000:
+            print(f"{B.YELLOW}{F.BLACK}WARNING: {S.R}You have chosen to scan a large amount of comments. The default API quota limit")
+            print(f"ends up around {F.YELLOW}10,000 comment deletions per day{S.R}. If you find more spam than that you will go over the limit.")
+            if userNotChannelOwner == True or moderator_mode == True:
+              print(f"{F.LIGHTCYAN_EX}> Note:{S.R} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")
+            if choice("Do you still want to continu?") == False:
+              validInteger == False
+
         if maxScanNumber > 0:
           validInteger = True # If it gets here, it's an integer, otherwise goes to exception
         else:
@@ -3099,6 +3113,7 @@ def main():
       except:
         print("\nInvalid Input! - Must be a whole number.")
         validConfigSetting = False
+
     miscData['channelOwnerID'] = currentUser[0]
     miscData['channelOwnerName'] = currentUser[1]
 
