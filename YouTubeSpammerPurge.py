@@ -37,7 +37,7 @@
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
 version = "2.8.0-Beta2"
-configVersion = 15
+configVersion = 16
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 # GUI Related
@@ -1296,7 +1296,7 @@ def choice(message="", bypass=False):
   # While loop until valid input
   valid = False
   while valid == False:
-    response = input("\n" + message + f" ({F.LIGHTCYAN_EX}y{S.R}/{F.LIGHTRED_EX}n{S.R}): ")
+    response = input("\n" + message + f" ({F.LIGHTCYAN_EX}y{S.R}/{F.LIGHTRED_EX}n{S.R}): ").strip()
     if response == "Y" or response == "y":
       return True
     elif response == "N" or response == "n":
@@ -2882,100 +2882,106 @@ def main():
   # If chooses to scan single video - Validate Video ID, get title, and confirm with user
   if scanMode == "chosenVideos":  
     # While loop to get video ID and if invalid ask again
-    confirm = True
+    confirm = False
     validConfigSetting = True
-    validList = False
-    while confirm == True and validList == False:
-      videoListResult = (False, None, None, None, None, None) # True/False, video ID, videoTitle, commentCount, channelID, channelTitle
+    while confirm == False:
       numVideos = 1
-      videosToScan = []
       allVideosMatchBool = True
       miscData['totalCommentCount'] = 0
-      validList = False
-      confirm = True
 
-      if validConfigSetting == True and config and config['video_to_scan'] != 'ask':
-        enteredVideosList = string_to_list(config['video_to_scan'])
-        if len(enteredVideosList) == 0:
+      # Checks if input list is empty and if contains only valid video IDs
+      listNotEmpty = False
+      validVideoIDs = False # False just to get into the loop
+      while listNotEmpty == False or validVideoIDs == False:
+        if validConfigSetting == True and config and config['video_to_scan'] != 'ask':
+          enteredVideosList = string_to_list(config['video_to_scan'])
+          if len(enteredVideosList) == 0:
+            validConfigSetting = False
+            listNotEmpty = False
+            print(f"{F.LIGHTRED_EX}\nError: Video list is empty!{S.R}")
+          else:
+            listNotEmpty = True
+        else:
+          print(f"\nEnter a list of {F.YELLOW}Video Links{S.R} or {F.YELLOW}Video IDs{S.R} to scan, separated by commas.")
+          print(" > Note: All videos must be from the same channel.")
+          enteredVideosList = string_to_list(input("Enter here: "))
           validConfigSetting = False
-          validList = False
-          print(f"{F.LIGHTRED_EX}\nError: Video list is empty!{S.R}")
-        else:
-          validList = True
-        
-      else:
-        print(f"\nEnter a list of {F.YELLOW}Video Links{S.R} or {F.YELLOW}Video IDs{S.R} to scan, separated by commas.")
-        print(" > Note: All videos must be from the same channel.")
-        enteredVideosList = string_to_list(input("Enter here: "))
-        validConfigSetting = False
-        if len(enteredVideosList) == 0:
-          validList = False
-          print(f"{F.LIGHTRED_EX}\nError: Video list is empty!{S.R}")
-        else:
-          validList = True
+          if len(enteredVideosList) == 0:
+            listNotEmpty = False
+            print(f"{F.LIGHTRED_EX}\nError: Video list is empty!{S.R}")
+          else:
+            listNotEmpty = True
 
-      if validList == True:
         # Validates all video IDs/Links, gets necessary info about them
+        validVideoIDs = True
+        videosToScan = []
+        videoListResult = [] # True/False, video ID, videoTitle, commentCount, channelID, channelTitle
         for i in range(len(enteredVideosList)):
+          videoListResult.append([])
           videosToScan.append({})
-          videoListResult = validate_video_id(enteredVideosList[i]) # Sends link or video ID for isolation and validation
-        
-          if videoListResult[0] == True:
-            videosToScan[i]['videoID'] = str(videoListResult[1])
-            videosToScan[i]['videoTitle'] = str(videoListResult[2])
-            videosToScan[i]['commentCount'] = int(videoListResult[3])
-            videosToScan[i]['channelOwnerID'] = str(videoListResult[4])
-            videosToScan[i]['channelOwnerName'] = str(videoListResult[5])
-            miscData['totalCommentCount'] += int(videoListResult[3])
-          else:
-            print(f"\nInvalid Video: {enteredVideosList[i]}  |  Video ID = {videoListResult[1]}")
-            validConfigSetting = False
+          videoListResult[i] = validate_video_id(enteredVideosList[i]) # Sends link or video ID for isolation and validation
+          if videoListResult[i][0] == False:
+            validVideoIDs = False
+            confirm = False
             break
-          
-          # Check each video against first to ensure all on same channel
+
+      for i in range(len(videoListResult)): # Change this
+        if videoListResult[i][0] == True:
+          videosToScan[i]['videoID'] = str(videoListResult[i][1])
+          videosToScan[i]['videoTitle'] = str(videoListResult[i][2])
+          videosToScan[i]['commentCount'] = int(videoListResult[i][3])
+          videosToScan[i]['channelOwnerID'] = str(videoListResult[i][4])
+          videosToScan[i]['channelOwnerName'] = str(videoListResult[i][5])
+          miscData['totalCommentCount'] += int(videoListResult[i][3])
+        else:
+          print(f"\nInvalid Video: {enteredVideosList[i]}  |  Video ID = {videoListResult[1]}")
+          validConfigSetting = False
+          break
+        
+        # Check each video against first to ensure all on same channel
+        if allVideosMatchBool == True:
+          misMatchVidIndex = 0
+        if videosToScan[0]['channelOwnerID'] != videosToScan[i]['channelOwnerID']:
+          misMatchVidIndex += 1
           if allVideosMatchBool == True:
-            misMatchVidIndex = 0
-          if videosToScan[0]['channelOwnerID'] != videosToScan[i]['channelOwnerID']:
-            misMatchVidIndex += 1
-            if allVideosMatchBool == True:
-              print(f"\n {F.LIGHTRED_EX}ERROR: Videos scanned together all must be from the same channel.{S.R}")
-              print("  The following videos do not match the channel owner of the first video in the list: ")
-            if misMatchVidIndex == 11 and len(enteredVideosList) > 10:
-              remainingCount = str(len(enteredVideosList) - 10)
-              if choice(f"There are {remainingCount} more mis-matched videos, do you want to see the rest?") == False:
-                break
-            print(f"  {misMatchVidIndex}. {str(videosToScan[i]['videoTitle'])}")
-            validConfigSetting = False
-            allVideosMatchBool = False
+            print(f"\n {F.LIGHTRED_EX}ERROR: Videos scanned together all must be from the same channel.{S.R}")
+            print("  The following videos do not match the channel owner of the first video in the list: ")
+          if misMatchVidIndex == 11 and len(enteredVideosList) > 10:
+            remainingCount = str(len(enteredVideosList) - 10)
+            if choice(f"There are {remainingCount} more mis-matched videos, do you want to see the rest?") == False:
+              break
+          print(f"  {misMatchVidIndex}. {str(videosToScan[i]['videoTitle'])}")
+          validConfigSetting = False
+          allVideosMatchBool = False
 
-        # If videos not from same channel, skip and re-prompt    
-        if allVideosMatchBool == True:       
-          # Print video titles, if there are many, ask user to see all if more than 5
-          i = 0
-          print(f"\n{F.BLUE}Chosen Videos:{S.R}")
-          for video in videosToScan:
-            i += 1
-            if i==6 and len(enteredVideosList) > 5:
-              remainingCount = str(len(enteredVideosList) - 5)
-              if choice(f"You have entered many videos, do you need to see the rest (x{remainingCount})?") == False:
-                break
-            print(f" {i}. {video['videoTitle']}")
+      # If videos not from same channel, skip and re-prompt    
+      if allVideosMatchBool == True:       
+        # Print video titles, if there are many, ask user to see all if more than 5
+        i = 0
+        print(f"\n{F.BLUE}Chosen Videos:{S.R}")
+        for video in videosToScan:
+          i += 1
+          if i==6 and len(enteredVideosList) > 5:
+            remainingCount = str(len(enteredVideosList) - 5)
+            if choice(f"You have entered many videos, do you need to see the rest (x{remainingCount})?") == False:
+              break
+          print(f" {i}. {video['videoTitle']}")
 
-          if currentUser[0] != videosToScan[0]['channelOwnerID']:
-            userNotChannelOwner = True
+        if currentUser[0] != videosToScan[0]['channelOwnerID']:
+          userNotChannelOwner = True
 
-          miscData['channelOwnerID'] = videosToScan[0]['channelOwnerID']
-          miscData['channelOwnerName'] = videosToScan[0]['channelOwnerName']
-          
-          # Ask if correct videos, or skip if config
-          if config and config['skip_confirm_video'] == True:
-            confirm = True
-          else:
-            if userNotChannelOwner == True and moderator_mode == False:
-              print(f"{F.LIGHTRED_EX}NOTE: This is not your video. Enabling '{F.YELLOW}Not Your Channel Mode{F.LIGHTRED_EX}'. You can report spam comments, but not delete them.{S.R}")
-            elif userNotChannelOwner == True and moderator_mode == True:
-              print(f"{F.LIGHTRED_EX}NOTE: {F.YELLOW}Moderator Mode is enabled{F.LIGHTRED_EX}. You can hold comments for review when using certain modes{S.R}")
-            confirm = choice("Is this video list correct?", bypass=validConfigSetting)
+        miscData['channelOwnerID'] = videosToScan[0]['channelOwnerID']
+        miscData['channelOwnerName'] = videosToScan[0]['channelOwnerName']
+        
+        # Ask if correct videos, or skip if config
+        if config and config['skip_confirm_video'] == True:
+          confirm = True
+        else:
+          if userNotChannelOwner == True and moderator_mode == False:
+            print(f"{F.LIGHTRED_EX}NOTE: This is not your video. Enabling '{F.YELLOW}Not Your Channel Mode{F.LIGHTRED_EX}'. You can report spam comments, but not delete them.{S.R}")
+          elif userNotChannelOwner == True and moderator_mode == True:
+            print(f"{F.LIGHTRED_EX}NOTE: {F.YELLOW}Moderator Mode is enabled{F.LIGHTRED_EX}. You can hold comments for review when using certain modes{S.R}")
+          confirm = choice("Is this video list correct?", bypass=validConfigSetting)
 
   elif scanMode == "recentVideos":
     confirm = False
