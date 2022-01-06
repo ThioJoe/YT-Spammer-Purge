@@ -1583,7 +1583,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
     if silentCheck == False:
       print("------------------------------------------------------------------------------------------")
       if isBeta == True:
-        print(f" {F.YELLOW}A new{F.LIGHTGREEN_EX}beta{F.YELLOW} version{S.R} is available!")
+        print(f" {F.YELLOW}A new {F.LIGHTGREEN_EX}beta{F.YELLOW} version{S.R} is available!")
       else:
         print(f" A {F.LIGHTGREEN_EX}new version{S.R} is available!")
       print(f" > Current Version: {currentVersion}")
@@ -1687,11 +1687,11 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
               sys.exit()
 
           # Print Success
-          print(f"\n>  Download Completed: {F.LIGHTGREEN_EX}{downloadFileName}{S.R}")
+          print(f"\n >  Download Completed: {F.LIGHTGREEN_EX}{downloadFileName}{S.R}")
           if isBeta == False:
-            print("You can now delete the old version. (Or keep it around in case you encounter any issues with the new version)")
+            print("\nYou can now delete the old version. (Or keep it around in case you encounter any issues with the new version)")
           else:
-            print(f"Because this is a {F.CYAN}beta release{S.R}, you should keep the old version around in case you encounter any issues")
+            print(f"\n{F.LIGHTYELLOW_EX}NOTE:{S.R} Because this is a {F.CYAN}beta release{S.R}, you should keep the old version around in case you encounter any issues")
             print(f" > And don't forget to report any problems you encounter here: {F.YELLOW}TJoe.io/bug-report{S.R}")
           input("\nPress Enter to Exit...")
           sys.exit()
