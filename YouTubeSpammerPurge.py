@@ -36,8 +36,8 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.8.0-Beta2"
-configVersion = 16
+version = "2.8.0-Beta3"
+configVersion = 17
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 # GUI Related
@@ -192,9 +192,6 @@ def print_comments(scanVideoID_localprint, comments, loggingEnabled, scanMode, l
   print(valuesPreparedToPrint)
   print(f"{F.LIGHTMAGENTA_EX}---------------------------- (See log file for channel IDs of matched authors above) ---------------------------{S.R}")
 
-  if jsonSettingsDict['jsonLogging']:
-    write_json_log(jsonSettingsDict, matchedCommentsDict, firstWrite=True)
-
   return None
 
 # Uses comments.list YouTube API Request to get text and author of specific set of comments, based on comment ID
@@ -329,7 +326,7 @@ def add_sample(authorID, authorNameRaw, commentText):
 ##########################################################################################
 
 # Call the API's commentThreads.list method to list the existing comments.
-def get_comments(youtube, currentUser, miscData, filterMode, filterSubMode, scanVideoID=None, check_channel_id=None, nextPageToken=None, inputtedSpammerChannelID=None, inputtedUsernameFilter=None, inputtedCommentTextFilter=None, regexPattern=None, videosToScan=None):  # None are set as default if no parameters passed into function
+def get_comments(youtube, currentUser, miscData, config, filterMode, filterSubMode, scanVideoID=None, check_channel_id=None, nextPageToken=None, inputtedSpammerChannelID=None, inputtedUsernameFilter=None, inputtedCommentTextFilter=None, regexPattern=None, videosToScan=None):  # None are set as default if no parameters passed into function
   global scannedCommentsCount
   # Initialize some variables
   authorChannelName = None
@@ -396,13 +393,13 @@ def get_comments(youtube, currentUser, miscData, filterMode, filterSubMode, scan
       commentText = "[Deleted/Missing Comment]"
     
     # Runs check against comment info for whichever filter data is relevant
-    check_against_filter(currentUser, miscData, filterMode=filterMode, filterSubMode=filterSubMode, commentID=parent_id, videoID=videoID, authorChannelID=parentAuthorChannelID, parentAuthorChannelID=None, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, authorChannelName=authorChannelName, commentText=commentText, regexPattern=regexPattern)
+    check_against_filter(currentUser, miscData, config, filterMode=filterMode, filterSubMode=filterSubMode, commentID=parent_id, videoID=videoID, authorChannelID=parentAuthorChannelID, parentAuthorChannelID=None, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, authorChannelName=authorChannelName, commentText=commentText, regexPattern=regexPattern)
     scannedCommentsCount += 1  # Counts number of comments scanned, add to global count
     
     if numReplies > 0 and len(limitedRepliesList) < numReplies:
-      get_replies(youtube, currentUser, miscData, filterMode, filterSubMode, parent_id, videoID, parentAuthorChannelID, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern, videosToScan)
+      get_replies(youtube, currentUser, miscData, config, filterMode, filterSubMode, parent_id, videoID, parentAuthorChannelID, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern, videosToScan)
     elif numReplies > 0 and len(limitedRepliesList) == numReplies: # limitedRepliesList can never be more than numReplies
-      get_replies(youtube, currentUser, miscData, filterMode, filterSubMode, parent_id, videoID, parentAuthorChannelID, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern, videosToScan, repliesList=limitedRepliesList)
+      get_replies(youtube, currentUser, miscData, config, filterMode, filterSubMode, parent_id, videoID, parentAuthorChannelID, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern, videosToScan, repliesList=limitedRepliesList)
     else:
       print_count_stats(miscData, videosToScan, final=False)  # Updates displayed stats if no replies
 
@@ -414,7 +411,7 @@ def get_comments(youtube, currentUser, miscData, filterMode, filterSubMode, scan
 ##########################################################################################
 
 # Call the API's comments.list method to list the existing comment replies.
-def get_replies(youtube, currentUser, miscData, filterMode, filterSubMode, parent_id, videoID, parentAuthorChannelID, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern, videosToScan, repliesList=None, ):
+def get_replies(youtube, currentUser, miscData, config, filterMode, filterSubMode, parent_id, videoID, parentAuthorChannelID, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern, videosToScan, repliesList=None, ):
   global scannedRepliesCount
   # Initialize some variables
   authorChannelName = None
@@ -463,7 +460,7 @@ def get_replies(youtube, currentUser, miscData, filterMode, filterSubMode, paren
       commentText = "[Deleted/Missing Comment]"
 
     # Runs check against comment info for whichever filter data is relevant
-    check_against_filter(currentUser, miscData, filterMode=filterMode, filterSubMode=filterSubMode, commentID=replyID, videoID=videoID, authorChannelID=authorChannelID, parentAuthorChannelID=parentAuthorChannelID, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, authorChannelName=authorChannelName, commentText=commentText, regexPattern=regexPattern, allThreadAuthorNames=allThreadAuthorNames)
+    check_against_filter(currentUser, miscData, config, filterMode=filterMode, filterSubMode=filterSubMode, commentID=replyID, videoID=videoID, authorChannelID=authorChannelID, parentAuthorChannelID=parentAuthorChannelID, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, authorChannelName=authorChannelName, commentText=commentText, regexPattern=regexPattern, allThreadAuthorNames=allThreadAuthorNames)
 
     # Update latest stats
     scannedRepliesCount += 1  # Count number of replies scanned, add to global count
@@ -473,7 +470,7 @@ def get_replies(youtube, currentUser, miscData, filterMode, filterSubMode, paren
 
 ############################## CHECK AGAINST FILTER ######################################
 # The basic logic that actually checks each comment against filter criteria
-def check_against_filter(currentUser, miscData, filterMode, filterSubMode, commentID, videoID, authorChannelID, parentAuthorChannelID=None, inputtedSpammerChannelID=None, inputtedUsernameFilter=None, inputtedCommentTextFilter=None,  authorChannelName=None, commentText=None, regexPattern=None, allThreadAuthorNames=None):
+def check_against_filter(currentUser, miscData, config, filterMode, filterSubMode, commentID, videoID, authorChannelID, parentAuthorChannelID=None, inputtedSpammerChannelID=None, inputtedUsernameFilter=None, inputtedCommentTextFilter=None,  authorChannelName=None, commentText=None, regexPattern=None, allThreadAuthorNames=None):
   global vidIdDict
   global matchedCommentsDict
   commentTextOriginal = str(commentText)
@@ -515,6 +512,11 @@ def check_against_filter(currentUser, miscData, filterMode, filterSubMode, comme
         authorMatchCountDict[authorChannelID] += 1
       else:
         authorMatchCountDict[authorChannelID] = 1
+      if config and config['json_log'] == True and config['json_extra_data'] == True:
+        matchedCommentsDict[commentID]['uploaderChannelID'] = miscData['channelOwnerID']
+        matchedCommentsDict[commentID]['uploaderChannelName'] = miscData['channelOwnerName']
+        matchedCommentsDict[commentID]['videoTitle'] = get_video_title(videoID)
+        
       if debugSingleComment == True: 
         input("--- Yes, Matched -----")
 
@@ -807,7 +809,7 @@ def delete_found_comments(commentsList, banChoice, deletionMode, recoveryMode=Fa
           deletedCounter += 50
           print_progress(deletedCounter, total, recoveryMode)
       if remainder > 0:
-          setStatus(commentsList[numDivisions*50:total]) # Deletes any leftover comments range after last full chunk
+          setStatus(commentsList[numDivisions*50:total]) # Handles any leftover comments range after last full chunk
           deletedCounter += remainder
           print_progress(deletedCounter, total, recoveryMode)
   else:
@@ -1328,6 +1330,119 @@ def process_spammer_ids(rawString):
   
   return True, IDList
 
+############################ Get Extra JSON Data and Profile Pictures ###############################
+
+def get_extra_json_data(channelIDs, jsonSettingsDict):
+  channelOwnerID = jsonSettingsDict['channelOwnerID']
+  channelOwnerName = jsonSettingsDict['channelOwnerName']
+  getPicsBool = False
+
+  # Construct extra json data dictionary
+  jsonExtraDataDict = {
+    "Comments": {},
+    "CommentAuthorInfo": {},
+    "UploaderInfo": {}
+  }
+
+  if jsonSettingsDict['json_profile_picture'] != False:
+      getPicsBool = True
+      pictureUrlsDict = {}
+      resolution = jsonSettingsDict['json_profile_picture']
+      possibleResolutions = ['default', 'medium', 'high']
+      if resolution not in possibleResolutions:
+        print(f"{B.RED}{F.BLACK}Invalid Resolution!{S.R} Defaulting to 'default' (smallest)")
+        resolution = 'default'
+
+  total = len(channelIDs)
+  fieldsToFetch=(
+    "items/id,"
+    "items/snippet/publishedAt,"
+    "items/statistics")
+
+  if jsonSettingsDict['json_profile_picture'] != False:
+    fieldsToFetch += ",items/snippet/thumbnails/default/url,items/id"
+
+  def fetch_data(channelIdGroup):
+    try:
+      response = youtube.channels().list(part="snippet,statistics", id=channelIdGroup, fields=fieldsToFetch).execute()
+      if response['items']:
+        for j in range(len(channelIdGroup)):
+          tempDict = {}
+          channelID = response['items'][j]['id']
+          tempDict['PublishedAt'] = response['items'][j]['snippet']['publishedAt']
+          tempDict['Statistics'] = response['items'][j]['statistics']          
+          if getPicsBool == True:
+            picURL = response['items'][j]['snippet']['thumbnails'][resolution]['url']
+            pictureUrlsDict[channelID] = picURL
+          jsonExtraDataDict['CommentAuthorInfo'][channelID] = tempDict
+    except:
+      traceback.print_exc()
+      print("Error occurred when extra json data.")
+      return False
+
+  # Get Extra Info About Commenters
+  print("Fetching Extra JSON Data...")
+  if total > 50:
+    remainder = total % 50
+    numDivisions = int((total-remainder)/50)
+    for i in range(numDivisions):
+      fetch_data(channelIDs[i*50:i*50+50])         
+    if remainder > 0:
+      fetch_data(channelIDs[numDivisions*50:])
+  else:
+    fetch_data(channelIDs)
+  
+  # Get info about uploader
+  response = youtube.channels().list(part="snippet,statistics", id=channelOwnerID, fields=fieldsToFetch).execute()
+  if response['items']:
+    tempDict = {}
+    tempDict['PublishedAt'] = response['items'][0]['snippet']['publishedAt']
+    tempDict['Statistics'] = response['items'][0]['statistics']
+    tempDict['ChannelID'] = channelOwnerID
+    tempDict['ChannelName'] = channelOwnerName
+    if getPicsBool == True:
+      pictureUrlsDict[channelOwnerID] = response['items'][0]['snippet']['thumbnails'][resolution]['url']
+    jsonExtraDataDict['UploaderInfo'] = tempDict
+
+  if getPicsBool == True:
+    download_profile_pictures(pictureUrlsDict, jsonSettingsDict)
+  
+  return jsonExtraDataDict
+
+
+def download_profile_pictures(pictureUrlsDict, jsonSettingsDict):
+  fileName = jsonSettingsDict['jsonLogFileName']
+  logtime = jsonSettingsDict['logTime'] # To have the same name as the log file
+
+  imageFolderName = "ProfileImages_" + logtime
+  logFolderPath = os.path.dirname(os.path.realpath(fileName))
+  imageFolderPath = os.path.join(logFolderPath, imageFolderName)
+  logtime = jsonSettingsDict['logTime'] # To have the same name as the log file
+
+  block_size =  1048576 # 1 MiB
+  if not os.path.isdir(imageFolderPath):
+    try:
+      os.mkdir(imageFolderPath)
+    except:
+      print(f"{F.LIGHTRED_EX}Error:{S.R} Unable to create image folder. Try creating a folder called 'ProfileImages' in the log file folder.")
+      return False, None
+
+  print("\nFetching Profile Pictures...")
+  # Download and save pictures
+  try:
+    for channelID, pictureURL in pictureUrlsDict.items():
+      filedownload = requests.get(pictureURL, stream=True)
+      downloadFileName = channelID + ".jpg"
+      # Make absolute path
+      downloadFileName = os.path.join(imageFolderPath, channelID + ".jpg")
+      with open(downloadFileName, 'wb') as file:
+        for data in filedownload.iter_content(block_size):
+          file.write(data)
+    print("Successfully downloaded profile pictures.")
+  except:
+    return False
+
+
 ################### Process Comma-Separated String to List ####################
 # Take in string, split by commas, remove whitespace and empty items, and return list
 def string_to_list(rawString, lower=False):
@@ -1458,7 +1573,7 @@ def write_json_log(jsonSettingsDict, dictionaryToWrite, firstWrite=True):
         print(f"{F.LIGHTRED_EX}Error:{S.R} Could not create desired directory for log files. Will place them in current directory.")
         fileName = os.path.basename(fileName)
     with open(fileName, "w", encoding=jsonEncoding) as file:
-      file.write(json.dumps(dictionaryToWrite))
+      file.write(json.dumps(dictionaryToWrite, indent=4))
       file.close()
 
 
@@ -2847,7 +2962,7 @@ def main():
       print(f"{F.LIGHTGREEN_EX}Notice: A new version is available! Choose 'Check For Updates' option for details.{S.R}\n")
     else:
       print(f"{F.LIGHTGREEN_EX}Notice: A new {F.CYAN}beta{F.LIGHTGREEN_EX} version is available! Choose 'Check For Updates' option for details.{S.R}\n")
-      
+
   if config and configOutOfDate == True:
     print(f"{F.LIGHTRED_EX}Notice: Your config file is out of date! Choose 'Create your own config file' to generate a new one.{S.R}\n")
 
@@ -3331,8 +3446,8 @@ def main():
     print("(Note: If the program appears to freeze, try right clicking within the window)\n")
     print("                          --- Scanning --- \n")
   
-    def scan_video(youtube, miscData, currentUser, filterMode, filterSubMode, videoID, check_channel_id, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern, videosToScan=None, videoTitle=None, showTitle=False, i=1):
-      nextPageToken = get_comments(youtube, currentUser, miscData, filterMode, filterSubMode, videoID, check_channel_id, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, regexPattern=regexPattern, videosToScan=videosToScan)
+    def scan_video(youtube, miscData, config, currentUser, filterMode, filterSubMode, videoID, check_channel_id, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern, videosToScan=None, videoTitle=None, showTitle=False, i=1):
+      nextPageToken = get_comments(youtube, currentUser, miscData, config, filterMode, filterSubMode, videoID, check_channel_id, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, regexPattern=regexPattern, videosToScan=videosToScan)
       if showTitle == True and len(videosToScan) > 0:
         # Prints video title, progress count, adds enough spaces to cover up previous stat print line
         offset = 95 - len(videoTitle)
@@ -3345,16 +3460,16 @@ def main():
       print_count_stats(miscData, videosToScan, final=False)  # Prints comment scan stats, updates on same line
       # After getting first page, if there are more pages, goes to get comments for next page
       while nextPageToken != "End" and scannedCommentsCount < maxScanNumber:
-        nextPageToken = get_comments(youtube, currentUser, miscData, filterMode, filterSubMode, videoID, check_channel_id, nextPageToken, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, regexPattern=regexPattern, videosToScan=videosToScan)
+        nextPageToken = get_comments(youtube, currentUser, miscData, config, filterMode, filterSubMode, videoID, check_channel_id, nextPageToken, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, regexPattern=regexPattern, videosToScan=videosToScan)
 
     if scanMode == "entireChannel":
-      scan_video(youtube, miscData, currentUser, filterMode, filterSubMode, scanVideoID, check_channel_id, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern)
+      scan_video(youtube, miscData, config, currentUser, filterMode, filterSubMode, scanVideoID, check_channel_id, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern)
     elif scanMode == "recentVideos" or scanMode == "chosenVideos":
       i = 1
       for video in videosToScan:
         videoID = str(video['videoID'])
         videoTitle = str(video['videoTitle'])
-        scan_video(youtube, miscData, currentUser, filterMode, filterSubMode, videoID, check_channel_id, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern, videosToScan=videosToScan, videoTitle=videoTitle, showTitle=True, i=i)
+        scan_video(youtube, miscData, config, currentUser, filterMode, filterSubMode, videoID, check_channel_id, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern, videosToScan=videosToScan, videoTitle=videoTitle, showTitle=True, i=i)
         i += 1
     print_count_stats(miscData, videosToScan, final=True)  # Prints comment scan stats, finalizes
   
@@ -3417,25 +3532,45 @@ def main():
 
     # Prepare log file names
     global logFileName
-    fileNameBase = "Spam_Log_" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    logTime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    fileNameBase = "Spam_Log_" + logTime
     fileName = fileNameBase + logFileType
 
-    if config and config['json_log']:
-      if config['json_log'] == True:
-        jsonLogging = True
-        jsonLogFileName = fileNameBase + ".json"
+    if config:
+      try:
+        # Get json logging settings
+        if config['json_log'] == True:
+          jsonLogging = True
+          jsonLogFileName = fileNameBase + ".json"
 
-        #Encoding
-        allowedEncodingModes = ['utf-8', 'utf-16', 'utf-32', 'rtfunicode']
-        if config['json_encoding'] in allowedEncodingModes:
-          jsonSettingsDict['encoding'] = config['json_encoding']
+          #Encoding
+          allowedEncodingModes = ['utf-8', 'utf-16', 'utf-32', 'rtfunicode']
+          if config['json_encoding'] in allowedEncodingModes:
+            jsonSettingsDict['encoding'] = config['json_encoding']
 
-      elif config['json_log'] == False:
-        jsonLogging = False
-      else:
-        print("Invalid value for 'json_log' in config file:  " + config['json_log'])
-        print("Defaulting to False (no json log file will be created)")
-        jsonLogging = False
+        elif config['json_log'] == False:
+          jsonLogging = False
+        else:
+          print("Invalid value for 'json_log' in config file:  " + config['json_log'])
+          print("Defaulting to False (no json log file will be created)")
+          jsonLogging = False
+
+        if config['json_extra_data'] == True:
+          jsonSettingsDict['json_extra_data'] = True
+        elif config['json_extra_data'] == False:
+          jsonSettingsDict['json_extra_data'] = False
+        
+        if config['json_profile_picture'] != False:
+          jsonSettingsDict['json_profile_picture'] = config['json_profile_picture']
+          jsonSettingsDict['channelOwnerID'] = miscData['channelOwnerID']
+          jsonSettingsDict['channelOwnerName'] = miscData['channelOwnerName']
+          jsonSettingsDict['logTime'] = logTime
+        elif config['json_profile_picture'] == False:
+          jsonSettingsDict['json_profile_picture'] = False
+          
+
+      except KeyError:
+        print("Problem getting json settings, is your config file correct?")
     else:
       jsonLogging = False
     
@@ -3502,7 +3637,20 @@ def main():
   if scanMode == "communityPost":
     scanVideoID = communityPostID
   print("\n\nAll Matched Comments: \n")
+
   print_comments(scanVideoID, list(matchedCommentsDict.keys()), loggingEnabled, scanMode, logMode, jsonSettingsDict)
+
+  try:
+    if jsonSettingsDict['jsonLogging']:
+      if config['json_extra_data'] == True:
+        jsonDataDict = get_extra_json_data(list(matchSamplesDict.keys()), jsonSettingsDict)
+        jsonDataDict['Comments'] = matchedCommentsDict
+        write_json_log(jsonSettingsDict, jsonDataDict, firstWrite=True)
+      else:
+        write_json_log(jsonSettingsDict, matchedCommentsDict, firstWrite=True)
+  except KeyError:
+    print("Problem getting json config settings. Is your config file up to date / correct?")
+
   print(f"\n{F.WHITE}{B.RED} NOTE: {S.R} Check that all comments listed above are indeed spam.")
   print(f" > If you see missed spam or false positives, you can submit a filter suggestion here: {F.YELLOW}TJoe.io/filter-feedback{S.R}")
 
@@ -3724,60 +3872,60 @@ if __name__ == "__main__":
   except SystemExit:
     sys.exit()
 
-  # except HttpError as hx:
-  #   traceback.print_exc()
-  #   print("------------------------------------------------")
-  #   print("Error Message: " + str(hx))
-  #   if hx.status_code:
-  #     print("Status Code: " + str(hx.status_code))
-  #     if hx.error_details[0]["reason"]: # If error reason is available, print it
-  #         reason = str(hx.error_details[0]["reason"])
-  #         print_exception_reason(reason)
-  #     print(f"\nAn {F.LIGHTRED_EX}'HttpError'{S.R} was raised. This is sometimes caused by a remote server error. See the error info above.")
-  #     print(f"If this keeps happening, consider posting a bug report on the GitHub issues page, and include the above error info.")
-  #     print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
-  #     input("\nPress Enter to Exit...")
-  #   else:
-  #     print(f"{F.LIGHTRED_EX}Unknown Error - Code: Z-1{S.R} occurred. If this keeps happening, consider posting a bug report on the GitHub issues page, and include the above error info.")
-  #     print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
-  #     input("\n Press Enter to Exit...")
-  # except UnboundLocalError as ux:
-  #   traceback.print_exc()
-  #   print("------------------------------------------------")
-  #   print("Error Message: " + str(ux))
-  #   if "referenced before assignment" in str(ux):
-  #     print(f"\n{F.LIGHTRED_EX}Error - Code: X-2{S.R} occurred. This is almost definitely {F.YELLOW}my fault and requires patching{S.R} (big bruh moment)")
-  #     print(f"Please post a bug report on the GitHub issues page, and include the above error info.")
-  #     print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
-  #     print("    (In the mean time, try using a previous release of the program.)")
-  #     input("\n Press Enter to Exit...")
-  #   else:
-  #     traceback.print_exc()
-  #     print("------------------------------------------------")
-  #     print(f"\n{F.LIGHTRED_EX}Unknown Error - Code: Z-2{S.R} occurred. If this keeps happening,")
-  #     print("consider posting a bug report on the GitHub issues page, and include the above error info.")
-  #     print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
-  #     input("\n Press Enter to Exit...")
-  # except KeyError as kx:
-  #   traceback.print_exc()
-  #   print("------------------------------------------------")
-  #   if "config" in str(kx):
-  #     print(f"{F.LIGHTRED_EX}Unknown Error - Code: X-3{S.R}")
-  #     print("Are you using an outdated version of the config file? Try re-creating the config file to get the latest version.")
-  #     print(f"{F.LIGHTYELLOW_EX}If that doesn't work{S.R}, consider posting a {F.LIGHTYELLOW_EX}bug report{S.R} on the GitHub issues page, and include the above error info.")
-  #   else:
-  #     print(f"{F.RED}Unknown Error - Code: X-4{S.R} occurred. This is {F.YELLOW}probably my fault{S.R},")
-  #     print(f"please a {F.LIGHTYELLOW_EX}bug report{S.R} on the GitHub issues page, and include the above error info.")
-  #   print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
-  #   input("\n Press Enter to Exit...")
-  # except Exception as x:
-  #   traceback.print_exc()
-  #   print("------------------------------------------------")
-  #   print("Error Message: " + str(x))
-  #   print(f"\n{F.LIGHTRED_EX}Unknown Error - Code: Z-3{S.R} occurred. If this keeps happening, consider posting a bug report")
-  #   print("on the GitHub issues page, and include the above error info.")
-  #   print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
-  #   input("\n Press Enter to Exit...")
-  # else:
-  #   print("\nFinished Executing.")      
+  except HttpError as hx:
+    traceback.print_exc()
+    print("------------------------------------------------")
+    print("Error Message: " + str(hx))
+    if hx.status_code:
+      print("Status Code: " + str(hx.status_code))
+      if hx.error_details[0]["reason"]: # If error reason is available, print it
+          reason = str(hx.error_details[0]["reason"])
+          print_exception_reason(reason)
+      print(f"\nAn {F.LIGHTRED_EX}'HttpError'{S.R} was raised. This is sometimes caused by a remote server error. See the error info above.")
+      print(f"If this keeps happening, consider posting a bug report on the GitHub issues page, and include the above error info.")
+      print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+      input("\nPress Enter to Exit...")
+    else:
+      print(f"{F.LIGHTRED_EX}Unknown Error - Code: Z-1{S.R} occurred. If this keeps happening, consider posting a bug report on the GitHub issues page, and include the above error info.")
+      print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+      input("\n Press Enter to Exit...")
+  except UnboundLocalError as ux:
+    traceback.print_exc()
+    print("------------------------------------------------")
+    print("Error Message: " + str(ux))
+    if "referenced before assignment" in str(ux):
+      print(f"\n{F.LIGHTRED_EX}Error - Code: X-2{S.R} occurred. This is almost definitely {F.YELLOW}my fault and requires patching{S.R} (big bruh moment)")
+      print(f"Please post a bug report on the GitHub issues page, and include the above error info.")
+      print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+      print("    (In the mean time, try using a previous release of the program.)")
+      input("\n Press Enter to Exit...")
+    else:
+      traceback.print_exc()
+      print("------------------------------------------------")
+      print(f"\n{F.LIGHTRED_EX}Unknown Error - Code: Z-2{S.R} occurred. If this keeps happening,")
+      print("consider posting a bug report on the GitHub issues page, and include the above error info.")
+      print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+      input("\n Press Enter to Exit...")
+  except KeyError as kx:
+    traceback.print_exc()
+    print("------------------------------------------------")
+    if "config" in str(kx):
+      print(f"{F.LIGHTRED_EX}Unknown Error - Code: X-3{S.R}")
+      print("Are you using an outdated version of the config file? Try re-creating the config file to get the latest version.")
+      print(f"{F.LIGHTYELLOW_EX}If that doesn't work{S.R}, consider posting a {F.LIGHTYELLOW_EX}bug report{S.R} on the GitHub issues page, and include the above error info.")
+    else:
+      print(f"{F.RED}Unknown Error - Code: X-4{S.R} occurred. This is {F.YELLOW}probably my fault{S.R},")
+      print(f"please a {F.LIGHTYELLOW_EX}bug report{S.R} on the GitHub issues page, and include the above error info.")
+    print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+    input("\n Press Enter to Exit...")
+  except Exception as x:
+    traceback.print_exc()
+    print("------------------------------------------------")
+    print("Error Message: " + str(x))
+    print(f"\n{F.LIGHTRED_EX}Unknown Error - Code: Z-3{S.R} occurred. If this keeps happening, consider posting a bug report")
+    print("on the GitHub issues page, and include the above error info.")
+    print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+    input("\n Press Enter to Exit...")
+  else:
+    print("\nFinished Executing.")      
 
