@@ -6,4 +6,6 @@
 
 - Avoid adding new non-standard libraries if at all possible. If you have an idea that would require one, please suggest it as an issue first instead of going through all the work and submitting a pull request.
 
+- Don't modify SpamAccountsList.txt, SpamDomainsList.txt & SpamThreadsList.txt in the assets folder. There is a dedicated repo for these, for which you can submit additions via issues - https://github.com/ThioJoe/YT-Spam-Domains-List
+
 - MAKE SURE IT RUNS

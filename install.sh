@@ -43,6 +43,7 @@ if  [[ $JQ -ne 0 ]]; then
 else
 	echo "Did not unistall jq as it was preinstalled before running this script."
 fi
+
 # Uncomment if running this script alone, to also install the files for Youtube-Spammer-Purge
 : 'curl https://codeload.github.com/ThioJoe/YT-Spammer-Purge/tar.gz/refs/tags/v${TAG} -o yt-spammer.tar.gz
 tar -xzf yt-spammer.tar.gz
