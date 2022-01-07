@@ -3778,7 +3778,8 @@ def main():
       
       # Report Instructions
       print(f" > To {F.LIGHTCYAN_EX}just report the comments for spam{S.R}, type ' {F.LIGHTCYAN_EX}REPORT{S.R} '. (Can be done even if you're not the channel owner)")
-
+      if config and config['json_extra_data'] == True:
+        print(f"\n{F.WHITE}{B.BLUE} JSON NOTE: {S.R} At this time, excluding comments will {F.RED}NOT{S.R} remove them from the JSON log file.")
       confirmDelete = input("\nInput: ")
       if confirmDelete == "DELETE" and userNotChannelOwner == False:
         deletionEnabled = True
