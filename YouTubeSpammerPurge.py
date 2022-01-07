@@ -3724,60 +3724,60 @@ if __name__ == "__main__":
   except SystemExit:
     sys.exit()
 
-  # except HttpError as hx:
-  #   traceback.print_exc()
-  #   print("------------------------------------------------")
-  #   print("Error Message: " + str(hx))
-  #   if hx.status_code:
-  #     print("Status Code: " + str(hx.status_code))
-  #     if hx.error_details[0]["reason"]: # If error reason is available, print it
-  #         reason = str(hx.error_details[0]["reason"])
-  #         print_exception_reason(reason)
-  #     print(f"\nAn {F.LIGHTRED_EX}'HttpError'{S.R} was raised. This is sometimes caused by a remote server error. See the error info above.")
-  #     print(f"If this keeps happening, consider posting a bug report on the GitHub issues page, and include the above error info.")
-  #     print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
-  #     input("\nPress Enter to Exit...")
-  #   else:
-  #     print(f"{F.LIGHTRED_EX}Unknown Error - Code: Z-1{S.R} occurred. If this keeps happening, consider posting a bug report on the GitHub issues page, and include the above error info.")
-  #     print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
-  #     input("\n Press Enter to Exit...")
-  # except UnboundLocalError as ux:
-  #   traceback.print_exc()
-  #   print("------------------------------------------------")
-  #   print("Error Message: " + str(ux))
-  #   if "referenced before assignment" in str(ux):
-  #     print(f"\n{F.LIGHTRED_EX}Error - Code: X-2{S.R} occurred. This is almost definitely {F.YELLOW}my fault and requires patching{S.R} (big bruh moment)")
-  #     print(f"Please post a bug report on the GitHub issues page, and include the above error info.")
-  #     print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
-  #     print("    (In the mean time, try using a previous release of the program.)")
-  #     input("\n Press Enter to Exit...")
-  #   else:
-  #     traceback.print_exc()
-  #     print("------------------------------------------------")
-  #     print(f"\n{F.LIGHTRED_EX}Unknown Error - Code: Z-2{S.R} occurred. If this keeps happening,")
-  #     print("consider posting a bug report on the GitHub issues page, and include the above error info.")
-  #     print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
-  #     input("\n Press Enter to Exit...")
-  # except KeyError as kx:
-  #   traceback.print_exc()
-  #   print("------------------------------------------------")
-  #   if "config" in str(kx):
-  #     print(f"{F.LIGHTRED_EX}Unknown Error - Code: X-3{S.R}")
-  #     print("Are you using an outdated version of the config file? Try re-creating the config file to get the latest version.")
-  #     print(f"{F.LIGHTYELLOW_EX}If that doesn't work{S.R}, consider posting a {F.LIGHTYELLOW_EX}bug report{S.R} on the GitHub issues page, and include the above error info.")
-  #   else:
-  #     print(f"{F.RED}Unknown Error - Code: X-4{S.R} occurred. This is {F.YELLOW}probably my fault{S.R},")
-  #     print(f"please a {F.LIGHTYELLOW_EX}bug report{S.R} on the GitHub issues page, and include the above error info.")
-  #   print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
-  #   input("\n Press Enter to Exit...")
-  # except Exception as x:
-  #   traceback.print_exc()
-  #   print("------------------------------------------------")
-  #   print("Error Message: " + str(x))
-  #   print(f"\n{F.LIGHTRED_EX}Unknown Error - Code: Z-3{S.R} occurred. If this keeps happening, consider posting a bug report")
-  #   print("on the GitHub issues page, and include the above error info.")
-  #   print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
-  #   input("\n Press Enter to Exit...")
-  # else:
-  #   print("\nFinished Executing.")      
+  except HttpError as hx:
+    traceback.print_exc()
+    print("------------------------------------------------")
+    print("Error Message: " + str(hx))
+    if hx.status_code:
+      print("Status Code: " + str(hx.status_code))
+      if hx.error_details[0]["reason"]: # If error reason is available, print it
+          reason = str(hx.error_details[0]["reason"])
+          print_exception_reason(reason)
+      print(f"\nAn {F.LIGHTRED_EX}'HttpError'{S.R} was raised. This is sometimes caused by a remote server error. See the error info above.")
+      print(f"If this keeps happening, consider posting a bug report on the GitHub issues page, and include the above error info.")
+      print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+      input("\nPress Enter to Exit...")
+    else:
+      print(f"{F.LIGHTRED_EX}Unknown Error - Code: Z-1{S.R} occurred. If this keeps happening, consider posting a bug report on the GitHub issues page, and include the above error info.")
+      print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+      input("\n Press Enter to Exit...")
+  except UnboundLocalError as ux:
+    traceback.print_exc()
+    print("------------------------------------------------")
+    print("Error Message: " + str(ux))
+    if "referenced before assignment" in str(ux):
+      print(f"\n{F.LIGHTRED_EX}Error - Code: X-2{S.R} occurred. This is almost definitely {F.YELLOW}my fault and requires patching{S.R} (big bruh moment)")
+      print(f"Please post a bug report on the GitHub issues page, and include the above error info.")
+      print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+      print("    (In the mean time, try using a previous release of the program.)")
+      input("\n Press Enter to Exit...")
+    else:
+      traceback.print_exc()
+      print("------------------------------------------------")
+      print(f"\n{F.LIGHTRED_EX}Unknown Error - Code: Z-2{S.R} occurred. If this keeps happening,")
+      print("consider posting a bug report on the GitHub issues page, and include the above error info.")
+      print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+      input("\n Press Enter to Exit...")
+  except KeyError as kx:
+    traceback.print_exc()
+    print("------------------------------------------------")
+    if "config" in str(kx):
+      print(f"{F.LIGHTRED_EX}Unknown Error - Code: X-3{S.R}")
+      print("Are you using an outdated version of the config file? Try re-creating the config file to get the latest version.")
+      print(f"{F.LIGHTYELLOW_EX}If that doesn't work{S.R}, consider posting a {F.LIGHTYELLOW_EX}bug report{S.R} on the GitHub issues page, and include the above error info.")
+    else:
+      print(f"{F.RED}Unknown Error - Code: X-4{S.R} occurred. This is {F.YELLOW}probably my fault{S.R},")
+      print(f"please a {F.LIGHTYELLOW_EX}bug report{S.R} on the GitHub issues page, and include the above error info.")
+    print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+    input("\n Press Enter to Exit...")
+  except Exception as x:
+    traceback.print_exc()
+    print("------------------------------------------------")
+    print("Error Message: " + str(x))
+    print(f"\n{F.LIGHTRED_EX}Unknown Error - Code: Z-3{S.R} occurred. If this keeps happening, consider posting a bug report")
+    print("on the GitHub issues page, and include the above error info.")
+    print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+    input("\n Press Enter to Exit...")
+  else:
+    print("\nFinished Executing.")
 
