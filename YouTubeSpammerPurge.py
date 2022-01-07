@@ -2074,13 +2074,13 @@ def create_config_file():
       parser = ConfigParser()
       try:
         parser.read("SpamPurgeConfig.ini", encoding="utf-8")
-        if parser.get("general", "use_this_config").lower() == "ask":
+        if parser.get("info", "config_version"):
           print(f"{B.GREEN}{F.BLACK}SUCCESS!{S.R} {F.YELLOW}SpamPurgeConfig.ini{S.R} file created successfully.")
           print("\nYou can now edit the file to your liking.\n")
           input("Press enter to Exit...")
           sys.exit()
         else:
-          print("Something might have gone wrong. Check if SpamPurgeConfig.ini file exists and has text.")
+          print("Something might have gone wrong. Check if SpamPurgeConfig.ini file exists and has contents.")
           input("Press enter to Exit...")
           sys.exit()
       except SystemExit:
@@ -2094,51 +2094,68 @@ def create_config_file():
     return None
 
 # Put config settings into dictionary
-def load_config_file():
+def load_config_file(forceDefault = False):
   configFileName = "SpamPurgeConfig.ini"
-  if os.path.exists(configFileName):
-    try:
-      with open(configFileName, 'r', encoding="utf-8") as configFile:
-        configData = configFile.read()
-        configFile.close()
-    except:
-      traceback.print_exc()
-      print(f"{B.RED}{F.WHITE}Error Code: F-4{S.R} - Config file found, but there was a problem loading it! The info above may help if it's a bug.")
-      print("\nYou can manually delete SpamPurgeConfig.ini and use the program to create a new default config.")
-      input("Press enter to Exit...")
-      sys.exit()
-    
-    # Sanitize config Data by removing quotes
-    configData = configData.replace("\'", "")
-    configData = configData.replace("\"", "")
+  configDict = {}
 
-    # Converts string from config file, wraps it to make it behave like file so it can be read by parser
-    # Must use .read_file, .read doesn't work
-    wrappedConfigData = io.StringIO(configData)
-    parser = ConfigParser()
-    parser.read_file(wrappedConfigData)
-    #configDictRaw = {s:dict(parser.items(s)) for s in parser.sections()}
+  # If user config file exists, keep path. Otherwise use default config file path
+  if os.path.exists(configFileName) and forceDefault == False:
+    default = False
 
-    # Convert raw config dictionary into easier to use dictionary
-    settingsToKeepCase = ["your_channel_id", "video_to_scan", "channel_ids_to_filter", "regex_to_filter", "channel_to_scan", "log_path"]
-    validWordVars = ['ask', 'mine', 'default']
-    configDict = {}
-    for section in parser.sections():
-      for setting in parser.items(section):
-        # Setting[0] is name of the setting, Setting[1] is the value of the setting
-        if setting[0] in settingsToKeepCase and setting[1].lower() not in validWordVars:
-          configDict[setting[0]] = setting[1]
-        else:
-          # Take values out of raw dictionary structure and put into easy dictionary with processed values
-          configDict[setting[0]] = setting[1].lower()
-          if setting[1].lower() == "false":
-            configDict[setting[0]] = False
-          elif setting[1].lower() == "true":
-            configDict[setting[0]] = True
-
-    return configDict
   else:
-    return None
+    def default_config_path(relative_path):
+      if hasattr(sys, '_MEIPASS'): # If running as a pyinstaller bundle
+          #print(os.path.join(sys._MEIPASS, relative_path)) # For Debugging
+          return os.path.join(sys._MEIPASS, relative_path)
+      #print(os.path.join(os.path.abspath("assets"), relative_path)) # For debugging
+      return os.path.join(os.path.abspath("assets"), relative_path) # If running as script, specifies resource folder as /assets
+
+    configFileName = default_config_path("default_config.ini")
+    default = True
+
+  # Load Contents of config file
+  try:
+    with open(configFileName, 'r', encoding="utf-8") as configFile:
+      configData = configFile.read()
+      configFile.close()
+  except:
+    traceback.print_exc()
+    print(f"{B.RED}{F.WHITE}Error Code: F-4{S.R} - Config file found, but there was a problem loading it! The info above may help if it's a bug.")
+    print("\nYou can manually delete SpamPurgeConfig.ini and use the program to create a new default config.")
+    input("Press enter to Exit...")
+    sys.exit()
+
+  # Sanitize config Data by removing quotes
+  configData = configData.replace("\'", "")
+  configData = configData.replace("\"", "")
+
+  # Converts string from config file, wraps it to make it behave like file so it can be read by parser
+  # Must use .read_file, .read doesn't work
+  wrappedConfigData = io.StringIO(configData)
+  parser = ConfigParser()
+  parser.read_file(wrappedConfigData)
+ 
+  # Convert raw config dictionary into easier to use dictionary
+  settingsToKeepCase = ["your_channel_id", "video_to_scan", "channel_ids_to_filter", "regex_to_filter", "channel_to_scan", "log_path"]
+  validWordVars = ['ask', 'mine', 'default']
+  for section in parser.sections():
+    for setting in parser.items(section):
+      # Setting[0] is name of the setting, Setting[1] is the value of the setting
+      if setting[0] in settingsToKeepCase and setting[1].lower() not in validWordVars:
+        configDict[setting[0]] = setting[1]
+      else:
+        # Take values out of raw dictionary structure and put into easy dictionary with processed values
+        configDict[setting[0]] = setting[1].lower()
+        if setting[1].lower() == "false":
+          configDict[setting[0]] = False
+        elif setting[1].lower() == "true":
+          configDict[setting[0]] = True
+
+  # Prevent prompt about config file if it's the default config file
+  if default == True:
+    configDict['use_this_config'] = True
+
+  return configDict
 
 ################################ RECOVERY MODE ###########################################
 def recover_deleted_comments():
@@ -2759,21 +2776,20 @@ def main():
     configOutOfDate = False
 
   os.system(clear_command)
-  if config != None:
-    if config['use_this_config'] == 'ask':
-      if configOutOfDate == True:
-        print(f"{F.LIGHTRED_EX}WARNING!{S.R} Your config file is out of date. If you don't generate a new one, you might get errors.")
-      if choice(f"\nFound {F.YELLOW}config file{S.R}, use those settings?") == False:
-        config = None
-      os.system(clear_command)
-    elif config['use_this_config'] == False:
-      config = None
-    elif config['use_this_config'] == True:
-      pass
-    else:
-      print("Error C-1: Invalid value in config file for setting 'use_this_config' - Must be 'True', 'False', or 'Ask'")
-      input("Press Enter to exit...")
-      sys.exit()
+  if config['use_this_config'] == 'ask':
+    if configOutOfDate == True:
+      print(f"{F.LIGHTRED_EX}WARNING!{S.R} Your config file is out of date. If you don't generate a new one, you might get errors.")
+    if choice(f"\nFound {F.YELLOW}config file{S.R}, use those settings?") == False:
+      config = load_config_file(forceDefault = True)
+    os.system(clear_command)
+  elif config['use_this_config'] == False:
+    config = load_config_file(forceDefault = True)
+  elif config['use_this_config'] == True:
+    pass
+  else:
+    print("Error C-1: Invalid value in config file for setting 'use_this_config' - Must be 'True', 'False', or 'Ask'")
+    input("Press Enter to exit...")
+    sys.exit()
 
            #### Prepare Resources ####
   resourceFolder = "SpamPurge_Resources"
