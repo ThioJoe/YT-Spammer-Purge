@@ -2772,10 +2772,9 @@ def main():
   # In all scenarios, load spam lists into memory  
   for x, spamList in spamListDict['Lists'].items():
     spamList['FilterContents'] = ingest_list_file(spamList['Path'], keepCase=False)
-  os.system(clear_command)
-
+  
   ####### Load Other Data into MiscData #######
-  print("Loading other assets..\n")
+  print("\nLoading other assets..\n")
   miscData = {
     'Resources': {},
     'SpamLists':{}
@@ -2804,6 +2803,7 @@ def main():
   else:
     moderator_mode = False
 
+  os.system(clear_command)
   #----------------------------------- Begin Showing Program ---------------------------------
   print(f"{F.LIGHTYELLOW_EX}\n===================== YOUTUBE SPAMMER PURGE v" + version + f" ====================={S.R}")
   print("=========== https://github.com/ThioJoe/YouTube-Spammer-Purge ===========")
