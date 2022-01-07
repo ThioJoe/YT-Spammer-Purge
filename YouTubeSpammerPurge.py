@@ -3542,6 +3542,8 @@ def main():
         if config['json_log'] == True:
           jsonLogging = True
           jsonLogFileName = fileNameBase + ".json"
+          jsonSettingsDict['channelOwnerID'] = miscData['channelOwnerID']
+          jsonSettingsDict['channelOwnerName'] = miscData['channelOwnerName']
 
           #Encoding
           allowedEncodingModes = ['utf-8', 'utf-16', 'utf-32', 'rtfunicode']
@@ -3562,8 +3564,6 @@ def main():
         
         if config['json_profile_picture'] != False:
           jsonSettingsDict['json_profile_picture'] = config['json_profile_picture']
-          jsonSettingsDict['channelOwnerID'] = miscData['channelOwnerID']
-          jsonSettingsDict['channelOwnerName'] = miscData['channelOwnerName']
           jsonSettingsDict['logTime'] = logTime
         elif config['json_profile_picture'] == False:
           jsonSettingsDict['json_profile_picture'] = False
