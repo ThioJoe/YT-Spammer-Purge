@@ -2139,7 +2139,7 @@ def load_config_file(forceDefault = False):
   parser.read_file(wrappedConfigData)
  
   # Convert raw config dictionary into easier to use dictionary
-  settingsToKeepCase = ["your_channel_id", "video_to_scan", "channel_ids_to_filter", "regex_to_filter", "channel_to_scan", "log_path"]
+  settingsToKeepCase = ["your_channel_id", "videos_to_scan", "channel_ids_to_filter", "regex_to_filter", "channel_to_scan", "log_path"]
   validWordVars = ['ask', 'mine', 'default']
   for section in parser.sections():
     for setting in parser.items(section):
@@ -3030,8 +3030,8 @@ def main():
       listNotEmpty = False
       validVideoIDs = False # False just to get into the loop
       while listNotEmpty == False or validVideoIDs == False:
-        if validConfigSetting == True and config and config['video_to_scan'] != 'ask':
-          enteredVideosList = string_to_list(config['video_to_scan'])
+        if validConfigSetting == True and config and config['videos_to_scan'] != 'ask':
+          enteredVideosList = string_to_list(config['videos_to_scan'])
           if len(enteredVideosList) == 0:
             validConfigSetting = False
             listNotEmpty = False
