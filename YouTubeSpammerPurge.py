@@ -36,7 +36,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.8.0"
+version = "2.8.1"
 configVersion = 16
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -1748,6 +1748,17 @@ def check_lists_update(spamListDict, silentCheck = False):
   SpamListFolder = spamListDict['Meta']['SpamListFolder']
   currentListVersion = spamListDict['Meta']['VersionInfo']['LatestLocalVersion']
   
+  def update_last_checked():
+    currentDate = datetime.today().strftime('%Y.%m.%d.%H.%M')
+    #Update Dictionary with latest release gotten from API
+    spamListDict['Meta']['VersionInfo'].update({'LatestLocalVersion': latestRelease})
+    spamListDict['Meta']['VersionInfo'].update({'LastChecked': currentDate})
+
+    # Prepare data for json file update, so only have to check once a day automatically
+    newJsonContents = json.dumps({'LatestRelease': latestRelease, 'LastChecked' : currentDate})
+    with open(spamListDict['Meta']['VersionInfo']['Path'], 'w', encoding="utf-8") as file:
+      json.dump(newJsonContents, file, indent=4)
+
   if silentCheck == False:
     print("\nChecking for updates to spam lists...")
 
@@ -1824,16 +1835,7 @@ def check_lists_update(spamListDict, silentCheck = False):
             break
         # This means success, the zip file was deleted after extracting
         except FileNotFoundError:
-          currentDate = datetime.today().strftime('%Y.%m.%d.%H.%M')
-          #Update Dictionary with latest release gotten from API
-          spamListDict['Meta']['VersionInfo'].update({'LatestLocalVersion': 'latestRelease'})
-          spamListDict['Meta']['VersionInfo'].update({'LastChecked': currentDate})
-
-          # Prepare data for json file update, so only have to check once a day automatically
-          newJsonContents = json.dumps({'LatestRelease': latestRelease, 'LastChecked' : currentDate})
-          with open(spamListDict['Meta']['VersionInfo']['Path'], 'w', encoding="utf-8") as file:
-            json.dump(newJsonContents, file, indent=4)
-          
+          update_last_checked()
           return spamListDict
 
     elif total_size_in_bytes != 0 and os.stat(downloadFilePath).st_size != total_size_in_bytes:
@@ -1841,6 +1843,7 @@ def check_lists_update(spamListDict, silentCheck = False):
       print(f" > {F.RED} File did not fully download. Please try again later.\n")
       return spamListDict
   else:
+    update_last_checked()
     return spamListDict
 
 ############################# Ingest Other Files ##############################
