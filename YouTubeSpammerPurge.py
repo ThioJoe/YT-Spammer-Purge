@@ -1717,10 +1717,14 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
               if(choice("Do you wish to automatically 'git clone' this project?")):
                 print("> Warning: This will erase ALL files related to this project (Ex: config.ini, client_secret.json)")
                 if(choice("Do you wish to continue (by continuing you agree to the above warning)?")):
+                  # Get current working directory
                   cwd = os.getcwd()
                   os.chdir("../")
+
+                  # Replace original program
                   os.shutil.rmtree(cwd)
                   os.system("git clone https://github.com/ThioJoe/YT-Spammer-Purge.git")
+
                   print("> New version downloaded and installed")
                   input("\nPress enter to Exit...")
                   sys.exit()
@@ -1731,13 +1735,12 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
                 print("\nYou can still manually update: https://github.com/ThioJoe/YT-Spammer-Purge/releases")
                 input("\nPress Enter to Exit...")
                 sys.exit()
-            else:
-              print(response)
+            elif(response == 0):
               print("> Installing requirements.txt...")
-              #os.system("pip3 install -r requirements.txt")
-              #os.system("clear")
+              os.system("pip3 install -r requirements.txt")
+              os.system("clear")
               print("> Update Successful")
-              input("Press Enter to Exit...")
+              input("\nPress Enter to Exit...")
               sys.exit()
           else:
             print("\nYou can still manually update: https://github.com/ThioJoe/YT-Spammer-Purge/releases")
