@@ -1745,7 +1745,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
           else:
             print("\nYou can still manually update: https://github.com/ThioJoe/YT-Spammer-Purge/releases")
             input("\nPress Enter to Exit...")
-          sys.exit()
+            sys.exit()
 
         else:
           print(f"> {F.RED} Error:{S.R} You are using an unsupported os for the autoupdater (macos). \n This updater only supports Windows and Linux (right now) Feel free to get the files from github: https://github.com/ThioJoe/YouTube-Spammer-Purge")
