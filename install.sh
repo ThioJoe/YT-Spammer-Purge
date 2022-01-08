@@ -41,7 +41,7 @@ if  [[ $JQ -ne 0 ]]; then
 		pacman -Rs jq
 	fi
 else
-	echo "Did not unistall jq as it was preinstalled before running this script."
+	echo "Did not uninstall jq as it was preinstalled before running this script."
 fi
 
 # Uncomment if running this script alone, to also install the files for Youtube-Spammer-Purge
