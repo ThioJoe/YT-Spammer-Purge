@@ -1707,9 +1707,45 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
           input("\nPress Enter to Exit...")
           sys.exit()
 
+        elif sys.platform == "linux":
+          print("> NOTE: Currently the auto-updater on linux does not support updating from GitHub releases\nThis means the auto-updater will pull the latest and greatest unstable version")
+          if(choice("Do you wish to continue?")):
+            response = os.system("git pull")
+            # Catch fatal missing .git file
+            if(response == 32768):
+              print(f"> {F.RED} Error:{S.R} Project not a git repository\nFor the auto-updater to work on linux please download this project using 'git clone'")
+              if(choice("Do you wish to automatically 'git clone' this project?")):
+                print("> Warning: This will erase ALL files related to this project (Ex: config.ini, client_secret.json)")
+                if(choice("Do you wish to continue (by continuing you agree to the above warning)?")):
+                  cwd = os.getcwd()
+                  os.chdir("../")
+                  os.shutil.rmtree(cwd)
+                  os.system("git clone https://github.com/ThioJoe/YT-Spammer-Purge.git")
+                  print("> New version downloaded and installed")
+                  input("\nPress enter to Exit...")
+                  sys.exit()
+                else:
+                  input("\nPress Enter to Exit...")
+                  sys.exit()
+              else:
+                print("\nYou can still manually update: https://github.com/ThioJoe/YT-Spammer-Purge/releases")
+                input("\nPress Enter to Exit...")
+                sys.exit()
+            else:
+              print(response)
+              print("> Installing requirements.txt...")
+              #os.system("pip3 install -r requirements.txt")
+              #os.system("clear")
+              print("> Update Successful")
+              input("Press Enter to Exit...")
+              sys.exit()
+          else:
+            print("\nYou can still manually update: https://github.com/ThioJoe/YT-Spammer-Purge/releases")
+            input("\nPress Enter to Exit...")
+          sys.exit()
+
         else:
-          # We do this because we pull the .exe for windows, but maybe we could use os.system('git pull')? Because this is a GIT repo, unlike the windows version
-          print(f"> {F.RED} Error:{S.R} You are using an unsupported os for the autoupdater (macos/linux). \n This updater only supports Windows (right now) Feel free to get the files from github: https://github.com/ThioJoe/YouTube-Spammer-Purge")
+          print(f"> {F.RED} Error:{S.R} You are using an unsupported os for the autoupdater (macos). \n This updater only supports Windows and Linux (right now) Feel free to get the files from github: https://github.com/ThioJoe/YouTube-Spammer-Purge")
           input("\nPress enter to Exit...")
           sys.exit()
       else:
