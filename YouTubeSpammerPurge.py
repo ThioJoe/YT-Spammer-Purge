@@ -974,7 +974,7 @@ def exclude_authors(inputtedString, miscData):
   # Get author names and IDs from dictionary, and display them
   for author in authorIDsToExclude:
     displayString += f"    User ID: {author}   |   User Name: {matchSamplesDict[author]['authorName']}\n"
-    with open(miscData['Resources']['Whitelist']['PathWithName'], "a") as f:
+    with open(miscData['Resources']['Whitelist']['PathWithName'], "a", encoding="utf-8") as f:
       f.write(f"# [Excluded]  Channel Name: {matchSamplesDict[author]['authorName']}  |  Channel ID: " + "\n")
       f.write(f"{author}\n")
 
@@ -1183,8 +1183,19 @@ def validate_video_id(video_url_or_id, silent=False):
         if possibleVideoID == result['items'][0]['id']:
           channelID = result['items'][0]['snippet']['channelId']
           channelTitle = result["items"][0]["snippet"]["channelTitle"]
-          commentCount = result['items'][0]['statistics']['commentCount']
           videoTitle = result["items"][0]["snippet"]["title"]
+          # When comments are disabled, the commentCount is not included in the response, requires catching KeyError
+          try:
+            commentCount = result['items'][0]['statistics']['commentCount']
+          except KeyError:
+            traceback.print_exc()
+            print("--------------------------------------")
+            print(f"\n{B.RED}{F.WHITE} ERROR: {S.R} {F.RED}Unable to get comment count for video: {S.R} {possibleVideoID}  |  {videoTitle}")
+            print(f"\n{F.YELLOW}Are comments disabled on this video?{S.R} If not, please report the bug and include the error info above.")
+            print(f"                    Bug Report Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+            input("\nPress Enter to Exit...")
+            sys.exit()
+
           return True, possibleVideoID, videoTitle, commentCount, channelID, channelTitle
         else:
           if silent == False:
