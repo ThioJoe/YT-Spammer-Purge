@@ -1573,7 +1573,7 @@ def write_json_log(jsonSettingsDict, dictionaryToWrite, firstWrite=True):
         print(f"{F.LIGHTRED_EX}Error:{S.R} Could not create desired directory for log files. Will place them in current directory.")
         fileName = os.path.basename(fileName)
     with open(fileName, "w", encoding=jsonEncoding) as file:
-      file.write(json.dumps(dictionaryToWrite, indent=4))
+      file.write(json.dumps(dictionaryToWrite, indent=4, ensure_ascii=False))
       file.close()
 
 
