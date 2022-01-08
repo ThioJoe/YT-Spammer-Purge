@@ -786,7 +786,7 @@ def delete_found_comments(commentsList, banChoice, deletionMode, recoveryMode=Fa
     elif deletionMode == "heldForReview" or deletionMode == "rejected" or deletionMode == "published":
       youtube.comments().setModerationStatus(id=commentIDs, moderationStatus=deletionMode, banAuthor=banChoice).execute()
     else:
-      print("Invalid deletion mode. This is definitely a bug, please report it here: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
+      print("Invalid deletion mode. This is definitely a bug, please report it here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
       print("Deletion Mode Is: " + deletionMode)
       input("Press Enter to Exit...")
       sys.exit()
@@ -967,7 +967,7 @@ def exclude_authors(inputtedString, miscData):
   for comment in matchedCommentsDict.keys():
     if comment in commentIDExcludeList:
       print(f"{F.LIGHTRED_EX}FATAL ERROR{S.R}: Something went wrong while trying to exclude comments. No comments have been deleted.")
-      print(f"You should {F.YELLOW}DEFINITELY{S.R} report this bug here: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
+      print(f"You should {F.YELLOW}DEFINITELY{S.R} report this bug here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
       print("Provide the error code: X-1")
       input("Press Enter to Exit...")
       sys.exit()
@@ -1685,9 +1685,9 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
 
   try:
     if updateReleaseChannel == "stable":
-      response = requests.get("https://api.github.com/repos/ThioJoe/YouTube-Spammer-Purge/releases/latest")
+      response = requests.get("https://api.github.com/repos/ThioJoe/YT-Spammer-Purge/releases/latest")
     elif updateReleaseChannel == "all":
-      response = requests.get("https://api.github.com/repos/ThioJoe/YouTube-Spammer-Purge/releases")
+      response = requests.get("https://api.github.com/repos/ThioJoe/YT-Spammer-Purge/releases")
 
     if response.status_code != 200:
       if response.status_code == 403:
@@ -1701,7 +1701,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
       else:
         if silentCheck == False:
           print(f"{B.RED}{F.WHITE}Error [U-3]:{S.R} Got non 200 status code (got: {response.status_code}) when attempting to check for update.\n")
-          print(f"If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
+          print(f"If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
           if silentCheck == False:
             input("\nPress enter to exit...")
             sys.exit()
@@ -1720,7 +1720,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
     if silentCheck == False:
       print(e + "\n")
       print(f"{B.RED}{F.WHITE}Error [Code U-1]:{S.R} Problem while checking for updates. See above error for more details.\n")
-      print("If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
+      print("If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
       input("Press enter to Exit...")
       sys.exit()
     elif silentCheck == True:
@@ -1798,7 +1798,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
               except:
                 traceback.print_exc()
                 print(f"\n{F.LIGHTRED_EX}Error F-6:{S.R} Problem deleting existing existing file! Check if it's gone, or delete it yourself, then try again.")
-                print("The info above may help if it's a bug, which you can report here: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
+                print("The info above may help if it's a bug, which you can report here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
                 input("Press enter to Exit...")
                 sys.exit()
 
@@ -1846,7 +1846,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
 
         else:
           # We do this because we pull the .exe for windows, but maybe we could use os.system('git pull')? Because this is a GIT repo, unlike the windows version
-          print(f"> {F.RED} Error:{S.R} You are using an unsupported os for the autoupdater (macos/linux). \n This updater only supports Windows (right now) Feel free to get the files from github: https://github.com/ThioJoe/YouTube-Spammer-Purge")
+          print(f"> {F.RED} Error:{S.R} You are using an unsupported os for the autoupdater (macos/linux). \n This updater only supports Windows (right now) Feel free to get the files from github: https://github.com/ThioJoe/YT-Spammer-Purge")
           input("\nPress enter to Exit...")
           sys.exit()
       else:
@@ -1932,7 +1932,7 @@ def check_lists_update(spamListDict, silentCheck = False):
       else:
         if silentCheck == False:
           print(f"{B.RED}{F.WHITE}Error [U-3L]:{S.R} Got non 200 status code (got: {response.status_code}) when attempting to check for spam list update.\n")
-          print(f"If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
+          print(f"If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
           if silentCheck == False:
             input("\nPress enter to exit...")
             sys.exit()
@@ -2077,7 +2077,7 @@ def create_config_file():
       except:
         traceback.print_exc()
         print("Error Code F-1: Problem deleting existing existing file! Check if it's gone. The info above may help if it's a bug.")
-        print("If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
+        print("If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
         input("Press enter to Exit...")
         sys.exit()
     else:
@@ -2325,7 +2325,7 @@ def prepare_filter_mode_chars(currentUser, scanMode, filterMode, config):
       except NameError: # Catch if user closes GUI window, exit program.
         print("                                                                                          ") # Clears the line because of \r on previous print
         print("\nError Code G-1: Something went wrong with the input, or you closed the window improperly.")
-        print("If this keeps happening inexplicably, consider filing a bug report here: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
+        print("If this keeps happening inexplicably, consider filing a bug report here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
         input("Press Enter to exit...")
         sys.exit()
 
@@ -2793,7 +2793,7 @@ def main():
       traceback.print_exc() # Prints traceback
       print("----------------")
       print(f"{F.RED}[!!!] Error: {S.R}" + str(e))
-      print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
+      print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
       input(f"\nError Code A-1: {F.RED}Something went wrong during authentication.{S.R} {F.YELLOW}Try deleting the token.pickle file.{S.R} \nPress Enter to exit...")
       sys.exit()
 
@@ -2973,7 +2973,7 @@ def main():
   os.system(clear_command)
   #----------------------------------- Begin Showing Program ---------------------------------
   print(f"{F.LIGHTYELLOW_EX}\n===================== YOUTUBE SPAMMER PURGE v" + version + f" ====================={S.R}")
-  print("=========== https://github.com/ThioJoe/YouTube-Spammer-Purge ===========")
+  print("=========== https://github.com/ThioJoe/YT-Spammer-Purge ===========")
   print("================= Author: ThioJoe - YouTube.com/ThioJoe ================ \n")
 
   # Instructions
@@ -3803,7 +3803,7 @@ def main():
   if deletionEnabled != "Allowed" and deletionEnabled != True:
       print("\nThe deletion functionality was not enabled. Cannot delete or report comments.")
       print("Possible Cause: You're scanning someone elses video with a non-supported filter mode.\n")
-      print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YouTube-Spammer-Purge/issues")
+      print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
       input("Press Enter to exit...")
       sys.exit()
 
