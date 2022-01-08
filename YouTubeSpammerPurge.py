@@ -149,6 +149,7 @@ def print_exception_reason(reason):
     print(" > There is a daily limit of 10,000 units/day, which works out to around reporting 10,000 comments/day.")
     print(" > You can check your quota by searching 'quota' in the google cloud console.")
     print(f"{F.YELLOW}Solutions: Either wait until tomorrow, or create additional projects in the cloud console.{S.R}")
+    print(f"  > Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
     input("\n Press Enter to Exit...")
 
 ##########################################################################################
@@ -1789,7 +1790,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
 
           # Check if file exists already, ask to overwrite if it does
           if os.path.exists(downloadFileName):
-            print(f"{B.RED}{F.WHITE}WARNING!{S.R} '{F.YELLOW}{downloadFileName}{S.R}' file already exists. This would overwrite the existing file.")
+            print(f"{B.RED}{F.WHITE} WARNING! {S.R} '{F.YELLOW}{downloadFileName}{S.R}' file already exists. This would overwrite the existing file.")
             confirm = choice("Overwrite this existing file?")
             if confirm == True:
               try:
@@ -2068,7 +2069,7 @@ def create_config_file():
   configFileName = "SpamPurgeConfig.ini"
   confirm = True
   if os.path.exists(configFileName):
-    print(f"{B.RED}{F.WHITE}WARNING!{S.R} {F.YELLOW}SpamPurgeConfig.ini{S.R} file already exists. This would overwrite the existing file.")
+    print(f"{B.RED}{F.WHITE} WARNING! {S.R} {F.YELLOW}SpamPurgeConfig.ini{S.R} file already exists. This would overwrite the existing file.")
     confirm = choice("Create new empty config file and overwrite existing?")
     if confirm == True:
       try:
@@ -2813,7 +2814,7 @@ def main():
   os.system(clear_command)
   if config['use_this_config'] == 'ask':
     if configOutOfDate == True:
-      print(f"{F.LIGHTRED_EX}WARNING!{S.R} Your config file is out of date. If you don't generate a new one, you might get errors.")
+      print(f"{F.LIGHTRED_EX} WARNING! {S.R} Your config file is out of date. If you don't generate a new one, you might get errors.")
     if choice(f"\nFound {F.YELLOW}config file{S.R}, use those settings?") == False:
       config = load_config_file(forceDefault = True)
     os.system(clear_command)
@@ -3152,9 +3153,10 @@ def main():
           elif userNotChannelOwner == True and moderator_mode == True:
             print(f"{F.LIGHTRED_EX}NOTE: {F.YELLOW}Moderator Mode is enabled{F.LIGHTRED_EX}. You can hold comments for review when using certain modes{S.R}")
           print("Total number of comments to scan: " + str(miscData['totalCommentCount']))
-          if miscData['totalCommentCount'] > 100000:
-            print(f"{B.YELLOW}{F.BLACK}WARNING: {S.R}You have chosen to scan a large amount of comments. The default API quota limit")
-            print(f"ends up around {F.YELLOW}10,000 comment deletions per day{S.R}. If you find more spam than that you will go over the limit.")
+          if miscData['totalCommentCount'] >= 100000:
+            print(f"\n{B.YELLOW}{F.BLACK} WARNING: {S.R} You have chosen to scan a large amount of comments. The default API quota limit ends up")
+            print(f" around {F.YELLOW}10,000 comment deletions per day{S.R}. If you find more spam than that you will go over the limit.")
+            print(f"        > Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
             if userNotChannelOwner == True or moderator_mode == True:
               print(f"{F.LIGHTCYAN_EX}> Note:{S.R} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")
           confirm = choice("Is this video list correct?", bypass=validConfigSetting)
@@ -3220,6 +3222,11 @@ def main():
           validConfigSetting = False
       except ValueError:
         print(f"{F.LIGHTRED_EX}Error:{S.R} Entry must be a whole number greater than zero.")
+      
+      if validEntry == True and numVideos >= 100:
+        print(f"\n{B.YELLOW}{F.BLACK} WARNING: {S.R} You have chosen to scan a large amount of videos. With the default API quota limit,")
+        print(f" every 100 videos will use up 20% of the quota {F.YELLOW}just from listing the videos alone, before any comment scanning.{S.R}")
+        print(f"        > Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
 
       if validEntry == True:
         # Fetch recent videos and print titles to user for confirmation
@@ -3231,7 +3238,7 @@ def main():
           miscData['totalCommentCount'] += int(video['commentCount'])
 
         if len(videosToScan) < numVideos:
-          print(f"\n{F.YELLOW}WARNING:{S.R} Only {len(videosToScan)} videos found.")
+          print(f"\n{F.YELLOW} WARNING:{S.R} Only {len(videosToScan)} videos found.")
         print("\nRecent Videos To Be Scanned:")
         for i in range(len(videosToScan)):
           if i == 10 and len(videosToScan) > 11:
@@ -3248,9 +3255,10 @@ def main():
           elif userNotChannelOwner == True and moderator_mode == True:
             print(f"{F.LIGHTRED_EX}NOTE: {F.YELLOW}Moderator Mode is enabled{F.LIGHTRED_EX}. You can hold comments for review when using certain modes{S.R}")
           print("\nTotal number of comments to scan: " + str(miscData['totalCommentCount']))
-          if miscData['totalCommentCount'] > 100000:
-            print(f"{B.YELLOW}{F.BLACK}WARNING: {S.R}You have chosen to scan a large amount of comments. The default API quota limit")
-            print(f"ends up around {F.YELLOW}10,000 comment deletions per day{S.R}. If you find more spam than that you will go over the limit.")
+          if miscData['totalCommentCount'] >= 100000:
+            print(f"\n{B.YELLOW}{F.BLACK} WARNING: {S.R} You have chosen to scan a large amount of comments. The default API quota limit ends up")
+            print(f" around {F.YELLOW}10,000 comment deletions per day{S.R}. If you find more spam than that you will go over the limit.")
+            print(f"        > Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
             if userNotChannelOwner == True or moderator_mode == True:
               print(f"{F.LIGHTCYAN_EX}> Note:{S.R} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")  
           confirm = choice("Is everything correct?", bypass=config['skip_confirm_video'])  
@@ -3271,9 +3279,10 @@ def main():
         else:
           maxScanNumber = int(input(f"Enter the maximum {F.YELLOW}number of comments{S.R} to scan: "))
 
-          if maxScanNumber > 100000:
-            print(f"{B.YELLOW}{F.BLACK}WARNING: {S.R}You have chosen to scan a large amount of comments. The default API quota limit")
-            print(f"ends up around {F.YELLOW}10,000 comment deletions per day{S.R}. If you find more spam than that you will go over the limit.")
+          if maxScanNumber >= 100000:
+            print(f"\n{B.YELLOW}{F.BLACK} WARNING: {S.R} You have chosen to scan a large amount of comments. The default API quota limit ends up")
+            print(f" around {F.YELLOW}10,000 comment deletions per day{S.R}. If you find more spam than that you will go over the limit.")
+            print(f"        > Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
             if userNotChannelOwner == True or moderator_mode == True:
               print(f"{F.LIGHTCYAN_EX}> Note:{S.R} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")
             if choice("Do you still want to continu?") == False:
