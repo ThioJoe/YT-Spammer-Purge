@@ -802,16 +802,16 @@ def delete_found_comments(commentsList, banChoice, deletionMode, recoveryMode=Fa
   print_progress(deletedCounter, total, recoveryMode)
 
   if total > 50:                                  # If more than 50 comments, break into chunks of 50
-      remainder = total % 50                      # Gets how many left over after dividing into chunks of 50
-      numDivisions = int((total-remainder)/50)    # Gets how many full chunks of 50 there are
-      for i in range(numDivisions):               # Loops through each full chunk of 50
-          setStatus(commentsList[i*50:i*50+50])
-          deletedCounter += 50
-          print_progress(deletedCounter, total, recoveryMode)
-      if remainder > 0:
-          setStatus(commentsList[numDivisions*50:total]) # Handles any leftover comments range after last full chunk
-          deletedCounter += remainder
-          print_progress(deletedCounter, total, recoveryMode)
+    remainder = total % 50                      # Gets how many left over after dividing into chunks of 50
+    numDivisions = int((total-remainder)/50)    # Gets how many full chunks of 50 there are
+    for i in range(numDivisions):               # Loops through each full chunk of 50
+      setStatus(commentsList[i*50:i*50+50])
+      deletedCounter += 50
+      print_progress(deletedCounter, total, recoveryMode)
+    if remainder > 0:
+      setStatus(commentsList[numDivisions*50:total]) # Handles any leftover comments range after last full chunk
+      deletedCounter += remainder
+      print_progress(deletedCounter, total, recoveryMode)
   else:
       setStatus(commentsList)
       print_progress(deletedCounter, total, recoveryMode)
@@ -1090,32 +1090,53 @@ def convert_comment_id_to_video_id(comment_id):
   video_id = vidIdDict[comment_id]
   return video_id
 
-################################# Get Most Recent 5 Videos #####################################
-# Returns a list of lists: [Video ID, Video Title]
-def get_recent_videos(channel_id, numVideos):
-  result = youtube.search().list(
-    part="snippet",
-    channelId=channel_id,
-    type='video',
-    order='date',
-    fields='items/id/videoId,items/snippet/title',
-    maxResults=numVideos,
-    ).execute()
+################################# Get Most Recent Videos #####################################
+# Returns a list of lists
+def get_recent_videos(channel_id, numVideosTotal):
+  def get_block_of_videos(nextPageToken, j, numVideosBlock=5):
+    result = youtube.search().list(
+      part="snippet",
+      channelId=channel_id,
+      type='video',
+      order='date',
+      pageToken=nextPageToken,
+      fields='nextPageToken,items/id/videoId,items/snippet/title',
+      maxResults=numVideosBlock,
+      ).execute()
 
+    for item in result['items']:
+      recentVideos.append({})
+      videoID = str(item['id']['videoId'])
+      videoTitle = str(item['snippet']['title']).replace("&quot;", "\"").replace("&#39;", "'")
+      recentVideos[j]['videoID'] = videoID
+      recentVideos[j]['videoTitle'] = videoTitle
+      commentCount = validate_video_id(videoID)[3]
+      recentVideos[j]['commentCount'] = commentCount
+      j+=1
+
+    # Get token for next page
+    try:
+      nextPageToken = result['nextPageToken']
+    except KeyError:
+      nextPageToken = "End"
+    
+    return nextPageToken, j
+    #----------------------------------------------------------------
+  
+  nextPageToken = None
   recentVideos = [] #List of dictionaries
-  i=0
-  for item in result['items']:
-    recentVideos.append({})
-    videoID = str(item['id']['videoId'])
-    videoTitle = str(item['snippet']['title']).replace("&quot;", "\"")
-    recentVideos[i]['videoID'] = videoID
-    recentVideos[i]['videoTitle'] = videoTitle
-
-    commentCount = validate_video_id(videoID)[3]
-    recentVideos[i]['commentCount'] = commentCount
-
-    i+=1
-
+  i = 0
+  if numVideosTotal <=5:
+    get_block_of_videos(None, j=i, numVideosBlock=numVideosTotal)
+  else:
+    while nextPageToken != "End" and len(recentVideos) < numVideosTotal:
+      print("Retrieved " + str(len(recentVideos)) + "/" + str(numVideosTotal) + " videos.", end="\r")
+      remainingVideos = numVideosTotal - len(recentVideos)
+      if remainingVideos <= 5:
+        nextPageToken, i = get_block_of_videos(nextPageToken, j=i, numVideosBlock = remainingVideos)
+      else:
+        nextPageToken, i = get_block_of_videos(nextPageToken, j=i, numVideosBlock = 5)
+  print("                                          ")
   return recentVideos
 
 ##################################### PRINT STATS ##########################################
@@ -3103,7 +3124,8 @@ def main():
             if choice(f"You have entered many videos, do you need to see the rest (x{remainingCount})?") == False:
               break
           print(f" {i}. {video['videoTitle']}")
-
+        print("")
+        
         if currentUser[0] != videosToScan[0]['channelOwnerID']:
           userNotChannelOwner = True
 
@@ -3174,19 +3196,19 @@ def main():
           print("Invalid number entered in config file for recent_videos_amount")
           numVideos = None
       else:
-        print(f"\nEnter the {F.YELLOW}number most recent videos{S.R} to scan back-to-back (up to 5):")
-        numVideos = input("\nNumber of Recent Videos (1-5): ")
+        print(f"\nEnter the {F.YELLOW}number most recent videos{S.R} to scan back-to-back:")
+        numVideos = input("\nNumber of Recent Videos: ")
       try:
         numVideos = int(numVideos)
-        if numVideos > 0 and numVideos <= 5:
+        if numVideos > 0 and numVideos <= 500:
           validEntry = True
           validConfigSetting = True
         else:
-          print("Error: Entry must be from 1 to 5")
+          print("Error: Entry must be from 1 to 500 (the YouTube API Limit)")
           validEntry = False
           validConfigSetting = False
       except ValueError:
-        print(f"{F.LIGHTRED_EX}Error:{S.R} Entry must be a whole number, from 1 to 5.")
+        print(f"{F.LIGHTRED_EX}Error:{S.R} Entry must be a whole number greater than zero.")
 
       if validEntry == True:
         # Fetch recent videos and print titles to user for confirmation
@@ -3201,9 +3223,13 @@ def main():
           print(f"\n{F.YELLOW}WARNING:{S.R} Only {len(videosToScan)} videos found.")
         print("\nRecent Videos To Be Scanned:")
         for i in range(len(videosToScan)):
+          if i == 10 and len(videosToScan) > 11:
+            remainingCount = str(len(videosToScan) - 10)
+            if choice(f"There are {remainingCount} more recent videos, do you want to see the rest?") == False:
+              break          
           print(f"  {i+1}. {videosToScan[i]['videoTitle']}")
 
-        if config and (config['skip_confirm_video'] == True or validConfigSetting == True):
+        if config and (config['skip_confirm_video'] == True and validConfigSetting == True):
           confirm = True
         else:
           if userNotChannelOwner == True and moderator_mode == False:
@@ -3216,7 +3242,7 @@ def main():
             print(f"ends up around {F.YELLOW}10,000 comment deletions per day{S.R}. If you find more spam than that you will go over the limit.")
             if userNotChannelOwner == True or moderator_mode == True:
               print(f"{F.LIGHTCYAN_EX}> Note:{S.R} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")  
-          confirm = choice("Is everything correct?", bypass=validConfigSetting)  
+          confirm = choice("Is everything correct?", bypass=config['skip_confirm_video'])  
 
     miscData['channelOwnerID'] = channelID
     miscData['channelOwnerName'] = channelTitle
