@@ -327,7 +327,7 @@ def add_sample(authorID, authorNameRaw, commentText):
 ##########################################################################################
 
 # Call the API's commentThreads.list method to list the existing comments.
-def get_comments(youtube, currentUser, filtersDict, miscData, config, scanVideoID=None, check_channel_id=None, nextPageToken=None, videosToScan=None):  # None are set as default if no parameters passed into function
+def get_comments(youtube, currentUser, filtersDict, miscData, config, scanVideoID=None, nextPageToken=None, videosToScan=None):  # None are set as default if no parameters passed into function
   global scannedCommentsCount
   # Initialize some variables
   authorChannelName = None
@@ -351,7 +351,7 @@ def get_comments(youtube, currentUser, filtersDict, miscData, config, scanVideoI
   elif scanVideoID is None:
     results = youtube.commentThreads().list(
       part="snippet, replies",
-      allThreadsRelatedToChannelId=check_channel_id,
+      allThreadsRelatedToChannelId=currentUser[0],
       maxResults=100,
       pageToken=nextPageToken,
       fields=fieldsToFetch,
@@ -2987,7 +2987,6 @@ def main():
     currentUser = get_current_user(config) # Returns [channelID, channelTitle]
     print("\n    >  Currently logged in user: " + f"{F.LIGHTGREEN_EX}" + str(currentUser[1]) + f"{S.R} (Channel ID: {F.LIGHTGREEN_EX}" + str(currentUser[0]) + f"{S.R} )")
     if choice("       Continue as this user?", currentUser[2]) == True:
-      check_channel_id = currentUser[0]
       confirmedCorrectLogin = True
       os.system(clear_command)
     else:
@@ -3517,8 +3516,8 @@ def main():
                     'CustomRegexPattern': regexPattern 
                     }
 
-    def scan_video(youtube, miscData, config, currentUser, filtersDict, videoID, check_channel_id, videosToScan=None, videoTitle=None, showTitle=False, i=1):
-      nextPageToken = get_comments(youtube, currentUser, filtersDict, miscData, config, videoID, check_channel_id, videosToScan=videosToScan)
+    def scan_video(youtube, miscData, config, currentUser, filtersDict, videoID, videosToScan=None, videoTitle=None, showTitle=False, i=1):
+      nextPageToken = get_comments(youtube, currentUser, filtersDict, miscData, config, videoID, videosToScan=videosToScan)
       if showTitle == True and len(videosToScan) > 0:
         # Prints video title, progress count, adds enough spaces to cover up previous stat print line
         offset = 95 - len(videoTitle)
@@ -3531,16 +3530,16 @@ def main():
       print_count_stats(miscData, videosToScan, final=False)  # Prints comment scan stats, updates on same line
       # After getting first page, if there are more pages, goes to get comments for next page
       while nextPageToken != "End" and scannedCommentsCount < maxScanNumber:
-        nextPageToken = get_comments(youtube, currentUser, filtersDict, miscData, config, videoID, check_channel_id, nextPageToken, videosToScan=videosToScan)
+        nextPageToken = get_comments(youtube, currentUser, filtersDict, miscData, config, videoID, nextPageToken, videosToScan=videosToScan)
 
     if scanMode == "entireChannel":
-      scan_video(youtube, miscData, config, currentUser, filtersDict, scanVideoID, check_channel_id)
+      scan_video(youtube, miscData, config, currentUser, filtersDict, scanVideoID)
     elif scanMode == "recentVideos" or scanMode == "chosenVideos":
       i = 1
       for video in videosToScan:
         videoID = str(video['videoID'])
         videoTitle = str(video['videoTitle'])
-        scan_video(youtube, miscData, config, currentUser, filtersDict, videoID, check_channel_id, videosToScan=videosToScan, videoTitle=videoTitle, showTitle=True, i=i)
+        scan_video(youtube, miscData, config, currentUser, filtersDict, videoID, videosToScan=videosToScan, videoTitle=videoTitle, showTitle=True, i=i)
         i += 1
     print_count_stats(miscData, videosToScan, final=True)  # Prints comment scan stats, finalizes
   
