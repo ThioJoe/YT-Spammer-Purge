@@ -167,11 +167,11 @@ def print_comments(current, scanVideoID, comments, loggingEnabled, scanMode, log
     remainder = len(comments) % groupSize
     numDivisions = int((len(comments)-remainder)/groupSize)
     for i in range(numDivisions):
-      j = print_prepared_comments(scanVideoID,comments[i*groupSize:i*groupSize+groupSize], j, loggingEnabled, scanMode, logMode)
+      j = print_prepared_comments(current, scanVideoID,comments[i*groupSize:i*groupSize+groupSize], j, loggingEnabled, scanMode, logMode)
     if remainder > 0:
-      j = print_prepared_comments(scanVideoID,comments[numDivisions*groupSize:len(comments)],j, loggingEnabled, scanMode, logMode)
+      j = print_prepared_comments(current, scanVideoID,comments[numDivisions*groupSize:len(comments)],j, loggingEnabled, scanMode, logMode)
   else:
-    j = print_prepared_comments(scanVideoID,comments, j, loggingEnabled, scanMode, logMode)
+    j = print_prepared_comments(current, scanVideoID,comments, j, loggingEnabled, scanMode, logMode)
 
   # Print Sample Match List
   valuesPreparedToWrite = ""
@@ -197,7 +197,7 @@ def print_comments(current, scanVideoID, comments, loggingEnabled, scanMode, log
   return None
 
 # Uses comments.list YouTube API Request to get text and author of specific set of comments, based on comment ID
-def print_prepared_comments(current, youtube, scanVideoID, comments, j, loggingEnabled, scanMode, logMode):
+def print_prepared_comments(current, scanVideoID, comments, j, loggingEnabled, scanMode, logMode):
 
   # Prints author and comment text for each comment
   i = 0 # Index when going through comments
@@ -221,7 +221,7 @@ def print_prepared_comments(current, youtube, scanVideoID, comments, j, loggingE
 
     # Add one sample from each matching author to current.matchSamplesDict, containing author ID, name, and text
     if author_id_local not in current.matchSamplesDict.keys():
-      add_sample(author_id_local, author, text)
+      add_sample(current, author_id_local, author, text)
 
     # Build comment direct link
     if scanMode == "communityPost":
@@ -233,7 +233,7 @@ def print_prepared_comments(current, youtube, scanVideoID, comments, j, loggingE
     print(str(j+1) + f". {F.LIGHTCYAN_EX}" + author + f"{S.R}:  {F.YELLOW}" + text + f"{S.R}")
     print("—————————————————————————————————————————————————————————————————————————————————————————————")
     if scanVideoID is None:  # Only print video title if searching entire channel
-      title = get_video_title(youtube, videoID) # Get Video Title
+      title = get_video_title(current, videoID) # Get Video Title
       print("     > Video: " + title)
     print("     > Direct Link: " + directLink)
     print(f"     > Author Channel ID: {F.LIGHTBLUE_EX}" + author_id_local + f"{S.R}")
@@ -328,7 +328,7 @@ def add_sample(current, authorID, authorNameRaw, commentText):
 ##########################################################################################
 
 # Call the API's commentThreads.list method to list the existing comments.
-def get_comments(current, youtube, currentUser, filtersDict, miscData, config, scanVideoID=None, nextPageToken=None, videosToScan=None):  # None are set as default if no parameters passed into function
+def get_comments(current, currentUser, filtersDict, miscData, config, scanVideoID=None, nextPageToken=None, videosToScan=None):  # None are set as default if no parameters passed into function
   # global current.scannedCommentsCount
   # Initialize some variables
   authorChannelName = None
@@ -399,15 +399,15 @@ def get_comments(current, youtube, currentUser, filtersDict, miscData, config, s
       'commentText':commentText,
       'commentID':parent_id,
       }
-    check_against_filter(currentUser, filtersDict, miscData, config, currentCommentDict, videoID)
+    check_against_filter(current, currentUser, filtersDict, miscData, config, currentCommentDict, videoID)
     current.scannedCommentsCount += 1  # Counts number of comments scanned, add to global count
     
     if numReplies > 0 and len(limitedRepliesList) < numReplies:
-      get_replies(youtube, currentUser, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan)
+      get_replies(current, currentUser, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan)
     elif numReplies > 0 and len(limitedRepliesList) == numReplies: # limitedRepliesList can never be more than numReplies
-      get_replies(youtube, currentUser, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, repliesList=limitedRepliesList)
+      get_replies(current, currentUser, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, repliesList=limitedRepliesList)
     else:
-      print_count_stats(miscData, videosToScan, final=False)  # Updates displayed stats if no replies
+      print_count_stats(current, miscData, videosToScan, final=False)  # Updates displayed stats if no replies
 
   return RetrievedNextPageToken
 
@@ -417,7 +417,7 @@ def get_comments(current, youtube, currentUser, filtersDict, miscData, config, s
 ##########################################################################################
 
 # Call the API's comments.list method to list the existing comment replies.
-def get_replies(current, youtube, currentUser, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, repliesList=None):
+def get_replies(current, currentUser, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, repliesList=None):
   # global current.scannedRepliesCount
 
   # Initialize some variables
@@ -474,11 +474,11 @@ def get_replies(current, youtube, currentUser, filtersDict, miscData, config, pa
       'commentText':commentText,
       'commentID':replyID,
       }
-    check_against_filter(currentUser, filtersDict, miscData, config, currentCommentDict, videoID, allThreadAuthorNames=allThreadAuthorNames)
+    check_against_filter(current, currentUser, filtersDict, miscData, config, currentCommentDict, videoID, allThreadAuthorNames=allThreadAuthorNames)
 
     # Update latest stats
     current.scannedRepliesCount += 1  # Count number of replies scanned, add to global count
-    print_count_stats(miscData, videosToScan, final=False) # Prints out current count stats
+    print_count_stats(current, miscData, videosToScan, final=False) # Prints out current count stats
 
   return True
 
@@ -536,7 +536,7 @@ def check_against_filter(current, currentUser, filtersDict, miscData, config, cu
       if config and config['json_log'] == True and config['json_extra_data'] == True:
         current.matchedCommentsDict[commentID]['uploaderChannelID'] = miscData['channelOwnerID']
         current.matchedCommentsDict[commentID]['uploaderChannelName'] = miscData['channelOwnerName']
-        current.matchedCommentsDict[commentID]['videoTitle'] = get_video_title(videoID)
+        current.matchedCommentsDict[commentID]['videoTitle'] = get_video_title(current, videoID)
         
       if debugSingleComment == True: 
         input("--- Yes, Matched -----")
@@ -782,7 +782,7 @@ def check_against_filter(current, currentUser, filtersDict, miscData, config, cu
 ########################################################################################## 
 
 # Takes in list of comment IDs to delete, breaks them into 50-comment chunks, and deletes them in groups
-def delete_found_comments(youtube, commentsList, banChoice, deletionMode, recoveryMode=False):
+def delete_found_comments(commentsList, banChoice, deletionMode, recoveryMode=False):
   print("\n")
   if deletionMode == "rejected":
     actionPresent = "Deleting"
@@ -848,7 +848,7 @@ class CommentFoundError(Exception):
     pass
 
 # Takes in list of comment IDs and video IDs, and checks if comments still exist individually
-def check_deleted_comments(youtube, checkDict):
+def check_deleted_comments(checkDict):
     i = 0 # Count number of remaining comments
     j = 1 # Count number of checked
     total = len(checkDict)
@@ -906,7 +906,7 @@ def check_deleted_comments(youtube, checkDict):
 class CommentNotFoundError(Exception):
   pass
 
-def check_recovered_comments(youtube, commentsList):
+def check_recovered_comments(commentsList):
   i = 0 # Count number of remaining comments
   j = 1 # Count number of checked
   total = len(commentsList)
@@ -1013,7 +1013,7 @@ def exclude_authors(current, inputtedString, miscData):
 
 ################################### GET VIDEO TITLE ###############################################
 # Check if video title is in dictionary, if not get video title from video ID using YouTube API request, then return title
-def get_video_title(current, youtube, video_id):
+def get_video_title(current, video_id):
   # global current.vidTitleDict
 
   if video_id in current.vidTitleDict.keys():
@@ -1065,7 +1065,7 @@ def get_current_user(config):
 
   try:
     channelID = results["items"][0]["id"]
-    IDCheck = validate_channel_id(youtube, channelID)
+    IDCheck = validate_channel_id(channelID)
     if IDCheck[0] == False:
       raise ChannelIDError
     try:
@@ -1092,7 +1092,7 @@ def get_current_user(config):
     configMatch = None
   elif config and config['your_channel_id'] == "ask":
     configMatch = None
-  elif validate_channel_id(youtube, config['your_channel_id'])[0] == True:
+  elif validate_channel_id(config['your_channel_id'])[0] == True:
     if config['your_channel_id'] == channelID:
       configMatch = True
     else:
@@ -1106,15 +1106,9 @@ def get_current_user(config):
 
   return channelID, channelTitle, configMatch
 
-################################# VIDEO ID LOOKUP ##############################################
-# Using comment ID, get corresponding video ID from dictionary variable
-def convert_comment_id_to_video_id(current, comment_id):
-  video_id = current.vidIdDict[comment_id]
-  return video_id
-
 ################################# Get Most Recent Videos #####################################
 # Returns a list of lists
-def get_recent_videos(youtube, channel_id, numVideosTotal):
+def get_recent_videos(channel_id, numVideosTotal):
   def get_block_of_videos(nextPageToken, j, numVideosBlock=5):
     result = YOUTUBE.search().list(
       part="snippet",
@@ -1132,7 +1126,7 @@ def get_recent_videos(youtube, channel_id, numVideosTotal):
       videoTitle = str(item['snippet']['title']).replace("&quot;", "\"").replace("&#39;", "'")
       recentVideos[j]['videoID'] = videoID
       recentVideos[j]['videoTitle'] = videoTitle
-      commentCount = validate_video_id(youtube, videoID)[3]
+      commentCount = validate_video_id(videoID)[3]
       recentVideos[j]['commentCount'] = commentCount
       j+=1
 
@@ -1187,7 +1181,7 @@ def print_count_stats(current, miscData, videosToScan, final):
 
 ##################################### VALIDATE VIDEO ID #####################################
 # Regex matches putting video id into a match group. Then queries youtube API to verify it exists - If so returns true and isolated video ID
-def validate_video_id(youtube, video_url_or_id, silent=False):
+def validate_video_id(video_url_or_id, silent=False):
     youtube_video_link_regex = r"^\s*(?P<video_url>(?:(?:https?:)?\/\/)?(?:(?:www|m)\.)?(?:youtube\.com|youtu.be)(?:\/(?:[\w\-]+\?v=|embed\/|v\/)?))?(?P<video_id>[\w\-]{11})(?:(?(video_url)\S+|$))?\s*$"
     match = re.match(youtube_video_link_regex, video_url_or_id)
     if match == None:
@@ -1234,7 +1228,7 @@ def validate_video_id(youtube, video_url_or_id, silent=False):
     
 
 ############################### VALIDATE COMMUNITY POST ID #################################
-def validate_post_id(youtube, post_url):
+def validate_post_id(post_url):
   if "/post/" in post_url:
     startIndex = post_url.rindex("/") + 1
     endIndex = len(post_url)
@@ -1254,7 +1248,7 @@ def validate_post_id(youtube, post_url):
     if isolatedPostID[0:2] == "Ug":
       validatedPostUrl = "https://www.youtube.com/post/" + isolatedPostID
       postOwnerURL = get_post_channel_url(isolatedPostID)
-      valid, postOwnerID, postOwnerUsername = validate_channel_id(youtube, postOwnerURL)
+      valid, postOwnerID, postOwnerUsername = validate_channel_id(postOwnerURL)
 
       return valid, isolatedPostID, validatedPostUrl, postOwnerID, postOwnerUsername
 
@@ -1264,13 +1258,13 @@ def validate_post_id(youtube, post_url):
 
 ##################################### VALIDATE CHANNEL ID ##################################
 # Checks if channel ID / Channel Link is correct length and in correct format - If so returns true and isolated channel ID
-def validate_channel_id(youtube, inputted_channel):
+def validate_channel_id(inputted_channel):
   isolatedChannelID = "Invalid" # Default value
   inputted_channel = inputted_channel.strip()
   notChannelList = ['?v', 'v=', '/embed/', '/vi/', '?feature=', '/v/', '/e/']
 
   # Check if link is actually a video link / ID
-  isVideo = validate_video_id(youtube, inputted_channel, silent=True)
+  isVideo = validate_video_id(inputted_channel, silent=True)
   if isVideo[0] == True:
     print(f"\n{F.BLACK}{B.LIGHTRED_EX} Invalid Channel ID / Link! {S.R} Looks like you entered a Video ID / Link by mistake.")
     return False, None, None
@@ -1364,7 +1358,7 @@ def choice(message="", bypass=False):
 ############################ Process Input Spammer IDs ###############################
 # Takes single or list of spammer IDs, splits and sanitizes each, converts to list of channel IDs
 # Returns list of channel IDs
-def process_spammer_ids(youtube, rawString):
+def process_spammer_ids(rawString):
   inputList = [] # For list of unvalidated inputted items
   IDList = [] # For list of validated channel IDs, converted from inputList of spammer IDs - Separate to allow printing original invalid input if necessary
   inputList = rawString.split(",") # Split spammer IDs / Links by commas
@@ -1377,7 +1371,7 @@ def process_spammer_ids(youtube, rawString):
 
   # Validate each ID in list
   for i in range(len(inputList)):
-    valid, IDList[i], channelTitle = validate_channel_id(youtube, inputList[i])
+    valid, IDList[i], channelTitle = validate_channel_id(inputList[i])
     if valid == False:
       print(f"{B.RED}{F.BLACK}Invalid{S.R} Channel ID or Link: " + str(inputList[i]) + "\n")
       return False, None
@@ -1386,7 +1380,7 @@ def process_spammer_ids(youtube, rawString):
 
 ############################ Get Extra JSON Data and Profile Pictures ###############################
 
-def get_extra_json_data(youtube, channelIDs, jsonSettingsDict):
+def get_extra_json_data(channelIDs, jsonSettingsDict):
   channelOwnerID = jsonSettingsDict['channelOwnerID']
   channelOwnerName = jsonSettingsDict['channelOwnerName']
   getPicsBool = False
@@ -2215,7 +2209,7 @@ def load_config_file(forceDefault = False):
   return configDict
 
 ################################ RECOVERY MODE ###########################################
-def recover_deleted_comments(youtube):
+def recover_deleted_comments():
   print(f"\n\n-------------------- {F.LIGHTGREEN_EX}Comment Recovery Mode{S.R} --------------------\n")
   print("Believe it or not, the YouTube API actually allows you to re-instate \"deleted\" comments.")
   print(f"This is {F.YELLOW}only possible if you have stored the comment IDs{S.R} of the deleted comments, such as {F.YELLOW}having kept the log file{S.R} of that session.")
@@ -2303,8 +2297,8 @@ def recover_deleted_comments(youtube):
     input("Press Enter to try recovering anyway...\n")
   print("\n")
 
-  delete_found_comments(youtube, commentsList=result, banChoice=False, deletionMode="published", recoveryMode=True)
-  check_recovered_comments(youtube, commentsList=result)
+  delete_found_comments(commentsList=result, banChoice=False, deletionMode="published", recoveryMode=True)
+  check_recovered_comments(commentsList=result)
 
 
 ##########################################################################################
@@ -2468,7 +2462,7 @@ def prepare_filter_mode_regex(currentUser, scanMode, filterMode, config):
 
 # Filter Mode: User manually enters ID
 # Returns inputtedSpammerChannelID
-def prepare_filter_mode_ID(youtube, currentUser, scanMode, config):
+def prepare_filter_mode_ID(currentUser, scanMode, config):
   currentUserID = currentUser[0]
   processResult = (False, None) #Tuple, first element is status of validity of channel ID, second element is channel ID
   validConfigSetting = True
@@ -2480,7 +2474,7 @@ def prepare_filter_mode_ID(youtube, currentUser, scanMode, config):
       bypass = False
       inputtedSpammerChannelID = input(f"Enter the {F.LIGHTRED_EX} Channel link(s) or ID(s){S.R} of the spammer (comma separated): ")
 
-    processResult = process_spammer_ids(youtube, inputtedSpammerChannelID)
+    processResult = process_spammer_ids(inputtedSpammerChannelID)
     if processResult[0] == True:
       inputtedSpammerChannelID = processResult[1] # After processing, if valid, inputtedSpammerChannelID is a list of channel IDs
     else:
@@ -2764,7 +2758,6 @@ def main():
 
   # Declare Global Variables
   global YOUTUBE
-  # global youtube
   # global current.matchedCommentsDict
   # global current.vidIdDict
   # global current.vidTitleDict
@@ -3145,7 +3138,7 @@ def main():
           for i in range(len(enteredVideosList)):
             videoListResult.append([])
             videosToScan.append({})
-            videoListResult[i] = validate_video_id(youtube, enteredVideosList[i]) # Sends link or video ID for isolation and validation
+            videoListResult[i] = validate_video_id(enteredVideosList[i]) # Sends link or video ID for isolation and validation
             if videoListResult[i][0] == False:
               validVideoIDs = False
               confirm = False
@@ -3231,7 +3224,7 @@ def main():
             validChannel = True
             break
           else:
-            validChannel, channelID, channelTitle = validate_channel_id(youtube, config['channel_to_scan'])
+            validChannel, channelID, channelTitle = validate_channel_id(config['channel_to_scan'])
             if validChannel == True:
               break
             else:
@@ -3245,7 +3238,7 @@ def main():
           channelTitle = currentUser[1]
           validChannel = True
         else:
-          validChannel, channelID, channelTitle = validate_channel_id(youtube, inputtedChannel)
+          validChannel, channelID, channelTitle = validate_channel_id(inputtedChannel)
 
       if currentUser[0] != channelID:
         userNotChannelOwner = True
@@ -3286,7 +3279,7 @@ def main():
 
         if validEntry == True:
           # Fetch recent videos and print titles to user for confirmation
-          videosToScan = get_recent_videos(youtube, channelID, numVideos)
+          videosToScan = get_recent_videos(channelID, numVideos)
 
           # Get total comment count
           miscData['totalCommentCount'] = 0
@@ -3364,7 +3357,7 @@ def main():
       while confirm == False:
         communityPostInput = input("\nEnter the ID or link of the community post: ")
         # Validate post ID or link, get additional info about owner, and useable link
-        isValid, communityPostID, postURL, postOwnerID, postOwnerUsername = validate_post_id(youtube, communityPostInput)
+        isValid, communityPostID, postURL, postOwnerID, postOwnerUsername = validate_post_id(communityPostInput)
         if isValid == True:
           print("\nCommunity Post By: " + postOwnerUsername)
           if postOwnerID != currentUser[0]:
@@ -3413,7 +3406,7 @@ def main():
 
     # Recove deleted comments mode
     elif scanMode == "recoverMode":
-      recover_deleted_comments(youtube)
+      recover_deleted_comments()
 
     # User inputs filtering mode
     print("\n-------------------------------------------------------")
@@ -3516,7 +3509,7 @@ def main():
     regexPattern = ""
 
     if filterMode == "ID":
-      filterSettings = prepare_filter_mode_ID(youtube, currentUser, scanMode, config)
+      filterSettings = prepare_filter_mode_ID(currentUser, scanMode, config)
       inputtedSpammerChannelID = filterSettings[0]
 
     elif filterMode == "AutoASCII":
@@ -3562,7 +3555,7 @@ def main():
             'commentText':value['commentText'],
             'commentID':key,
             }
-          check_against_filter(currentUser, filtersDict, miscData, config, currentCommentDict, videoID=communityPostID)
+          check_against_filter(current, currentUser, filtersDict, miscData, config, currentCommentDict, videoID=communityPostID)
       scan_community_post(communityPostID, maxScanNumber)
 
     else:
@@ -3580,8 +3573,8 @@ def main():
                       }
       
       # ----------------------------------------------------------------------------------------------------------------------
-      def scan_video(youtube, miscData, config, currentUser, filtersDict, scanVideoID, videosToScan=None, videoTitle=None, showTitle=False, i=1):
-        nextPageToken = get_comments(youtube, currentUser, filtersDict, miscData, config, scanVideoID, videosToScan=videosToScan)
+      def scan_video(miscData, config, currentUser, filtersDict, scanVideoID, videosToScan=None, videoTitle=None, showTitle=False, i=1):
+        nextPageToken = get_comments(current, currentUser, filtersDict, miscData, config, scanVideoID, videosToScan=videosToScan)
         if showTitle == True and len(videosToScan) > 0:
           # Prints video title, progress count, adds enough spaces to cover up previous stat print line
           offset = 95 - len(videoTitle)
@@ -3591,22 +3584,22 @@ def main():
             spacesStr = ""
           print(f"Scanning {i}/{len(videosToScan)}: " + videoTitle + spacesStr + "\n")
 
-        print_count_stats(miscData, videosToScan, final=False)  # Prints comment scan stats, updates on same line
+        print_count_stats(current, miscData, videosToScan, final=False)  # Prints comment scan stats, updates on same line
         # After getting first page, if there are more pages, goes to get comments for next page
         while nextPageToken != "End" and current.scannedCommentsCount < maxScanNumber:
-          nextPageToken = get_comments(youtube, currentUser, filtersDict, miscData, config, scanVideoID, nextPageToken, videosToScan=videosToScan)
+          nextPageToken = get_comments(current, currentUser, filtersDict, miscData, config, scanVideoID, nextPageToken, videosToScan=videosToScan)
       # ----------------------------------------------------------------------------------------------------------------------
 
       if scanMode == "entireChannel":
-        scan_video(youtube, miscData, config, currentUser, filtersDict, scanVideoID)
+        scan_video(miscData, config, currentUser, filtersDict, scanVideoID)
       elif scanMode == "recentVideos" or scanMode == "chosenVideos":
         i = 1
         for video in videosToScan:
           scanVideoID = str(video['videoID'])
           videoTitle = str(video['videoTitle'])
-          scan_video(youtube, miscData, config, currentUser, filtersDict, scanVideoID, videosToScan=videosToScan, videoTitle=videoTitle, showTitle=True, i=i)
+          scan_video(miscData, config, currentUser, filtersDict, scanVideoID, videosToScan=videosToScan, videoTitle=videoTitle, showTitle=True, i=i)
           i += 1
-      print_count_stats(miscData, videosToScan, final=True)  # Prints comment scan stats, finalizes
+      print_count_stats(current, miscData, videosToScan, final=True)  # Prints comment scan stats, finalizes
     
   ##########################################################
     bypass = False
@@ -3772,12 +3765,12 @@ def main():
       scanVideoID = communityPostID
     print("\n\nAll Matched Comments: \n")
 
-    print_comments(scanVideoID, list(current.matchedCommentsDict.keys()), loggingEnabled, scanMode, logMode, jsonSettingsDict)
+    print_comments(current, scanVideoID, list(current.matchedCommentsDict.keys()), loggingEnabled, scanMode, logMode, jsonSettingsDict)
 
     try:
       if jsonSettingsDict['jsonLogging']:
         if config['json_extra_data'] == True:
-          jsonDataDict = get_extra_json_data(youtube, list(current.matchSamplesDict.keys()), jsonSettingsDict)
+          jsonDataDict = get_extra_json_data(list(current.matchSamplesDict.keys()), jsonSettingsDict)
           jsonDataDict['Comments'] = current.matchedCommentsDict
           write_json_log(jsonSettingsDict, jsonDataDict, firstWrite=True)
         else:
@@ -3925,7 +3918,7 @@ def main():
           deletionEnabled = True
           deletionMode = "reportSpam" 
         elif "exclude" in confirmDelete.lower():
-          excludedDict, rtfExclude, plaintextExclude = exclude_authors(inputtedString=confirmDelete, miscData=miscData)
+          excludedDict, rtfExclude, plaintextExclude = exclude_authors(current, inputtedString=confirmDelete, miscData=miscData)
           exclude = True
         else:
           input(f"\nDeletion {F.YELLOW}CANCELLED{S.R} (Because no matching option entered). Press Enter to exit...")
@@ -3961,10 +3954,10 @@ def main():
         pass
       
       ### ---------------- Reporting / Deletion Begins  ----------------
-      delete_found_comments(youtube, list(current.matchedCommentsDict), banChoice, deletionMode)
+      delete_found_comments(list(current.matchedCommentsDict), banChoice, deletionMode)
       if deletionMode != "reportSpam":
         if not config or config and config['check_deletion_success'] == True:
-          check_deleted_comments(youtube, current.matchedCommentsDict)
+          check_deleted_comments(current.matchedCommentsDict)
         elif config and config['check_deletion_success'] == False:
           print("\nSkipped checking if deletion was successful.\n")
 
