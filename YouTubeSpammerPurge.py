@@ -1724,11 +1724,11 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
           mainFileName = "YouTubeSpammerPurge.py"
 
           # Fetch the latest update
-          print(f"Downloading version: {latestVersion}")
+          print(f"\nDownloading version: {latestVersion}")
           response = os.system(f"curl https://codeload.github.com/ThioJoe/YT-Spammer-Purge/tar.gz/refs/tags/v{latestVersion} -o {tarFileName}")
           if(response != 0):
-            print("Error: Somthing went wrong with downloading the updated version!")
-            input("Press Enter to Exit...")
+            print(f"\n> {F.RED} Error:{S.R} Something went wrong with downloading the updated version! Please try later. \nIf this keeps happening consider creating a bug report.")
+            input("\nPress Enter to Exit...")
             sys.exit()
           # Extract the tar file and delete it
           with tarfile.open(tarFileName) as file:
