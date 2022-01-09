@@ -3557,7 +3557,7 @@ def main():
   # Counts number of found spam comments and prints list
   spam_count = len(matchedCommentsDict)
   if spam_count == 0: # If no spam comments found, exits
-    print(f"{B.RED}{F.BLACK}No matched comments or users found!{S.R}\n")
+    print(f"{B.RED}{F.BLACK} No matched comments or users found! {F.R}{B.R}{S.R}\n")
     print(f"If you see missed spam or false positives, you can submit a filter suggestion here: {F.YELLOW}TJoe.io/filter-feedback{S.R}")
     if bypass == False:
       input("\nPress Enter to exit...")
