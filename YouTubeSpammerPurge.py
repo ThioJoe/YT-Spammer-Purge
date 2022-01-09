@@ -62,7 +62,6 @@ import unicodedata
 import hashlib
 from itertools import islice
 import zipfile
-import shutil
 import tarfile
 from shutil import rmtree
 from shutil import move
