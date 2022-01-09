@@ -1,9 +1,7 @@
 #!/bin/bash
 
-if [[ -e /etc/debian_version ]] || [[ -e /etc/fedora-release ]] || [[ -e  /etc/centos-release ]] || [[ -e /etc/arch-release ]]; then
-	echo "Looks like you aren't running this installer on a Debian, Ubuntu, Fedora, CentOS, or Arch Linux system."
-	exit 1
-fi
+[[ -e /etc/debian_version ]] || [[ -e /etc/fedora-release ]] || [[ -e  /etc/centos-release ]] || [[ -e /etc/arch-release ]] \
+       	|| echo "Looks like you aren't running this installer on a Debian, Ubuntu, Fedora, CentOS, or Arch Linux system."; exit 1
 
 
 command -v jq >/dev/null 2>&1 || { JQ=0; }
