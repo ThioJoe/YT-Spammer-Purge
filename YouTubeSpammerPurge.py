@@ -1735,15 +1735,29 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
           os.remove(tarFileName)
 
           # Rename this file
-          os.rename(scriptName, scriptName + ".old")
-          # List the contents of the folder
+          try:
+            os.rename(f"{scriptName}", f"{scriptName}-{currentVersion}.old")
+          except:
+            print(f"\n> {F.RED} Error:{S.R}There is already a file by the name '{scriptName}-{currentVersion}.old' already!")
+            print(f"{F.R}Aborting Update!{S.R}")
+            print("Cleaning up...")
+            rmtree(stagingFolder)
+
+
+          # Retrieve the name of the folder containing the main file, we are assuming there will always be only one folder here
           contents = os.listdir(f"./{stagingFolder}")
-          # Assuming there is one folder
-          content = contents[0]
+          # If there happens to be more then one folder
+          if(len(contents) > 1):
+            print(f"\n> {F.RED} Error:{S.R} more then one folder in {stagingFolder}! Please make a bug report.")
+            print(f"{F.RED}Aborting Update!{S.R}")
+            print("Cleaning up...")
+            rmtree(stagingFolder)
+            input("Press Enter to Exit...")
+            sys.exit()
           # Move updated version to old versions place
-          move(f"{cwd}/{stagingFolder}/{content}/{mainFileName}", f"{cwd}/{scriptName}")
+          move(f"{cwd}/{stagingFolder}/{contents[0]}/{mainFileName}", f"{cwd}/{scriptName}")
           rmtree(stagingFolder)
-          print("> App Updated Successfully")
+          print(f"> {F.GREEN}App Updated Successfully{S.R}")
           input("Press Enter to Exit...")
           sys.exit()
 
