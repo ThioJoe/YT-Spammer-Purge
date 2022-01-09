@@ -1879,8 +1879,9 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
             print(f"{F.R}Aborting Update!{S.R}")
             print("Cleaning up...")
             rmtree(stagingFolder)
-
-
+            input("Press Enter to Exit...")
+            sys.exit()
+            
           # Retrieve the name of the folder containing the main file, we are assuming there will always be only one folder here
           contents = os.listdir(f"./{stagingFolder}")
           # If there happens to be more then one folder
