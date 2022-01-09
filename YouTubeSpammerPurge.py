@@ -299,8 +299,6 @@ def print_prepared_comments(current, scanVideoID, comments, j, loggingEnabled, s
 
 # Adds a sample to current.matchSamplesDict and preps formatting
 def add_sample(current, authorID, authorNameRaw, commentText):
-  # global current.matchSamplesDict
-  # global current.authorMatchCountDict
 
   # Make index number and string formatted version
   index = len(current.matchSamplesDict) + 1
@@ -329,7 +327,6 @@ def add_sample(current, authorID, authorNameRaw, commentText):
 
 # Call the API's commentThreads.list method to list the existing comments.
 def get_comments(current, currentUser, filtersDict, miscData, config, scanVideoID=None, nextPageToken=None, videosToScan=None):  # None are set as default if no parameters passed into function
-  # global current.scannedCommentsCount
   # Initialize some variables
   authorChannelName = None
   commentText = None
@@ -400,7 +397,7 @@ def get_comments(current, currentUser, filtersDict, miscData, config, scanVideoI
       'commentID':parent_id,
       }
     check_against_filter(current, currentUser, filtersDict, miscData, config, currentCommentDict, videoID)
-    current.scannedCommentsCount += 1  # Counts number of comments scanned, add to global count
+    current.scannedCommentsCount += 1
     
     if numReplies > 0 and len(limitedRepliesList) < numReplies:
       get_replies(current, currentUser, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan)
@@ -418,8 +415,6 @@ def get_comments(current, currentUser, filtersDict, miscData, config, scanVideoI
 
 # Call the API's comments.list method to list the existing comment replies.
 def get_replies(current, currentUser, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, repliesList=None):
-  # global current.scannedRepliesCount
-
   # Initialize some variables
   authorChannelName = None
   commentText = None
@@ -485,9 +480,6 @@ def get_replies(current, currentUser, filtersDict, miscData, config, parent_id, 
 ############################## CHECK AGAINST FILTER ######################################
 # The basic logic that actually checks each comment against filter criteria
 def check_against_filter(current, currentUser, filtersDict, miscData, config, currentCommentDict, videoID, allThreadAuthorNames=None):
-  # global current.vidIdDict
-  # global current.matchedCommentsDict
-
   # Retrieve Data from currentCommentDict
   commentID = currentCommentDict['commentID']
   authorChannelName = currentCommentDict['authorChannelName']
@@ -525,8 +517,6 @@ def check_against_filter(current, currentUser, filtersDict, miscData, config, cu
     # Also add key-value pair of comment ID and video ID to dictionary
     # Also count how many spam comments for each author
     def add_spam(commentID, videoID):
-      # global current.matchedCommentsDict
-      # global current.authorMatchCountDict
       current.matchedCommentsDict[commentID] = {'text':commentText, 'textUnsanitized':commentTextRaw, 'authorName':authorChannelName, 'authorID':authorChannelID, 'videoID':videoID}
       current.vidIdDict[commentID] = videoID # Probably remove this later, but still being used for now
       if authorChannelID in current.authorMatchCountDict:
@@ -946,8 +936,6 @@ def check_recovered_comments(commentsList):
 
 # Removes comments by user-selected authors from list of comments to delete
 def exclude_authors(current, inputtedString, miscData):
-  # global current.matchSamplesDict
-
   expression = r"(?<=exclude ).*" # Match everything after 'exclude '
   result = str(re.search(expression, inputtedString).group(0))
   result = result.replace(" ", "")
@@ -1014,8 +1002,6 @@ def exclude_authors(current, inputtedString, miscData):
 ################################### GET VIDEO TITLE ###############################################
 # Check if video title is in dictionary, if not get video title from video ID using YouTube API request, then return title
 def get_video_title(current, video_id):
-  # global current.vidTitleDict
-
   if video_id in current.vidTitleDict.keys():
     title = current.vidTitleDict[video_id]
   else:
@@ -1036,8 +1022,6 @@ class ChannelIDError(Exception):
     pass
 # Get channel ID and channel title of the currently authorized user
 def get_current_user(config):
-  # global youtube
-
   #Define fetch function so it can be re-used if issue and need to re-run it
   def fetch_user():
     results = YOUTUBE.channels().list(
@@ -2758,23 +2742,7 @@ def main():
 
   # Declare Global Variables
   global YOUTUBE
-  # global current.matchedCommentsDict
-  # global current.vidIdDict
-  # global current.vidTitleDict
-  # global current.scannedRepliesCount
-  # global current.scannedCommentsCount
-  # global current.matchSamplesDict
-  # global current.authorMatchCountDict
-
-  # Default values for global variables
-  #current.matchedCommentsDict = {}
-  #current.authorMatchCountDict = {}
-  #current.vidIdDict = {}
-  #current.vidTitleDict = {}
-  #current.matchSamplesDict = {}
-  #current.scannedRepliesCount = 0
-  #current.scannedCommentsCount = 0
-   
+ 
   # Checks system platform to set correct console clear command
   # Clears console otherwise the windows terminal doesn't work with colorama for some reason  
   clear_command = "cls" if platform.system() == "Windows" else "clear"
@@ -3659,7 +3627,6 @@ def main():
         logFileType = ".rtf"
 
       # Prepare log file names
-      # global logFileName
       fileNameBase = "Spam_Log_" + current.logTime
       fileName = fileNameBase + logFileType
 
