@@ -418,7 +418,7 @@ def get_comments(youtube, currentUser, filtersDict, miscData, config, scanVideoI
 # Call the API's comments.list method to list the existing comment replies.
 def get_replies(youtube, currentUser, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, repliesList=None):
   global scannedRepliesCount
-  
+
   # Initialize some variables
   authorChannelName = None
   commentText = None
@@ -467,7 +467,7 @@ def get_replies(youtube, currentUser, filtersDict, miscData, config, parent_id, 
 
     # Runs check against comment info for whichever filter data is relevant
     currentCommentDict = {
-      'authorChannelID':parentAuthorChannelID, 
+      'authorChannelID':authorChannelID, 
       'parentAuthorChannelID':parentAuthorChannelID, 
       'authorChannelName':authorChannelName, 
       'commentText':commentText,
