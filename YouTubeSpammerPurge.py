@@ -398,7 +398,7 @@ def get_comments(youtube, currentUser, filtersDict, miscData, config, scanVideoI
       'commentText':commentText,
       'commentID':parent_id,
       }
-    check_against_filter(currentUser, filtersDict, miscData, config, currentCommentDict, videoID=videoID, )
+    check_against_filter(currentUser, filtersDict, miscData, config, currentCommentDict, videoID)
     scannedCommentsCount += 1  # Counts number of comments scanned, add to global count
     
     if numReplies > 0 and len(limitedRepliesList) < numReplies:
@@ -416,8 +416,9 @@ def get_comments(youtube, currentUser, filtersDict, miscData, config, scanVideoI
 ##########################################################################################
 
 # Call the API's comments.list method to list the existing comment replies.
-def get_replies(youtube, currentUser, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, repliesList=None, ):
+def get_replies(youtube, currentUser, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, repliesList=None):
   global scannedRepliesCount
+  
   # Initialize some variables
   authorChannelName = None
   commentText = None
@@ -472,7 +473,7 @@ def get_replies(youtube, currentUser, filtersDict, miscData, config, parent_id, 
       'commentText':commentText,
       'commentID':replyID,
       }
-    check_against_filter(currentUser, filtersDict, miscData, config, currentCommentDict, videoID=videoID, allThreadAuthorNames=allThreadAuthorNames)
+    check_against_filter(currentUser, filtersDict, miscData, config, currentCommentDict, videoID, allThreadAuthorNames=allThreadAuthorNames)
 
     # Update latest stats
     scannedRepliesCount += 1  # Count number of replies scanned, add to global count
