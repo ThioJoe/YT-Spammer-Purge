@@ -50,6 +50,7 @@ import re
 import sys
 import time
 import ast
+from dataclasses import dataclass
 from datetime import datetime, date, timedelta
 import traceback
 import platform
@@ -158,7 +159,7 @@ def print_exception_reason(reason):
 
 # First prepared comments into segments of 50 to be submitted to API simultaneously
 # Then uses print_prepared_comments() to print / log the comments
-def print_comments(scanVideoID, comments, loggingEnabled, scanMode, logMode, jsonSettingsDict):
+def print_comments(current, scanVideoID, comments, loggingEnabled, scanMode, logMode):
   j = 0 # Counting index when going through comments all comment segments
   groupSize = 2500 # Number of comments to process per iteration
 
@@ -166,17 +167,17 @@ def print_comments(scanVideoID, comments, loggingEnabled, scanMode, logMode, jso
     remainder = len(comments) % groupSize
     numDivisions = int((len(comments)-remainder)/groupSize)
     for i in range(numDivisions):
-      j = print_prepared_comments(scanVideoID,comments[i*groupSize:i*groupSize+groupSize], j, loggingEnabled, scanMode, logMode, jsonSettingsDict)
+      j = print_prepared_comments(scanVideoID,comments[i*groupSize:i*groupSize+groupSize], j, loggingEnabled, scanMode, logMode)
     if remainder > 0:
-      j = print_prepared_comments(scanVideoID,comments[numDivisions*groupSize:len(comments)],j, loggingEnabled, scanMode, logMode, jsonSettingsDict)
+      j = print_prepared_comments(scanVideoID,comments[numDivisions*groupSize:len(comments)],j, loggingEnabled, scanMode, logMode)
   else:
-    j = print_prepared_comments(scanVideoID,comments, j, loggingEnabled, scanMode, logMode, jsonSettingsDict)
+    j = print_prepared_comments(scanVideoID,comments, j, loggingEnabled, scanMode, logMode)
 
   # Print Sample Match List
   valuesPreparedToWrite = ""
   valuesPreparedToPrint = ""
   print(f"{F.LIGHTMAGENTA_EX}---------------------------- Match Samples: One comment per matched-comment author ----------------------------{S.R}")
-  for value in matchSamplesDict.values():
+  for value in current.matchSamplesDict.values():
     if loggingEnabled == True and logMode == "rtf":
       valuesPreparedToWrite = valuesPreparedToWrite + value['iString'] + value['cString'] + f"{str(value['authorID'])} | {make_rtf_compatible(str(value['nameAndText']))} \\line \n"
     elif loggingEnabled == True and logMode == "plaintext":
@@ -185,25 +186,25 @@ def print_comments(scanVideoID, comments, loggingEnabled, scanMode, logMode, jso
   
   if loggingEnabled == True:
     if logMode == "rtf":
-      write_rtf(logFileName, "-------------------- Match Samples: One comment per matched-comment author -------------------- \\line\\line \n")
-      write_rtf(logFileName, valuesPreparedToWrite)
+      write_rtf(current.logFileName, "-------------------- Match Samples: One comment per matched-comment author -------------------- \\line\\line \n")
+      write_rtf(current.logFileName, valuesPreparedToWrite)
     elif logMode == "plaintext":
-      write_plaintext_log(logFileName, "-------------------- Match Samples: One comment per matched-comment author --------------------\n")
-      write_plaintext_log(logFileName, valuesPreparedToWrite)
+      write_plaintext_log(current.logFileName, "-------------------- Match Samples: One comment per matched-comment author --------------------\n")
+      write_plaintext_log(current.logFileName, valuesPreparedToWrite)
   print(valuesPreparedToPrint)
   print(f"{F.LIGHTMAGENTA_EX}---------------------------- (See log file for channel IDs of matched authors above) ---------------------------{S.R}")
 
   return None
 
 # Uses comments.list YouTube API Request to get text and author of specific set of comments, based on comment ID
-def print_prepared_comments(scanVideoID, comments, j, loggingEnabled, scanMode, logMode, jsonSettingsDict):
+def print_prepared_comments(current, youtube, scanVideoID, comments, j, loggingEnabled, scanMode, logMode):
 
   # Prints author and comment text for each comment
   i = 0 # Index when going through comments
   dataPreparedToWrite = ""
 
   for comment in comments:
-    metadata = matchedCommentsDict[comment]
+    metadata = current.matchedCommentsDict[comment]
 
     # For printing and regular logging
     text = metadata['text']
@@ -218,8 +219,8 @@ def print_prepared_comments(scanVideoID, comments, j, loggingEnabled, scanMode, 
     if text.count("\n") > 0:
       text = text.replace("\n", " ")
 
-    # Add one sample from each matching author to matchSamplesDict, containing author ID, name, and text
-    if author_id_local not in matchSamplesDict.keys():
+    # Add one sample from each matching author to current.matchSamplesDict, containing author ID, name, and text
+    if author_id_local not in current.matchSamplesDict.keys():
       add_sample(author_id_local, author, text)
 
     # Build comment direct link
@@ -232,7 +233,7 @@ def print_prepared_comments(scanVideoID, comments, j, loggingEnabled, scanMode, 
     print(str(j+1) + f". {F.LIGHTCYAN_EX}" + author + f"{S.R}:  {F.YELLOW}" + text + f"{S.R}")
     print("—————————————————————————————————————————————————————————————————————————————————————————————")
     if scanVideoID is None:  # Only print video title if searching entire channel
-      title = get_video_title(videoID) # Get Video Title
+      title = get_video_title(youtube, videoID) # Get Video Title
       print("     > Video: " + title)
     print("     > Direct Link: " + directLink)
     print(f"     > Author Channel ID: {F.LIGHTBLUE_EX}" + author_id_local + f"{S.R}")
@@ -289,22 +290,22 @@ def print_prepared_comments(scanVideoID, comments, j, loggingEnabled, scanMode, 
   if loggingEnabled == True:
     print(" Writing to log file, please wait...", end="\r")
     if logMode == "rtf":
-      write_rtf(logFileName, dataPreparedToWrite)
+      write_rtf(current.logFileName, dataPreparedToWrite)
     elif logMode == "plaintext":
-      write_plaintext_log(logFileName, dataPreparedToWrite)
+      write_plaintext_log(current.logFileName, dataPreparedToWrite)
     print("                                    ")
 
   return j
 
-# Adds a sample to matchSamplesDict and preps formatting
-def add_sample(authorID, authorNameRaw, commentText):
-  global matchSamplesDict
-  global authorMatchCountDict
+# Adds a sample to current.matchSamplesDict and preps formatting
+def add_sample(current, authorID, authorNameRaw, commentText):
+  # global current.matchSamplesDict
+  # global current.authorMatchCountDict
 
   # Make index number and string formatted version
-  index = len(matchSamplesDict) + 1
+  index = len(current.matchSamplesDict) + 1
   iString = f"{str(index)}. ".ljust(4)
-  authorNumComments = authorMatchCountDict[authorID]
+  authorNumComments = current.authorMatchCountDict[authorID]
   cString = f"[x{str(authorNumComments)}] ".ljust(7)
 
   # Left Justify Author Name and Comment Text
@@ -319,7 +320,7 @@ def add_sample(authorID, authorNameRaw, commentText):
   commentText = commentText[0:82].ljust(82)
 
   # Add comment sample, author ID, name, and counter
-  matchSamplesDict[authorID] = {'index':index, 'cString':cString, 'iString':iString, 'count':authorNumComments, 'authorID':authorID, 'authorName':authorNameRaw, 'nameAndText':authorName + commentText}
+  current.matchSamplesDict[authorID] = {'index':index, 'cString':cString, 'iString':iString, 'count':authorNumComments, 'authorID':authorID, 'authorName':authorNameRaw, 'nameAndText':authorName + commentText}
 
 
 ##########################################################################################
@@ -327,8 +328,8 @@ def add_sample(authorID, authorNameRaw, commentText):
 ##########################################################################################
 
 # Call the API's commentThreads.list method to list the existing comments.
-def get_comments(youtube, currentUser, filtersDict, miscData, config, scanVideoID=None, nextPageToken=None, videosToScan=None):  # None are set as default if no parameters passed into function
-  global scannedCommentsCount
+def get_comments(current, youtube, currentUser, filtersDict, miscData, config, scanVideoID=None, nextPageToken=None, videosToScan=None):  # None are set as default if no parameters passed into function
+  # global current.scannedCommentsCount
   # Initialize some variables
   authorChannelName = None
   commentText = None
@@ -338,7 +339,7 @@ def get_comments(youtube, currentUser, filtersDict, miscData, config, scanVideoI
 
   # Gets all comment threads for a specific video
   if scanVideoID is not None:
-    results = youtube.commentThreads().list(
+    results = YOUTUBE.commentThreads().list(
       part="snippet, replies",
       videoId=scanVideoID, 
       maxResults=100,
@@ -349,7 +350,7 @@ def get_comments(youtube, currentUser, filtersDict, miscData, config, scanVideoI
   
   # Get all comment threads across the whole channel
   elif scanVideoID is None:
-    results = youtube.commentThreads().list(
+    results = YOUTUBE.commentThreads().list(
       part="snippet, replies",
       allThreadsRelatedToChannelId=currentUser[0],
       maxResults=100,
@@ -361,7 +362,7 @@ def get_comments(youtube, currentUser, filtersDict, miscData, config, scanVideoI
   # Get token for next page. If no token, sets to 'End'
   RetrievedNextPageToken = results.get("nextPageToken", "End")
   
-  # After getting all comments threads for page, extracts data for each and stores matches in matchedCommentsDict
+  # After getting all comments threads for page, extracts data for each and stores matches in current.matchedCommentsDict
   # Also goes through each thread and executes get_replies() to get reply content and matches
   for item in results["items"]:
     comment = item["snippet"]["topLevelComment"]
@@ -399,7 +400,7 @@ def get_comments(youtube, currentUser, filtersDict, miscData, config, scanVideoI
       'commentID':parent_id,
       }
     check_against_filter(currentUser, filtersDict, miscData, config, currentCommentDict, videoID)
-    scannedCommentsCount += 1  # Counts number of comments scanned, add to global count
+    current.scannedCommentsCount += 1  # Counts number of comments scanned, add to global count
     
     if numReplies > 0 and len(limitedRepliesList) < numReplies:
       get_replies(youtube, currentUser, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan)
@@ -416,8 +417,8 @@ def get_comments(youtube, currentUser, filtersDict, miscData, config, scanVideoI
 ##########################################################################################
 
 # Call the API's comments.list method to list the existing comment replies.
-def get_replies(youtube, currentUser, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, repliesList=None):
-  global scannedRepliesCount
+def get_replies(current, youtube, currentUser, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, repliesList=None):
+  # global current.scannedRepliesCount
 
   # Initialize some variables
   authorChannelName = None
@@ -426,7 +427,7 @@ def get_replies(youtube, currentUser, filtersDict, miscData, config, parent_id, 
   if repliesList == None:
     fieldsToFetch = "items/snippet/authorChannelId/value,items/id,items/snippet/authorDisplayName,items/snippet/textDisplay"
 
-    results = youtube.comments().list(
+    results = YOUTUBE.comments().list(
       part="snippet",
       parentId=parent_id,
       maxResults=100,
@@ -476,16 +477,16 @@ def get_replies(youtube, currentUser, filtersDict, miscData, config, parent_id, 
     check_against_filter(currentUser, filtersDict, miscData, config, currentCommentDict, videoID, allThreadAuthorNames=allThreadAuthorNames)
 
     # Update latest stats
-    scannedRepliesCount += 1  # Count number of replies scanned, add to global count
+    current.scannedRepliesCount += 1  # Count number of replies scanned, add to global count
     print_count_stats(miscData, videosToScan, final=False) # Prints out current count stats
 
   return True
 
 ############################## CHECK AGAINST FILTER ######################################
 # The basic logic that actually checks each comment against filter criteria
-def check_against_filter(currentUser, filtersDict, miscData, config, currentCommentDict, videoID, allThreadAuthorNames=None):
-  global vidIdDict
-  global matchedCommentsDict
+def check_against_filter(current, currentUser, filtersDict, miscData, config, currentCommentDict, videoID, allThreadAuthorNames=None):
+  # global current.vidIdDict
+  # global current.matchedCommentsDict
 
   # Retrieve Data from currentCommentDict
   commentID = currentCommentDict['commentID']
@@ -510,32 +511,32 @@ def check_against_filter(currentUser, filtersDict, miscData, config, currentComm
           if "@"+str(name) in commentText:
             commentText = commentText.replace("@"+str(name), "")
       # Extra logic to detect false positive if spammer's comment already deleted, but someone replied
-      if matchedCommentsDict and filtersDict['filterMode'] == "AutoSmart":
-        for key, value in matchedCommentsDict.items():
+      if current.matchedCommentsDict and filtersDict['filterMode'] == "AutoSmart":
+        for key, value in current.matchedCommentsDict.items():
           if "@"+str(value['authorName']) in commentText:
             remove = True
-            for key2,value2 in matchedCommentsDict.items():
+            for key2,value2 in current.matchedCommentsDict.items():
               if value2['authorID'] == authorChannelID:
                 remove = False
             if remove == True:
               commentText = commentText.replace("@"+str(value['authorName']), "")
 
-    # If the comment/username matches criteria based on mode, add key/value pair of comment ID and author ID to matchedCommentsDict
+    # If the comment/username matches criteria based on mode, add key/value pair of comment ID and author ID to current.matchedCommentsDict
     # Also add key-value pair of comment ID and video ID to dictionary
     # Also count how many spam comments for each author
     def add_spam(commentID, videoID):
-      global matchedCommentsDict
-      global authorMatchCountDict
-      matchedCommentsDict[commentID] = {'text':commentText, 'textUnsanitized':commentTextRaw, 'authorName':authorChannelName, 'authorID':authorChannelID, 'videoID':videoID}
-      vidIdDict[commentID] = videoID # Probably remove this later, but still being used for now
-      if authorChannelID in authorMatchCountDict:
-        authorMatchCountDict[authorChannelID] += 1
+      # global current.matchedCommentsDict
+      # global current.authorMatchCountDict
+      current.matchedCommentsDict[commentID] = {'text':commentText, 'textUnsanitized':commentTextRaw, 'authorName':authorChannelName, 'authorID':authorChannelID, 'videoID':videoID}
+      current.vidIdDict[commentID] = videoID # Probably remove this later, but still being used for now
+      if authorChannelID in current.authorMatchCountDict:
+        current.authorMatchCountDict[authorChannelID] += 1
       else:
-        authorMatchCountDict[authorChannelID] = 1
+        current.authorMatchCountDict[authorChannelID] = 1
       if config and config['json_log'] == True and config['json_extra_data'] == True:
-        matchedCommentsDict[commentID]['uploaderChannelID'] = miscData['channelOwnerID']
-        matchedCommentsDict[commentID]['uploaderChannelName'] = miscData['channelOwnerName']
-        matchedCommentsDict[commentID]['videoTitle'] = get_video_title(videoID)
+        current.matchedCommentsDict[commentID]['uploaderChannelID'] = miscData['channelOwnerID']
+        current.matchedCommentsDict[commentID]['uploaderChannelName'] = miscData['channelOwnerName']
+        current.matchedCommentsDict[commentID]['videoTitle'] = get_video_title(videoID)
         
       if debugSingleComment == True: 
         input("--- Yes, Matched -----")
@@ -781,7 +782,7 @@ def check_against_filter(currentUser, filtersDict, miscData, config, currentComm
 ########################################################################################## 
 
 # Takes in list of comment IDs to delete, breaks them into 50-comment chunks, and deletes them in groups
-def delete_found_comments(commentsList, banChoice, deletionMode, recoveryMode=False):
+def delete_found_comments(youtube, commentsList, banChoice, deletionMode, recoveryMode=False):
   print("\n")
   if deletionMode == "rejected":
     actionPresent = "Deleting"
@@ -799,11 +800,11 @@ def delete_found_comments(commentsList, banChoice, deletionMode, recoveryMode=Fa
   # Local Functions 
   def setStatus(commentIDs): #Does the actual deletion
     if deletionMode == "reportSpam":
-      result = youtube.comments().markAsSpam(id=commentIDs).execute()
+      result = YOUTUBE.comments().markAsSpam(id=commentIDs).execute()
       if len(result) > 0:
         print("\nSomething may gone wrong when reporting the comments.")    
     elif deletionMode == "heldForReview" or deletionMode == "rejected" or deletionMode == "published":
-      youtube.comments().setModerationStatus(id=commentIDs, moderationStatus=deletionMode, banAuthor=banChoice).execute()
+      YOUTUBE.comments().setModerationStatus(id=commentIDs, moderationStatus=deletionMode, banAuthor=banChoice).execute()
     else:
       print("Invalid deletion mode. This is definitely a bug, please report it here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
       print("Deletion Mode Is: " + deletionMode)
@@ -847,7 +848,7 @@ class CommentFoundError(Exception):
     pass
 
 # Takes in list of comment IDs and video IDs, and checks if comments still exist individually
-def check_deleted_comments(checkDict):
+def check_deleted_comments(youtube, checkDict):
     i = 0 # Count number of remaining comments
     j = 1 # Count number of checked
     total = len(checkDict)
@@ -860,7 +861,7 @@ def check_deleted_comments(checkDict):
     print("    (Note: You can disable deletion success checking in the config file, to save time and API quota)\n")
     for commentID, metadata in checkDict.items():
       try:
-        results = youtube.comments().list(
+        results = YOUTUBE.comments().list(
           part="snippet",
           id=commentID,  
           maxResults=1,
@@ -905,7 +906,7 @@ def check_deleted_comments(checkDict):
 class CommentNotFoundError(Exception):
   pass
 
-def check_recovered_comments(commentsList):
+def check_recovered_comments(youtube, commentsList):
   i = 0 # Count number of remaining comments
   j = 1 # Count number of checked
   total = len(commentsList)
@@ -913,7 +914,7 @@ def check_recovered_comments(commentsList):
 
   for comment in commentsList:
     try:
-      results = youtube.comments().list(
+      results = YOUTUBE.comments().list(
         part="snippet",
         id=comment,  
         maxResults=1,
@@ -944,8 +945,8 @@ def check_recovered_comments(commentsList):
   sys.exit()
 
 # Removes comments by user-selected authors from list of comments to delete
-def exclude_authors(inputtedString, miscData):
-  global matchSamplesDict
+def exclude_authors(current, inputtedString, miscData):
+  # global current.matchSamplesDict
 
   expression = r"(?<=exclude ).*" # Match everything after 'exclude '
   result = str(re.search(expression, inputtedString).group(0))
@@ -959,18 +960,18 @@ def exclude_authors(inputtedString, miscData):
   commentIDExcludeList = []
 
   # Get authorIDs for selected sample comments
-  for authorID, info in matchSamplesDict.items():
+  for authorID, info in current.matchSamplesDict.items():
     if str(info['index']) in SampleIDsToExclude:
       authorIDsToExclude += [authorID]
 
   # Get comment IDs to be excluded
-  for comment, metadata in matchedCommentsDict.items():
+  for comment, metadata in current.matchedCommentsDict.items():
     if metadata['authorID'] in authorIDsToExclude:
       commentIDExcludeList.append(comment)
   # Remove all comments by selected authors from dictionary of comments
   for comment in commentIDExcludeList:
-    if comment in matchedCommentsDict.keys():
-      excludedCommentsDict[comment] = matchedCommentsDict.pop(comment)
+    if comment in current.matchedCommentsDict.keys():
+      excludedCommentsDict[comment] = current.matchedCommentsDict.pop(comment)
 
   # Create strings that can be used in log files
   rtfFormattedExcludes += f"Comments Excluded From Deletion: \\line \n"
@@ -983,7 +984,7 @@ def exclude_authors(inputtedString, miscData):
     plaintextFormattedExcludes += f"{str(commentID)}  |  {str(excludedCommentsDict[commentID]['authorID'])}  |  {str(excludedCommentsDict[commentID]['authorName'])}  |   {str(excludedCommentsDict[commentID]['text'])}\n"
 
   # Verify removal
-  for comment in matchedCommentsDict.keys():
+  for comment in current.matchedCommentsDict.keys():
     if comment in commentIDExcludeList:
       print(f"{F.LIGHTRED_EX}FATAL ERROR{S.R}: Something went wrong while trying to exclude comments. No comments have been deleted.")
       print(f"You should {F.YELLOW}DEFINITELY{S.R} report this bug here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
@@ -993,9 +994,9 @@ def exclude_authors(inputtedString, miscData):
   
   # Get author names and IDs from dictionary, and display them
   for author in authorIDsToExclude:
-    displayString += f"    User ID: {author}   |   User Name: {matchSamplesDict[author]['authorName']}\n"
+    displayString += f"    User ID: {author}   |   User Name: {current.matchSamplesDict[author]['authorName']}\n"
     with open(miscData['Resources']['Whitelist']['PathWithName'], "a", encoding="utf-8") as f:
-      f.write(f"# [Excluded]  Channel Name: {matchSamplesDict[author]['authorName']}  |  Channel ID: " + "\n")
+      f.write(f"# [Excluded]  Channel Name: {current.matchSamplesDict[author]['authorName']}  |  Channel ID: " + "\n")
       f.write(f"{author}\n")
 
   print(f"\n{F.CYAN}All {len(excludedCommentsDict)} comments{S.R} from the {F.CYAN}following {len(authorIDsToExclude)} users{S.R} are now {F.LIGHTGREEN_EX}excluded{S.R} from deletion:")
@@ -1012,20 +1013,20 @@ def exclude_authors(inputtedString, miscData):
 
 ################################### GET VIDEO TITLE ###############################################
 # Check if video title is in dictionary, if not get video title from video ID using YouTube API request, then return title
-def get_video_title(video_id):
-  global vidTitleDict
+def get_video_title(current, youtube, video_id):
+  # global current.vidTitleDict
 
-  if video_id in vidTitleDict.keys():
-    title = vidTitleDict[video_id]
+  if video_id in current.vidTitleDict.keys():
+    title = current.vidTitleDict[video_id]
   else:
-    results = youtube.videos().list(
+    results = YOUTUBE.videos().list(
       part="snippet",
       id=video_id,
       fields="items/snippet/title",
       maxResults=1
     ).execute()
     title = results["items"][0]["snippet"]["title"]
-    vidTitleDict[video_id] = title
+    current.vidTitleDict[video_id] = title
 
   return title
 
@@ -1035,17 +1036,17 @@ class ChannelIDError(Exception):
     pass
 # Get channel ID and channel title of the currently authorized user
 def get_current_user(config):
-  global youtube
+  # global youtube
 
   #Define fetch function so it can be re-used if issue and need to re-run it
-  def fetch():
-    results = youtube.channels().list(
+  def fetch_user():
+    results = YOUTUBE.channels().list(
       part="snippet", #Can also add "contentDetails" or "statistics"
       mine=True,
       fields="items/id,items/snippet/title"
     ).execute()
     return results
-  results = fetch()
+  results = fetch_user()
 
   # Fetch the channel ID and title from the API response
   # Catch exceptions if problems getting info
@@ -1058,12 +1059,13 @@ def get_current_user(config):
     print("> When choosing the account to log into, you selected the option showing the Google Account's email address, which might not have a channel attached to it.")
     input("\nPress Enter to try logging in again...")
     os.remove(TOKEN_FILE_NAME)
-    youtube = get_authenticated_service()
-    results = fetch() # Try again
+    global YOUTUBE
+    YOUTUBE = get_authenticated_service()
+    results = fetch_user() # Try again
 
   try:
     channelID = results["items"][0]["id"]
-    IDCheck = validate_channel_id(channelID)
+    IDCheck = validate_channel_id(youtube, channelID)
     if IDCheck[0] == False:
       raise ChannelIDError
     try:
@@ -1090,7 +1092,7 @@ def get_current_user(config):
     configMatch = None
   elif config and config['your_channel_id'] == "ask":
     configMatch = None
-  elif validate_channel_id(config['your_channel_id'])[0] == True:
+  elif validate_channel_id(youtube, config['your_channel_id'])[0] == True:
     if config['your_channel_id'] == channelID:
       configMatch = True
     else:
@@ -1106,15 +1108,15 @@ def get_current_user(config):
 
 ################################# VIDEO ID LOOKUP ##############################################
 # Using comment ID, get corresponding video ID from dictionary variable
-def convert_comment_id_to_video_id(comment_id):
-  video_id = vidIdDict[comment_id]
+def convert_comment_id_to_video_id(current, comment_id):
+  video_id = current.vidIdDict[comment_id]
   return video_id
 
 ################################# Get Most Recent Videos #####################################
 # Returns a list of lists
-def get_recent_videos(channel_id, numVideosTotal):
+def get_recent_videos(youtube, channel_id, numVideosTotal):
   def get_block_of_videos(nextPageToken, j, numVideosBlock=5):
-    result = youtube.search().list(
+    result = YOUTUBE.search().list(
       part="snippet",
       channelId=channel_id,
       type='video',
@@ -1130,7 +1132,7 @@ def get_recent_videos(channel_id, numVideosTotal):
       videoTitle = str(item['snippet']['title']).replace("&quot;", "\"").replace("&#39;", "'")
       recentVideos[j]['videoID'] = videoID
       recentVideos[j]['videoTitle'] = videoTitle
-      commentCount = validate_video_id(videoID)[3]
+      commentCount = validate_video_id(youtube, videoID)[3]
       recentVideos[j]['commentCount'] = commentCount
       j+=1
 
@@ -1162,19 +1164,19 @@ def get_recent_videos(channel_id, numVideosTotal):
 ##################################### PRINT STATS ##########################################
 
 # Prints Scanning Statistics, can be version that overwrites itself or one that finalizes and moves to next line
-def print_count_stats(miscData, videosToScan, final):
+def print_count_stats(current, miscData, videosToScan, final):
   # Use videosToScan (list of dictionaries) to retrieve total number of comments
   if videosToScan:
     totalComments = miscData['totalCommentCount']
-    totalScanned = scannedRepliesCount + scannedCommentsCount
+    totalScanned = current.scannedRepliesCount + current.scannedCommentsCount
     percent = ((totalScanned / totalComments) * 100)
     progress = f"Total: [{str(totalScanned)}/{str(totalComments)}] ({percent:.0f}%) ".ljust(27, " ") + "|" #Formats percentage to 0 decimal places
   else:
     progress = ""
   
-  comScanned = str(scannedCommentsCount)
-  repScanned = str(scannedRepliesCount)
-  matchCount = str(len(matchedCommentsDict))
+  comScanned = str(current.scannedCommentsCount)
+  repScanned = str(current.scannedRepliesCount)
+  matchCount = str(len(current.matchedCommentsDict))
 
   if final == True:
     print(f" {progress} Comments Scanned: {F.YELLOW}{comScanned}{S.R} | Replies Scanned: {F.YELLOW}{repScanned}{S.R} | Matches Found So Far: {F.LIGHTRED_EX}{matchCount}{S.R}\n")
@@ -1185,7 +1187,7 @@ def print_count_stats(miscData, videosToScan, final):
 
 ##################################### VALIDATE VIDEO ID #####################################
 # Regex matches putting video id into a match group. Then queries youtube API to verify it exists - If so returns true and isolated video ID
-def validate_video_id(video_url_or_id, silent=False):
+def validate_video_id(youtube, video_url_or_id, silent=False):
     youtube_video_link_regex = r"^\s*(?P<video_url>(?:(?:https?:)?\/\/)?(?:(?:www|m)\.)?(?:youtube\.com|youtu.be)(?:\/(?:[\w\-]+\?v=|embed\/|v\/)?))?(?P<video_id>[\w\-]{11})(?:(?(video_url)\S+|$))?\s*$"
     match = re.match(youtube_video_link_regex, video_url_or_id)
     if match == None:
@@ -1195,7 +1197,7 @@ def validate_video_id(video_url_or_id, silent=False):
     else:
       try:
         possibleVideoID = match.group('video_id')
-        result = youtube.videos().list(
+        result = YOUTUBE.videos().list(
           part="snippet,id,statistics",
           id=possibleVideoID,
           fields='items/id,items/snippet/channelId,items/snippet/channelTitle,items/statistics/commentCount,items/snippet/title',
@@ -1232,7 +1234,7 @@ def validate_video_id(video_url_or_id, silent=False):
     
 
 ############################### VALIDATE COMMUNITY POST ID #################################
-def validate_post_id(post_url):
+def validate_post_id(youtube, post_url):
   if "/post/" in post_url:
     startIndex = post_url.rindex("/") + 1
     endIndex = len(post_url)
@@ -1252,7 +1254,7 @@ def validate_post_id(post_url):
     if isolatedPostID[0:2] == "Ug":
       validatedPostUrl = "https://www.youtube.com/post/" + isolatedPostID
       postOwnerURL = get_post_channel_url(isolatedPostID)
-      valid, postOwnerID, postOwnerUsername = validate_channel_id(postOwnerURL)
+      valid, postOwnerID, postOwnerUsername = validate_channel_id(youtube, postOwnerURL)
 
       return valid, isolatedPostID, validatedPostUrl, postOwnerID, postOwnerUsername
 
@@ -1262,13 +1264,13 @@ def validate_post_id(post_url):
 
 ##################################### VALIDATE CHANNEL ID ##################################
 # Checks if channel ID / Channel Link is correct length and in correct format - If so returns true and isolated channel ID
-def validate_channel_id(inputted_channel):
+def validate_channel_id(youtube, inputted_channel):
   isolatedChannelID = "Invalid" # Default value
   inputted_channel = inputted_channel.strip()
   notChannelList = ['?v', 'v=', '/embed/', '/vi/', '?feature=', '/v/', '/e/']
 
   # Check if link is actually a video link / ID
-  isVideo = validate_video_id(inputted_channel, silent=True)
+  isVideo = validate_video_id(youtube, inputted_channel, silent=True)
   if isVideo[0] == True:
     print(f"\n{F.BLACK}{B.LIGHTRED_EX} Invalid Channel ID / Link! {S.R} Looks like you entered a Video ID / Link by mistake.")
     return False, None, None
@@ -1298,7 +1300,7 @@ def validate_channel_id(inputted_channel):
 
     if startIndex < endIndex and endIndex <= len(inputted_channel):
       customURL = inputted_channel[startIndex:endIndex]
-      response = youtube.search().list(part="snippet",q=customURL, maxResults=1).execute()
+      response = YOUTUBE.search().list(part="snippet",q=customURL, maxResults=1).execute()
       if response.get("items"):
         isolatedChannelID = response.get("items")[0]["snippet"]["channelId"] # Get channel ID from custom channel URL username
   
@@ -1314,7 +1316,7 @@ def validate_channel_id(inputted_channel):
         print(f"{F.LIGHTRED_EX}Invalid Channel ID / Link!{S.R} Did you enter a video ID / link by mistake?")
         return False, None, None
 
-      response = youtube.search().list(part="snippet",q=customURL, maxResults=1).execute()
+      response = YOUTUBE.search().list(part="snippet",q=customURL, maxResults=1).execute()
       if response.get("items"):
         isolatedChannelID = response.get("items")[0]["snippet"]["channelId"] # Get channel ID from custom channel URL username
 
@@ -1327,7 +1329,7 @@ def validate_channel_id(inputted_channel):
     return False, None, None
 
   if len(isolatedChannelID) == 24 and isolatedChannelID[0:2] == "UC":
-    response = youtube.channels().list(part="snippet", id=isolatedChannelID).execute()
+    response = YOUTUBE.channels().list(part="snippet", id=isolatedChannelID).execute()
     if response['items']:
       channelTitle = response['items'][0]['snippet']['title']
       return True, isolatedChannelID, channelTitle
@@ -1362,7 +1364,7 @@ def choice(message="", bypass=False):
 ############################ Process Input Spammer IDs ###############################
 # Takes single or list of spammer IDs, splits and sanitizes each, converts to list of channel IDs
 # Returns list of channel IDs
-def process_spammer_ids(rawString):
+def process_spammer_ids(youtube, rawString):
   inputList = [] # For list of unvalidated inputted items
   IDList = [] # For list of validated channel IDs, converted from inputList of spammer IDs - Separate to allow printing original invalid input if necessary
   inputList = rawString.split(",") # Split spammer IDs / Links by commas
@@ -1375,7 +1377,7 @@ def process_spammer_ids(rawString):
 
   # Validate each ID in list
   for i in range(len(inputList)):
-    valid, IDList[i], channelTitle = validate_channel_id(inputList[i])
+    valid, IDList[i], channelTitle = validate_channel_id(youtube, inputList[i])
     if valid == False:
       print(f"{B.RED}{F.BLACK}Invalid{S.R} Channel ID or Link: " + str(inputList[i]) + "\n")
       return False, None
@@ -1384,7 +1386,7 @@ def process_spammer_ids(rawString):
 
 ############################ Get Extra JSON Data and Profile Pictures ###############################
 
-def get_extra_json_data(channelIDs, jsonSettingsDict):
+def get_extra_json_data(youtube, channelIDs, jsonSettingsDict):
   channelOwnerID = jsonSettingsDict['channelOwnerID']
   channelOwnerName = jsonSettingsDict['channelOwnerName']
   getPicsBool = False
@@ -1416,7 +1418,7 @@ def get_extra_json_data(channelIDs, jsonSettingsDict):
 
   def fetch_data(channelIdGroup):
     try:
-      response = youtube.channels().list(part="snippet,statistics", id=channelIdGroup, fields=fieldsToFetch).execute()
+      response = YOUTUBE.channels().list(part="snippet,statistics", id=channelIdGroup, fields=fieldsToFetch).execute()
       if response['items']:
         for j in range(len(channelIdGroup)):
           tempDict = {}
@@ -1445,7 +1447,7 @@ def get_extra_json_data(channelIDs, jsonSettingsDict):
     fetch_data(channelIDs)
   
   # Get info about uploader
-  response = youtube.channels().list(part="snippet,statistics", id=channelOwnerID, fields=fieldsToFetch).execute()
+  response = YOUTUBE.channels().list(part="snippet,statistics", id=channelOwnerID, fields=fieldsToFetch).execute()
   if response['items']:
     tempDict = {}
     tempDict['PublishedAt'] = response['items'][0]['snippet']['publishedAt']
@@ -2213,7 +2215,7 @@ def load_config_file(forceDefault = False):
   return configDict
 
 ################################ RECOVERY MODE ###########################################
-def recover_deleted_comments():
+def recover_deleted_comments(youtube):
   print(f"\n\n-------------------- {F.LIGHTGREEN_EX}Comment Recovery Mode{S.R} --------------------\n")
   print("Believe it or not, the YouTube API actually allows you to re-instate \"deleted\" comments.")
   print(f"This is {F.YELLOW}only possible if you have stored the comment IDs{S.R} of the deleted comments, such as {F.YELLOW}having kept the log file{S.R} of that session.")
@@ -2301,8 +2303,8 @@ def recover_deleted_comments():
     input("Press Enter to try recovering anyway...\n")
   print("\n")
 
-  delete_found_comments(commentsList=result, banChoice=False, deletionMode="published", recoveryMode=True)
-  check_recovered_comments(commentsList=result)
+  delete_found_comments(youtube, commentsList=result, banChoice=False, deletionMode="published", recoveryMode=True)
+  check_recovered_comments(youtube, commentsList=result)
 
 
 ##########################################################################################
@@ -2466,7 +2468,7 @@ def prepare_filter_mode_regex(currentUser, scanMode, filterMode, config):
 
 # Filter Mode: User manually enters ID
 # Returns inputtedSpammerChannelID
-def prepare_filter_mode_ID(currentUser, scanMode, config):
+def prepare_filter_mode_ID(youtube, currentUser, scanMode, config):
   currentUserID = currentUser[0]
   processResult = (False, None) #Tuple, first element is status of validity of channel ID, second element is channel ID
   validConfigSetting = True
@@ -2478,7 +2480,7 @@ def prepare_filter_mode_ID(currentUser, scanMode, config):
       bypass = False
       inputtedSpammerChannelID = input(f"Enter the {F.LIGHTRED_EX} Channel link(s) or ID(s){S.R} of the spammer (comma separated): ")
 
-    processResult = process_spammer_ids(inputtedSpammerChannelID)
+    processResult = process_spammer_ids(youtube, inputtedSpammerChannelID)
     if processResult[0] == True:
       inputtedSpammerChannelID = processResult[1] # After processing, if valid, inputtedSpammerChannelID is a list of channel IDs
     else:
@@ -2745,6 +2747,8 @@ def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive
   print("                                ") # Erases line that says "loading filters"  
   return filterSettings, None
 
+
+
 ##########################################################################################
 ##########################################################################################
 ###################################### MAIN ##############################################
@@ -2759,33 +2763,25 @@ def main():
     sys.exit()
 
   # Declare Global Variables
-  global youtube
-  global matchedCommentsDict
-  global vidIdDict
-  global vidTitleDict
-  global scannedRepliesCount
-  global scannedCommentsCount
-  global matchSamplesDict
-  global authorMatchCountDict
+  global YOUTUBE
+  # global youtube
+  # global current.matchedCommentsDict
+  # global current.vidIdDict
+  # global current.vidTitleDict
+  # global current.scannedRepliesCount
+  # global current.scannedCommentsCount
+  # global current.matchSamplesDict
+  # global current.authorMatchCountDict
 
   # Default values for global variables
-  matchedCommentsDict = {}
-  authorMatchCountDict = {}
-  vidIdDict = {}
-  vidTitleDict = {}
-  matchSamplesDict = {}
-  scannedRepliesCount = 0
-  scannedCommentsCount = 0
-  regexPattern = ""
-  
-  # Declare Default Variables
-  maxScanNumber = 999999999
-  scanVideoID = None
-  videosToScan = []
-  nextPageToken = "start"
-  loggingEnabled = False
-  userNotChannelOwner = False
-  
+  #current.matchedCommentsDict = {}
+  #current.authorMatchCountDict = {}
+  #current.vidIdDict = {}
+  #current.vidTitleDict = {}
+  #current.matchSamplesDict = {}
+  #current.scannedRepliesCount = 0
+  #current.scannedCommentsCount = 0
+   
   # Checks system platform to set correct console clear command
   # Clears console otherwise the windows terminal doesn't work with colorama for some reason  
   clear_command = "cls" if platform.system() == "Windows" else "clear"
@@ -2800,13 +2796,14 @@ def main():
   print("\nLoading YT Spammer Purge @ " + str(version) + "...")
 
   # Authenticate with the Google API - If token expired and invalid, deletes and re-authenticates
+  
   try:
-    youtube = get_authenticated_service() # Create authentication object
+    YOUTUBE = get_authenticated_service() # Create authentication object
   except Exception as e:
     if "invalid_grant" in str(e):
       print(f"{F.YELLOW}[!] Invalid token{S.R} - Requires Re-Authentication")
       os.remove(TOKEN_FILE_NAME)
-      youtube = get_authenticated_service()
+      YOUTUBE = get_authenticated_service()
     else:
       print('\n')
       traceback.print_exc() # Prints traceback
@@ -3013,942 +3010,988 @@ def main():
     else:
       os.remove(TOKEN_FILE_NAME)
       os.system(clear_command)
-      youtube = get_authenticated_service()
-  
-  # User selects scanning mode,  while Loop to get scanning mode, so if invalid input, it will keep asking until valid input
-  print(f"\n---------- {F.YELLOW}Scanning Options{S.R} ----------")
-  print(f"      1. Scan {F.LIGHTBLUE_EX}specific videos{S.R}")
-  print(f"      2. Scan {F.LIGHTCYAN_EX}recent videos{S.R} for a channel")
-  print(f"      3. Scan recent comments across your {F.LIGHTMAGENTA_EX}Entire Channel{S.R}")
-  print(f"      4. Scan a {F.LIGHTMAGENTA_EX}community post{S.R} (Experimental)")
-  print(f"---------- {F.LIGHTRED_EX}Other Options{S.R} ----------")
-  print(f"      5. Create your own config file to quickly run the program with pre-set settings")
-  print(f"      6. Recover deleted comments using log file")
-  print(f"      7. Check For Updates\n")
-  
-  # Check for updates silently
-  if updateAvailable == True:
-    if updateReleaseChannel == "stable":
-      print(f"{F.LIGHTGREEN_EX}Notice: A new version is available! Choose 'Check For Updates' option for details.{S.R}\n")
-    else:
-      print(f"{F.LIGHTGREEN_EX}Notice: A new {F.CYAN}beta{F.LIGHTGREEN_EX} version is available! Choose 'Check For Updates' option for details.{S.R}\n")
+      YOUTUBE = get_authenticated_service()
 
-  if config and configOutOfDate == True:
-    print(f"{F.LIGHTRED_EX}Notice: Your config file is out of date! Choose 'Create your own config file' to generate a new one.{S.R}\n")
+  @dataclass
+  class ScanInstance:
+    matchedCommentsDict: dict
+    vidIdDict: dict
+    vidTitleDict: dict
+    matchSamplesDict: dict
+    authorMatchCountDict: dict
+    scannedRepliesCount: int
+    scannedCommentsCount: int
+    logTime: str
+    logFileName: str  
 
-  # Make sure input is valid, if not ask again
-  validMode = False
-  validConfigSetting = True
-  while validMode == False:
-    if validConfigSetting == True and config and config['scan_mode'] != 'ask':
-      scanMode = config['scan_mode']
-    else:
-      scanMode = input("Choice (1-7): ")
+  ##############################################
+  ######### PRIMARY INSTANCE FUNCTION ##########
+  ##############################################
+  ## Allows Re-running Program From Main Menu ##
+  ##############################################
+  def primaryInstance(miscData):
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
-    # Set scanMode Variable Names
-    validModeValues = ['1', '2', '3', '4', '5', '6', '7', 'chosenvideos', 'recentvideos', 'entirechannel', 'communitypost']
-    if scanMode in validModeValues:
-      validMode = True
-      if scanMode == "1" or scanMode == "chosenvideos":
-        scanMode = "chosenVideos"
-      elif scanMode == "2" or scanMode == "recentvideos":
-        scanMode = "recentVideos"
-      elif scanMode == "3" or scanMode == "entirechannel":
-        scanMode = "entireChannel"
-      elif scanMode == "4" or scanMode == "communitypost":
-        scanMode = "communityPost"
-      elif scanMode == "5":
-        scanMode = "makeConfig"
-      elif scanMode == "6":
-        scanMode = "recoverMode"
-      elif scanMode == "7":
-        scanMode = "checkUpdates"
-    else:
-      print(f"\nInvalid choice: {scanMode} - Enter either 1, 2, 3, 4, 5, 6, or 7. ")
-      validConfigSetting = False
+    # Instantiate class for primary instance
+    current = ScanInstance(
+      matchedCommentsDict={}, 
+      vidIdDict={}, 
+      vidTitleDict={}, 
+      matchSamplesDict={}, 
+      authorMatchCountDict={}, 
+      scannedRepliesCount=0, 
+      scannedCommentsCount=0,
+      logTime = timestamp, 
+      logFileName = None,
+      )
 
-  # If chooses to scan single video - Validate Video ID, get title, and confirm with user
-  if scanMode == "chosenVideos":  
-    # While loop to get video ID and if invalid ask again
-    confirm = False
-    validConfigSetting = True
-    while confirm == False:
-      numVideos = 1
-      allVideosMatchBool = True
-      miscData['totalCommentCount'] = 0
+    # Declare Default Variables
+    maxScanNumber = 999999999
+    scanVideoID = None
+    videosToScan = []
+    nextPageToken = "start"
+    loggingEnabled = False
+    userNotChannelOwner = False
 
-      # Checks if input list is empty and if contains only valid video IDs
-      listNotEmpty = False
-      validVideoIDs = False # False just to get into the loop
-      while listNotEmpty == False or validVideoIDs == False:
-        if validConfigSetting == True and config and config['videos_to_scan'] != 'ask':
-          enteredVideosList = string_to_list(config['videos_to_scan'])
-          if len(enteredVideosList) == 0:
-            validConfigSetting = False
-            listNotEmpty = False
-            print(f"{F.LIGHTRED_EX}\nError: Video list is empty!{S.R}")
-          else:
-            listNotEmpty = True
-        else:
-          print(f"\nEnter a list of {F.YELLOW}Video Links{S.R} or {F.YELLOW}Video IDs{S.R} to scan, separated by commas.")
-          print(" > Note: All videos must be from the same channel.")
-          enteredVideosList = string_to_list(input("Enter here: "))
-          validConfigSetting = False
-          if len(enteredVideosList) == 0:
-            listNotEmpty = False
-            print(f"{F.LIGHTRED_EX}\nError: Video list is empty!{S.R}")
-          else:
-            listNotEmpty = True
-
-        # Validates all video IDs/Links, gets necessary info about them
-        validVideoIDs = True
-        videosToScan = []
-        videoListResult = [] # True/False, video ID, videoTitle, commentCount, channelID, channelTitle
-        for i in range(len(enteredVideosList)):
-          videoListResult.append([])
-          videosToScan.append({})
-          videoListResult[i] = validate_video_id(enteredVideosList[i]) # Sends link or video ID for isolation and validation
-          if videoListResult[i][0] == False:
-            validVideoIDs = False
-            confirm = False
-            break
-
-      for i in range(len(videoListResult)): # Change this
-        if videoListResult[i][0] == True:
-          videosToScan[i]['videoID'] = str(videoListResult[i][1])
-          videosToScan[i]['videoTitle'] = str(videoListResult[i][2])
-          videosToScan[i]['commentCount'] = int(videoListResult[i][3])
-          videosToScan[i]['channelOwnerID'] = str(videoListResult[i][4])
-          videosToScan[i]['channelOwnerName'] = str(videoListResult[i][5])
-          miscData['totalCommentCount'] += int(videoListResult[i][3])
-        else:
-          print(f"\nInvalid Video: {enteredVideosList[i]}  |  Video ID = {videoListResult[1]}")
-          validConfigSetting = False
-          break
-        
-        # Check each video against first to ensure all on same channel
-        if allVideosMatchBool == True:
-          misMatchVidIndex = 0
-        if videosToScan[0]['channelOwnerID'] != videosToScan[i]['channelOwnerID']:
-          misMatchVidIndex += 1
-          if allVideosMatchBool == True:
-            print(f"\n {F.LIGHTRED_EX}ERROR: Videos scanned together all must be from the same channel.{S.R}")
-            print("  The following videos do not match the channel owner of the first video in the list: ")
-          if misMatchVidIndex == 11 and len(enteredVideosList) > 10:
-            remainingCount = str(len(enteredVideosList) - 10)
-            if choice(f"There are {remainingCount} more mis-matched videos, do you want to see the rest?") == False:
-              break
-          print(f"  {misMatchVidIndex}. {str(videosToScan[i]['videoTitle'])}")
-          validConfigSetting = False
-          allVideosMatchBool = False
-
-      # If videos not from same channel, skip and re-prompt    
-      if allVideosMatchBool == True:       
-        # Print video titles, if there are many, ask user to see all if more than 5
-        i = 0
-        print(f"\n{F.BLUE}Chosen Videos:{S.R}")
-        for video in videosToScan:
-          i += 1
-          if i==6 and len(enteredVideosList) > 5:
-            remainingCount = str(len(enteredVideosList) - 5)
-            if choice(f"You have entered many videos, do you need to see the rest (x{remainingCount})?") == False:
-              break
-          print(f" {i}. {video['videoTitle']}")
-        print("")
-        
-        if currentUser[0] != videosToScan[0]['channelOwnerID']:
-          userNotChannelOwner = True
-
-        miscData['channelOwnerID'] = videosToScan[0]['channelOwnerID']
-        miscData['channelOwnerName'] = videosToScan[0]['channelOwnerName']
-        
-        # Ask if correct videos, or skip if config
-        if config and config['skip_confirm_video'] == True:
-          confirm = True
-        else:
-          if userNotChannelOwner == True and moderator_mode == False:
-            print(f"{F.LIGHTRED_EX}NOTE: This is not your video. Enabling '{F.YELLOW}Not Your Channel Mode{F.LIGHTRED_EX}'. You can report spam comments, but not delete them.{S.R}")
-          elif userNotChannelOwner == True and moderator_mode == True:
-            print(f"{F.LIGHTRED_EX}NOTE: {F.YELLOW}Moderator Mode is enabled{F.LIGHTRED_EX}. You can hold comments for review when using certain modes{S.R}")
-          print("Total number of comments to scan: " + str(miscData['totalCommentCount']))
-          if miscData['totalCommentCount'] >= 100000:
-            print(f"\n{B.YELLOW}{F.BLACK} WARNING: {S.R} You have chosen to scan a large amount of comments. The default API quota limit ends up")
-            print(f" around {F.YELLOW}10,000 comment deletions per day{S.R}. If you find more spam than that you will go over the limit.")
-            print(f"        > Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
-            if userNotChannelOwner == True or moderator_mode == True:
-              print(f"{F.LIGHTCYAN_EX}> Note:{S.R} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")
-          confirm = choice("Is this video list correct?", bypass=validConfigSetting)
-
-  elif scanMode == "recentVideos":
-    confirm = False
-    validEntry = False
-    validChannel = False
+    # User selects scanning mode,  while Loop to get scanning mode, so if invalid input, it will keep asking until valid input
+    print(f"\n---------- {F.YELLOW}Scanning Options{S.R} ----------")
+    print(f"      1. Scan {F.LIGHTBLUE_EX}specific videos{S.R}")
+    print(f"      2. Scan {F.LIGHTCYAN_EX}recent videos{S.R} for a channel")
+    print(f"      3. Scan recent comments across your {F.LIGHTMAGENTA_EX}Entire Channel{S.R}")
+    print(f"      4. Scan a {F.LIGHTMAGENTA_EX}community post{S.R} (Experimental)")
+    print(f"---------- {F.LIGHTRED_EX}Other Options{S.R} ----------")
+    print(f"      5. Create your own config file to quickly run the program with pre-set settings")
+    print(f"      6. Recover deleted comments using log file")
+    print(f"      7. Check For Updates\n")
     
-    while validChannel == False:
-      # Get and verify config setting for channel ID
-      if config and config['channel_to_scan'] != 'ask':
-        if config['channel_to_scan'] == 'mine':
+    # Check for updates silently
+    if updateAvailable == True:
+      if updateReleaseChannel == "stable":
+        print(f"{F.LIGHTGREEN_EX}Notice: A new version is available! Choose 'Check For Updates' option for details.{S.R}\n")
+      else:
+        print(f"{F.LIGHTGREEN_EX}Notice: A new {F.CYAN}beta{F.LIGHTGREEN_EX} version is available! Choose 'Check For Updates' option for details.{S.R}\n")
+
+    if config and configOutOfDate == True:
+      print(f"{F.LIGHTRED_EX}Notice: Your config file is out of date! Choose 'Create your own config file' to generate a new one.{S.R}\n")
+
+    # Make sure input is valid, if not ask again
+    validMode = False
+    validConfigSetting = True
+    while validMode == False:
+      if validConfigSetting == True and config and config['scan_mode'] != 'ask':
+        scanMode = config['scan_mode']
+      else:
+        scanMode = input("Choice (1-7): ")
+
+      # Set scanMode Variable Names
+      validModeValues = ['1', '2', '3', '4', '5', '6', '7', 'chosenvideos', 'recentvideos', 'entirechannel', 'communitypost']
+      if scanMode in validModeValues:
+        validMode = True
+        if scanMode == "1" or scanMode == "chosenvideos":
+          scanMode = "chosenVideos"
+        elif scanMode == "2" or scanMode == "recentvideos":
+          scanMode = "recentVideos"
+        elif scanMode == "3" or scanMode == "entirechannel":
+          scanMode = "entireChannel"
+        elif scanMode == "4" or scanMode == "communitypost":
+          scanMode = "communityPost"
+        elif scanMode == "5":
+          scanMode = "makeConfig"
+        elif scanMode == "6":
+          scanMode = "recoverMode"
+        elif scanMode == "7":
+          scanMode = "checkUpdates"
+      else:
+        print(f"\nInvalid choice: {scanMode} - Enter either 1, 2, 3, 4, 5, 6, or 7. ")
+        validConfigSetting = False
+
+    # If chooses to scan single video - Validate Video ID, get title, and confirm with user
+    if scanMode == "chosenVideos":  
+      # While loop to get video ID and if invalid ask again
+      confirm = False
+      validConfigSetting = True
+      while confirm == False:
+        numVideos = 1
+        allVideosMatchBool = True
+        miscData['totalCommentCount'] = 0
+
+        # Checks if input list is empty and if contains only valid video IDs
+        listNotEmpty = False
+        validVideoIDs = False # False just to get into the loop
+        while listNotEmpty == False or validVideoIDs == False:
+          if validConfigSetting == True and config and config['videos_to_scan'] != 'ask':
+            enteredVideosList = string_to_list(config['videos_to_scan'])
+            if len(enteredVideosList) == 0:
+              validConfigSetting = False
+              listNotEmpty = False
+              print(f"{F.LIGHTRED_EX}\nError: Video list is empty!{S.R}")
+            else:
+              listNotEmpty = True
+          else:
+            print(f"\nEnter a list of {F.YELLOW}Video Links{S.R} or {F.YELLOW}Video IDs{S.R} to scan, separated by commas.")
+            print(" > Note: All videos must be from the same channel.")
+            enteredVideosList = string_to_list(input("Enter here: "))
+            validConfigSetting = False
+            if len(enteredVideosList) == 0:
+              listNotEmpty = False
+              print(f"{F.LIGHTRED_EX}\nError: Video list is empty!{S.R}")
+            else:
+              listNotEmpty = True
+
+          # Validates all video IDs/Links, gets necessary info about them
+          validVideoIDs = True
+          videosToScan = []
+          videoListResult = [] # True/False, video ID, videoTitle, commentCount, channelID, channelTitle
+          for i in range(len(enteredVideosList)):
+            videoListResult.append([])
+            videosToScan.append({})
+            videoListResult[i] = validate_video_id(youtube, enteredVideosList[i]) # Sends link or video ID for isolation and validation
+            if videoListResult[i][0] == False:
+              validVideoIDs = False
+              confirm = False
+              break
+
+        for i in range(len(videoListResult)): # Change this
+          if videoListResult[i][0] == True:
+            videosToScan[i]['videoID'] = str(videoListResult[i][1])
+            videosToScan[i]['videoTitle'] = str(videoListResult[i][2])
+            videosToScan[i]['commentCount'] = int(videoListResult[i][3])
+            videosToScan[i]['channelOwnerID'] = str(videoListResult[i][4])
+            videosToScan[i]['channelOwnerName'] = str(videoListResult[i][5])
+            miscData['totalCommentCount'] += int(videoListResult[i][3])
+          else:
+            print(f"\nInvalid Video: {enteredVideosList[i]}  |  Video ID = {videoListResult[1]}")
+            validConfigSetting = False
+            break
+          
+          # Check each video against first to ensure all on same channel
+          if allVideosMatchBool == True:
+            misMatchVidIndex = 0
+          if videosToScan[0]['channelOwnerID'] != videosToScan[i]['channelOwnerID']:
+            misMatchVidIndex += 1
+            if allVideosMatchBool == True:
+              print(f"\n {F.LIGHTRED_EX}ERROR: Videos scanned together all must be from the same channel.{S.R}")
+              print("  The following videos do not match the channel owner of the first video in the list: ")
+            if misMatchVidIndex == 11 and len(enteredVideosList) > 10:
+              remainingCount = str(len(enteredVideosList) - 10)
+              if choice(f"There are {remainingCount} more mis-matched videos, do you want to see the rest?") == False:
+                break
+            print(f"  {misMatchVidIndex}. {str(videosToScan[i]['videoTitle'])}")
+            validConfigSetting = False
+            allVideosMatchBool = False
+
+        # If videos not from same channel, skip and re-prompt    
+        if allVideosMatchBool == True:       
+          # Print video titles, if there are many, ask user to see all if more than 5
+          i = 0
+          print(f"\n{F.BLUE}Chosen Videos:{S.R}")
+          for video in videosToScan:
+            i += 1
+            if i==6 and len(enteredVideosList) > 5:
+              remainingCount = str(len(enteredVideosList) - 5)
+              if choice(f"You have entered many videos, do you need to see the rest (x{remainingCount})?") == False:
+                break
+            print(f" {i}. {video['videoTitle']}")
+          print("")
+          
+          if currentUser[0] != videosToScan[0]['channelOwnerID']:
+            userNotChannelOwner = True
+
+          miscData['channelOwnerID'] = videosToScan[0]['channelOwnerID']
+          miscData['channelOwnerName'] = videosToScan[0]['channelOwnerName']
+          
+          # Ask if correct videos, or skip if config
+          if config and config['skip_confirm_video'] == True:
+            confirm = True
+          else:
+            if userNotChannelOwner == True and moderator_mode == False:
+              print(f"{F.LIGHTRED_EX}NOTE: This is not your video. Enabling '{F.YELLOW}Not Your Channel Mode{F.LIGHTRED_EX}'. You can report spam comments, but not delete them.{S.R}")
+            elif userNotChannelOwner == True and moderator_mode == True:
+              print(f"{F.LIGHTRED_EX}NOTE: {F.YELLOW}Moderator Mode is enabled{F.LIGHTRED_EX}. You can hold comments for review when using certain modes{S.R}")
+            print("Total number of comments to scan: " + str(miscData['totalCommentCount']))
+            if miscData['totalCommentCount'] >= 100000:
+              print(f"\n{B.YELLOW}{F.BLACK} WARNING: {S.R} You have chosen to scan a large amount of comments. The default API quota limit ends up")
+              print(f" around {F.YELLOW}10,000 comment deletions per day{S.R}. If you find more spam than that you will go over the limit.")
+              print(f"        > Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
+              if userNotChannelOwner == True or moderator_mode == True:
+                print(f"{F.LIGHTCYAN_EX}> Note:{S.R} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")
+            confirm = choice("Is this video list correct?", bypass=validConfigSetting)
+
+    elif scanMode == "recentVideos":
+      confirm = False
+      validEntry = False
+      validChannel = False
+      
+      while validChannel == False:
+        # Get and verify config setting for channel ID
+        if config and config['channel_to_scan'] != 'ask':
+          if config['channel_to_scan'] == 'mine':
+            channelID = currentUser[0]
+            channelTitle = currentUser[1]
+            validChannel = True
+            break
+          else:
+            validChannel, channelID, channelTitle = validate_channel_id(youtube, config['channel_to_scan'])
+            if validChannel == True:
+              break
+            else:
+              print("Invalid Channel ID or Link in config file!")
+
+        print(f"\nEnter a {F.YELLOW}channel ID or Link{S.R} to scan {F.LIGHTCYAN_EX}recent videos{S.R} from")
+        print(f"   > If scanning {F.YELLOW}your own channel{S.R}, just hit {F.LIGHTGREEN_EX}Enter{S.R}")
+        inputtedChannel = input("\nEnter Here: ")
+        if inputtedChannel == "":
           channelID = currentUser[0]
           channelTitle = currentUser[1]
           validChannel = True
-          break
         else:
-          validChannel, channelID, channelTitle = validate_channel_id(config['channel_to_scan'])
-          if validChannel == True:
-            break
-          else:
-            print("Invalid Channel ID or Link in config file!")
+          validChannel, channelID, channelTitle = validate_channel_id(youtube, inputtedChannel)
 
-      print(f"\nEnter a {F.YELLOW}channel ID or Link{S.R} to scan {F.LIGHTCYAN_EX}recent videos{S.R} from")
-      print(f"   > If scanning {F.YELLOW}your own channel{S.R}, just hit {F.LIGHTGREEN_EX}Enter{S.R}")
-      inputtedChannel = input("\nEnter Here: ")
-      if inputtedChannel == "":
-        channelID = currentUser[0]
-        channelTitle = currentUser[1]
-        validChannel = True
-      else:
-        validChannel, channelID, channelTitle = validate_channel_id(inputtedChannel)
+      if currentUser[0] != channelID:
+        userNotChannelOwner = True
 
-    if currentUser[0] != channelID:
-      userNotChannelOwner = True
-
-    print(f"\nChosen Channel: {F.LIGHTCYAN_EX}{channelTitle}{S.R}")
-    
-    # Get number of recent videos to scan, either from config or user input, and validate
-    while validEntry == False or confirm == False:
-      videosToScan=[]
-      validConfigSetting = True
-      if config and config['recent_videos_amount'] != 'ask' and validConfigSetting == True:
-        numVideos = config['recent_videos_amount']
+      print(f"\nChosen Channel: {F.LIGHTCYAN_EX}{channelTitle}{S.R}")
+      
+      # Get number of recent videos to scan, either from config or user input, and validate
+      while validEntry == False or confirm == False:
+        videosToScan=[]
+        validConfigSetting = True
+        if config and config['recent_videos_amount'] != 'ask' and validConfigSetting == True:
+          numVideos = config['recent_videos_amount']
+          try:
+            numVideos = int(numVideos)
+          except:
+            validConfigSetting = False
+            print("Invalid number entered in config file for recent_videos_amount")
+            numVideos = None
+        else:
+          print(f"\nEnter the {F.YELLOW}number most recent videos{S.R} to scan back-to-back:")
+          numVideos = input("\nNumber of Recent Videos: ")
         try:
           numVideos = int(numVideos)
-        except:
-          validConfigSetting = False
-          print("Invalid number entered in config file for recent_videos_amount")
-          numVideos = None
-      else:
-        print(f"\nEnter the {F.YELLOW}number most recent videos{S.R} to scan back-to-back:")
-        numVideos = input("\nNumber of Recent Videos: ")
-      try:
-        numVideos = int(numVideos)
-        if numVideos > 0 and numVideos <= 500:
-          validEntry = True
-          validConfigSetting = True
-        else:
-          print("Error: Entry must be from 1 to 500 (the YouTube API Limit)")
-          validEntry = False
-          validConfigSetting = False
-      except ValueError:
-        print(f"{F.LIGHTRED_EX}Error:{S.R} Entry must be a whole number greater than zero.")
-      
-      if validEntry == True and numVideos >= 100:
-        print(f"\n{B.YELLOW}{F.BLACK} WARNING: {S.R} You have chosen to scan a large amount of videos. With the default API quota limit,")
-        print(f" every 100 videos will use up 20% of the quota {F.YELLOW}just from listing the videos alone, before any comment scanning.{S.R}")
-        print(f"        > Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
+          if numVideos > 0 and numVideos <= 500:
+            validEntry = True
+            validConfigSetting = True
+          else:
+            print("Error: Entry must be from 1 to 500 (the YouTube API Limit)")
+            validEntry = False
+            validConfigSetting = False
+        except ValueError:
+          print(f"{F.LIGHTRED_EX}Error:{S.R} Entry must be a whole number greater than zero.")
+        
+        if validEntry == True and numVideos >= 100:
+          print(f"\n{B.YELLOW}{F.BLACK} WARNING: {S.R} You have chosen to scan a large amount of videos. With the default API quota limit,")
+          print(f" every 100 videos will use up 20% of the quota {F.YELLOW}just from listing the videos alone, before any comment scanning.{S.R}")
+          print(f"        > Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
 
-      if validEntry == True:
-        # Fetch recent videos and print titles to user for confirmation
-        videosToScan = get_recent_videos(channelID, numVideos)
+        if validEntry == True:
+          # Fetch recent videos and print titles to user for confirmation
+          videosToScan = get_recent_videos(youtube, channelID, numVideos)
 
-        # Get total comment count
-        miscData['totalCommentCount'] = 0
-        for video in videosToScan:
-          miscData['totalCommentCount'] += int(video['commentCount'])
+          # Get total comment count
+          miscData['totalCommentCount'] = 0
+          for video in videosToScan:
+            miscData['totalCommentCount'] += int(video['commentCount'])
 
-        if len(videosToScan) < numVideos:
-          print(f"\n{F.YELLOW} WARNING:{S.R} Only {len(videosToScan)} videos found.")
-        print("\nRecent Videos To Be Scanned:")
-        for i in range(len(videosToScan)):
-          if i == 10 and len(videosToScan) > 11:
-            remainingCount = str(len(videosToScan) - 10)
-            if choice(f"There are {remainingCount} more recent videos, do you want to see the rest?") == False:
-              break          
-          print(f"  {i+1}. {videosToScan[i]['videoTitle']}")
+          if len(videosToScan) < numVideos:
+            print(f"\n{F.YELLOW} WARNING:{S.R} Only {len(videosToScan)} videos found.")
+          print("\nRecent Videos To Be Scanned:")
+          for i in range(len(videosToScan)):
+            if i == 10 and len(videosToScan) > 11:
+              remainingCount = str(len(videosToScan) - 10)
+              if choice(f"There are {remainingCount} more recent videos, do you want to see the rest?") == False:
+                break          
+            print(f"  {i+1}. {videosToScan[i]['videoTitle']}")
 
-        if config and (config['skip_confirm_video'] == True and validConfigSetting == True):
-          confirm = True
-        else:
-          if userNotChannelOwner == True and moderator_mode == False:
-            print(f"{F.LIGHTRED_EX}NOTE: These aren't your videos. Enabling '{F.YELLOW}Not Your Channel Mode{F.LIGHTRED_EX}'. You can report spam comments, but not delete them.{S.R}")
-          elif userNotChannelOwner == True and moderator_mode == True:
-            print(f"{F.LIGHTRED_EX}NOTE: {F.YELLOW}Moderator Mode is enabled{F.LIGHTRED_EX}. You can hold comments for review when using certain modes{S.R}")
-          print("\nTotal number of comments to scan: " + str(miscData['totalCommentCount']))
-          if miscData['totalCommentCount'] >= 100000:
-            print(f"\n{B.YELLOW}{F.BLACK} WARNING: {S.R} You have chosen to scan a large amount of comments. The default API quota limit ends up")
-            print(f" around {F.YELLOW}10,000 comment deletions per day{S.R}. If you find more spam than that you will go over the limit.")
-            print(f"        > Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
-            if userNotChannelOwner == True or moderator_mode == True:
-              print(f"{F.LIGHTCYAN_EX}> Note:{S.R} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")  
-          confirm = choice("Is everything correct?", bypass=config['skip_confirm_video'])  
+          if config and (config['skip_confirm_video'] == True and validConfigSetting == True):
+            confirm = True
+          else:
+            if userNotChannelOwner == True and moderator_mode == False:
+              print(f"{F.LIGHTRED_EX}NOTE: These aren't your videos. Enabling '{F.YELLOW}Not Your Channel Mode{F.LIGHTRED_EX}'. You can report spam comments, but not delete them.{S.R}")
+            elif userNotChannelOwner == True and moderator_mode == True:
+              print(f"{F.LIGHTRED_EX}NOTE: {F.YELLOW}Moderator Mode is enabled{F.LIGHTRED_EX}. You can hold comments for review when using certain modes{S.R}")
+            print("\nTotal number of comments to scan: " + str(miscData['totalCommentCount']))
+            if miscData['totalCommentCount'] >= 100000:
+              print(f"\n{B.YELLOW}{F.BLACK} WARNING: {S.R} You have chosen to scan a large amount of comments. The default API quota limit ends up")
+              print(f" around {F.YELLOW}10,000 comment deletions per day{S.R}. If you find more spam than that you will go over the limit.")
+              print(f"        > Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
+              if userNotChannelOwner == True or moderator_mode == True:
+                print(f"{F.LIGHTCYAN_EX}> Note:{S.R} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")  
+            confirm = choice("Is everything correct?", bypass=config['skip_confirm_video'])  
 
-    miscData['channelOwnerID'] = channelID
-    miscData['channelOwnerName'] = channelTitle
+      miscData['channelOwnerID'] = channelID
+      miscData['channelOwnerName'] = channelTitle
 
-  # If chooses to scan entire channel - Validate Channel ID
-  elif scanMode == "entireChannel":
-    numVideos = 1 # Using this variable to indicate only one loop of scanning done later
-    # While loop to get max scan number, not an integer, asks again
-    validInteger = False
-    if config: validConfigSetting = True
-    while validInteger == False:
-      try:
-        if validConfigSetting == True and config and config['max_comments'] != 'ask':
-          maxScanNumber = int(config['max_comments'])
-        else:
-          maxScanNumber = int(input(f"Enter the maximum {F.YELLOW}number of comments{S.R} to scan: "))
-
-          if maxScanNumber >= 100000:
-            print(f"\n{B.YELLOW}{F.BLACK} WARNING: {S.R} You have chosen to scan a large amount of comments. The default API quota limit ends up")
-            print(f" around {F.YELLOW}10,000 comment deletions per day{S.R}. If you find more spam than that you will go over the limit.")
-            print(f"        > Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
-            if userNotChannelOwner == True or moderator_mode == True:
-              print(f"{F.LIGHTCYAN_EX}> Note:{S.R} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")
-            if choice("Do you still want to continu?") == False:
-              validInteger == False
-
-        if maxScanNumber > 0:
-          validInteger = True # If it gets here, it's an integer, otherwise goes to exception
-        else:
-          print("\nInvalid Input! Number must be greater than zero.")
-          validConfigSetting = False
-      except:
-        print("\nInvalid Input! - Must be a whole number.")
-        validConfigSetting = False
-
-    miscData['channelOwnerID'] = currentUser[0]
-    miscData['channelOwnerName'] = currentUser[1]
-
-  elif scanMode == 'communityPost':
-    print(f"\nNOTES: This mode is {F.YELLOW}experimental{S.R}, and not as polished as other features. Expect some janky-ness.")
-    print("   > It is also much slower to retrieve comments, because it does not use the API")
-    print(f"   > You should only scan {F.YELLOW}your own{S.R} community posts, or things might not work right")
-    confirm = False
-    while confirm == False:
-      communityPostInput = input("\nEnter the ID or link of the community post: ")
-      # Validate post ID or link, get additional info about owner, and useable link
-      isValid, communityPostID, postURL, postOwnerID, postOwnerUsername = validate_post_id(communityPostInput)
-      if isValid == True:
-        print("\nCommunity Post By: " + postOwnerUsername)
-        if postOwnerID != currentUser[0]:
-          userNotChannelOwner = True
-          print("\nWarning: You are scanning someone elses post. 'Not Your Channel Mode' Enabled.")
-        confirm = choice("Continue?")
-      else:
-        print("Problem interpreting the post information, please check the link or ID.")
-    miscData['channelOwnerID'] = postOwnerID
-    miscData['channelOwnerName'] = postOwnerUsername 
-
-    # Checking config for max comments in config
-    if config and config['max_comments'] != 'ask':
-      validInteger = False 
-      try:
-        maxScanNumber = int(config['max_comments'])
-        if maxScanNumber > 0:
-          validInteger = True
-        else:
-          pass
-      except:
-        pass
-
-      if validInteger == False:
-        print("\nInvalid max_comments setting in config! Number must a whole number be greater than zero.")
+    # If chooses to scan entire channel - Validate Channel ID
+    elif scanMode == "entireChannel":
+      numVideos = 1 # Using this variable to indicate only one loop of scanning done later
+      # While loop to get max scan number, not an integer, asks again
+      validInteger = False
+      if config: validConfigSetting = True
       while validInteger == False:
-        maxScanInput = input(f"\nEnter the maximum {F.YELLOW}number of comments{S.R} to scan: ")
         try:
-          maxScanNumber = int(maxScanInput)
+          if validConfigSetting == True and config and config['max_comments'] != 'ask':
+            maxScanNumber = int(config['max_comments'])
+          else:
+            maxScanNumber = int(input(f"Enter the maximum {F.YELLOW}number of comments{S.R} to scan: "))
+
+            if maxScanNumber >= 100000:
+              print(f"\n{B.YELLOW}{F.BLACK} WARNING: {S.R} You have chosen to scan a large amount of comments. The default API quota limit ends up")
+              print(f" around {F.YELLOW}10,000 comment deletions per day{S.R}. If you find more spam than that you will go over the limit.")
+              print(f"        > Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
+              if userNotChannelOwner == True or moderator_mode == True:
+                print(f"{F.LIGHTCYAN_EX}> Note:{S.R} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")
+              if choice("Do you still want to continu?") == False:
+                validInteger == False
+
           if maxScanNumber > 0:
             validInteger = True # If it gets here, it's an integer, otherwise goes to exception
           else:
-            print("\nInvalid Input! Number must a whole number be greater than zero.")
+            print("\nInvalid Input! Number must be greater than zero.")
+            validConfigSetting = False
         except:
-          print("\nInvalid Input! - Must be a whole number greater than zero.")
-      
-  # Create config file
-  elif scanMode == "makeConfig":
-    create_config_file()
-    print("\nConfig file created: SpamPurgeConfig.ini - Open file with text editor to read instructions and change settings.")
+          print("\nInvalid Input! - Must be a whole number.")
+          validConfigSetting = False
 
-  # Check for latest version
-  elif scanMode == "checkUpdates":
-    check_lists_update(spamListDict)
-    check_for_update(version, updateReleaseChannel)
+      miscData['channelOwnerID'] = currentUser[0]
+      miscData['channelOwnerName'] = currentUser[1]
 
-  # Recove deleted comments mode
-  elif scanMode == "recoverMode":
-    recover_deleted_comments()
+    elif scanMode == 'communityPost':
+      print(f"\nNOTES: This mode is {F.YELLOW}experimental{S.R}, and not as polished as other features. Expect some janky-ness.")
+      print("   > It is also much slower to retrieve comments, because it does not use the API")
+      print(f"   > You should only scan {F.YELLOW}your own{S.R} community posts, or things might not work right")
+      confirm = False
+      while confirm == False:
+        communityPostInput = input("\nEnter the ID or link of the community post: ")
+        # Validate post ID or link, get additional info about owner, and useable link
+        isValid, communityPostID, postURL, postOwnerID, postOwnerUsername = validate_post_id(youtube, communityPostInput)
+        if isValid == True:
+          print("\nCommunity Post By: " + postOwnerUsername)
+          if postOwnerID != currentUser[0]:
+            userNotChannelOwner = True
+            print("\nWarning: You are scanning someone elses post. 'Not Your Channel Mode' Enabled.")
+          confirm = choice("Continue?")
+        else:
+          print("Problem interpreting the post information, please check the link or ID.")
+      miscData['channelOwnerID'] = postOwnerID
+      miscData['channelOwnerName'] = postOwnerUsername 
 
-  # User inputs filtering mode
-  print("\n-------------------------------------------------------")
-  print(f"~~~~~~~~~~~ Choose how to identify spammers ~~~~~~~~~~~")
-  print("-------------------------------------------------------")
-  print(f" 1. {F.BLACK}{B.LIGHTGREEN_EX}(RECOMMENDED):{S.R} {F.YELLOW}Auto-Smart Mode{S.R}: Automatically detects multiple spammer techniques")
-  print(f" 2. {F.YELLOW}Sensitive-Smart Mode{S.R}: Much more likely to catch all spammers, but with significantly more false positives")  
-  print(f" 3. Enter Spammer's {F.LIGHTRED_EX}channel ID(s) or link(s){S.R}")
-  print(f" 4. Scan {F.LIGHTBLUE_EX}usernames{S.R} for criteria you choose")
-  print(f" 5. Scan {F.CYAN}comment text{S.R} for criteria you choose")
-  print(f" 6. Scan both {F.LIGHTBLUE_EX}usernames{S.R} and {F.CYAN}comment text{S.R} for criteria you choose")
-  print(f" 7. ASCII Mode: Scan usernames for {F.LIGHTMAGENTA_EX}ANY non-ASCII special characters{S.R} (May cause collateral damage!)")
+      # Checking config for max comments in config
+      if config and config['max_comments'] != 'ask':
+        validInteger = False 
+        try:
+          maxScanNumber = int(config['max_comments'])
+          if maxScanNumber > 0:
+            validInteger = True
+          else:
+            pass
+        except:
+          pass
+
+        if validInteger == False:
+          print("\nInvalid max_comments setting in config! Number must a whole number be greater than zero.")
+        while validInteger == False:
+          maxScanInput = input(f"\nEnter the maximum {F.YELLOW}number of comments{S.R} to scan: ")
+          try:
+            maxScanNumber = int(maxScanInput)
+            if maxScanNumber > 0:
+              validInteger = True # If it gets here, it's an integer, otherwise goes to exception
+            else:
+              print("\nInvalid Input! Number must a whole number be greater than zero.")
+          except:
+            print("\nInvalid Input! - Must be a whole number greater than zero.")
+        
+    # Create config file
+    elif scanMode == "makeConfig":
+      create_config_file()
+      print("\nConfig file created: SpamPurgeConfig.ini - Open file with text editor to read instructions and change settings.")
+
+    # Check for latest version
+    elif scanMode == "checkUpdates":
+      check_lists_update(spamListDict)
+      check_for_update(version, updateReleaseChannel)
+
+    # Recove deleted comments mode
+    elif scanMode == "recoverMode":
+      recover_deleted_comments(youtube)
+
+    # User inputs filtering mode
+    print("\n-------------------------------------------------------")
+    print(f"~~~~~~~~~~~ Choose how to identify spammers ~~~~~~~~~~~")
+    print("-------------------------------------------------------")
+    print(f" 1. {F.BLACK}{B.LIGHTGREEN_EX}(RECOMMENDED):{S.R} {F.YELLOW}Auto-Smart Mode{S.R}: Automatically detects multiple spammer techniques")
+    print(f" 2. {F.YELLOW}Sensitive-Smart Mode{S.R}: Much more likely to catch all spammers, but with significantly more false positives")  
+    print(f" 3. Enter Spammer's {F.LIGHTRED_EX}channel ID(s) or link(s){S.R}")
+    print(f" 4. Scan {F.LIGHTBLUE_EX}usernames{S.R} for criteria you choose")
+    print(f" 5. Scan {F.CYAN}comment text{S.R} for criteria you choose")
+    print(f" 6. Scan both {F.LIGHTBLUE_EX}usernames{S.R} and {F.CYAN}comment text{S.R} for criteria you choose")
+    print(f" 7. ASCII Mode: Scan usernames for {F.LIGHTMAGENTA_EX}ANY non-ASCII special characters{S.R} (May cause collateral damage!)")
 
 
-  if userNotChannelOwner == True and moderator_mode == False:
-    print(f" {F.LIGHTRED_EX}Note: With 'Not Your Channel Mode' enabled, you can only report matched comments while using 'Auto-Smart Mode'.{S.R}") # Based on filterModesAllowedforNonOwners
-  elif userNotChannelOwner == True and moderator_mode == True:
-    print(f" {F.LIGHTRED_EX}Note: With 'Moderator Mode', you can hold for review using: 'Auto-Smart', 'Sensitive-Smart', and Channel ID modes.{S.R}")
-  # Make sure input is valid, if not ask again
-  validFilterMode = False
-  validFilterSubMode = False
-  filterSubMode = None
-  validConfigSetting = True
-
-  validConfigSetting = True
-  while validFilterMode == False:
-    if validConfigSetting == True and config and config['filter_mode'] != 'ask':
-      filterChoice = config['filter_mode']
-    else:
-      filterChoice = input("\nChoice (1-7): ")
-
-    validChoices = ['1', '2', '3', '4', '5', '6', '7', 'id', 'username', 'text', 'nameandtext', 'autoascii', 'autosmart', 'sensitivesmart']
-    if filterChoice in validChoices:
-      validFilterMode = True
-      # Set string variable names for filtering modes
-      if filterChoice == "1" or filterChoice == "autosmart":
-        filterMode = "AutoSmart"
-      elif filterChoice == "2" or filterChoice == "sensitivesmart":
-        filterMode = "SensitiveSmart"      
-      elif filterChoice == "3" or filterChoice == "id":
-        filterMode = "ID"
-      elif filterChoice == "4" or filterChoice == "username":
-        filterMode = "Username"
-      elif filterChoice == "5" or filterChoice == "text":
-        filterMode = "Text"
-      elif filterChoice == "6" or filterChoice == "nameandtext":
-        filterMode = "NameAndText"
-      elif filterChoice == "7" or filterChoice == "autoascii":
-        filterMode = "AutoASCII"
-
-    else:
-      print(f"\nInvalid Filter Mode: {filterChoice} - Enter either 1, 2, 3, 4, 5, 6, or 7")
-      validConfigSetting = False
-
-  ## Get filter sub-mode to decide if searching characters or string
-  validConfigSetting = None
-  if config and config['filter_submode'] != 'ask':
-    filterSubMode = config['filter_submode']
+    if userNotChannelOwner == True and moderator_mode == False:
+      print(f" {F.LIGHTRED_EX}Note: With 'Not Your Channel Mode' enabled, you can only report matched comments while using 'Auto-Smart Mode'.{S.R}") # Based on filterModesAllowedforNonOwners
+    elif userNotChannelOwner == True and moderator_mode == True:
+      print(f" {F.LIGHTRED_EX}Note: With 'Moderator Mode', you can hold for review using: 'Auto-Smart', 'Sensitive-Smart', and Channel ID modes.{S.R}")
+    # Make sure input is valid, if not ask again
+    validFilterMode = False
+    validFilterSubMode = False
+    filterSubMode = None
     validConfigSetting = True
-  else:
-    validConfigSetting = False
 
-  if filterMode == "Username" or filterMode == "Text" or filterMode == "NameAndText":
-    print("\n--------------------------------------------------------------")
-    if filterMode == "Username":
-      print("~~~ What do you want to scan usernames for specifically? ~~~")
-    elif filterMode == "Text":
-      print("~~~ What do you want to scan comment text for specifically? ~~~")
-    elif filterMode == "NameAndText":
-      print("~~~ What do you want to scan names and comments for specifically? ~~~")
-    print(f" 1. A {F.CYAN}certain special character{S.R}, or set of multiple characters")
-    print(f" 2. An {F.LIGHTMAGENTA_EX}entire string{S.R}, or multiple strings")
-    print(f" 3. Advanced: A custom {F.YELLOW}Regex pattern{S.R} you'll enter")
+    validConfigSetting = True
+    while validFilterMode == False:
+      if validConfigSetting == True and config and config['filter_mode'] != 'ask':
+        filterChoice = config['filter_mode']
+      else:
+        filterChoice = input("\nChoice (1-7): ")
 
-    while validFilterSubMode == False:
-      if validConfigSetting == True:
-        pass
+      validChoices = ['1', '2', '3', '4', '5', '6', '7', 'id', 'username', 'text', 'nameandtext', 'autoascii', 'autosmart', 'sensitivesmart']
+      if filterChoice in validChoices:
+        validFilterMode = True
+        # Set string variable names for filtering modes
+        if filterChoice == "1" or filterChoice == "autosmart":
+          filterMode = "AutoSmart"
+        elif filterChoice == "2" or filterChoice == "sensitivesmart":
+          filterMode = "SensitiveSmart"      
+        elif filterChoice == "3" or filterChoice == "id":
+          filterMode = "ID"
+        elif filterChoice == "4" or filterChoice == "username":
+          filterMode = "Username"
+        elif filterChoice == "5" or filterChoice == "text":
+          filterMode = "Text"
+        elif filterChoice == "6" or filterChoice == "nameandtext":
+          filterMode = "NameAndText"
+        elif filterChoice == "7" or filterChoice == "autoascii":
+          filterMode = "AutoASCII"
+
       else:
-        filterSubMode = input("\nChoice (1, 2, or 3): ")
-      validFilterSubModes = ["1", "2", "3", "characters", "strings", "regex"]
-      if filterSubMode in validFilterSubModes:
-        validFilterSubMode = True
-        validConfigSetting = True
-        if filterSubMode == "1" or filterSubMode == "characters":
-          filterSubMode = "chars"
-        elif filterSubMode == "2" or filterSubMode == "strings":
-          filterSubMode = "string"
-        elif filterSubMode == "3" or filterSubMode == "regex":
-          filterSubMode = "regex"
-      else:
-        print(f"\nInvalid choice: {filterSubMode} - Enter 1, 2 or 3")
+        print(f"\nInvalid Filter Mode: {filterChoice} - Enter either 1, 2, 3, 4, 5, 6, or 7")
         validConfigSetting = False
 
+    ## Get filter sub-mode to decide if searching characters or string
+    validConfigSetting = None
+    if config and config['filter_submode'] != 'ask':
+      filterSubMode = config['filter_submode']
+      validConfigSetting = True
+    else:
+      validConfigSetting = False
 
-  ### Prepare Filtering Modes ###
-  # Default values for filter criteria
-  inputtedSpammerChannelID = None
-  inputtedUsernameFilter = None
-  inputtedCommentTextFilter = None
+    if filterMode == "Username" or filterMode == "Text" or filterMode == "NameAndText":
+      print("\n--------------------------------------------------------------")
+      if filterMode == "Username":
+        print("~~~ What do you want to scan usernames for specifically? ~~~")
+      elif filterMode == "Text":
+        print("~~~ What do you want to scan comment text for specifically? ~~~")
+      elif filterMode == "NameAndText":
+        print("~~~ What do you want to scan names and comments for specifically? ~~~")
+      print(f" 1. A {F.CYAN}certain special character{S.R}, or set of multiple characters")
+      print(f" 2. An {F.LIGHTMAGENTA_EX}entire string{S.R}, or multiple strings")
+      print(f" 3. Advanced: A custom {F.YELLOW}Regex pattern{S.R} you'll enter")
 
-  if filterMode == "ID":
-    filterSettings = prepare_filter_mode_ID(currentUser, scanMode, config)
-    inputtedSpammerChannelID = filterSettings[0]
-
-  elif filterMode == "AutoASCII":
-    filterSettings = prepare_filter_mode_non_ascii(currentUser, scanMode, config)
-    regexPattern = filterSettings[0]
-
-  elif filterMode == "AutoSmart":
-    filterSettings = prepare_filter_mode_smart(currentUser, scanMode, config, miscData)
-    inputtedUsernameFilter = filterSettings[0]
-    inputtedCommentTextFilter = filterSettings[0]
-  elif filterMode == "SensitiveSmart":
-    filterSettings = prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive=True)
-    inputtedUsernameFilter = filterSettings[0]
-    inputtedCommentTextFilter = filterSettings[0]
-
-  elif filterSubMode == "chars":
-    filterSettings = prepare_filter_mode_chars(currentUser, scanMode, filterMode, config)
-  elif filterSubMode == "string":
-    filterSettings = prepare_filter_mode_strings(currentUser, scanMode, filterMode, config)
-  elif filterSubMode == "regex":
-    filterSettings = prepare_filter_mode_regex(currentUser, scanMode, filterMode, config)
-    regexPattern = filterSettings[1]
-
-  if filterSubMode != "regex":
-    if filterMode == "Username":
-      inputtedUsernameFilter = filterSettings[0]
-    elif filterMode == "Text":
-      inputtedCommentTextFilter = filterSettings[0]
-    elif filterMode == "NameAndText":
-      inputtedUsernameFilter = filterSettings[0]
-      inputtedCommentTextFilter = filterSettings[0]
-
-  ##################### START SCANNING #####################
-
-  if scanMode == "communityPost":
-    def scan_community_post(communityPostID, limit):
-      allCommunityCommentsDict = get_community_comments(communityPostID=communityPostID, limit=limit)
-      for key, value in allCommunityCommentsDict.items():
-        currentCommentDict = {
-          'authorChannelID':value['authorChannelID'], 
-          'parentAuthorChannelID':None, 
-          'authorChannelName':value['authorName'], 
-          'commentText':value['commentText'],
-          'commentID':key,
-          }
-        check_against_filter(currentUser, filtersDict, miscData, config, currentCommentDict, videoID=communityPostID)
-    scan_community_post(communityPostID, maxScanNumber)
-
-  else:
-    # Goes to get comments for first page
-    print("\n------------------------------------------------------------------------------")
-    print("(Note: If the program appears to freeze, try right clicking within the window)\n")
-    print("                          --- Scanning --- \n")
-
-    filtersDict = { 'filterMode': filterMode,
-                    'filterSubMode': filterSubMode,
-                    'CustomChannelIdFilter': inputtedSpammerChannelID,
-                    'CustomUsernameFilter': inputtedUsernameFilter,
-                    'CustomCommentTextFilter': inputtedCommentTextFilter,
-                    'CustomRegexPattern': regexPattern 
-                    }
-    
-    # ----------------------------------------------------------------------------------------------------------------------
-    def scan_video(youtube, miscData, config, currentUser, filtersDict, scanVideoID, videosToScan=None, videoTitle=None, showTitle=False, i=1):
-      nextPageToken = get_comments(youtube, currentUser, filtersDict, miscData, config, scanVideoID, videosToScan=videosToScan)
-      if showTitle == True and len(videosToScan) > 0:
-        # Prints video title, progress count, adds enough spaces to cover up previous stat print line
-        offset = 95 - len(videoTitle)
-        if offset > 0:
-          spacesStr = " " * offset
+      while validFilterSubMode == False:
+        if validConfigSetting == True:
+          pass
         else:
-          spacesStr = ""
-        print(f"Scanning {i}/{len(videosToScan)}: " + videoTitle + spacesStr + "\n")
-
-      print_count_stats(miscData, videosToScan, final=False)  # Prints comment scan stats, updates on same line
-      # After getting first page, if there are more pages, goes to get comments for next page
-      while nextPageToken != "End" and scannedCommentsCount < maxScanNumber:
-        nextPageToken = get_comments(youtube, currentUser, filtersDict, miscData, config, scanVideoID, nextPageToken, videosToScan=videosToScan)
-    # ----------------------------------------------------------------------------------------------------------------------
-
-    if scanMode == "entireChannel":
-      scan_video(youtube, miscData, config, currentUser, filtersDict, scanVideoID)
-    elif scanMode == "recentVideos" or scanMode == "chosenVideos":
-      i = 1
-      for video in videosToScan:
-        scanVideoID = str(video['videoID'])
-        videoTitle = str(video['videoTitle'])
-        scan_video(youtube, miscData, config, currentUser, filtersDict, scanVideoID, videosToScan=videosToScan, videoTitle=videoTitle, showTitle=True, i=i)
-        i += 1
-    print_count_stats(miscData, videosToScan, final=True)  # Prints comment scan stats, finalizes
-  
-##########################################################
-  bypass = False
-  if config and config['enable_logging'] != 'ask':
-    logSetting = config['enable_logging']
-    if logSetting == True:
-      loggingEnabled = True
-      bypass = True
-    elif logSetting == False:
-      loggingEnabled = False
-      bypass = True
-    elif logSetting == "ask":
-      bypass = False
-    else:
-      bypass = False
-      print("Error Code C-2: Invalid value for 'enable_logging' in config file:  " + logSetting)
-
-  # Counts number of found spam comments and prints list
-  spam_count = len(matchedCommentsDict)
-  if spam_count == 0: # If no spam comments found, exits
-    print(f"{B.RED}{F.BLACK} No matched comments or users found! {F.R}{B.R}{S.R}\n")
-    print(f"If you see missed spam or false positives, you can submit a filter suggestion here: {F.YELLOW}TJoe.io/filter-feedback{S.R}")
-    if bypass == False:
-      input("\nPress Enter to exit...")
-      sys.exit()
-    elif bypass == True:
-      print("Exiting in 5 seconds...")
-      time.sleep(5)
-      sys.exit()
-  print(f"Number of Matched Comments Found: {B.RED}{F.WHITE} {str(len(matchedCommentsDict))} {F.R}{B.R}{S.R}")
-
-  if bypass == False:
-    # Asks user if they want to save list of spam comments to a file
-    print(f"\nSpam comments ready to display. Also {F.LIGHTGREEN_EX}save a log file?{S.R} {B.GREEN}{F.BLACK} Highly Recommended! {F.R}{B.R}{S.R}")
-    print(f"        (It even allows you to {F.LIGHTGREEN_EX}restore{S.R} deleted comments later)")
-    loggingEnabled = choice(f"Save Log File (Recommended)?")
-    print("")
-
-  # Prepare logging
-  logMode = None
-  logFileType = None
-  jsonSettingsDict = {}
-  jsonLogging = False
-  if loggingEnabled == True:
-    if config and config['log_mode']:
-      logMode = config['log_mode']
-      if logMode == "rtf":
-        logFileType = ".rtf"
-      elif logMode == "plaintext":
-        logFileType = ".txt"
-      else:
-        print("Invalid value for 'log_mode' in config file:  " + logMode)
-        print("Defaulting to .rtf file")
-        logMode = "rtf"
-    else:
-      logMode =  "rtf"
-      logFileType = ".rtf"
-
-    # Prepare log file names
-    global logFileName
-    logTime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    fileNameBase = "Spam_Log_" + logTime
-    fileName = fileNameBase + logFileType
-
-    if config:
-      try:
-        # Get json logging settings
-        if config['json_log'] == True:
-          jsonLogging = True
-          jsonLogFileName = fileNameBase + ".json"
-          jsonSettingsDict['channelOwnerID'] = miscData['channelOwnerID']
-          jsonSettingsDict['channelOwnerName'] = miscData['channelOwnerName']
-
-          #Encoding
-          allowedEncodingModes = ['utf-8', 'utf-16', 'utf-32', 'rtfunicode']
-          if config['json_encoding'] in allowedEncodingModes:
-            jsonSettingsDict['encoding'] = config['json_encoding']
-
-        elif config['json_log'] == False:
-          jsonLogging = False
+          filterSubMode = input("\nChoice (1, 2, or 3): ")
+        validFilterSubModes = ["1", "2", "3", "characters", "strings", "regex"]
+        if filterSubMode in validFilterSubModes:
+          validFilterSubMode = True
+          validConfigSetting = True
+          if filterSubMode == "1" or filterSubMode == "characters":
+            filterSubMode = "chars"
+          elif filterSubMode == "2" or filterSubMode == "strings":
+            filterSubMode = "string"
+          elif filterSubMode == "3" or filterSubMode == "regex":
+            filterSubMode = "regex"
         else:
-          print("Invalid value for 'json_log' in config file:  " + config['json_log'])
-          print("Defaulting to False (no json log file will be created)")
-          jsonLogging = False
+          print(f"\nInvalid choice: {filterSubMode} - Enter 1, 2 or 3")
+          validConfigSetting = False
 
-        if config['json_extra_data'] == True:
-          jsonSettingsDict['json_extra_data'] = True
-        elif config['json_extra_data'] == False:
-          jsonSettingsDict['json_extra_data'] = False
-        
-        if config['json_profile_picture'] != False:
-          jsonSettingsDict['json_profile_picture'] = config['json_profile_picture']
-          jsonSettingsDict['logTime'] = logTime
-        elif config['json_profile_picture'] == False:
-          jsonSettingsDict['json_profile_picture'] = False
-          
 
-      except KeyError:
-        print("Problem getting json settings, is your config file correct?")
-    else:
-      jsonLogging = False
-    
-
-    # Set where to put log files      
-    defaultLogPath = "logs"
-    if config and config['log_path']:
-      if config['log_path'] == "default": # For backwards compatibility, can remove later on
-        logPath = defaultLogPath
-      else:
-        logPath = config['log_path']
-      logFileName = os.path.normpath(logPath + "/" + fileName)
-      print(f"Log file will be located at {F.YELLOW}" + logFileName + f"{S.R}\n")
-      if jsonLogging == True:
-        jsonLogFileName = os.path.normpath(logPath + "/" + jsonLogFileName)
-        jsonSettingsDict['jsonLogFileName'] = jsonLogFileName
-        print(f"JSON log file will be located at {F.YELLOW}" + jsonLogFileName + f"{S.R}\n")
-    else:
-      logFileName = os.path.normpath(defaultLogPath + "/" + fileName)
-      print(f"Log file will be called {F.YELLOW}" + logFileName + f"{S.R}\n")
-
-    if bypass == False:
-      input(f"Press {F.YELLOW}Enter{S.R} to display comments...")
-
-    # Write heading info to log file
-    def write_func(logFileName, string, logMode, numLines):
-      rtfLineEnd = ("\\line"*numLines) + " "
-      newLines = "\n"*numLines
-      if logMode == "rtf":
-        write_rtf(logFileName, make_rtf_compatible(string) + rtfLineEnd)
-      elif logMode == "plaintext":
-        write_plaintext_log(logFileName, string + newLines)
-
-    # Creates log file and writes first line
-    if logMode == "rtf":
-      write_rtf(logFileName, firstWrite=True)
-      write_func(logFileName, "\\par----------- YouTube Spammer Purge Log File -----------", logMode, 2)
-    elif logMode == "plaintext":
-      write_plaintext_log(logFileName, firstWrite=True)
-      write_func(logFileName, "----------- YouTube Spammer Purge Log File -----------", logMode, 2)
+    ### Prepare Filtering Modes ###
+    # Default values for filter criteria
+    inputtedSpammerChannelID = None
+    inputtedUsernameFilter = None
+    inputtedCommentTextFilter = None
+    regexPattern = ""
 
     if filterMode == "ID":
-      write_func(logFileName, "Channel IDs of spammer searched: " + ", ".join(inputtedSpammerChannelID), logMode, 2)
-    elif filterMode == "Username":
-      write_func(logFileName, "Characters searched in Usernames: " + ", ".join(inputtedUsernameFilter), logMode, 2)
-    elif filterMode == "Text":
-      write_func(logFileName, "Characters searched in Comment Text: " + ", ".join(inputtedCommentTextFilter), logMode, 2)
-    elif filterMode == "NameAndText":
-      write_func(logFileName, "Characters searched in Usernames and Comment Text: " + ", ".join(filterSettings[1]), logMode, 2)
+      filterSettings = prepare_filter_mode_ID(youtube, currentUser, scanMode, config)
+      inputtedSpammerChannelID = filterSettings[0]
+
     elif filterMode == "AutoASCII":
-      write_func(logFileName, "Automatic Search Mode: " + str(filterSettings[1]), logMode, 2)
+      filterSettings = prepare_filter_mode_non_ascii(currentUser, scanMode, config)
+      regexPattern = filterSettings[0]
+
     elif filterMode == "AutoSmart":
-      write_func(logFileName, "Automatic Search Mode: Smart Mode ", logMode, 2)
+      filterSettings = prepare_filter_mode_smart(currentUser, scanMode, config, miscData)
+      inputtedUsernameFilter = filterSettings[0]
+      inputtedCommentTextFilter = filterSettings[0]
     elif filterMode == "SensitiveSmart":
-      write_func(logFileName, "Automatic Search Mode: Sensitive Smart ", logMode, 2)
-    write_func(logFileName, "Number of Matched Comments Found: " + str(len(matchedCommentsDict)), logMode, 2)
-    write_func(logFileName, f"IDs of Matched Comments: \n[ {', '.join(matchedCommentsDict)} ] ", logMode, 3)
-  else:
-    print("Continuing without logging... \n")
+      filterSettings = prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive=True)
+      inputtedUsernameFilter = filterSettings[0]
+      inputtedCommentTextFilter = filterSettings[0]
 
-  jsonSettingsDict['jsonLogging'] = jsonLogging
+    elif filterSubMode == "chars":
+      filterSettings = prepare_filter_mode_chars(currentUser, scanMode, filterMode, config)
+    elif filterSubMode == "string":
+      filterSettings = prepare_filter_mode_strings(currentUser, scanMode, filterMode, config)
+    elif filterSubMode == "regex":
+      filterSettings = prepare_filter_mode_regex(currentUser, scanMode, filterMode, config)
+      regexPattern = filterSettings[1]
 
-  # Prints list of spam comments
-  if scanMode == "communityPost":
-    scanVideoID = communityPostID
-  print("\n\nAll Matched Comments: \n")
+    if filterSubMode != "regex":
+      if filterMode == "Username":
+        inputtedUsernameFilter = filterSettings[0]
+      elif filterMode == "Text":
+        inputtedCommentTextFilter = filterSettings[0]
+      elif filterMode == "NameAndText":
+        inputtedUsernameFilter = filterSettings[0]
+        inputtedCommentTextFilter = filterSettings[0]
 
-  print_comments(scanVideoID, list(matchedCommentsDict.keys()), loggingEnabled, scanMode, logMode, jsonSettingsDict)
+    ##################### START SCANNING #####################
 
-  try:
-    if jsonSettingsDict['jsonLogging']:
-      if config['json_extra_data'] == True:
-        jsonDataDict = get_extra_json_data(list(matchSamplesDict.keys()), jsonSettingsDict)
-        jsonDataDict['Comments'] = matchedCommentsDict
-        write_json_log(jsonSettingsDict, jsonDataDict, firstWrite=True)
-      else:
-        write_json_log(jsonSettingsDict, matchedCommentsDict, firstWrite=True)
-  except KeyError:
-    print("Problem getting json config settings. Is your config file up to date / correct?")
+    if scanMode == "communityPost":
+      def scan_community_post(communityPostID, limit):
+        allCommunityCommentsDict = get_community_comments(communityPostID=communityPostID, limit=limit)
+        for key, value in allCommunityCommentsDict.items():
+          currentCommentDict = {
+            'authorChannelID':value['authorChannelID'], 
+            'parentAuthorChannelID':None, 
+            'authorChannelName':value['authorName'], 
+            'commentText':value['commentText'],
+            'commentID':key,
+            }
+          check_against_filter(currentUser, filtersDict, miscData, config, currentCommentDict, videoID=communityPostID)
+      scan_community_post(communityPostID, maxScanNumber)
 
-  print(f"\n{F.WHITE}{B.RED} NOTE: {S.R} Check that all comments listed above are indeed spam.")
-  print(f" > If you see missed spam or false positives, you can submit a filter suggestion here: {F.YELLOW}TJoe.io/filter-feedback{S.R}")
-
-  print()
-
-  ### ---------------- Decide whether to skip deletion ----------------
-  # Defaults
-  deletionEnabled = False
-  deletionMode = None # Should be changed later, but if missed it will default to heldForReview
-  confirmDelete = None # If None, will later cause user to be asked to delete
-  if moderator_mode == False:
-    filterModesAllowedforNonOwners = ["AutoSmart"]
-  elif moderator_mode == True:
-    filterModesAllowedforNonOwners = ["AutoSmart", "SensitiveSmart", 'ID']
-  
-  # If user isn't channel owner and not using allowed filter mode, skip deletion
-  if userNotChannelOwner == True and filterMode not in filterModesAllowedforNonOwners:
-    confirmDelete = False
-    deletionEnabled = False
-  elif not config:
-    deletionEnabled = "Allowed" # If no config, no need to use all the below, skip right to prompt how to process
-
-  # Test skip_deletion preference - If passes both, will either delete or ask user to delete
-  elif config['skip_deletion'] == True:
-    sys.exit()
-  elif config['skip_deletion'] != False:
-    print("Error Code C-3: Invalid value for 'skip_deletion' in config file. Must be 'True' or 'False':  " + str(config['skip_deletion']))
-    input("\nPress Enter to exit...")
-    sys.exit()
-  ### ----------------------------------------------------------------  
-
-  ### ------------- Decide whether to ask before deleting -------------
-  # Using config to determine deletion type, block invalid settings
-  elif config['delete_without_reviewing'] == False:
-    deletionEnabled = "Allowed"
-    if config['removal_type'] == "reportspam" or userNotChannelOwner == True:
-      deletionMode = "reportSpam"
-    elif config['removal_type'] == "heldforreview":
-      deletionMode = "heldForReview"
-    elif config['removal_type'] == "rejected":
-      deletionMode = "rejected"
     else:
-      print("Error Code C-4: Invalid value for 'removal_type' in config file. Must be 'heldforreview', 'rejected', or 'reportSpam':  " + config['removal_type'])
+      # Goes to get comments for first page
+      print("\n------------------------------------------------------------------------------")
+      print("(Note: If the program appears to freeze, try right clicking within the window)\n")
+      print("                          --- Scanning --- \n")
+
+      filtersDict = { 'filterMode': filterMode,
+                      'filterSubMode': filterSubMode,
+                      'CustomChannelIdFilter': inputtedSpammerChannelID,
+                      'CustomUsernameFilter': inputtedUsernameFilter,
+                      'CustomCommentTextFilter': inputtedCommentTextFilter,
+                      'CustomRegexPattern': regexPattern 
+                      }
+      
+      # ----------------------------------------------------------------------------------------------------------------------
+      def scan_video(youtube, miscData, config, currentUser, filtersDict, scanVideoID, videosToScan=None, videoTitle=None, showTitle=False, i=1):
+        nextPageToken = get_comments(youtube, currentUser, filtersDict, miscData, config, scanVideoID, videosToScan=videosToScan)
+        if showTitle == True and len(videosToScan) > 0:
+          # Prints video title, progress count, adds enough spaces to cover up previous stat print line
+          offset = 95 - len(videoTitle)
+          if offset > 0:
+            spacesStr = " " * offset
+          else:
+            spacesStr = ""
+          print(f"Scanning {i}/{len(videosToScan)}: " + videoTitle + spacesStr + "\n")
+
+        print_count_stats(miscData, videosToScan, final=False)  # Prints comment scan stats, updates on same line
+        # After getting first page, if there are more pages, goes to get comments for next page
+        while nextPageToken != "End" and current.scannedCommentsCount < maxScanNumber:
+          nextPageToken = get_comments(youtube, currentUser, filtersDict, miscData, config, scanVideoID, nextPageToken, videosToScan=videosToScan)
+      # ----------------------------------------------------------------------------------------------------------------------
+
+      if scanMode == "entireChannel":
+        scan_video(youtube, miscData, config, currentUser, filtersDict, scanVideoID)
+      elif scanMode == "recentVideos" or scanMode == "chosenVideos":
+        i = 1
+        for video in videosToScan:
+          scanVideoID = str(video['videoID'])
+          videoTitle = str(video['videoTitle'])
+          scan_video(youtube, miscData, config, currentUser, filtersDict, scanVideoID, videosToScan=videosToScan, videoTitle=videoTitle, showTitle=True, i=i)
+          i += 1
+      print_count_stats(miscData, videosToScan, final=True)  # Prints comment scan stats, finalizes
+    
+  ##########################################################
+    bypass = False
+    if config and config['enable_logging'] != 'ask':
+      logSetting = config['enable_logging']
+      if logSetting == True:
+        loggingEnabled = True
+        bypass = True
+      elif logSetting == False:
+        loggingEnabled = False
+        bypass = True
+      elif logSetting == "ask":
+        bypass = False
+      else:
+        bypass = False
+        print("Error Code C-2: Invalid value for 'enable_logging' in config file:  " + logSetting)
+
+    # Counts number of found spam comments and prints list
+    spam_count = len(current.matchedCommentsDict)
+    if spam_count == 0: # If no spam comments found, exits
+      print(f"{B.RED}{F.BLACK} No matched comments or users found! {F.R}{B.R}{S.R}\n")
+      print(f"If you see missed spam or false positives, you can submit a filter suggestion here: {F.YELLOW}TJoe.io/filter-feedback{S.R}")
+      if bypass == False:
+        input("\nPress Enter to exit...")
+        sys.exit()
+      elif bypass == True:
+        print("Exiting in 5 seconds...")
+        time.sleep(5)
+        sys.exit()
+    print(f"Number of Matched Comments Found: {B.RED}{F.WHITE} {str(len(current.matchedCommentsDict))} {F.R}{B.R}{S.R}")
+
+    if bypass == False:
+      # Asks user if they want to save list of spam comments to a file
+      print(f"\nSpam comments ready to display. Also {F.LIGHTGREEN_EX}save a log file?{S.R} {B.GREEN}{F.BLACK} Highly Recommended! {F.R}{B.R}{S.R}")
+      print(f"        (It even allows you to {F.LIGHTGREEN_EX}restore{S.R} deleted comments later)")
+      loggingEnabled = choice(f"Save Log File (Recommended)?")
+      print("")
+
+    # Prepare logging
+    logMode = None
+    logFileType = None
+    jsonSettingsDict = {}
+    jsonLogging = False
+    if loggingEnabled == True:
+      if config and config['log_mode']:
+        logMode = config['log_mode']
+        if logMode == "rtf":
+          logFileType = ".rtf"
+        elif logMode == "plaintext":
+          logFileType = ".txt"
+        else:
+          print("Invalid value for 'log_mode' in config file:  " + logMode)
+          print("Defaulting to .rtf file")
+          logMode = "rtf"
+      else:
+        logMode =  "rtf"
+        logFileType = ".rtf"
+
+      # Prepare log file names
+      # global logFileName
+      fileNameBase = "Spam_Log_" + current.logTime
+      fileName = fileNameBase + logFileType
+
+      if config:
+        try:
+          # Get json logging settings
+          if config['json_log'] == True:
+            jsonLogging = True
+            jsonLogFileName = fileNameBase + ".json"
+            jsonSettingsDict['channelOwnerID'] = miscData['channelOwnerID']
+            jsonSettingsDict['channelOwnerName'] = miscData['channelOwnerName']
+
+            #Encoding
+            allowedEncodingModes = ['utf-8', 'utf-16', 'utf-32', 'rtfunicode']
+            if config['json_encoding'] in allowedEncodingModes:
+              jsonSettingsDict['encoding'] = config['json_encoding']
+
+          elif config['json_log'] == False:
+            jsonLogging = False
+          else:
+            print("Invalid value for 'json_log' in config file:  " + config['json_log'])
+            print("Defaulting to False (no json log file will be created)")
+            jsonLogging = False
+
+          if config['json_extra_data'] == True:
+            jsonSettingsDict['json_extra_data'] = True
+          elif config['json_extra_data'] == False:
+            jsonSettingsDict['json_extra_data'] = False
+          
+          if config['json_profile_picture'] != False:
+            jsonSettingsDict['json_profile_picture'] = config['json_profile_picture']
+            jsonSettingsDict['logTime'] = current.logTime
+          elif config['json_profile_picture'] == False:
+            jsonSettingsDict['json_profile_picture'] = False
+            
+
+        except KeyError:
+          print("Problem getting json settings, is your config file correct?")
+      else:
+        jsonLogging = False
+      
+
+      # Set where to put log files      
+      defaultLogPath = "logs"
+      if config and config['log_path']:
+        if config['log_path'] == "default": # For backwards compatibility, can remove later on
+          logPath = defaultLogPath
+        else:
+          logPath = config['log_path']
+        current.logFileName = os.path.normpath(logPath + "/" + fileName)
+        print(f"Log file will be located at {F.YELLOW}" + current.logFileName + f"{S.R}\n")
+        if jsonLogging == True:
+          jsonLogFileName = os.path.normpath(logPath + "/" + jsonLogFileName)
+          jsonSettingsDict['jsonLogFileName'] = jsonLogFileName
+          print(f"JSON log file will be located at {F.YELLOW}" + jsonLogFileName + f"{S.R}\n")
+      else:
+        current.logFileName = os.path.normpath(defaultLogPath + "/" + fileName)
+        print(f"Log file will be called {F.YELLOW}" + current.logFileName + f"{S.R}\n")
+
+      if bypass == False:
+        input(f"Press {F.YELLOW}Enter{S.R} to display comments...")
+
+      # Write heading info to log file
+      def write_func(logFileName, string, logMode, numLines):
+        rtfLineEnd = ("\\line"*numLines) + " "
+        newLines = "\n"*numLines
+        if logMode == "rtf":
+          write_rtf(logFileName, make_rtf_compatible(string) + rtfLineEnd)
+        elif logMode == "plaintext":
+          write_plaintext_log(logFileName, string + newLines)
+
+      # Creates log file and writes first line
+      if logMode == "rtf":
+        write_rtf(current.logFileName, firstWrite=True)
+        write_func(current.logFileName, "\\par----------- YouTube Spammer Purge Log File -----------", logMode, 2)
+      elif logMode == "plaintext":
+        write_plaintext_log(current.logFileName, firstWrite=True)
+        write_func(current.logFileName, "----------- YouTube Spammer Purge Log File -----------", logMode, 2)
+
+      if filterMode == "ID":
+        write_func(current.logFileName, "Channel IDs of spammer searched: " + ", ".join(inputtedSpammerChannelID), logMode, 2)
+      elif filterMode == "Username":
+        write_func(current.logFileName, "Characters searched in Usernames: " + ", ".join(inputtedUsernameFilter), logMode, 2)
+      elif filterMode == "Text":
+        write_func(current.logFileName, "Characters searched in Comment Text: " + ", ".join(inputtedCommentTextFilter), logMode, 2)
+      elif filterMode == "NameAndText":
+        write_func(current.logFileName, "Characters searched in Usernames and Comment Text: " + ", ".join(filterSettings[1]), logMode, 2)
+      elif filterMode == "AutoASCII":
+        write_func(current.logFileName, "Automatic Search Mode: " + str(filterSettings[1]), logMode, 2)
+      elif filterMode == "AutoSmart":
+        write_func(current.logFileName, "Automatic Search Mode: Smart Mode ", logMode, 2)
+      elif filterMode == "SensitiveSmart":
+        write_func(current.logFileName, "Automatic Search Mode: Sensitive Smart ", logMode, 2)
+      write_func(current.logFileName, "Number of Matched Comments Found: " + str(len(current.matchedCommentsDict)), logMode, 2)
+      write_func(current.logFileName, f"IDs of Matched Comments: \n[ {', '.join(current.matchedCommentsDict)} ] ", logMode, 3)
+    else:
+      print("Continuing without logging... \n")
+
+    jsonSettingsDict['jsonLogging'] = jsonLogging
+
+    # Prints list of spam comments
+    if scanMode == "communityPost":
+      scanVideoID = communityPostID
+    print("\n\nAll Matched Comments: \n")
+
+    print_comments(scanVideoID, list(current.matchedCommentsDict.keys()), loggingEnabled, scanMode, logMode, jsonSettingsDict)
+
+    try:
+      if jsonSettingsDict['jsonLogging']:
+        if config['json_extra_data'] == True:
+          jsonDataDict = get_extra_json_data(youtube, list(current.matchSamplesDict.keys()), jsonSettingsDict)
+          jsonDataDict['Comments'] = current.matchedCommentsDict
+          write_json_log(jsonSettingsDict, jsonDataDict, firstWrite=True)
+        else:
+          write_json_log(jsonSettingsDict, current.matchedCommentsDict, firstWrite=True)
+    except KeyError:
+      print("Problem getting json config settings. Is your config file up to date / correct?")
+
+    print(f"\n{F.WHITE}{B.RED} NOTE: {S.R} Check that all comments listed above are indeed spam.")
+    print(f" > If you see missed spam or false positives, you can submit a filter suggestion here: {F.YELLOW}TJoe.io/filter-feedback{S.R}")
+
+    print()
+
+    ### ---------------- Decide whether to skip deletion ----------------
+    # Defaults
+    deletionEnabled = False
+    deletionMode = None # Should be changed later, but if missed it will default to heldForReview
+    confirmDelete = None # If None, will later cause user to be asked to delete
+    if moderator_mode == False:
+      filterModesAllowedforNonOwners = ["AutoSmart"]
+    elif moderator_mode == True:
+      filterModesAllowedforNonOwners = ["AutoSmart", "SensitiveSmart", 'ID']
+    
+    # If user isn't channel owner and not using allowed filter mode, skip deletion
+    if userNotChannelOwner == True and filterMode not in filterModesAllowedforNonOwners:
+      confirmDelete = False
+      deletionEnabled = False
+    elif not config:
+      deletionEnabled = "Allowed" # If no config, no need to use all the below, skip right to prompt how to process
+
+    # Test skip_deletion preference - If passes both, will either delete or ask user to delete
+    elif config['skip_deletion'] == True:
+      sys.exit()
+    elif config['skip_deletion'] != False:
+      print("Error Code C-3: Invalid value for 'skip_deletion' in config file. Must be 'True' or 'False':  " + str(config['skip_deletion']))
       input("\nPress Enter to exit...")
       sys.exit()
+    ### ----------------------------------------------------------------  
 
-  # User wants to automatically delete with no user intervention
-  elif config['delete_without_reviewing'] == True:
-    if userNotChannelOwner == True:
-        confirmDelete = "REPORT"
+    ### ------------- Decide whether to ask before deleting -------------
+    # Using config to determine deletion type, block invalid settings
+    elif config['delete_without_reviewing'] == False:
+      deletionEnabled = "Allowed"
+      if config['removal_type'] == "reportspam" or userNotChannelOwner == True:
         deletionMode = "reportSpam"
-        deletionEnabled = True
-    elif config['removal_type'] == "reportspam" or config['removal_type'] == "heldforreview":
-      if filterMode == "AutoSmart" or filterMode == "ID":
-        deletionEnabled = True
-        if config['removal_type'] == "reportspam":
-          deletionMode = "reportSpam"
-          confirmDelete = "REPORT"
-        elif config['removal_type'] == "heldforreview":
-          deletionMode = "heldForReview"
-          confirmDelete = "DELETE"
+      elif config['removal_type'] == "heldforreview":
+        deletionMode = "heldForReview"
+      elif config['removal_type'] == "rejected":
+        deletionMode = "rejected"
       else:
-        # If non-permitted filter mode with delete_without_reviewing, will allow deletion, but now warns and requires usual confirmation prompt
-        print("Error Code C-5: 'delete_without_reviewing' is set to 'True' in config file. So only filter mode 'AutoSmart' allowed..\n")
-        print("Next time use one of those filter modes, or set 'delete_without_reviewing' to 'False'.")
+        print("Error Code C-4: Invalid value for 'removal_type' in config file. Must be 'heldforreview', 'rejected', or 'reportSpam':  " + config['removal_type'])
+        input("\nPress Enter to exit...")
+        sys.exit()
+
+    # User wants to automatically delete with no user intervention
+    elif config['delete_without_reviewing'] == True:
+      if userNotChannelOwner == True:
+          confirmDelete = "REPORT"
+          deletionMode = "reportSpam"
+          deletionEnabled = True
+      elif config['removal_type'] == "reportspam" or config['removal_type'] == "heldforreview":
+        if filterMode == "AutoSmart" or filterMode == "ID":
+          deletionEnabled = True
+          if config['removal_type'] == "reportspam":
+            deletionMode = "reportSpam"
+            confirmDelete = "REPORT"
+          elif config['removal_type'] == "heldforreview":
+            deletionMode = "heldForReview"
+            confirmDelete = "DELETE"
+        else:
+          # If non-permitted filter mode with delete_without_reviewing, will allow deletion, but now warns and requires usual confirmation prompt
+          print("Error Code C-5: 'delete_without_reviewing' is set to 'True' in config file. So only filter mode 'AutoSmart' allowed..\n")
+          print("Next time use one of those filter modes, or set 'delete_without_reviewing' to 'False'.")
+          print("    > For this run, you will be asked to confirm removal of spam comments.")
+          input("\nPress Enter to continue...")
+          confirmDelete = None
+          deletionEnabled = "Allowed"
+      else:
+        print("Error Code C-6: 'delete_without_reviewing' is set to 'True' in config file. So 'removal_type' must be either 'heldForReview' or 'reportSpam'.\n")
+        print("Next time, either set one of those removal types, or set 'delete_without_reviewing' to 'False'.")
         print("    > For this run, you will be asked to confirm removal of spam comments.")
         input("\nPress Enter to continue...")
         confirmDelete = None
         deletionEnabled = "Allowed"
     else:
-      print("Error Code C-6: 'delete_without_reviewing' is set to 'True' in config file. So 'removal_type' must be either 'heldForReview' or 'reportSpam'.\n")
-      print("Next time, either set one of those removal types, or set 'delete_without_reviewing' to 'False'.")
-      print("    > For this run, you will be asked to confirm removal of spam comments.")
-      input("\nPress Enter to continue...")
-      confirmDelete = None
-      deletionEnabled = "Allowed"
-  else:
-    # Catch Invalid value    
-    print("Error C-7: Invalid value for 'delete_without_reviewing' in config file. Must be 'True' or 'False':  " + config['delete_without_reviewing'])
-    input("\nPress Enter to exit...")
-    sys.exit()
-
-  
-  # Check if deletion is enabled, otherwise block and quit
-  if deletionEnabled != "Allowed" and deletionEnabled != True:
-      print("\nThe deletion functionality was not enabled. Cannot delete or report comments.")
-      print("Possible Cause: You're scanning someone elses video with a non-supported filter mode.\n")
-      print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
-      input("Press Enter to exit...")
+      # Catch Invalid value    
+      print("Error C-7: Invalid value for 'delete_without_reviewing' in config file. Must be 'True' or 'False':  " + config['delete_without_reviewing'])
+      input("\nPress Enter to exit...")
       sys.exit()
 
-
-  ### ---------------- Set Up How To Handle Comments  ----------------
-  # If not skipped by config, ask user what to do
-  if confirmDelete == None:
-    exclude = False
-    # Menu for deletion mode
-    while confirmDelete != "DELETE" and confirmDelete != "REPORT" and confirmDelete != "HOLD":
-      # Title
-      if exclude == False:
-        print(f"{F.YELLOW}How do you want to handle the matched comments above?{S.R}")
-      elif exclude == True:
-        print(f"{F.YELLOW}How do you want to handle the rest of the comments (not ones you {F.LIGHTGREEN_EX}excluded{F.YELLOW})?{S.R}")
-      if userNotChannelOwner == True and moderator_mode == False:
-        print(f"{F.GREEN}~~ Not Your Channel Mode: Only Reporting is Possible ~~{S.R}")
-      if userNotChannelOwner == True and moderator_mode == True:
-        print(f"{F.GREEN}~~ Moderator Mode: Reporting and Holding for Review is possible ~~{S.R}")
-
-      # Exclude
-      if exclude == False:
-        print(f" > To {F.LIGHTGREEN_EX}exclude certain authors{S.R}: Type \'{F.LIGHTGREEN_EX}exclude{S.R}\' followed by a list of the numbers {F.LIGHTMAGENTA_EX}in the sample list{S.R} next to those authors")
-        print("      > Example:  exclude 1, 12, 9")
-
-      # Delete Instructions
-      if exclude == False:
-        if userNotChannelOwner == False:
-          print(f" > To {F.LIGHTRED_EX}delete ALL of the above comments{S.R}: Type ' {F.LIGHTRED_EX}DELETE{S.R} ' exactly (in all caps), then hit Enter.")
-        if userNotChannelOwner == False or moderator_mode == True:
-          print(f" > To {F.LIGHTRED_EX}move ALL comments above to 'Held For Review' in YT Studio{S.R}: Type ' {F.LIGHTRED_EX}HOLD{S.R} ' exactly (in all caps), then hit Enter.")
-      elif exclude == True:
-        if userNotChannelOwner == False:
-          print(f" > To {F.LIGHTRED_EX}delete the rest of the comments{S.R}: Type ' {F.LIGHTRED_EX}DELETE{S.R} ' exactly (in all caps), then hit Enter.")
-        if userNotChannelOwner == False or moderator_mode == True:
-          print(f" > To {F.LIGHTRED_EX}move rest of comments above to 'Held For Review' in YT Studio{S.R}: Type ' {F.LIGHTRED_EX}HOLD{S.R} ' exactly (in all caps), then hit Enter.")
-      
-      # Report Instructions
-      print(f" > To {F.LIGHTCYAN_EX}just report the comments for spam{S.R}, type ' {F.LIGHTCYAN_EX}REPORT{S.R} '. (Can be done even if you're not the channel owner)")
-      if config and config['json_extra_data'] == True:
-        print(f"\n{F.WHITE}{B.BLUE} JSON NOTE: {S.R} At this time, excluding comments will {F.RED}NOT{S.R} remove them from the JSON log file.")
-      confirmDelete = input("\nInput: ")
-      if confirmDelete == "DELETE" and userNotChannelOwner == False:
-        deletionEnabled = True
-        deletionMode = "rejected"
-      elif confirmDelete == "HOLD" and (userNotChannelOwner == False or moderator_mode == True):
-        deletionEnabled = True
-        deletionMode = "heldForReview"
-      elif confirmDelete == "REPORT":
-        deletionEnabled = True
-        deletionMode = "reportSpam" 
-      elif "exclude" in confirmDelete.lower():
-        excludedDict, rtfExclude, plaintextExclude = exclude_authors(inputtedString=confirmDelete, miscData=miscData)
-        exclude = True
-      else:
-        input(f"\nDeletion {F.YELLOW}CANCELLED{S.R} (Because no matching option entered). Press Enter to exit...")
+    
+    # Check if deletion is enabled, otherwise block and quit
+    if deletionEnabled != "Allowed" and deletionEnabled != True:
+        print("\nThe deletion functionality was not enabled. Cannot delete or report comments.")
+        print("Possible Cause: You're scanning someone elses video with a non-supported filter mode.\n")
+        print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
+        input("Press Enter to exit...")
         sys.exit()
 
-  
-  # Set deletion mode friendly name
-  if deletionMode == "rejected":
-    deletionModeFriendlyName = "Removed"
-  elif deletionMode == "heldForReview":
-    deletionModeFriendlyName = "Moved to 'Held for Review' Section"
-  elif deletionMode == "reportSpam":
-    deletionModeFriendlyName = "Reported for spam"
 
-  # Set or choose ban mode, check if valid based on deletion mode
-  if (confirmDelete == "DELETE" or confirmDelete == "REPORT" or confirmDelete == "HOLD") and deletionEnabled == True:  
-    banChoice = False
-    if config and config['enable_ban'] != "ask":
-      if config['enable_ban'] == False:
-        pass
-      elif config['enable_ban'] == True:
-        print("Error Code C-8: 'enable_ban' is set to 'True' in config file. Only possible config options are 'ask' or 'False' when using config.\n")
-        input("Press Enter to continue...")
-      else:
-        print("Error Code C-9: 'enable_ban' is set to an invalid value in config file. Only possible config options are 'ask' or 'False' when using config.\n")
-        input("Press Enter to continue...")
-    elif deletionMode == "rejected":
-      banChoice = choice(f"Also {F.YELLOW}ban{S.R} the spammer(s) ?")
+    ### ---------------- Set Up How To Handle Comments  ----------------
+    # If not skipped by config, ask user what to do
+    if confirmDelete == None:
+      exclude = False
+      # Menu for deletion mode
+      while confirmDelete != "DELETE" and confirmDelete != "REPORT" and confirmDelete != "HOLD":
+        # Title
+        if exclude == False:
+          print(f"{F.YELLOW}How do you want to handle the matched comments above?{S.R}")
+        elif exclude == True:
+          print(f"{F.YELLOW}How do you want to handle the rest of the comments (not ones you {F.LIGHTGREEN_EX}excluded{F.YELLOW})?{S.R}")
+        if userNotChannelOwner == True and moderator_mode == False:
+          print(f"{F.GREEN}~~ Not Your Channel Mode: Only Reporting is Possible ~~{S.R}")
+        if userNotChannelOwner == True and moderator_mode == True:
+          print(f"{F.GREEN}~~ Moderator Mode: Reporting and Holding for Review is possible ~~{S.R}")
 
-    elif deletionMode == "heldForReview":
-      pass
-    elif deletionMode == "reportSpam":
-      pass
+        # Exclude
+        if exclude == False:
+          print(f" > To {F.LIGHTGREEN_EX}exclude certain authors{S.R}: Type \'{F.LIGHTGREEN_EX}exclude{S.R}\' followed by a list of the numbers {F.LIGHTMAGENTA_EX}in the sample list{S.R} next to those authors")
+          print("      > Example:  exclude 1, 12, 9")
+
+        # Delete Instructions
+        if exclude == False:
+          if userNotChannelOwner == False:
+            print(f" > To {F.LIGHTRED_EX}delete ALL of the above comments{S.R}: Type ' {F.LIGHTRED_EX}DELETE{S.R} ' exactly (in all caps), then hit Enter.")
+          if userNotChannelOwner == False or moderator_mode == True:
+            print(f" > To {F.LIGHTRED_EX}move ALL comments above to 'Held For Review' in YT Studio{S.R}: Type ' {F.LIGHTRED_EX}HOLD{S.R} ' exactly (in all caps), then hit Enter.")
+        elif exclude == True:
+          if userNotChannelOwner == False:
+            print(f" > To {F.LIGHTRED_EX}delete the rest of the comments{S.R}: Type ' {F.LIGHTRED_EX}DELETE{S.R} ' exactly (in all caps), then hit Enter.")
+          if userNotChannelOwner == False or moderator_mode == True:
+            print(f" > To {F.LIGHTRED_EX}move rest of comments above to 'Held For Review' in YT Studio{S.R}: Type ' {F.LIGHTRED_EX}HOLD{S.R} ' exactly (in all caps), then hit Enter.")
+        
+        # Report Instructions
+        print(f" > To {F.LIGHTCYAN_EX}just report the comments for spam{S.R}, type ' {F.LIGHTCYAN_EX}REPORT{S.R} '. (Can be done even if you're not the channel owner)")
+        if config and config['json_extra_data'] == True:
+          print(f"\n{F.WHITE}{B.BLUE} JSON NOTE: {S.R} At this time, excluding comments will {F.RED}NOT{S.R} remove them from the JSON log file.")
+        confirmDelete = input("\nInput: ")
+        if confirmDelete == "DELETE" and userNotChannelOwner == False:
+          deletionEnabled = True
+          deletionMode = "rejected"
+        elif confirmDelete == "HOLD" and (userNotChannelOwner == False or moderator_mode == True):
+          deletionEnabled = True
+          deletionMode = "heldForReview"
+        elif confirmDelete == "REPORT":
+          deletionEnabled = True
+          deletionMode = "reportSpam" 
+        elif "exclude" in confirmDelete.lower():
+          excludedDict, rtfExclude, plaintextExclude = exclude_authors(inputtedString=confirmDelete, miscData=miscData)
+          exclude = True
+        else:
+          input(f"\nDeletion {F.YELLOW}CANCELLED{S.R} (Because no matching option entered). Press Enter to exit...")
+          sys.exit()
+
     
-    ### ---------------- Reporting / Deletion Begins  ----------------
-    delete_found_comments(list(matchedCommentsDict), banChoice, deletionMode)
-    if deletionMode != "reportSpam":
-      if not config or config and config['check_deletion_success'] == True:
-        check_deleted_comments(matchedCommentsDict)
-      elif config and config['check_deletion_success'] == False:
-        print("\nSkipped checking if deletion was successful.\n")
+    # Set deletion mode friendly name
+    if deletionMode == "rejected":
+      deletionModeFriendlyName = "Removed"
+    elif deletionMode == "heldForReview":
+      deletionModeFriendlyName = "Moved to 'Held for Review' Section"
+    elif deletionMode == "reportSpam":
+      deletionModeFriendlyName = "Reported for spam"
 
-    if loggingEnabled == True:
-      if logMode == "rtf":
-        write_rtf(logFileName, "\n\n \\line\\line Spammers Banned: " + str(banChoice)) # Write whether or not spammer is banned to log file
-        write_rtf(logFileName, "\n\n \\line\\line Action Taken on Comments: " + str(deletionModeFriendlyName) + " \\line\\line \n\n")
-        if exclude == True:
-          write_rtf(logFileName, str(rtfExclude))
-      elif logMode == "plaintext":
-        write_plaintext_log(logFileName, "\n\n Spammers Banned: " + str(banChoice) + "\n\n") # Write whether or not spammer is banned to log file
-        write_plaintext_log(logFileName, "Action Taken on Comments: " + str(deletionModeFriendlyName) + "\n\n")
-        if exclude == True:
-          write_plaintext_log(logFileName, str(plaintextExclude))
+    # Set or choose ban mode, check if valid based on deletion mode
+    if (confirmDelete == "DELETE" or confirmDelete == "REPORT" or confirmDelete == "HOLD") and deletionEnabled == True:  
+      banChoice = False
+      if config and config['enable_ban'] != "ask":
+        if config['enable_ban'] == False:
+          pass
+        elif config['enable_ban'] == True:
+          print("Error Code C-8: 'enable_ban' is set to 'True' in config file. Only possible config options are 'ask' or 'False' when using config.\n")
+          input("Press Enter to continue...")
+        else:
+          print("Error Code C-9: 'enable_ban' is set to an invalid value in config file. Only possible config options are 'ask' or 'False' when using config.\n")
+          input("Press Enter to continue...")
+      elif deletionMode == "rejected":
+        banChoice = choice(f"Also {F.YELLOW}ban{S.R} the spammer(s) ?")
 
-    input(f"\nProgram {F.LIGHTGREEN_EX}Complete{S.R}. Press Enter to Exit...")
+      elif deletionMode == "heldForReview":
+        pass
+      elif deletionMode == "reportSpam":
+        pass
+      
+      ### ---------------- Reporting / Deletion Begins  ----------------
+      delete_found_comments(youtube, list(current.matchedCommentsDict), banChoice, deletionMode)
+      if deletionMode != "reportSpam":
+        if not config or config and config['check_deletion_success'] == True:
+          check_deleted_comments(youtube, current.matchedCommentsDict)
+        elif config and config['check_deletion_success'] == False:
+          print("\nSkipped checking if deletion was successful.\n")
 
-  elif config:
+      if loggingEnabled == True:
+        if logMode == "rtf":
+          write_rtf(current.logFileName, "\n\n \\line\\line Spammers Banned: " + str(banChoice)) # Write whether or not spammer is banned to log file
+          write_rtf(current.logFileName, "\n\n \\line\\line Action Taken on Comments: " + str(deletionModeFriendlyName) + " \\line\\line \n\n")
+          if exclude == True:
+            write_rtf(current.logFileName, str(rtfExclude))
+        elif logMode == "plaintext":
+          write_plaintext_log(current.logFileName, "\n\n Spammers Banned: " + str(banChoice) + "\n\n") # Write whether or not spammer is banned to log file
+          write_plaintext_log(current.logFileName, "Action Taken on Comments: " + str(deletionModeFriendlyName) + "\n\n")
+          if exclude == True:
+            write_plaintext_log(current.logFileName, str(plaintextExclude))
+
+      input(f"\nProgram {F.LIGHTGREEN_EX}Complete{S.R}. Press Enter to Exit...")
+
+    elif config:
+        sys.exit()
+    else:
+      input(f"\nDeletion {F.LIGHTRED_EX}Cancelled{S.R}. Press Enter to exit...")
       sys.exit()
-  else:
-    input(f"\nDeletion {F.LIGHTRED_EX}Cancelled{S.R}. Press Enter to exit...")
-    sys.exit()
+
+  continueRunning = True
+  while continueRunning == True:
+    continueRunning = primaryInstance(miscData)
+
 
 # Runs the program
 if __name__ == "__main__":
