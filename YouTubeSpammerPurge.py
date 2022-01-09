@@ -3502,7 +3502,7 @@ def main():
         authorChannelID = value['authorChannelID']
         authorChannelName = value['authorName']
         commentText = value['commentText']
-        check_against_filter(currentUser, miscData, filterMode=filterMode, filterSubMode=filterSubMode, commentID=commentID, videoID=communityPostID, authorChannelID=authorChannelID, parentAuthorChannelID=None, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, authorChannelName=authorChannelName, commentText=commentText, regexPattern=regexPattern)
+        check_against_filter(currentUser, miscData, config, filterMode=filterMode, filterSubMode=filterSubMode, commentID=commentID, videoID=communityPostID, authorChannelID=authorChannelID, parentAuthorChannelID=None, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, authorChannelName=authorChannelName, commentText=commentText, regexPattern=regexPattern)
     scan_community_post(communityPostID, maxScanNumber)
 
   else:
