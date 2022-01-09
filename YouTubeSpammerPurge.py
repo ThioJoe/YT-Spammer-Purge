@@ -327,7 +327,7 @@ def add_sample(authorID, authorNameRaw, commentText):
 ##########################################################################################
 
 # Call the API's commentThreads.list method to list the existing comments.
-def get_comments(youtube, currentUser, miscData, config, filterMode, filterSubMode, scanVideoID=None, check_channel_id=None, nextPageToken=None, inputtedSpammerChannelID=None, inputtedUsernameFilter=None, inputtedCommentTextFilter=None, regexPattern=None, videosToScan=None):  # None are set as default if no parameters passed into function
+def get_comments(youtube, currentUser, filtersDict, miscData, config, scanVideoID=None, check_channel_id=None, nextPageToken=None, videosToScan=None):  # None are set as default if no parameters passed into function
   global scannedCommentsCount
   # Initialize some variables
   authorChannelName = None
@@ -358,11 +358,8 @@ def get_comments(youtube, currentUser, miscData, config, filterMode, filterSubMo
       textFormat="plainText"
     ).execute()  
     
-  # Get token for next page
-  try:
-    RetrievedNextPageToken = results["nextPageToken"]
-  except KeyError:
-    RetrievedNextPageToken = "End"  
+  # Get token for next page. If no token, sets to 'End'
+  RetrievedNextPageToken = results.get("nextPageToken", "End")
   
   # After getting all comments threads for page, extracts data for each and stores matches in matchedCommentsDict
   # Also goes through each thread and executes get_replies() to get reply content and matches
@@ -372,7 +369,7 @@ def get_comments(youtube, currentUser, miscData, config, filterMode, filterSubMo
     parent_id = item["snippet"]["topLevelComment"]["id"]
     numReplies = item["snippet"]["totalReplyCount"]
 
-    # Need to use try/except, because if no replies, will throw KeyError
+    # On rare occasions a comment will be there but the channel name will be empty, so this allows placeholders
     try:
       limitedRepliesList = item["replies"]["comments"] # API will return a limited number of replies (~5), but to get all, need to make separate call
     except KeyError:
@@ -394,13 +391,13 @@ def get_comments(youtube, currentUser, miscData, config, filterMode, filterSubMo
       commentText = "[Deleted/Missing Comment]"
     
     # Runs check against comment info for whichever filter data is relevant
-    check_against_filter(currentUser, miscData, config, filterMode=filterMode, filterSubMode=filterSubMode, commentID=parent_id, videoID=videoID, authorChannelID=parentAuthorChannelID, parentAuthorChannelID=None, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, authorChannelName=authorChannelName, commentText=commentText, regexPattern=regexPattern)
+    check_against_filter(currentUser, filtersDict, miscData, config, commentID=parent_id, videoID=videoID, authorChannelID=parentAuthorChannelID, parentAuthorChannelID=None, authorChannelName=authorChannelName, commentText=commentText)
     scannedCommentsCount += 1  # Counts number of comments scanned, add to global count
     
     if numReplies > 0 and len(limitedRepliesList) < numReplies:
-      get_replies(youtube, currentUser, miscData, config, filterMode, filterSubMode, parent_id, videoID, parentAuthorChannelID, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern, videosToScan)
+      get_replies(youtube, currentUser, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan)
     elif numReplies > 0 and len(limitedRepliesList) == numReplies: # limitedRepliesList can never be more than numReplies
-      get_replies(youtube, currentUser, miscData, config, filterMode, filterSubMode, parent_id, videoID, parentAuthorChannelID, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern, videosToScan, repliesList=limitedRepliesList)
+      get_replies(youtube, currentUser, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, repliesList=limitedRepliesList)
     else:
       print_count_stats(miscData, videosToScan, final=False)  # Updates displayed stats if no replies
 
@@ -412,7 +409,7 @@ def get_comments(youtube, currentUser, miscData, config, filterMode, filterSubMo
 ##########################################################################################
 
 # Call the API's comments.list method to list the existing comment replies.
-def get_replies(youtube, currentUser, miscData, config, filterMode, filterSubMode, parent_id, videoID, parentAuthorChannelID, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern, videosToScan, repliesList=None, ):
+def get_replies(youtube, currentUser, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, repliesList=None, ):
   global scannedRepliesCount
   # Initialize some variables
   authorChannelName = None
@@ -448,20 +445,20 @@ def get_replies(youtube, currentUser, miscData, config, filterMode, filterSubMod
 
     # Get author display name
     try:
-      authorChannelName = reply["snippet"]["authorDisplayName"].replace("\r", " ")
-      if filterMode == "Username" or filterMode == "AutoASCII" or filterMode == "AutoSmart" or filterMode == "NameAndText":
+      authorChannelName = reply["snippet"]["authorDisplayName"]
+      if filtersDict['filterMode'] == "Username" or filtersDict['filterMode'] == "AutoASCII" or filtersDict['filterMode'] == "AutoSmart" or filtersDict['filterMode'] == "NameAndText":
         allThreadAuthorNames.append(authorChannelName)
     except KeyError:
       authorChannelName = "[Deleted Channel]"
     
     # Comment Text
     try:
-      commentText = reply["snippet"]["textDisplay"].replace("\r", " ") # Remove Return carriages
+      commentText = reply["snippet"]["textDisplay"] # Remove Return carriages
     except KeyError:
       commentText = "[Deleted/Missing Comment]"
 
     # Runs check against comment info for whichever filter data is relevant
-    check_against_filter(currentUser, miscData, config, filterMode=filterMode, filterSubMode=filterSubMode, commentID=replyID, videoID=videoID, authorChannelID=authorChannelID, parentAuthorChannelID=parentAuthorChannelID, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, authorChannelName=authorChannelName, commentText=commentText, regexPattern=regexPattern, allThreadAuthorNames=allThreadAuthorNames)
+    check_against_filter(currentUser, filtersDict, miscData, config, commentID=replyID, videoID=videoID, authorChannelID=authorChannelID, parentAuthorChannelID=parentAuthorChannelID, authorChannelName=authorChannelName, commentText=commentText, allThreadAuthorNames=allThreadAuthorNames)
 
     # Update latest stats
     scannedRepliesCount += 1  # Count number of replies scanned, add to global count
@@ -471,10 +468,11 @@ def get_replies(youtube, currentUser, miscData, config, filterMode, filterSubMod
 
 ############################## CHECK AGAINST FILTER ######################################
 # The basic logic that actually checks each comment against filter criteria
-def check_against_filter(currentUser, miscData, config, filterMode, filterSubMode, commentID, videoID, authorChannelID, parentAuthorChannelID=None, inputtedSpammerChannelID=None, inputtedUsernameFilter=None, inputtedCommentTextFilter=None,  authorChannelName=None, commentText=None, regexPattern=None, allThreadAuthorNames=None):
+def check_against_filter(currentUser, filtersDict, miscData, config, commentID, videoID, authorChannelID, parentAuthorChannelID=None, authorChannelName=None, commentText=None, allThreadAuthorNames=None):
   global vidIdDict
   global matchedCommentsDict
-  commentTextOriginal = str(commentText)
+  commentTextRaw = str(commentText)
+  commentTextSanitized = str(commentText).replace("\r", "")
 
   debugSingleComment = False #Debug usage
   if debugSingleComment == True:
@@ -486,12 +484,12 @@ def check_against_filter(currentUser, miscData, config, filterMode, filterSubMod
   if currentUser[0] != authorChannelID and miscData['channelOwnerID'] != authorChannelID and authorChannelID not in miscData['Resources']['Whitelist']['WhitelistContents']:
     if "@" in commentText:
       # Logic to avoid false positives from replies to spammers
-      if allThreadAuthorNames and (filterMode == "AutoSmart" or filterMode == "NameAndText"):
+      if allThreadAuthorNames and (filtersDict['filterMode'] == "AutoSmart" or filtersDict['filterMode'] == "NameAndText"):
         for name in allThreadAuthorNames:
           if "@"+str(name) in commentText:
             commentText = commentText.replace("@"+str(name), "")
       # Extra logic to detect false positive if spammer's comment already deleted, but someone replied
-      if matchedCommentsDict and filterMode == "AutoSmart":
+      if matchedCommentsDict and filtersDict['filterMode'] == "AutoSmart":
         for key, value in matchedCommentsDict.items():
           if "@"+str(value['authorName']) in commentText:
             remove = True
@@ -507,7 +505,7 @@ def check_against_filter(currentUser, miscData, config, filterMode, filterSubMod
     def add_spam(commentID, videoID):
       global matchedCommentsDict
       global authorMatchCountDict
-      matchedCommentsDict[commentID] = {'text':commentTextOriginal, 'authorName':authorChannelName, 'authorID':authorChannelID, 'videoID':videoID}
+      matchedCommentsDict[commentID] = {'text':commentTextSanitized, 'textUnsanitized':commentTextRaw, 'authorName':authorChannelName, 'authorID':authorChannelID, 'videoID':videoID}
       vidIdDict[commentID] = videoID # Probably remove this later, but still being used for now
       if authorChannelID in authorMatchCountDict:
         authorMatchCountDict[authorChannelID] += 1
@@ -522,66 +520,66 @@ def check_against_filter(currentUser, miscData, config, filterMode, filterSubMod
         input("--- Yes, Matched -----")
 
     # Checks author of either parent comment or reply (both passed in as commentID) against channel ID inputted by user
-    if filterMode == "ID":
-      if any(authorChannelID == x for x in inputtedSpammerChannelID):
+    if filtersDict['filterMode'] == "ID":
+      if any(authorChannelID == x for x in filtersDict['CustomChannelIdFilter']):
         add_spam(commentID, videoID)
 
     # Check Modes: Username
-    elif filterMode == "Username":
-      if filterSubMode == "chars":
+    elif filtersDict['filterMode'] == "Username":
+      if filtersDict['filterSubMode'] == "chars":
         authorChannelName = make_char_set(str(authorChannelName))
-        if any(x in inputtedUsernameFilter for x in authorChannelName):
+        if any(x in filtersDict['CustomUsernameFilter'] for x in authorChannelName):
           add_spam(commentID, videoID)
-      elif filterSubMode == "string":
-        if check_list_against_string(listInput=inputtedUsernameFilter, stringInput=authorChannelName, caseSensitive=False):
+      elif filtersDict['filterSubMode'] == "string":
+        if check_list_against_string(listInput=filtersDict['CustomUsernameFilter'], stringInput=authorChannelName, caseSensitive=False):
           add_spam(commentID, videoID)
-      elif filterSubMode == "regex":
-        if re.search(str(regexPattern), authorChannelName):
+      elif filtersDict['filterSubMode'] == "regex":
+        if re.search(str(filtersDict['CustomRegexPattern']), authorChannelName):
           add_spam(commentID, videoID)
 
     # Check Modes: Comment Text
-    elif filterMode == "Text":
-      if filterSubMode == "chars":
+    elif filtersDict['filterMode'] == "Text":
+      if filtersDict['filterSubMode'] == "chars":
         commentText = make_char_set(str(commentText))
-        if any(x in inputtedCommentTextFilter for x in commentText):
+        if any(x in filtersDict['CustomCommentTextFilter'] for x in commentText):
           add_spam(commentID, videoID)
-      elif filterSubMode == "string":
-        if check_list_against_string(listInput=inputtedCommentTextFilter, stringInput=commentText, caseSensitive=False):
+      elif filtersDict['filterSubMode'] == "string":
+        if check_list_against_string(listInput=filtersDict['CustomCommentTextFilter'], stringInput=commentText, caseSensitive=False):
           add_spam(commentID, videoID)
-      elif filterSubMode == "regex":
-        if re.search(str(regexPattern), commentText):
+      elif filtersDict['filterSubMode'] == "regex":
+        if re.search(str(filtersDict['CustomRegexPattern']), commentText):
           add_spam(commentID, videoID)
 
     # Check Modes: Name and Text
-    elif filterMode == "NameAndText":
-      if filterSubMode == "chars":
+    elif filtersDict['filterMode'] == "NameAndText":
+      if filtersDict['filterSubMode'] == "chars":
         authorChannelName = make_char_set(str(authorChannelName))
         commentText = make_char_set(str(commentText))
-        if any(x in inputtedUsernameFilter for x in authorChannelName):
+        if any(x in filtersDict['CustomUsernameFilter'] for x in authorChannelName):
           add_spam(commentID, videoID)
-        elif any(x in inputtedCommentTextFilter for x in commentText):
+        elif any(x in filtersDict['CustomCommentTextFilter'] for x in commentText):
           add_spam(commentID, videoID)
-      elif filterSubMode == "string":
-        if check_list_against_string(listInput=inputtedUsernameFilter, stringInput=authorChannelName, caseSensitive=False):
+      elif filtersDict['filterSubMode'] == "string":
+        if check_list_against_string(listInput=filtersDict['CustomUsernameFilter'], stringInput=authorChannelName, caseSensitive=False):
           add_spam(commentID, videoID)
-        elif check_list_against_string(listInput=inputtedCommentTextFilter, stringInput=commentText, caseSensitive=False):
+        elif check_list_against_string(listInput=filtersDict['CustomCommentTextFilter'], stringInput=commentText, caseSensitive=False):
           add_spam(commentID, videoID)
-      elif filterSubMode == "regex":
-        if re.search(str(regexPattern), authorChannelName):
+      elif filtersDict['filterSubMode'] == "regex":
+        if re.search(str(filtersDict['CustomRegexPattern']), authorChannelName):
           add_spam(commentID, videoID)
-        elif re.search(str(regexPattern), commentText):
+        elif re.search(str(filtersDict['CustomRegexPattern']), commentText):
           add_spam(commentID, videoID)
 
     # Check Modes: Auto ASCII (in username)
-    elif filterMode == "AutoASCII":
-      if re.search(str(regexPattern), authorChannelName):
+    elif filtersDict['filterMode'] == "AutoASCII":
+      if re.search(str(filtersDict['CustomRegexPattern']), authorChannelName):
         add_spam(commentID, videoID)
 
     # Check Modes: Auto Smart (in username or comment text)
     # Here inputtedComment/Author Filters are tuples of, where 2nd element is list of char-sets to check against
     ## Also Check if reply author ID is same as parent comment author ID, if so, ignore (to account for users who reply to spammers)
-    elif filterMode == "AutoSmart" or filterMode == "SensitiveSmart":
-      smartFilter = inputtedUsernameFilter
+    elif filtersDict['filterMode'] == "AutoSmart" or filtersDict['filterMode'] == "SensitiveSmart":
+      smartFilter = filtersDict['CustomCommentTextFilter']
       # Receive Variables
       compiledRegexDict = smartFilter['compiledRegexDict']
       numberFilterSet = smartFilter['spammerNumbersSet']
@@ -3502,7 +3500,7 @@ def main():
         authorChannelID = value['authorChannelID']
         authorChannelName = value['authorName']
         commentText = value['commentText']
-        check_against_filter(currentUser, miscData, config, filterMode=filterMode, filterSubMode=filterSubMode, commentID=commentID, videoID=communityPostID, authorChannelID=authorChannelID, parentAuthorChannelID=None, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, authorChannelName=authorChannelName, commentText=commentText, regexPattern=regexPattern)
+        check_against_filter(currentUser, filtersDict, miscData, config, commentID=commentID, videoID=communityPostID, authorChannelID=authorChannelID, parentAuthorChannelID=None, authorChannelName=authorChannelName, commentText=commentText)
     scan_community_post(communityPostID, maxScanNumber)
 
   else:
@@ -3510,9 +3508,17 @@ def main():
     print("\n------------------------------------------------------------------------------")
     print("(Note: If the program appears to freeze, try right clicking within the window)\n")
     print("                          --- Scanning --- \n")
-  
-    def scan_video(youtube, miscData, config, currentUser, filterMode, filterSubMode, videoID, check_channel_id, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern, videosToScan=None, videoTitle=None, showTitle=False, i=1):
-      nextPageToken = get_comments(youtube, currentUser, miscData, config, filterMode, filterSubMode, videoID, check_channel_id, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, regexPattern=regexPattern, videosToScan=videosToScan)
+
+    filtersDict = { 'filterMode': filterMode,
+                    'filterSubMode': filterSubMode,
+                    'CustomChannelIdFilter': inputtedSpammerChannelID,
+                    'CustomUsernameFilter': inputtedUsernameFilter,
+                    'CustomCommentTextFilter': inputtedCommentTextFilter,
+                    'CustomRegexPattern': regexPattern 
+                    }
+
+    def scan_video(youtube, miscData, config, currentUser, filtersDict, videoID, check_channel_id, videosToScan=None, videoTitle=None, showTitle=False, i=1):
+      nextPageToken = get_comments(youtube, currentUser, filtersDict, miscData, config, videoID, check_channel_id, videosToScan=videosToScan)
       if showTitle == True and len(videosToScan) > 0:
         # Prints video title, progress count, adds enough spaces to cover up previous stat print line
         offset = 95 - len(videoTitle)
@@ -3525,16 +3531,16 @@ def main():
       print_count_stats(miscData, videosToScan, final=False)  # Prints comment scan stats, updates on same line
       # After getting first page, if there are more pages, goes to get comments for next page
       while nextPageToken != "End" and scannedCommentsCount < maxScanNumber:
-        nextPageToken = get_comments(youtube, currentUser, miscData, config, filterMode, filterSubMode, videoID, check_channel_id, nextPageToken, inputtedSpammerChannelID=inputtedSpammerChannelID, inputtedUsernameFilter=inputtedUsernameFilter, inputtedCommentTextFilter=inputtedCommentTextFilter, regexPattern=regexPattern, videosToScan=videosToScan)
+        nextPageToken = get_comments(youtube, currentUser, filtersDict, miscData, config, videoID, check_channel_id, nextPageToken, videosToScan=videosToScan)
 
     if scanMode == "entireChannel":
-      scan_video(youtube, miscData, config, currentUser, filterMode, filterSubMode, scanVideoID, check_channel_id, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern)
+      scan_video(youtube, miscData, config, currentUser, filtersDict, scanVideoID, check_channel_id)
     elif scanMode == "recentVideos" or scanMode == "chosenVideos":
       i = 1
       for video in videosToScan:
         videoID = str(video['videoID'])
         videoTitle = str(video['videoTitle'])
-        scan_video(youtube, miscData, config, currentUser, filterMode, filterSubMode, videoID, check_channel_id, inputtedSpammerChannelID, inputtedUsernameFilter, inputtedCommentTextFilter, regexPattern, videosToScan=videosToScan, videoTitle=videoTitle, showTitle=True, i=i)
+        scan_video(youtube, miscData, config, currentUser, filtersDict, videoID, check_channel_id, videosToScan=videosToScan, videoTitle=videoTitle, showTitle=True, i=i)
         i += 1
     print_count_stats(miscData, videosToScan, final=True)  # Prints comment scan stats, finalizes
   
