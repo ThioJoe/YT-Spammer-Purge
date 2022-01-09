@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [[ -ne /etc/debian_version ]] || [[ -ne /etc/fedora-release ]] || [[ -ne  /etc/centos-release ]] || [[ -ne /etc/arch-release ]]; then
+if [[ -e /etc/debian_version ]] || [[ -e /etc/fedora-release ]] || [[ -e  /etc/centos-release ]] || [[ -e /etc/arch-release ]]; then
 	echo "Looks like you aren't running this installer on a Debian, Ubuntu, Fedora, CentOS, or Arch Linux system."
 	exit 1
 fi
