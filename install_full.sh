@@ -1,10 +1,14 @@
 #!/bin/bash
 
-[[ -e /etc/debian_version ]] || [[ -e /etc/fedora-release ]] || [[ -e  /etc/centos-release ]] || [[ -e /etc/arch-release ]] \
-       	|| echo "Looks like you aren't running this installer on a Debian, Ubuntu, Fedora, CentOS, or Arch Linux system."; exit 1
+if [[ -e /etc/debian_version ]] || [[ -e /etc/fedora-release ]] || [[ -e  /etc/centos-release ]] || [[ -e /etc/arch-release ]]; then
+	:
+else
+	echo "Looks like you aren't running this installer on a Debian, Ubuntu, Fedora, CentOS, or Arch Linux system."
+	exit 1
+fi
 
 
-command -v jq >/dev/null 2>&1 || { JQ=0; }
+command -v jq >/dev/null 2>&1 && { JQ=0; }
 #install python
 if ! command -v python3 &> /dev/null; then
 	if [[ -e /etc/debian_version ]]; then
@@ -26,10 +30,10 @@ if [[ -e /etc/debian_version ]]; then
 elif [[ -e /etc/fedora-release ]]; then
 	sudo dnf install python3-tkinter jq python3-pip
 elif [[ -e /etc/centos-release ]]; then
-	rpm -q epel-release &> /dev/null || { EPEL=0 }
+	rpm -q epel-release &> /dev/null || EPEL=0 
 	sudo yum install -y python3-tkinter epel-release python3-pip
 	sudo yum install -y jq
-	[[ $EPEL -ne 0 ]] && sudo yum remove epel-release
+	[[ $EPEL -eq 0 ]] && sudo yum remove -y epel-release
 elif [[ -e /etc/arch-release ]]; then
 	sudo pacman -S --needed tk jq
 fi
