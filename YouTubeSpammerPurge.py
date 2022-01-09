@@ -62,6 +62,10 @@ import unicodedata
 import hashlib
 from itertools import islice
 import zipfile
+import shutil
+import tarfile
+from shutil import rmtree
+from shutil import move
 from shutil import copyfile
 
 # Non Standard Modules
@@ -1708,44 +1712,42 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
           sys.exit()
 
         elif sys.platform == "linux":
-          print("> NOTE: Currently the auto-updater on linux does not support updating from GitHub releases\nThis means the auto-updater will pull the latest and greatest unstable version")
-          if(choice("Do you wish to continue?")):
-            response = os.system("git pull")
-            # Catch fatal missing .git file
-            if(response == 32768):
-              print(f"> {F.RED} Error:{S.R} Project not a git repository\nFor the auto-updater to work on linux please download this project using 'git clone'")
-              if(choice("Do you wish to automatically 'git clone' this project?")):
-                print("> Warning: This will erase ALL files related to this project (Ex: config.ini, client_secret.json)")
-                if(choice("Do you wish to continue (by continuing you agree to the above warning)?")):
-                  # Get current working directory
-                  cwd = os.getcwd()
-                  os.chdir("../")
+          # Current working directory
+          cwd = os.getcwd()
+          # what we want the tar file to be called on the system
+          tarFileName = "yt-spammer.tar.gz"
+          # Name of this file
+          scriptName = sys.argv[0]
+          # Temp folder for update
+          stagingFolder = "linuxYoutubeSpammerStaging"
+          # Name of the main file in the tar file
+          mainFileName = "YouTubeSpammerPurge.py"
 
-                  # Replace original program
-                  os.shutil.rmtree(cwd)
-                  os.system("git clone https://github.com/ThioJoe/YT-Spammer-Purge.git")
-
-                  print("> New version downloaded and installed")
-                  input("\nPress enter to Exit...")
-                  sys.exit()
-                else:
-                  input("\nPress Enter to Exit...")
-                  sys.exit()
-              else:
-                print("\nYou can still manually update: https://github.com/ThioJoe/YT-Spammer-Purge/releases")
-                input("\nPress Enter to Exit...")
-                sys.exit()
-            elif(response == 0):
-              print("> Installing requirements.txt...")
-              os.system("pip3 install -r requirements.txt")
-              os.system("clear")
-              print("> Update Successful")
-              input("\nPress Enter to Exit...")
-              sys.exit()
-          else:
-            print("\nYou can still manually update: https://github.com/ThioJoe/YT-Spammer-Purge/releases")
-            input("\nPress Enter to Exit...")
+          # Fetch the latest update
+          print(f"Downloading version: {latestVersion}")
+          response = os.system(f"curl https://codeload.github.com/ThioJoe/YT-Spammer-Purge/tar.gz/refs/tags/v{latestVersion} -o {tarFileName}")
+          if(response != 0):
+            print("Error: Somthing went wrong with downloading the updated version!")
+            input("Press Enter to Exit...")
             sys.exit()
+          # Extract the tar file and delete it
+          with tarfile.open(tarFileName) as file:
+            file.extractall(f'./{stagingFolder}')
+          os.remove(tarFileName)
+
+          # Rename this file
+          os.rename(scriptName, scriptName + ".old")
+          # List the contents of the folder
+          contents = os.listdir(f"./{stagingFolder}")
+          # Assuming there is one folder
+          content = contents[0]
+          # Move updated version to old versions place
+          move(f"{cwd}/{stagingFolder}/{content}/{mainFileName}", f"{cwd}/{scriptName}")
+          rmtree(stagingFolder)
+          print("> App Updated Successfully")
+          input("Press Enter to Exit...")
+          sys.exit()
+
 
         else:
           print(f"> {F.RED} Error:{S.R} You are using an unsupported os for the autoupdater (macos). \n This updater only supports Windows and Linux (right now) Feel free to get the files from github: https://github.com/ThioJoe/YouTube-Spammer-Purge")
