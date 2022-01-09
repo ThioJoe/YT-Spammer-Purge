@@ -3765,7 +3765,7 @@ def main():
       scanVideoID = communityPostID
     print("\n\nAll Matched Comments: \n")
 
-    print_comments(current, scanVideoID, list(current.matchedCommentsDict.keys()), loggingEnabled, scanMode, logMode, jsonSettingsDict)
+    print_comments(current, scanVideoID, list(current.matchedCommentsDict.keys()), loggingEnabled, scanMode, logMode)
 
     try:
       if jsonSettingsDict['jsonLogging']:
