@@ -36,8 +36,8 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.8.0-Beta2"
-configVersion = 15
+version = "2.8.2"
+configVersion = 16
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 # GUI Related
@@ -972,7 +972,7 @@ def exclude_authors(inputtedString, miscData):
   # Get author names and IDs from dictionary, and display them
   for author in authorIDsToExclude:
     displayString += f"    User ID: {author}   |   User Name: {matchSamplesDict[author]['authorName']}\n"
-    with open(miscData['Resources']['Whitelist']['PathWithName'], "a") as f:
+    with open(miscData['Resources']['Whitelist']['PathWithName'], "a", encoding="utf-8") as f:
       f.write(f"# [Excluded]  Channel Name: {matchSamplesDict[author]['authorName']}  |  Channel ID: " + "\n")
       f.write(f"{author}\n")
 
@@ -1006,30 +1006,6 @@ def get_video_title(video_id):
     vidTitleDict[video_id] = title
 
   return title
-
-
-def get_comment_count(video_id):
-  result = youtube.videos().list(
-    part="statistics",
-    id=video_id,
-    fields='items/statistics/commentCount',
-    ).execute()
-  return result['items'][0]['statistics']['commentCount']
-
-############################# GET CHANNEL ID FROM VIDEO ID #####################################
-# Get channel ID from video ID using YouTube API request
-def get_channel_id(video_id):
-  results = youtube.videos().list(
-    part="snippet",
-    id=video_id,
-    fields="items/snippet/channelId,items/snippet/channelTitle",
-    maxResults=1
-  ).execute()
-  
-  channelID = results["items"][0]["snippet"]["channelId"]
-  channelTitle = results["items"][0]["snippet"]["channelTitle"]
-
-  return channelID, channelTitle
 
 ############################# GET CURRENTLY LOGGED IN USER #####################################
 # Class for custom exception to throw if a comment if invalid channel ID returned
@@ -1133,7 +1109,7 @@ def get_recent_videos(channel_id, numVideos):
     recentVideos[i]['videoID'] = videoID
     recentVideos[i]['videoTitle'] = videoTitle
 
-    commentCount = get_comment_count(videoID)
+    commentCount = validate_video_id(videoID)[3]
     recentVideos[i]['commentCount'] = commentCount
 
     i+=1
@@ -1166,35 +1142,50 @@ def print_count_stats(miscData, videosToScan, final):
 
 ##################################### VALIDATE VIDEO ID #####################################
 # Regex matches putting video id into a match group. Then queries youtube API to verify it exists - If so returns true and isolated video ID
-def validate_video_id(video_url, silent=False):
+def validate_video_id(video_url_or_id, silent=False):
     youtube_video_link_regex = r"^\s*(?P<video_url>(?:(?:https?:)?\/\/)?(?:(?:www|m)\.)?(?:youtube\.com|youtu.be)(?:\/(?:[\w\-]+\?v=|embed\/|v\/)?))?(?P<video_id>[\w\-]{11})(?:(?(video_url)\S+|$))?\s*$"
-    match = re.match(youtube_video_link_regex, video_url)
+    match = re.match(youtube_video_link_regex, video_url_or_id)
     if match == None:
       if silent == False:
         print(f"\n{B.RED}{F.BLACK}Invalid Video link or ID!{S.R} Video IDs are 11 characters long.")
-      return False, None
+      return False, None, None, None, None
     else:
       try:
         possibleVideoID = match.group('video_id')
         result = youtube.videos().list(
-          part="id",
+          part="snippet,id,statistics",
           id=possibleVideoID,
-          fields='items/id',
+          fields='items/id,items/snippet/channelId,items/snippet/channelTitle,items/statistics/commentCount,items/snippet/title',
           ).execute()
         if possibleVideoID == result['items'][0]['id']:
-          return True, possibleVideoID
+          channelID = result['items'][0]['snippet']['channelId']
+          channelTitle = result["items"][0]["snippet"]["channelTitle"]
+          videoTitle = result["items"][0]["snippet"]["title"]
+          # When comments are disabled, the commentCount is not included in the response, requires catching KeyError
+          try:
+            commentCount = result['items'][0]['statistics']['commentCount']
+          except KeyError:
+            traceback.print_exc()
+            print("--------------------------------------")
+            print(f"\n{B.RED}{F.WHITE} ERROR: {S.R} {F.RED}Unable to get comment count for video: {S.R} {possibleVideoID}  |  {videoTitle}")
+            print(f"\n{F.YELLOW}Are comments disabled on this video?{S.R} If not, please report the bug and include the error info above.")
+            print(f"                    Bug Report Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+            input("\nPress Enter to Exit...")
+            sys.exit()
+
+          return True, possibleVideoID, videoTitle, commentCount, channelID, channelTitle
         else:
           if silent == False:
             print("Something very odd happened. YouTube returned a video ID, but it is not equal to what was queried!")
-          return False, None
+          return False, None, None, None, None
       except AttributeError:
         if silent == False:
           print(f"\n{B.RED}{F.BLACK}Invalid Video link or ID!{S.R} Video IDs are 11 characters long.")
-        return False, None
+        return False, None, None, None, None
       except IndexError:
         if silent == False:
           print(f"\n{B.RED}{F.BLACK}Invalid Video link or ID!{S.R} Video IDs are 11 characters long.")
-        return False, None
+        return False, None, None, None, None
     
 
 ############################### VALIDATE COMMUNITY POST ID #################################
@@ -1316,7 +1307,7 @@ def choice(message="", bypass=False):
   # While loop until valid input
   valid = False
   while valid == False:
-    response = input("\n" + message + f" ({F.LIGHTCYAN_EX}y{S.R}/{F.LIGHTRED_EX}n{S.R}): ")
+    response = input("\n" + message + f" ({F.LIGHTCYAN_EX}y{S.R}/{F.LIGHTRED_EX}n{S.R}): ").strip()
     if response == "Y" or response == "y":
       return True
     elif response == "N" or response == "n":
@@ -1603,7 +1594,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
     if silentCheck == False:
       print("------------------------------------------------------------------------------------------")
       if isBeta == True:
-        print(f" {F.YELLOW}A new{F.LIGHTGREEN_EX}beta{F.YELLOW} version{S.R} is available!")
+        print(f" {F.YELLOW}A new {F.LIGHTGREEN_EX}beta{F.YELLOW} version{S.R} is available!")
       else:
         print(f" A {F.LIGHTGREEN_EX}new version{S.R} is available!")
       print(f" > Current Version: {currentVersion}")
@@ -1707,11 +1698,11 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
               sys.exit()
 
           # Print Success
-          print(f"\n>  Download Completed: {F.LIGHTGREEN_EX}{downloadFileName}{S.R}")
+          print(f"\n >  Download Completed: {F.LIGHTGREEN_EX}{downloadFileName}{S.R}")
           if isBeta == False:
-            print("You can now delete the old version. (Or keep it around in case you encounter any issues with the new version)")
+            print("\nYou can now delete the old version. (Or keep it around in case you encounter any issues with the new version)")
           else:
-            print(f"Because this is a {F.CYAN}beta release{S.R}, you should keep the old version around in case you encounter any issues")
+            print(f"\n{F.LIGHTYELLOW_EX}NOTE:{S.R} Because this is a {F.CYAN}beta release{S.R}, you should keep the old version around in case you encounter any issues")
             print(f" > And don't forget to report any problems you encounter here: {F.YELLOW}TJoe.io/bug-report{S.R}")
           input("\nPress Enter to Exit...")
           sys.exit()
@@ -1768,6 +1759,17 @@ def check_lists_update(spamListDict, silentCheck = False):
   SpamListFolder = spamListDict['Meta']['SpamListFolder']
   currentListVersion = spamListDict['Meta']['VersionInfo']['LatestLocalVersion']
   
+  def update_last_checked():
+    currentDate = datetime.today().strftime('%Y.%m.%d.%H.%M')
+    #Update Dictionary with latest release gotten from API
+    spamListDict['Meta']['VersionInfo'].update({'LatestLocalVersion': latestRelease})
+    spamListDict['Meta']['VersionInfo'].update({'LastChecked': currentDate})
+
+    # Prepare data for json file update, so only have to check once a day automatically
+    newJsonContents = json.dumps({'LatestRelease': latestRelease, 'LastChecked' : currentDate})
+    with open(spamListDict['Meta']['VersionInfo']['Path'], 'w', encoding="utf-8") as file:
+      json.dump(newJsonContents, file, indent=4)
+
   if silentCheck == False:
     print("\nChecking for updates to spam lists...")
 
@@ -1844,16 +1846,7 @@ def check_lists_update(spamListDict, silentCheck = False):
             break
         # This means success, the zip file was deleted after extracting
         except FileNotFoundError:
-          currentDate = datetime.today().strftime('%Y.%m.%d.%H.%M')
-          #Update Dictionary with latest release gotten from API
-          spamListDict['Meta']['VersionInfo'].update({'LatestLocalVersion': 'latestRelease'})
-          spamListDict['Meta']['VersionInfo'].update({'LastChecked': currentDate})
-
-          # Prepare data for json file update, so only have to check once a day automatically
-          newJsonContents = json.dumps({'LatestRelease': latestRelease, 'LastChecked' : currentDate})
-          with open(spamListDict['Meta']['VersionInfo']['Path'], 'w', encoding="utf-8") as file:
-            json.dump(newJsonContents, file, indent=4)
-          
+          update_last_checked()
           return spamListDict
 
     elif total_size_in_bytes != 0 and os.stat(downloadFilePath).st_size != total_size_in_bytes:
@@ -1861,6 +1854,7 @@ def check_lists_update(spamListDict, silentCheck = False):
       print(f" > {F.RED} File did not fully download. Please try again later.\n")
       return spamListDict
   else:
+    update_last_checked()
     return spamListDict
 
 ############################# Ingest Other Files ##############################
@@ -2792,10 +2786,9 @@ def main():
   # In all scenarios, load spam lists into memory  
   for x, spamList in spamListDict['Lists'].items():
     spamList['FilterContents'] = ingest_list_file(spamList['Path'], keepCase=False)
-  os.system(clear_command)
-
+  
   ####### Load Other Data into MiscData #######
-  print("Loading other assets..\n")
+  print("\nLoading other assets..\n")
   miscData = {
     'Resources': {},
     'SpamLists':{}
@@ -2824,6 +2817,7 @@ def main():
   else:
     moderator_mode = False
 
+  os.system(clear_command)
   #----------------------------------- Begin Showing Program ---------------------------------
   print(f"{F.LIGHTYELLOW_EX}\n===================== YOUTUBE SPAMMER PURGE v" + version + f" ====================={S.R}")
   print("=========== https://github.com/ThioJoe/YouTube-Spammer-Purge ===========")
@@ -2831,7 +2825,7 @@ def main():
 
   # Instructions
   print("Purpose: Lets you scan for spam comments and mass-delete them all at once \n")
-  print("NOTE: It's probably better to scan a single video, because you can scan all those comments,")
+  print("NOTE: It's probably better to scan individual videos, because you can scan all those comments,")
   print("      but scanning your entire channel must be limited and might miss older spam comments.")
   print("You will be shown the comments to confirm before they are deleted.")
 
@@ -2852,7 +2846,7 @@ def main():
   
   # User selects scanning mode,  while Loop to get scanning mode, so if invalid input, it will keep asking until valid input
   print(f"\n---------- {F.YELLOW}Scanning Options{S.R} ----------")
-  print(f"      1. Scan a {F.LIGHTBLUE_EX}Specific video{S.R}")
+  print(f"      1. Scan {F.LIGHTBLUE_EX}specific videos{S.R}")
   print(f"      2. Scan {F.LIGHTCYAN_EX}recent videos{S.R} for a channel")
   print(f"      3. Scan recent comments across your {F.LIGHTMAGENTA_EX}Entire Channel{S.R}")
   print(f"      4. Scan a {F.LIGHTMAGENTA_EX}community post{S.R} (Experimental)")
@@ -2862,9 +2856,12 @@ def main():
   print(f"      7. Check For Updates\n")
   
   # Check for updates silently
-  
   if updateAvailable == True:
-    print(f"{F.LIGHTGREEN_EX}Notice: A new version is available! Choose 'Check For Updates' option for details.{S.R}\n")
+    if updateReleaseChannel == "stable":
+      print(f"{F.LIGHTGREEN_EX}Notice: A new version is available! Choose 'Check For Updates' option for details.{S.R}\n")
+    else:
+      print(f"{F.LIGHTGREEN_EX}Notice: A new {F.CYAN}beta{F.LIGHTGREEN_EX} version is available! Choose 'Check For Updates' option for details.{S.R}\n")
+      
   if config and configOutOfDate == True:
     print(f"{F.LIGHTRED_EX}Notice: Your config file is out of date! Choose 'Create your own config file' to generate a new one.{S.R}\n")
 
@@ -2902,40 +2899,98 @@ def main():
   # If chooses to scan single video - Validate Video ID, get title, and confirm with user
   if scanMode == "chosenVideos":  
     # While loop to get video ID and if invalid ask again
-    validVideoIDResult = (False, None) # Tuple, first element is status of validity of video ID, second element is video ID
     confirm = False
     validConfigSetting = True
-    numVideos = 1
-    videosToScan = [{}]
+    while confirm == False:
+      numVideos = 1
+      allVideosMatchBool = True
+      miscData['totalCommentCount'] = 0
 
-    while validVideoIDResult[0] == False or confirm == False:
-      if validConfigSetting == True and config and config['video_to_scan'] != 'ask':
-        enteredVideos = config['video_to_scan']
-      else:
-        enteredVideos = input(F"Enter {F.YELLOW}Video Link{S.R} or {F.YELLOW}Video ID{S.R} to scan: ")
-        validConfigSetting = False
+      # Checks if input list is empty and if contains only valid video IDs
+      listNotEmpty = False
+      validVideoIDs = False # False just to get into the loop
+      while listNotEmpty == False or validVideoIDs == False:
+        if validConfigSetting == True and config and config['video_to_scan'] != 'ask':
+          enteredVideosList = string_to_list(config['video_to_scan'])
+          if len(enteredVideosList) == 0:
+            validConfigSetting = False
+            listNotEmpty = False
+            print(f"{F.LIGHTRED_EX}\nError: Video list is empty!{S.R}")
+          else:
+            listNotEmpty = True
+        else:
+          print(f"\nEnter a list of {F.YELLOW}Video Links{S.R} or {F.YELLOW}Video IDs{S.R} to scan, separated by commas.")
+          print(" > Note: All videos must be from the same channel.")
+          enteredVideosList = string_to_list(input("Enter here: "))
+          validConfigSetting = False
+          if len(enteredVideosList) == 0:
+            listNotEmpty = False
+            print(f"{F.LIGHTRED_EX}\nError: Video list is empty!{S.R}")
+          else:
+            listNotEmpty = True
 
-      validVideoIDResult = validate_video_id(enteredVideos) # Sends link or video ID for isolation and validation
-      
-      if validVideoIDResult[0] == True:  #validVideoID now contains True/False and video ID
-        videosToScan[0]['videoID'] = str(validVideoIDResult[1])
-        videosToScan[0]['videoTitle'] = get_video_title(videosToScan[0]['videoID'])
-        videosToScan[0]['commentCount'] = get_comment_count(videosToScan[0]['videoID'])
+        # Validates all video IDs/Links, gets necessary info about them
+        validVideoIDs = True
+        videosToScan = []
+        videoListResult = [] # True/False, video ID, videoTitle, commentCount, channelID, channelTitle
+        for i in range(len(enteredVideosList)):
+          videoListResult.append([])
+          videosToScan.append({})
+          videoListResult[i] = validate_video_id(enteredVideosList[i]) # Sends link or video ID for isolation and validation
+          if videoListResult[i][0] == False:
+            validVideoIDs = False
+            confirm = False
+            break
 
-        # Add to comment overall comment count
-        miscData['totalCommentCount'] = 0
-        for video in videosToScan:
-          miscData['totalCommentCount'] += int(video['commentCount'])
-
-        print(f"\n{F.BLUE}Chosen Video:{S.R}  " + videosToScan[0]['videoTitle'])
-
-        channelOwner = get_channel_id(videosToScan[0]['videoID'])
-        if currentUser[0] != channelOwner[0]:
-          userNotChannelOwner = True
-        miscData['channelOwnerID'] = channelOwner[0]
-        miscData['channelOwnerName'] = channelOwner[1]
+      for i in range(len(videoListResult)): # Change this
+        if videoListResult[i][0] == True:
+          videosToScan[i]['videoID'] = str(videoListResult[i][1])
+          videosToScan[i]['videoTitle'] = str(videoListResult[i][2])
+          videosToScan[i]['commentCount'] = int(videoListResult[i][3])
+          videosToScan[i]['channelOwnerID'] = str(videoListResult[i][4])
+          videosToScan[i]['channelOwnerName'] = str(videoListResult[i][5])
+          miscData['totalCommentCount'] += int(videoListResult[i][3])
+        else:
+          print(f"\nInvalid Video: {enteredVideosList[i]}  |  Video ID = {videoListResult[1]}")
+          validConfigSetting = False
+          break
         
-        # Ask if correct video, or skip if config
+        # Check each video against first to ensure all on same channel
+        if allVideosMatchBool == True:
+          misMatchVidIndex = 0
+        if videosToScan[0]['channelOwnerID'] != videosToScan[i]['channelOwnerID']:
+          misMatchVidIndex += 1
+          if allVideosMatchBool == True:
+            print(f"\n {F.LIGHTRED_EX}ERROR: Videos scanned together all must be from the same channel.{S.R}")
+            print("  The following videos do not match the channel owner of the first video in the list: ")
+          if misMatchVidIndex == 11 and len(enteredVideosList) > 10:
+            remainingCount = str(len(enteredVideosList) - 10)
+            if choice(f"There are {remainingCount} more mis-matched videos, do you want to see the rest?") == False:
+              break
+          print(f"  {misMatchVidIndex}. {str(videosToScan[i]['videoTitle'])}")
+          validConfigSetting = False
+          allVideosMatchBool = False
+
+      # If videos not from same channel, skip and re-prompt    
+      if allVideosMatchBool == True:       
+        # Print video titles, if there are many, ask user to see all if more than 5
+        i = 0
+        print(f"\n{F.BLUE}Chosen Videos:{S.R}")
+        for video in videosToScan:
+          i += 1
+          if i==6 and len(enteredVideosList) > 5:
+            remainingCount = str(len(enteredVideosList) - 5)
+            if choice(f"You have entered many videos, do you need to see the rest (x{remainingCount})?") == False:
+              break
+          print(f" {i}. {video['videoTitle']}")
+
+        if currentUser[0] != videosToScan[0]['channelOwnerID']:
+          userNotChannelOwner = True
+
+        miscData['channelOwnerID'] = videosToScan[0]['channelOwnerID']
+        miscData['channelOwnerName'] = videosToScan[0]['channelOwnerName']
+        
+        # Ask if correct videos, or skip if config
         if config and config['skip_confirm_video'] == True:
           confirm = True
         else:
@@ -2943,11 +2998,13 @@ def main():
             print(f"{F.LIGHTRED_EX}NOTE: This is not your video. Enabling '{F.YELLOW}Not Your Channel Mode{F.LIGHTRED_EX}'. You can report spam comments, but not delete them.{S.R}")
           elif userNotChannelOwner == True and moderator_mode == True:
             print(f"{F.LIGHTRED_EX}NOTE: {F.YELLOW}Moderator Mode is enabled{F.LIGHTRED_EX}. You can hold comments for review when using certain modes{S.R}")
-          confirm = choice("Is this video correct?", bypass=validConfigSetting)
-
-      else:
-        print("\nInvalid Video ID or Link: " + str(validVideoIDResult[1]))
-        validConfigSetting = False
+          print("Total number of comments to scan: " + str(miscData['totalCommentCount']))
+          if miscData['totalCommentCount'] > 100000:
+            print(f"{B.YELLOW}{F.BLACK}WARNING: {S.R}You have chosen to scan a large amount of comments. The default API quota limit")
+            print(f"ends up around {F.YELLOW}10,000 comment deletions per day{S.R}. If you find more spam than that you will go over the limit.")
+            if userNotChannelOwner == True or moderator_mode == True:
+              print(f"{F.LIGHTCYAN_EX}> Note:{S.R} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")
+          confirm = choice("Is this video list correct?", bypass=validConfigSetting)
 
   elif scanMode == "recentVideos":
     confirm = False
@@ -3033,6 +3090,12 @@ def main():
             print(f"{F.LIGHTRED_EX}NOTE: These aren't your videos. Enabling '{F.YELLOW}Not Your Channel Mode{F.LIGHTRED_EX}'. You can report spam comments, but not delete them.{S.R}")
           elif userNotChannelOwner == True and moderator_mode == True:
             print(f"{F.LIGHTRED_EX}NOTE: {F.YELLOW}Moderator Mode is enabled{F.LIGHTRED_EX}. You can hold comments for review when using certain modes{S.R}")
+          print("\nTotal number of comments to scan: " + str(miscData['totalCommentCount']))
+          if miscData['totalCommentCount'] > 100000:
+            print(f"{B.YELLOW}{F.BLACK}WARNING: {S.R}You have chosen to scan a large amount of comments. The default API quota limit")
+            print(f"ends up around {F.YELLOW}10,000 comment deletions per day{S.R}. If you find more spam than that you will go over the limit.")
+            if userNotChannelOwner == True or moderator_mode == True:
+              print(f"{F.LIGHTCYAN_EX}> Note:{S.R} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")  
           confirm = choice("Is everything correct?", bypass=validConfigSetting)  
 
     miscData['channelOwnerID'] = channelID
@@ -3051,6 +3114,14 @@ def main():
         else:
           maxScanNumber = int(input(f"Enter the maximum {F.YELLOW}number of comments{S.R} to scan: "))
 
+          if maxScanNumber > 100000:
+            print(f"{B.YELLOW}{F.BLACK}WARNING: {S.R}You have chosen to scan a large amount of comments. The default API quota limit")
+            print(f"ends up around {F.YELLOW}10,000 comment deletions per day{S.R}. If you find more spam than that you will go over the limit.")
+            if userNotChannelOwner == True or moderator_mode == True:
+              print(f"{F.LIGHTCYAN_EX}> Note:{S.R} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")
+            if choice("Do you still want to continu?") == False:
+              validInteger == False
+
         if maxScanNumber > 0:
           validInteger = True # If it gets here, it's an integer, otherwise goes to exception
         else:
@@ -3059,6 +3130,7 @@ def main():
       except:
         print("\nInvalid Input! - Must be a whole number.")
         validConfigSetting = False
+
     miscData['channelOwnerID'] = currentUser[0]
     miscData['channelOwnerName'] = currentUser[1]
 
@@ -3664,7 +3736,8 @@ if __name__ == "__main__":
   try:
     main()
   except SystemExit:
-    sys.exit()    
+    sys.exit()
+
   except HttpError as hx:
     traceback.print_exc()
     print("------------------------------------------------")
@@ -3720,5 +3793,5 @@ if __name__ == "__main__":
     print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
     input("\n Press Enter to Exit...")
   else:
-    print("\nFinished Executing.")      
+    print("\nFinished Executing.")
 
