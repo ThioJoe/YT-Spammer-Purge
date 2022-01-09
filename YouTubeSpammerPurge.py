@@ -158,7 +158,7 @@ def print_exception_reason(reason):
 
 # First prepared comments into segments of 50 to be submitted to API simultaneously
 # Then uses print_prepared_comments() to print / log the comments
-def print_comments(scanVideoID_localprint, comments, loggingEnabled, scanMode, logMode, jsonSettingsDict):
+def print_comments(scanVideoID, comments, loggingEnabled, scanMode, logMode, jsonSettingsDict):
   j = 0 # Counting index when going through comments all comment segments
   groupSize = 2500 # Number of comments to process per iteration
 
@@ -166,11 +166,11 @@ def print_comments(scanVideoID_localprint, comments, loggingEnabled, scanMode, l
     remainder = len(comments) % groupSize
     numDivisions = int((len(comments)-remainder)/groupSize)
     for i in range(numDivisions):
-      j = print_prepared_comments(scanVideoID_localprint,comments[i*groupSize:i*groupSize+groupSize], j, loggingEnabled, scanMode, logMode, jsonSettingsDict)
+      j = print_prepared_comments(scanVideoID,comments[i*groupSize:i*groupSize+groupSize], j, loggingEnabled, scanMode, logMode, jsonSettingsDict)
     if remainder > 0:
-      j = print_prepared_comments(scanVideoID_localprint,comments[numDivisions*groupSize:len(comments)],j, loggingEnabled, scanMode, logMode, jsonSettingsDict)
+      j = print_prepared_comments(scanVideoID,comments[numDivisions*groupSize:len(comments)],j, loggingEnabled, scanMode, logMode, jsonSettingsDict)
   else:
-    j = print_prepared_comments(scanVideoID_localprint,comments, j, loggingEnabled, scanMode, logMode, jsonSettingsDict)
+    j = print_prepared_comments(scanVideoID,comments, j, loggingEnabled, scanMode, logMode, jsonSettingsDict)
 
   # Print Sample Match List
   valuesPreparedToWrite = ""
@@ -196,7 +196,7 @@ def print_comments(scanVideoID_localprint, comments, loggingEnabled, scanMode, l
   return None
 
 # Uses comments.list YouTube API Request to get text and author of specific set of comments, based on comment ID
-def print_prepared_comments(scanVideoID_localprep, comments, j, loggingEnabled, scanMode, logMode, jsonSettingsDict):
+def print_prepared_comments(scanVideoID, comments, j, loggingEnabled, scanMode, logMode, jsonSettingsDict):
 
   # Prints author and comment text for each comment
   i = 0 # Index when going through comments
@@ -231,7 +231,7 @@ def print_prepared_comments(scanVideoID_localprep, comments, j, loggingEnabled, 
     # Prints comment info to console
     print(str(j+1) + f". {F.LIGHTCYAN_EX}" + author + f"{S.R}:  {F.YELLOW}" + text + f"{S.R}")
     print("—————————————————————————————————————————————————————————————————————————————————————————————")
-    if scanVideoID_localprep is None:  # Only print video title if searching entire channel
+    if scanVideoID is None:  # Only print video title if searching entire channel
       title = get_video_title(videoID) # Get Video Title
       print("     > Video: " + title)
     print("     > Direct Link: " + directLink)
@@ -241,7 +241,7 @@ def print_prepared_comments(scanVideoID_localprep, comments, j, loggingEnabled, 
     # If logging enabled, also prints to log file 
     if loggingEnabled == True:
       # Only print video title info if searching entire channel
-      if scanVideoID_localprep is None:  
+      if scanVideoID is None:  
         if logMode == "rtf":
          titleInfoLine = "     > Video: " + title + "\\line " + "\n"
         elif logMode == "plaintext":
@@ -391,7 +391,14 @@ def get_comments(youtube, currentUser, filtersDict, miscData, config, scanVideoI
       commentText = "[Deleted/Missing Comment]"
     
     # Runs check against comment info for whichever filter data is relevant
-    check_against_filter(currentUser, filtersDict, miscData, config, commentID=parent_id, videoID=videoID, authorChannelID=parentAuthorChannelID, parentAuthorChannelID=None, authorChannelName=authorChannelName, commentText=commentText)
+    currentCommentDict = {
+      'authorChannelID':parentAuthorChannelID, 
+      'parentAuthorChannelID':None, 
+      'authorChannelName':authorChannelName, 
+      'commentText':commentText,
+      'commentID':parent_id,
+      }
+    check_against_filter(currentUser, filtersDict, miscData, config, currentCommentDict, videoID=videoID, )
     scannedCommentsCount += 1  # Counts number of comments scanned, add to global count
     
     if numReplies > 0 and len(limitedRepliesList) < numReplies:
@@ -458,7 +465,14 @@ def get_replies(youtube, currentUser, filtersDict, miscData, config, parent_id, 
       commentText = "[Deleted/Missing Comment]"
 
     # Runs check against comment info for whichever filter data is relevant
-    check_against_filter(currentUser, filtersDict, miscData, config, commentID=replyID, videoID=videoID, authorChannelID=authorChannelID, parentAuthorChannelID=parentAuthorChannelID, authorChannelName=authorChannelName, commentText=commentText, allThreadAuthorNames=allThreadAuthorNames)
+    currentCommentDict = {
+      'authorChannelID':parentAuthorChannelID, 
+      'parentAuthorChannelID':parentAuthorChannelID, 
+      'authorChannelName':authorChannelName, 
+      'commentText':commentText,
+      'commentID':replyID,
+      }
+    check_against_filter(currentUser, filtersDict, miscData, config, currentCommentDict, videoID=videoID, allThreadAuthorNames=allThreadAuthorNames)
 
     # Update latest stats
     scannedRepliesCount += 1  # Count number of replies scanned, add to global count
@@ -468,11 +482,17 @@ def get_replies(youtube, currentUser, filtersDict, miscData, config, parent_id, 
 
 ############################## CHECK AGAINST FILTER ######################################
 # The basic logic that actually checks each comment against filter criteria
-def check_against_filter(currentUser, filtersDict, miscData, config, commentID, videoID, authorChannelID, parentAuthorChannelID=None, authorChannelName=None, commentText=None, allThreadAuthorNames=None):
+def check_against_filter(currentUser, filtersDict, miscData, config, currentCommentDict, videoID, allThreadAuthorNames=None):
   global vidIdDict
   global matchedCommentsDict
-  commentTextRaw = str(commentText)
-  commentTextSanitized = str(commentText).replace("\r", "")
+
+  # Retrieve Data from currentCommentDict
+  commentID = currentCommentDict['commentID']
+  authorChannelName = currentCommentDict['authorChannelName']
+  authorChannelID = currentCommentDict['authorChannelID']
+  parentAuthorChannelID = currentCommentDict['parentAuthorChannelID']
+  commentTextRaw = str(currentCommentDict['commentText']) # Use str() to ensure not pointing to same place in memory
+  commentText = str(currentCommentDict['commentText']).replace("\r", "")
 
   debugSingleComment = False #Debug usage
   if debugSingleComment == True:
@@ -505,7 +525,7 @@ def check_against_filter(currentUser, filtersDict, miscData, config, commentID, 
     def add_spam(commentID, videoID):
       global matchedCommentsDict
       global authorMatchCountDict
-      matchedCommentsDict[commentID] = {'text':commentTextSanitized, 'textUnsanitized':commentTextRaw, 'authorName':authorChannelName, 'authorID':authorChannelID, 'videoID':videoID}
+      matchedCommentsDict[commentID] = {'text':commentText, 'textUnsanitized':commentTextRaw, 'authorName':authorChannelName, 'authorID':authorChannelID, 'videoID':videoID}
       vidIdDict[commentID] = videoID # Probably remove this later, but still being used for now
       if authorChannelID in authorMatchCountDict:
         authorMatchCountDict[authorChannelID] += 1
@@ -3495,11 +3515,14 @@ def main():
     def scan_community_post(communityPostID, limit):
       allCommunityCommentsDict = get_community_comments(communityPostID=communityPostID, limit=limit)
       for key, value in allCommunityCommentsDict.items():
-        commentID = key
-        authorChannelID = value['authorChannelID']
-        authorChannelName = value['authorName']
-        commentText = value['commentText']
-        check_against_filter(currentUser, filtersDict, miscData, config, commentID=commentID, videoID=communityPostID, authorChannelID=authorChannelID, parentAuthorChannelID=None, authorChannelName=authorChannelName, commentText=commentText)
+        currentCommentDict = {
+          'authorChannelID':value['authorChannelID'], 
+          'parentAuthorChannelID':None, 
+          'authorChannelName':value['authorName'], 
+          'commentText':value['commentText'],
+          'commentID':key,
+          }
+        check_against_filter(currentUser, filtersDict, miscData, config, currentCommentDict, videoID=communityPostID)
     scan_community_post(communityPostID, maxScanNumber)
 
   else:
@@ -3515,9 +3538,10 @@ def main():
                     'CustomCommentTextFilter': inputtedCommentTextFilter,
                     'CustomRegexPattern': regexPattern 
                     }
-
-    def scan_video(youtube, miscData, config, currentUser, filtersDict, videoID, videosToScan=None, videoTitle=None, showTitle=False, i=1):
-      nextPageToken = get_comments(youtube, currentUser, filtersDict, miscData, config, videoID, videosToScan=videosToScan)
+    
+    # ----------------------------------------------------------------------------------------------------------------------
+    def scan_video(youtube, miscData, config, currentUser, filtersDict, scanVideoID, videosToScan=None, videoTitle=None, showTitle=False, i=1):
+      nextPageToken = get_comments(youtube, currentUser, filtersDict, miscData, config, scanVideoID, videosToScan=videosToScan)
       if showTitle == True and len(videosToScan) > 0:
         # Prints video title, progress count, adds enough spaces to cover up previous stat print line
         offset = 95 - len(videoTitle)
@@ -3530,16 +3554,17 @@ def main():
       print_count_stats(miscData, videosToScan, final=False)  # Prints comment scan stats, updates on same line
       # After getting first page, if there are more pages, goes to get comments for next page
       while nextPageToken != "End" and scannedCommentsCount < maxScanNumber:
-        nextPageToken = get_comments(youtube, currentUser, filtersDict, miscData, config, videoID, nextPageToken, videosToScan=videosToScan)
+        nextPageToken = get_comments(youtube, currentUser, filtersDict, miscData, config, scanVideoID, nextPageToken, videosToScan=videosToScan)
+    # ----------------------------------------------------------------------------------------------------------------------
 
     if scanMode == "entireChannel":
       scan_video(youtube, miscData, config, currentUser, filtersDict, scanVideoID)
     elif scanMode == "recentVideos" or scanMode == "chosenVideos":
       i = 1
       for video in videosToScan:
-        videoID = str(video['videoID'])
+        scanVideoID = str(video['videoID'])
         videoTitle = str(video['videoTitle'])
-        scan_video(youtube, miscData, config, currentUser, filtersDict, videoID, videosToScan=videosToScan, videoTitle=videoTitle, showTitle=True, i=i)
+        scan_video(youtube, miscData, config, currentUser, filtersDict, scanVideoID, videosToScan=videosToScan, videoTitle=videoTitle, showTitle=True, i=i)
         i += 1
     print_count_stats(miscData, videosToScan, final=True)  # Prints comment scan stats, finalizes
   
