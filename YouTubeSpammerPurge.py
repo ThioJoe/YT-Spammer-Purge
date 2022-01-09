@@ -36,7 +36,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.9.0"
+version = "2.10.0-Beta1"
 configVersion = 17
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -64,6 +64,7 @@ import hashlib
 from itertools import islice
 import zipfile
 from shutil import copyfile
+from random import randrange
 
 # Non Standard Modules
 import rtfunicode
@@ -1765,7 +1766,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
 
           # Check if file exists already, ask to overwrite if it does
           if os.path.exists(downloadFileName):
-            print(f"{B.RED}{F.WHITE} WARNING! {S.R} '{F.YELLOW}{downloadFileName}{S.R}' file already exists. This would overwrite the existing file.")
+            print(f"\n{B.RED}{F.WHITE} WARNING! {S.R} '{F.YELLOW}{downloadFileName}{S.R}' file already exists. This would overwrite the existing file.")
             confirm = choice("Overwrite this existing file?")
             if confirm == True:
               try:
@@ -2023,7 +2024,7 @@ def get_list_file_version(relativeFilePath):
     return None
 
 ############################# CONFIG FILE FUNCTIONS ##############################
-def create_config_file():
+def create_config_file(updating=False, dontWarn=False):
   def config_path(relative_path):
     if hasattr(sys, '_MEIPASS'): # If running as a pyinstaller bundle
         #print("Test1") # For Debugging
@@ -2033,12 +2034,15 @@ def create_config_file():
     #print(os.path.join(os.path.abspath("assets"), relative_path)) # For debugging
     return os.path.join(os.path.abspath("assets"), relative_path) # If running as script, specifies resource folder as /assets
 
-
   configFileName = "SpamPurgeConfig.ini"
   confirm = True
   if os.path.exists(configFileName):
-    print(f"{B.RED}{F.WHITE} WARNING! {S.R} {F.YELLOW}SpamPurgeConfig.ini{S.R} file already exists. This would overwrite the existing file.")
-    confirm = choice("Create new empty config file and overwrite existing?")
+    if updating == False and dontWarn == False:
+      print(f"{B.RED}{F.WHITE} WARNING! {S.R} {F.YELLOW}SpamPurgeConfig.ini{S.R} file already exists. This would overwrite the existing file.")
+      confirm = choice("Create new empty config file and overwrite existing?")
+    else:
+      confirm = True
+
     if confirm == True:
       try:
         os.remove(configFileName)
@@ -2079,10 +2083,13 @@ def create_config_file():
       try:
         parser.read("SpamPurgeConfig.ini", encoding="utf-8")
         if parser.get("info", "config_version"):
-          print(f"{B.GREEN}{F.BLACK}SUCCESS!{S.R} {F.YELLOW}SpamPurgeConfig.ini{S.R} file created successfully.")
-          print("\nYou can now edit the file to your liking.\n")
-          input("Press enter to Exit...")
-          sys.exit()
+          if updating == False:
+            print(f"\n{B.GREEN}{F.BLACK} SUCCESS! {S.R} {F.YELLOW} SpamPurgeConfig.ini{S.R} file created successfully.")
+            print("\nYou can now edit the file to your liking.\n")
+            input("Press enter to Exit...")
+            sys.exit()
+          else:
+            return True
         else:
           print("Something might have gone wrong. Check if SpamPurgeConfig.ini file exists and has contents.")
           input("Press enter to Exit...")
@@ -2098,6 +2105,7 @@ def create_config_file():
     input("Press Enter to return to the main menu...")
     return "MainMenu"
 
+# -------------------------------------------------------------------
 # Put config settings into dictionary
 def load_config_file(forceDefault = False):
   configFileName = "SpamPurgeConfig.ini"
@@ -2110,9 +2118,7 @@ def load_config_file(forceDefault = False):
   else:
     def default_config_path(relative_path):
       if hasattr(sys, '_MEIPASS'): # If running as a pyinstaller bundle
-          #print(os.path.join(sys._MEIPASS, relative_path)) # For Debugging
           return os.path.join(sys._MEIPASS, relative_path)
-      #print(os.path.join(os.path.abspath("assets"), relative_path)) # For debugging
       return os.path.join(os.path.abspath("assets"), relative_path) # If running as script, specifies resource folder as /assets
 
     configFileName = default_config_path("default_config.ini")
@@ -2161,6 +2167,69 @@ def load_config_file(forceDefault = False):
     configDict['use_this_config'] = True
 
   return configDict
+
+# -------------------------------------------------------------------
+def update_config_file(oldVersion, newVersion, oldConfig):
+  configFileName = "SpamPurgeConfig.ini"
+
+  # If user config file exists, keep path. Otherwise use default config file path
+  if os.path.exists(configFileName):
+    pass
+  else:
+    print("No existing config file found!")
+    return False
+
+  # Load data of old config file
+  with open(configFileName, 'r', encoding="utf-8") as oldFile:
+    oldConfigData = oldFile.readlines()
+    oldFile.close()
+
+  # Rename config to backup
+  backupConfigFileName = f"{configFileName}.backup_v{oldVersion}"
+  if os.path.exists(backupConfigFileName):
+    print("Existing backup config file found. Random number will be added to new backup file name.")
+    while os.path.exists(backupConfigFileName):
+      backupConfigFileName = backupConfigFileName + "_" + str(randrange(999))
+
+  os.rename(configFileName, backupConfigFileName)
+  print(f"\nOld config file renamed to {F.CYAN}{backupConfigFileName}{S.R}")
+
+  # Creates new config file from default
+  create_config_file(updating=True)
+
+  try:
+    with open(configFileName, 'r', encoding="utf-8") as newFile:
+      newConfigData = newFile.readlines()
+
+    newDataList = []
+    # Go through all new config lines
+    for newLine in newConfigData:
+      if not newLine.strip().startswith('#') and not newLine.strip()=="" and "version" not in newLine:
+        for setting in oldConfig.keys():
+          # Check if any old settings are in new config file
+          if newLine.startswith(setting):
+            for oldLine in oldConfigData:
+              if not oldLine.strip().startswith('#') and not oldLine.strip()=="" and "version" not in oldLine:
+                # Sets new line to be the old line
+                if oldLine.startswith(setting):
+                  newLine = oldLine
+                  break
+            break
+      # The new config file writes itself again, but with the modified newLine's
+      newDataList.append(newLine)
+
+    with open(configFileName, "w", encoding="utf-8") as newFile:
+      newFile.writelines(newDataList)
+  except:
+    traceback.print_exc()
+    print("--------------------------------------------------------------------------------")
+    print("Something went wrong when copying your config settings. You'll have to manually copy them from backup.")
+    input("\nPress Enter to exit...")
+    sys.exit()
+  
+  print("\nConfig Updated! Please restart the program...")
+  input("\nPress enter to Exit...")
+  sys.exit()
 
 ################################ RECOVERY MODE ###########################################
 def recover_deleted_comments():
@@ -2761,7 +2830,7 @@ def main():
       input(f"\nError Code A-1: {F.RED}Something went wrong during authentication.{S.R} {F.YELLOW}Try deleting the token.pickle file.{S.R} \nPress Enter to exit...")
       sys.exit()
 
-  # Check for config file, load into dictionary 'config'
+  # Check for config file, load into dictionary 'config'. If no config found, loads data from default config in assets folder
   config = load_config_file()
   if config:
     try:
@@ -2774,11 +2843,16 @@ def main():
       configOutOfDate = True
   else:
     configOutOfDate = False
-
+  
   os.system(clear_command)
-  if config['use_this_config'] == 'ask':
+
+  if config['use_this_config'] == 'ask' or config['use_this_config'] == True:
     if configOutOfDate == True:
-      print(f"{F.LIGHTRED_EX} WARNING! {S.R} Your config file is out of date. If you don't generate a new one, you might get errors.")
+      print(f"{F.YELLOW} WARNING! {S.R} Your config file is {F.YELLOW}out of date{S.R}. If you don't update it or a new one, you might get errors")
+      print(f"\n  {F.LIGHTGREEN_EX}> Update it now?{S.R} (Program will {F.CYAN}back up the old file{S.R}, and also attempt to {F.CYAN}copy the settings over{S.R})")
+      updateChoice = choice("Update Config File?")
+      if updateChoice == True:
+        update_config_file(oldVersion=int(config['config_version']), newVersion=configVersion, oldConfig=config)
     if choice(f"\nFound {F.YELLOW}config file{S.R}, use those settings?") == False:
       config = load_config_file(forceDefault = True)
     os.system(clear_command)
@@ -3385,9 +3459,21 @@ def main():
         
     # Create config file
     elif scanMode == "makeConfig":
-      result = create_config_file()
-      if str(result) == "MainMenu":
+      if configOutOfDate == False:
+        print(f"\n{F.LIGHTGREEN_EX}Config file already up to date!{S.R}")
+        print(f"\nDo you want to {F.YELLOW}restore the default{S.R} config settings? (Overwrites current config file)")
+        confirm = choice("Overwrite config and restore defaults?")
+        if confirm == True:
+          result = create_config_file(dontWarn=True)
+        elif confirm == False or confirm == None:
+          input("Press Enter to Return to main menu...")
+          return True
+        input("Press Enter to Return to main menu...")
         return True
+      else:
+        result = create_config_file()
+        if str(result) == "MainMenu":
+          return True
 
     # Check for latest version
     elif scanMode == "checkUpdates":
