@@ -931,8 +931,8 @@ def check_recovered_comments(commentsList):
     print("\n\nWarning: " + str(i) + " comments may have not been restored. See above list.")
     print("Use the links to the comments from the log file you used, to verify if they are back or not.")
 
-  input("\nRecovery process finished. Press Enter to Exit...")
-  sys.exit()
+  input("\nRecovery process finished. Press Enter to return to main menu...")
+  return True
 
 # Removes comments by user-selected authors from list of comments to delete
 def exclude_authors(current, inputtedString, miscData):
@@ -1111,6 +1111,8 @@ def get_recent_videos(channel_id, numVideosTotal):
       recentVideos[j]['videoID'] = videoID
       recentVideos[j]['videoTitle'] = videoTitle
       commentCount = validate_video_id(videoID)[3]
+      if str(commentCount)=="MainMenu":
+        return "MainMenu", None
       recentVideos[j]['commentCount'] = commentCount
       j+=1
 
@@ -1127,15 +1129,19 @@ def get_recent_videos(channel_id, numVideosTotal):
   recentVideos = [] #List of dictionaries
   i = 0
   if numVideosTotal <=5:
-    get_block_of_videos(None, j=i, numVideosBlock=numVideosTotal)
+    result = get_block_of_videos(None, j=i, numVideosBlock=numVideosTotal)
+    if result[0] == "MainMenu":
+      return "MainMenu"
   else:
-    while nextPageToken != "End" and len(recentVideos) < numVideosTotal:
+    while nextPageToken != "End" and len(recentVideos) < numVideosTotal and str(nextPageToken[0]) != "MainMenu":
       print("Retrieved " + str(len(recentVideos)) + "/" + str(numVideosTotal) + " videos.", end="\r")
       remainingVideos = numVideosTotal - len(recentVideos)
       if remainingVideos <= 5:
         nextPageToken, i = get_block_of_videos(nextPageToken, j=i, numVideosBlock = remainingVideos)
       else:
         nextPageToken, i = get_block_of_videos(nextPageToken, j=i, numVideosBlock = 5)
+      if str(nextPageToken[0]) == "MainMenu":
+        return "MainMenu"
   print("                                          ")
   return recentVideos
 
@@ -1193,8 +1199,8 @@ def validate_video_id(video_url_or_id, silent=False):
             print(f"\n{B.RED}{F.WHITE} ERROR: {S.R} {F.RED}Unable to get comment count for video: {S.R} {possibleVideoID}  |  {videoTitle}")
             print(f"\n{F.YELLOW}Are comments disabled on this video?{S.R} If not, please report the bug and include the error info above.")
             print(f"                    Bug Report Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
-            input("\nPress Enter to Exit...")
-            sys.exit()
+            input("\nPress Enter to return to the main menu...")
+            return "MainMenu"
 
           return True, possibleVideoID, videoTitle, commentCount, channelID, channelTitle
         else:
@@ -1335,8 +1341,10 @@ def choice(message="", bypass=False):
       return True
     elif response == "N" or response == "n":
       return False
+    elif response == "X" or response == "x":
+      return None
     else:
-      print("\nInvalid Input. Enter Y or N")
+      print("\nInvalid Input. Enter Y or N  --  Or enter X to return to main menu.")
 
 
 ############################ Process Input Spammer IDs ###############################
@@ -1646,36 +1654,7 @@ def check_list_against_string(listInput, stringInput, caseSensitive=False):
   else:
     return False
 
-############################# Check Username Against Filter ##############################
-# Check the own user's username against a filter, warn if it matches
-# Note: Most uses of this function are obsolete after changing it so the program totally ignores current users's own comments
-def safety_check_username_against_filter(currentUserName, scanMode, filterCharsSet=None, filterStringList=None, regexPattern=None, bypass = False):
-  currentUsernameChars = make_char_set(currentUserName)
-  proceed = False
-  if bypass != True:
-    if filterCharsSet:
-      if any(x in filterCharsSet for x in currentUsernameChars):
-        print(f"\n{B.LIGHTRED_EX}{F.BLACK}NOTE!{S.R} Character(s) you entered are within {F.LIGHTRED_EX}your own username{S.R}, ' " + currentUserName + " '! : " + str(filterCharsSet & currentUsernameChars))
-        print("      (Some symbols above may not show in windows console)")
-        print(f"\nThis program will {F.YELLOW}ignore{S.R} any comments made by you (by checking the author channel ID)")
-        input("\nPress enter to continue...")    
-    
-    elif filterStringList:
-      if check_list_against_string(listInput=filterStringList, stringInput=currentUserName, caseSensitive=False):
-        print(f"\n{B.LIGHTRED_EX}{F.BLACK}NOTE!{S.R} A string you entered is within {F.LIGHTRED_EX}your own username{S.R}!")
-        print(f"\nThis program will {F.YELLOW}ignore{S.R} any comments made by you (by checking the author channel ID)")
-        input("\nPress enter to continue...")
 
-    elif regexPattern:
-      if re.search(regexPattern, currentUserName):
-        print(f"{B.RED}{F.WHITE}NOTE!{S.R} This search mode / pattern would detect {F.LIGHTRED_EX}your own username{S.R}!")
-        print(f"\nThis program will {F.YELLOW}ignore{S.R} any comments made by you (by checking the author channel ID)")
-        input("\nPress enter to continue...")
-
-  proceed = True
-
-  return proceed
-  
   
 ############################# Check For App Update ##############################
 def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
@@ -1693,8 +1672,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
         if silentCheck == False:
           print(f"\n{B.RED}{F.WHITE}Error [U-4]:{S.R} Got an 403 (ratelimit_reached) when attempting to check for update.")
           print(f"This means you have been {F.YELLOW}rate limited by github.com{S.R}. Please try again in a while.\n")
-          input("\nPress enter to exit...")
-          sys.exit()
+          return False
         else:
           return False
       else:
@@ -1702,8 +1680,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
           print(f"{B.RED}{F.WHITE}Error [U-3]:{S.R} Got non 200 status code (got: {response.status_code}) when attempting to check for update.\n")
           print(f"If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
           if silentCheck == False:
-            input("\nPress enter to exit...")
-            sys.exit()
+            return False
         else:
           return False
     else:
@@ -1720,8 +1697,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
       print(e + "\n")
       print(f"{B.RED}{F.WHITE}Error [Code U-1]:{S.R} Problem while checking for updates. See above error for more details.\n")
       print("If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
-      input("Press enter to Exit...")
-      sys.exit()
+      return False
     elif silentCheck == True:
       return False
 
@@ -1737,7 +1713,8 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
       print(f" > Latest Version: {F.LIGHTGREEN_EX}{latestVersion}{S.R}")
       print("(To stop receiving beta releases, change the 'release_channel' setting in the config file)")
       print("------------------------------------------------------------------------------------------")
-      if choice("Update Now?") == True:
+      userChoice = choice("Update Now?")
+      if userChoice == True:
         if sys.platform == 'win32' or sys.platform == 'win64':
           print(f"\n> {F.LIGHTCYAN_EX} Downloading Latest Version...{S.R}")
           if updateReleaseChannel == "stable":
@@ -1769,18 +1746,17 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
           elif j == 0: # No exe file in release
             print(f"{S.LIGHTRED_EX}Warning!{S.R} No exe file found in release. You'll have to manually download the latest version from:")
             print("https://github.com/ThioJoe/YT-Spammer-Purge/releases")
-            input("\nPress Enter to Exit...")
-            sys.exit()
+            return False
           if k == 0: # No hash file in release
             print(f"{S.YELLOW}Warning!{S.R} No verification sha256 hash found in release. If download fails, you can manually download latest version here:")
             print("https://github.com/ThioJoe/YT-Spammer-Purge/releases")
-            input("\nPress Enter to Exit...")
+            input("\nPress Enter to try to continue...")
             ignoreHash = True
           elif k>0 and k!=j:
             print(f"{S.YELLOW}Warning!{S.R} Too many or too few sha256 files found in release. If download fails, you should manually download latest version here:")
             print("https://github.com/ThioJoe/YT-Spammer-Purge/releases")
-            input("\nPress Enter to Exit...")
-            sys.exit()
+            input("\nPress Enter to try to continue...")
+
 
           # Get and Set Download Info
           total_size_in_bytes= int(filedownload.headers.get('content-length', 0))
@@ -1800,6 +1776,8 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
                 print("The info above may help if it's a bug, which you can report here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
                 input("Press enter to Exit...")
                 sys.exit()
+            elif confirm == False or confirm == None:
+              return False
 
           # Download File
           with open(downloadFileName, 'wb') as file:
@@ -1816,8 +1794,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
           elif total_size_in_bytes != 0 and os.stat(downloadFileName).st_size != total_size_in_bytes:
             os.remove(downloadFileName)
             print(f"\n> {F.RED} File did not fully download. Please try again later.")
-            input("\nPress enter to Exit...")
-            sys.exit()
+            return False
           elif total_size_in_bytes == 0:
             print("Something is wrong with the download on the remote end. You should manually download latest version here:")
             print("https://github.com/ThioJoe/YT-Spammer-Purge/releases")
@@ -1830,8 +1807,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
               os.remove(downloadFileName)
               print(f"\n> {F.RED} Hash did not match. Please try again later.")
               print("Or download the latest version manually from here: https://github.com/ThioJoe/YT-Spammer-Purge/releases")
-              input("\nPress enter to Exit...")
-              sys.exit()
+              return False
 
           # Print Success
           print(f"\n >  Download Completed: {F.LIGHTGREEN_EX}{downloadFileName}{S.R}")
@@ -1846,11 +1822,9 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
         else:
           # We do this because we pull the .exe for windows, but maybe we could use os.system('git pull')? Because this is a GIT repo, unlike the windows version
           print(f"> {F.RED} Error:{S.R} You are using an unsupported os for the autoupdater (macos/linux). \n This updater only supports Windows (right now) Feel free to get the files from github: https://github.com/ThioJoe/YT-Spammer-Purge")
-          input("\nPress enter to Exit...")
-          sys.exit()
-      else:
-        input("Aborted. Press Enter to Exit...")
-        sys.exit()
+          return False
+      elif userChoice == "False" or userChoice == None:
+        return False
     elif silentCheck == True:
       isUpdateAvailable = True
       return isUpdateAvailable
@@ -1858,13 +1832,11 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
   elif parse_version(latestVersion) == parse_version(currentVersion):
     if silentCheck == False:
       print(f"\nYou have the {F.LIGHTGREEN_EX}latest{S.R} version: {F.LIGHTGREEN_EX}" + currentVersion)
-      input("\nPress enter to Exit...")
-      sys.exit()
+      return False
   else:
     if silentCheck == False:
       print("\nNo newer release available - Your Version: " + currentVersion + "  --  Latest Version: " + latestVersion)
-      input("\nPress enter to Exit...")
-      sys.exit()
+      return False
     elif silentCheck == True:
       return isUpdateAvailable
 
@@ -1924,8 +1896,7 @@ def check_lists_update(spamListDict, silentCheck = False):
         if silentCheck == False:
           print(f"\n{B.RED}{F.WHITE}Error [U-4L]:{S.R} Got an 403 (ratelimit_reached) when attempting to check for spam list update.")
           print(f"This means you have been {F.YELLOW}rate limited by github.com{S.R}. Please try again in a while.\n")
-          input("\nPress enter to exit...")
-          sys.exit()
+          return False
         else:
           return spamListDict
       else:
@@ -1933,8 +1904,7 @@ def check_lists_update(spamListDict, silentCheck = False):
           print(f"{B.RED}{F.WHITE}Error [U-3L]:{S.R} Got non 200 status code (got: {response.status_code}) when attempting to check for spam list update.\n")
           print(f"If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
           if silentCheck == False:
-            input("\nPress enter to exit...")
-            sys.exit()
+            return False
         else:
           return spamListDict
     latestRelease = response.json()["tag_name"]
@@ -1943,8 +1913,7 @@ def check_lists_update(spamListDict, silentCheck = False):
       return spamListDict
     else:
       print("Error: Could not get latest release info from GitHub. Please try again later.")
-      input("\nPress enter to Exit...")
-      sys.exit()
+      return False
 
   # If update available
   if currentListVersion == None or (parse_version(latestRelease) > parse_version(currentListVersion)):
@@ -2079,8 +2048,8 @@ def create_config_file():
         print("If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
         input("Press enter to Exit...")
         sys.exit()
-    else:
-      return None
+    elif confirm == False or confirm == None:
+      return "MainMenu"
 
   if confirm == True:
     # Get default config file contents
@@ -2126,7 +2095,8 @@ def create_config_file():
         input("Press enter to Exit...")
         sys.exit()
   else:
-    return None
+    input("Press Enter to return to the main menu...")
+    return "MainMenu"
 
 # Put config settings into dictionary
 def load_config_file(forceDefault = False):
@@ -2205,6 +2175,8 @@ def recover_deleted_comments():
     print("Enter the name of the log file containing the comments to recover (you could rename it to something easier like \'log.rtf\')")
     print("     > (Or, just hit Enter to manually paste in the list of IDs next)")
     recoveryFileName = input("\nLog File Name (Example: \"log.rtf\" or \"log\"):  ")
+    if str(recoveryFileName).lower() == "x":
+      return "MainMenu"
 
     if len(recoveryFileName) > 0:
       if os.path.exists(recoveryFileName):
@@ -2224,10 +2196,13 @@ def recover_deleted_comments():
       else:
         print(f"\n{F.LIGHTRED_EX}Error: File not found.{S.R} Make sure it is in the same folder as the program.\n")
         print("Enter 'Y' to try again, or 'N' to manually paste in the comment IDs.")
-        if choice("Try entering file name again?") == True:
+        userChoice = choice("Try entering file name again?")
+        if userChoice == True:
           pass
-        else:
+        elif userChoice == False:
           manuallyEnter = True
+        elif userChoice == None:
+          return "MainMenu"
     else: 
       manuallyEnter = True
 
@@ -2237,6 +2212,8 @@ def recover_deleted_comments():
     print("2. Copy that list, and paste it below (In windows console try pasting by right clicking).")
     print("3. If not using a log file, instead enter the ID list in this format: FirstID, SecondID, ThirdID, ... \n")
     data = str(input("Paste the list here, then hit Enter: "))
+    if str(data).lower() == "x":
+      return "MainMenu"
     print("\n")
 
   # Parse data into list
@@ -2253,8 +2230,8 @@ def recover_deleted_comments():
 
   if len(result) == 0:
     print("Error Code R-1: No comment IDs detected, try entering them manually and make sure they are formatted correctly.")
-    input("Press enter to Exit...")
-    sys.exit()
+    input("Press Enter to return to main menu...")
+    return "MainMenu"
 
   # Check for valid comment IDs
   validCount = 0
@@ -2309,9 +2286,9 @@ def prepare_filter_mode_chars(currentUser, scanMode, filterMode, config):
     input(f"\nPress {F.LIGHTGREEN_EX}Enter{S.R} to open the {F.LIGHTGREEN_EX}text entry window{S.R}...")
     print("-------------------------------------------")
 
-  validEntry = False
+  confirm = False
   validConfigSetting = True
-  while validEntry == False:
+  while confirm == False:
     if validConfigSetting == True and config and config['characters_to_filter'] != "ask":
       inputChars = make_char_set(config['characters_to_filter'], stripLettersNumbers=True, stripKeyboardSpecialChars=False, stripPunctuation=True)
       bypass = True
@@ -2328,21 +2305,15 @@ def prepare_filter_mode_chars(currentUser, scanMode, filterMode, config):
         input("Press Enter to exit...")
         sys.exit()
 
-    if filterMode == "Username" or filterMode == "NameAndText":
-      validEntry= safety_check_username_against_filter(currentUserName, scanMode, filterCharsSet=inputChars, bypass=bypass)
-    elif filterMode == "Text":
-      validEntry = True
-
-    if validEntry == True:
-      if validConfigSetting == True and config and config['characters_to_filter'] != "ask":
-        pass
-      else:
-        print(f"     {whatToScanMsg} will be scanned for {F.MAGENTA}ANY{S.R} of the characters you entered in the previous window.")
-      if choice("Begin Scanning? ", bypass) == True:
-        validEntry = True
-      else:
-        validEntry = False
-        validConfigSetting = False
+    print(f"     {whatToScanMsg} will be scanned for {F.MAGENTA}ANY{S.R} of the characters you entered in the previous window.")
+    userChoice = choice("Begin Scanning? ", bypass)
+    if userChoice == True:
+      confirm = True
+    elif userChoice == False:
+      confirm = False
+      validConfigSetting = False
+    elif userChoice == None:
+      return "MainMenu", None
 
   return inputChars, None
 
@@ -2373,14 +2344,13 @@ def prepare_filter_mode_strings(currentUser, scanMode, filterMode, config):
     else:
       bypass = False
       inputString = input("Input Here: ")
+      if str(inputString).lower() == "x":
+        return "MainMenu", None
 
     # Convert comma separated string into list with function, then check against current user's name
     filterStringList = string_to_list(inputString, lower=True)
     if len(filterStringList) > 0:
-      if filterMode == "Username" or filterMode == "NameAndText":
-        validEntry = safety_check_username_against_filter(currentUserName.lower(), scanMode, filterStringList=filterStringList, bypass=bypass)
-      elif filterMode == "Text":
-        validEntry = True
+      validEntry = True
     else:
       validConfigSetting = False
 
@@ -2390,10 +2360,13 @@ def prepare_filter_mode_strings(currentUser, scanMode, filterMode, config):
       else:
         print(f"     {whatToScanMsg} will be scanned for {F.MAGENTA}ANY{S.R} of the following strings:")
         print(filterStringList)
-      if choice("Begin scanning? ", bypass) == True:
+      userChoice = choice("Begin scanning? ", bypass)
+      if userChoice == True:
         validEntry = True
-      else:
+      elif userChoice == False:
         validEntry = False
+      elif userChoice == None:
+        return "MainMenu", None
 
   return filterStringList, None
 
@@ -2422,6 +2395,8 @@ def prepare_filter_mode_regex(currentUser, scanMode, filterMode, config):
       bypass = True
     else:
       inputtedExpression = input("Input Expression Here:  ")
+      if str(inputtedExpression).lower() == "x":
+        return "MainMenu", None
       bypass = False
 
     validationResults = validate_regex(inputtedExpression) # Returns tuple of valid, and processed expression
@@ -2430,14 +2405,16 @@ def prepare_filter_mode_regex(currentUser, scanMode, filterMode, config):
     if validExpression == True:
       processedExpression = validationResults[1]
       print(f"     The expression appears to be {F.GREEN}valid{S.R}!")
-      if filterMode == "Username" or filterMode == "NameAndText":
-        validExpression = safety_check_username_against_filter(currentUserName, scanMode, regexPattern=processedExpression, bypass=bypass)
 
-      if validExpression == True and choice("Begin scanning? ", bypass) == True:
-        pass
-      else:
-        validExpression = False
-        validConfigSetting = False
+      if validExpression == True:
+        userChoice = choice("Begin scanning? ", bypass)
+        if userChoice == True:
+          pass
+        elif userChoice == False:
+          validExpression = False
+          validConfigSetting = False
+        elif userChoice == None:
+          return "MainMenu", None
     else:
       print(f"     {F.RED}Error{S.R}: The expression appears to be {F.RED}invalid{S.R}!")
       validConfigSetting = False
@@ -2457,6 +2434,8 @@ def prepare_filter_mode_ID(currentUser, scanMode, config):
     else:
       bypass = False
       inputtedSpammerChannelID = input(f"Enter the {F.LIGHTRED_EX} Channel link(s) or ID(s){S.R} of the spammer (comma separated): ")
+      if str(inputtedSpammerChannelID).lower() == "x":
+        return "MainMenu", None
 
     processResult = process_spammer_ids(inputtedSpammerChannelID)
     if processResult[0] == True:
@@ -2499,28 +2478,36 @@ def prepare_filter_mode_non_ascii(currentUser, scanMode, config):
     else:
       bypass = False
       selection = input("Choose Mode: ")
+      if str(selection).lower() == "x":
+        return "MainMenu", None
     if selection == "1":
       print(f"Searches for {F.YELLOW}usernames with emojis, unicode symbols, and rare foreign characters{S.R} such as: ✔️ ☝️ 🡆 ▲ π Ɲ Œ")
-      if choice("Choose this mode?", bypass) == True:
+      userChoice = choice("Choose this mode?", bypass)
+      if userChoice == True:
         regexPattern = r"[^\x00-\xFF]"
         confirmation = True
+      elif userChoice == None:
+        return "MainMenu", None
     elif selection == "2":
       print(f"Searches for {F.YELLOW}usernames with anything EXCEPT{S.R} the following: {F.YELLOW}Letters, numbers, punctuation, and common special characters{S.R} you can type with your keyboard like: % * & () + ")
-      if choice("Choose this mode?", bypass) == True:
+      userChoice = choice("Choose this mode?", bypass)
+      if userChoice == True:
         regexPattern = r"[^\x00-\x7F]"
         confirmation = True
+      elif userChoice == None:
+        return "MainMenu", None
     elif selection == "3":
       print(f"Searches for {F.YELLOW}usernames with anything EXCEPT letters, numbers, and spaces{S.R} - {B.RED}{F.WHITE} EXTREMELY LIKELY to cause collateral damage!{S.R} Recommended to just use to manually gather list of spammer IDs, then use a different mode to delete.")
-      if choice("Choose this mode?", bypass) == True:
+      userChoice = choice("Choose this mode?", bypass)
+      if userChoice == True:
         regexPattern = r"[^a-zA-Z0-9 ]"
         confirmation = True
+      elif userChoice == None:
+        return "MainMenu", None
     else:
       print(f"Invalid input: {selection} - Must be 1, 2, or 3.")
       validConfigSetting = False
     
-    if confirmation == True:
-      confirmation = safety_check_username_against_filter(currentUser[1], scanMode=scanMode, regexPattern=regexPattern, bypass=bypass)
-
   if selection == "1":
     autoModeName = "Allow Standard + Extended ASCII"
   elif selection == "2":
@@ -3014,13 +3001,15 @@ def main():
     loggingEnabled = False
     userNotChannelOwner = False
 
+    os.system(clear_command)
     # User selects scanning mode,  while Loop to get scanning mode, so if invalid input, it will keep asking until valid input
-    print(f"\n---------- {F.YELLOW}Scanning Options{S.R} ----------")
+    print(f"   [At any prompt, you can enter 'X' to return to this menu]")
+    print(f"\n----------------------- {F.YELLOW}Scanning Options{S.R} -----------------------")
     print(f"      1. Scan {F.LIGHTBLUE_EX}specific videos{S.R}")
     print(f"      2. Scan {F.LIGHTCYAN_EX}recent videos{S.R} for a channel")
     print(f"      3. Scan recent comments across your {F.LIGHTMAGENTA_EX}Entire Channel{S.R}")
     print(f"      4. Scan a {F.LIGHTMAGENTA_EX}community post{S.R} (Experimental)")
-    print(f"---------- {F.LIGHTRED_EX}Other Options{S.R} ----------")
+    print(f"------------------------ {F.LIGHTRED_EX}Other Options{S.R} -------------------------")
     print(f"      5. Create your own config file to quickly run the program with pre-set settings")
     print(f"      6. Recover deleted comments using log file")
     print(f"      7. Check For Updates\n")
@@ -3092,6 +3081,8 @@ def main():
             print(f"\nEnter a list of {F.YELLOW}Video Links{S.R} or {F.YELLOW}Video IDs{S.R} to scan, separated by commas.")
             print(" > Note: All videos must be from the same channel.")
             enteredVideosList = string_to_list(input("Enter here: "))
+            if str(enteredVideosList).lower() == "['x']":
+              return True # Return to main menu
             validConfigSetting = False
             if len(enteredVideosList) == 0:
               listNotEmpty = False
@@ -3135,8 +3126,11 @@ def main():
               print("  The following videos do not match the channel owner of the first video in the list: ")
             if misMatchVidIndex == 11 and len(enteredVideosList) > 10:
               remainingCount = str(len(enteredVideosList) - 10)
-              if choice(f"There are {remainingCount} more mis-matched videos, do you want to see the rest?") == False:
+              userChoice = choice(f"There are {remainingCount} more mis-matched videos, do you want to see the rest?")
+              if userChoice == False:
                 break
+              elif userChoice == None:
+                return True # Return to main menu
             print(f"  {misMatchVidIndex}. {str(videosToScan[i]['videoTitle'])}")
             validConfigSetting = False
             allVideosMatchBool = False
@@ -3150,8 +3144,11 @@ def main():
             i += 1
             if i==6 and len(enteredVideosList) > 5:
               remainingCount = str(len(enteredVideosList) - 5)
-              if choice(f"You have entered many videos, do you need to see the rest (x{remainingCount})?") == False:
+              userChoice = choice(f"You have entered many videos, do you need to see the rest (x{remainingCount})?")
+              if userChoice == False:
                 break
+              elif userChoice == None:
+                return True # Return to main menu
             print(f" {i}. {video['videoTitle']}")
           print("")
           
@@ -3177,6 +3174,8 @@ def main():
               if userNotChannelOwner == True or moderator_mode == True:
                 print(f"{F.LIGHTCYAN_EX}> Note:{S.R} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")
             confirm = choice("Is this video list correct?", bypass=validConfigSetting)
+            if confirm == None:
+              return True # Return to main menu
 
     elif scanMode == "recentVideos":
       confirm = False
@@ -3205,6 +3204,8 @@ def main():
           channelID = currentUser[0]
           channelTitle = currentUser[1]
           validChannel = True
+        elif str(inputtedChannel).lower() == "x":
+          return True # Return to main menu
         else:
           validChannel, channelID, channelTitle = validate_channel_id(inputtedChannel)
 
@@ -3228,6 +3229,8 @@ def main():
         else:
           print(f"\nEnter the {F.YELLOW}number most recent videos{S.R} to scan back-to-back:")
           numVideos = input("\nNumber of Recent Videos: ")
+          if str(numVideos).lower() == "x":
+            return True # Return to main menu
         try:
           numVideos = int(numVideos)
           if numVideos > 0 and numVideos <= 500:
@@ -3248,7 +3251,8 @@ def main():
         if validEntry == True:
           # Fetch recent videos and print titles to user for confirmation
           videosToScan = get_recent_videos(channelID, numVideos)
-
+          if str(videosToScan) == "MainMenu":
+            return True # Return to main menu
           # Get total comment count
           miscData['totalCommentCount'] = 0
           for video in videosToScan:
@@ -3260,8 +3264,11 @@ def main():
           for i in range(len(videosToScan)):
             if i == 10 and len(videosToScan) > 11:
               remainingCount = str(len(videosToScan) - 10)
-              if choice(f"There are {remainingCount} more recent videos, do you want to see the rest?") == False:
-                break          
+              userChoice = choice(f"There are {remainingCount} more recent videos, do you want to see the rest?")
+              if userChoice == False:
+                break 
+              elif userChoice == None:
+                return True # Return to main menu         
             print(f"  {i+1}. {videosToScan[i]['videoTitle']}")
 
           if config and (config['skip_confirm_video'] == True and validConfigSetting == True):
@@ -3277,8 +3284,10 @@ def main():
               print(f" around {F.YELLOW}10,000 comment deletions per day{S.R}. If you find more spam than that you will go over the limit.")
               print(f"        > Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
               if userNotChannelOwner == True or moderator_mode == True:
-                print(f"{F.LIGHTCYAN_EX}> Note:{S.R} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")  
-            confirm = choice("Is everything correct?", bypass=config['skip_confirm_video'])  
+                print(f"{F.LIGHTCYAN_EX}> Note:{S.R} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")
+            confirm = choice("Is everything correct?", bypass=config['skip_confirm_video'])
+            if confirm == None:
+              return True # Return to main menu
 
       miscData['channelOwnerID'] = channelID
       miscData['channelOwnerName'] = channelTitle
@@ -3294,7 +3303,10 @@ def main():
           if validConfigSetting == True and config and config['max_comments'] != 'ask':
             maxScanNumber = int(config['max_comments'])
           else:
-            maxScanNumber = int(input(f"Enter the maximum {F.YELLOW}number of comments{S.R} to scan: "))
+            maxScanNumber = input(f"Enter the maximum {F.YELLOW}number of comments{S.R} to scan: ")
+            if str(maxScanNumber).lower() == "x":
+              return True # Return to main menu
+            maxScanNumber = int(maxScanNumber)
 
             if maxScanNumber >= 100000:
               print(f"\n{B.YELLOW}{F.BLACK} WARNING: {S.R} You have chosen to scan a large amount of comments. The default API quota limit ends up")
@@ -3302,8 +3314,11 @@ def main():
               print(f"        > Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
               if userNotChannelOwner == True or moderator_mode == True:
                 print(f"{F.LIGHTCYAN_EX}> Note:{S.R} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")
-              if choice("Do you still want to continu?") == False:
+              userChoice = choice("Do you still want to continue?")
+              if userChoice == False:
                 validInteger == False
+              elif userChoice == None:
+                return True # Return to main menu
 
           if maxScanNumber > 0:
             validInteger = True # If it gets here, it's an integer, otherwise goes to exception
@@ -3324,6 +3339,8 @@ def main():
       confirm = False
       while confirm == False:
         communityPostInput = input("\nEnter the ID or link of the community post: ")
+        if str(communityPostInput).lower() == "x":
+          return True # Return to main menu
         # Validate post ID or link, get additional info about owner, and useable link
         isValid, communityPostID, postURL, postOwnerID, postOwnerUsername = validate_post_id(communityPostInput)
         if isValid == True:
@@ -3332,6 +3349,8 @@ def main():
             userNotChannelOwner = True
             print("\nWarning: You are scanning someone elses post. 'Not Your Channel Mode' Enabled.")
           confirm = choice("Continue?")
+          if confirm == None:
+            return True # Return to main menu
         else:
           print("Problem interpreting the post information, please check the link or ID.")
       miscData['channelOwnerID'] = postOwnerID
@@ -3353,6 +3372,8 @@ def main():
           print("\nInvalid max_comments setting in config! Number must a whole number be greater than zero.")
         while validInteger == False:
           maxScanInput = input(f"\nEnter the maximum {F.YELLOW}number of comments{S.R} to scan: ")
+          if str(maxScanInput).lower() == "x":
+            return True # Return to main menu
           try:
             maxScanNumber = int(maxScanInput)
             if maxScanNumber > 0:
@@ -3364,17 +3385,22 @@ def main():
         
     # Create config file
     elif scanMode == "makeConfig":
-      create_config_file()
-      print("\nConfig file created: SpamPurgeConfig.ini - Open file with text editor to read instructions and change settings.")
+      result = create_config_file()
+      if str(result) == "MainMenu":
+        return True
 
     # Check for latest version
     elif scanMode == "checkUpdates":
       check_lists_update(spamListDict)
       check_for_update(version, updateReleaseChannel)
+      input("\nPress Enter to return to main menu...")
+      return True
 
     # Recove deleted comments mode
     elif scanMode == "recoverMode":
-      recover_deleted_comments()
+      result = recover_deleted_comments()
+      if str(result) == "MainMenu":
+        return True
 
     # User inputs filtering mode
     print("\n-------------------------------------------------------")
@@ -3405,6 +3431,9 @@ def main():
         filterChoice = config['filter_mode']
       else:
         filterChoice = input("\nChoice (1-7): ")
+      
+      if str(filterChoice).lower() == "x":
+        return True # Return to main menu
 
       validChoices = ['1', '2', '3', '4', '5', '6', '7', 'id', 'username', 'text', 'nameandtext', 'autoascii', 'autosmart', 'sensitivesmart']
       if filterChoice in validChoices:
@@ -3454,6 +3483,9 @@ def main():
           pass
         else:
           filterSubMode = input("\nChoice (1, 2, or 3): ")
+        if str(filterSubMode).lower() == "x":
+          return True # Return to main menu
+
         validFilterSubModes = ["1", "2", "3", "characters", "strings", "regex"]
         if filterSubMode in validFilterSubModes:
           validFilterSubMode = True
@@ -3500,6 +3532,9 @@ def main():
     elif filterSubMode == "regex":
       filterSettings = prepare_filter_mode_regex(currentUser, scanMode, filterMode, config)
       regexPattern = filterSettings[1]
+
+    if filterSettings[0] == "MainMenu":
+      return True
 
     if filterSubMode != "regex":
       if filterMode == "Username":
@@ -3569,7 +3604,7 @@ def main():
           i += 1
       print_count_stats(current, miscData, videosToScan, final=True)  # Prints comment scan stats, finalizes
     
-  ##########################################################
+    ##########################################################
     bypass = False
     if config and config['enable_logging'] != 'ask':
       logSetting = config['enable_logging']
@@ -3591,8 +3626,8 @@ def main():
       print(f"{B.RED}{F.BLACK} No matched comments or users found! {F.R}{B.R}{S.R}\n")
       print(f"If you see missed spam or false positives, you can submit a filter suggestion here: {F.YELLOW}TJoe.io/filter-feedback{S.R}")
       if bypass == False:
-        input("\nPress Enter to exit...")
-        sys.exit()
+        input("\nPress Enter to return to main menu...")
+        return True
       elif bypass == True:
         print("Exiting in 5 seconds...")
         time.sleep(5)
@@ -3604,6 +3639,8 @@ def main():
       print(f"\nSpam comments ready to display. Also {F.LIGHTGREEN_EX}save a log file?{S.R} {B.GREEN}{F.BLACK} Highly Recommended! {F.R}{B.R}{S.R}")
       print(f"        (It even allows you to {F.LIGHTGREEN_EX}restore{S.R} deleted comments later)")
       loggingEnabled = choice(f"Save Log File (Recommended)?")
+      if loggingEnabled == None:
+        return True # Return to main menu
       print("")
 
     # Prepare logging
@@ -3769,7 +3806,7 @@ def main():
 
     # Test skip_deletion preference - If passes both, will either delete or ask user to delete
     elif config['skip_deletion'] == True:
-      sys.exit()
+      return True
     elif config['skip_deletion'] != False:
       print("Error Code C-3: Invalid value for 'skip_deletion' in config file. Must be 'True' or 'False':  " + str(config['skip_deletion']))
       input("\nPress Enter to exit...")
@@ -3833,8 +3870,8 @@ def main():
         print("\nThe deletion functionality was not enabled. Cannot delete or report comments.")
         print("Possible Cause: You're scanning someone elses video with a non-supported filter mode.\n")
         print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
-        input("Press Enter to exit...")
-        sys.exit()
+        input("\nPress Enter to return to main menu...")
+        return True
 
 
     ### ---------------- Set Up How To Handle Comments  ----------------
@@ -3888,8 +3925,8 @@ def main():
           excludedDict, rtfExclude, plaintextExclude = exclude_authors(current, inputtedString=confirmDelete, miscData=miscData)
           exclude = True
         else:
-          input(f"\nDeletion {F.YELLOW}CANCELLED{S.R} (Because no matching option entered). Press Enter to exit...")
-          sys.exit()
+          input(f"\nDeletion {F.YELLOW}CANCELLED{S.R} (Because no matching option entered). Press Enter to return to main menu...")
+          return True
 
     
     # Set deletion mode friendly name
@@ -3914,6 +3951,8 @@ def main():
           input("Press Enter to continue...")
       elif deletionMode == "rejected":
         banChoice = choice(f"Also {F.YELLOW}ban{S.R} the spammer(s) ?")
+        if banChoice == None:
+          return True # Return to main menu
 
       elif deletionMode == "heldForReview":
         pass
@@ -3940,13 +3979,15 @@ def main():
           if exclude == True:
             write_plaintext_log(current.logFileName, str(plaintextExclude))
 
-      input(f"\nProgram {F.LIGHTGREEN_EX}Complete{S.R}. Press Enter to Exit...")
+      input(f"\nProgram {F.LIGHTGREEN_EX}Complete{S.R}. Press Enter to to return to main menu...")
+      return True
 
-    elif config:
-        sys.exit()
+    elif config['deletion_enabled'] == False:
+      input(f"\nDeletion is disabled in config file. Press Enter to to return to main menu...")
+      return True
     else:
-      input(f"\nDeletion {F.LIGHTRED_EX}Cancelled{S.R}. Press Enter to exit...")
-      sys.exit()
+      input(f"\nDeletion {F.LIGHTRED_EX}Cancelled{S.R}. Press Enter to to return to main menu...")
+      return True
 
   continueRunning = True
   while continueRunning == True:
