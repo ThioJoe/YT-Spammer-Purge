@@ -1742,7 +1742,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
       print("(To stop receiving beta releases, change the 'release_channel' setting in the config file)")
       print("------------------------------------------------------------------------------------------")
       if choice("Update Now?") == True:
-        if sys.platform == 'win32' or sys.platform == 'win64':
+        if platform.system() == 'Windows':
           print(f"\n> {F.LIGHTCYAN_EX} Downloading Latest Version...{S.R}")
           if updateReleaseChannel == "stable":
             jsondata = json.dumps(response.json()["assets"])
@@ -1847,7 +1847,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
           input("\nPress Enter to Exit...")
           sys.exit()
 
-        elif sys.platform == "linux":
+        elif platform.system() == "Linux":
           # Current working directory
           cwd = os.getcwd()
           # what we want the tar file to be called on the system
