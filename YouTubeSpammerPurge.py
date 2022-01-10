@@ -357,7 +357,7 @@ def get_comments(current, filtersDict, miscData, config, scanVideoID=None, nextP
       pageToken=nextPageToken,
       fields=fieldsToFetch,
       textFormat="plainText"
-    ).execute()  
+    ).execute()
     
   # Get token for next page. If no token, sets to 'End'
   RetrievedNextPageToken = results.get("nextPageToken", "End")
@@ -1407,7 +1407,7 @@ def get_extra_json_data(channelIDs, jsonSettingsDict):
     "items/statistics")
 
   if jsonSettingsDict['json_profile_picture'] != False:
-    fieldsToFetch += ",items/snippet/thumbnails/default/url,items/id"
+    fieldsToFetch += f",items/snippet/thumbnails/{resolution}/url,items/id"
 
   def fetch_data(channelIdGroup):
     try:
@@ -1417,14 +1417,14 @@ def get_extra_json_data(channelIDs, jsonSettingsDict):
           tempDict = {}
           channelID = response['items'][j]['id']
           tempDict['PublishedAt'] = response['items'][j]['snippet']['publishedAt']
-          tempDict['Statistics'] = response['items'][j]['statistics']          
+          tempDict['Statistics'] = response['items'][j]['statistics']
           if getPicsBool == True:
             picURL = response['items'][j]['snippet']['thumbnails'][resolution]['url']
             pictureUrlsDict[channelID] = picURL
           jsonExtraDataDict['CommentAuthorInfo'][channelID] = tempDict
     except:
       traceback.print_exc()
-      print("Error occurred when extra json data.")
+      print("Error occurred when fetching extra json data.")
       return False
 
   # Get Extra Info About Commenters
@@ -2022,7 +2022,9 @@ def get_list_file_version(relativeFilePath):
     with open(relativeFilePath, 'r', encoding="utf-8") as file:
       for line in islice(file, 0, 5):
         try:
-          listVersion = str(re.search(matchBetweenBrackets, line).group(0))
+          matchItem = re.search(matchBetweenBrackets, line)
+          if matchItem:
+            listVersion = str(matchItem.group(0))
         except AttributeError:
           pass
       return listVersion
