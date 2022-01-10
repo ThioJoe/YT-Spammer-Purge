@@ -1098,21 +1098,28 @@ def get_current_user(config:dict) -> tuple[str, str, bool]:
 ################################# Get Most Recent Videos #####################################
 # Returns a list of lists
 def get_recent_videos(channel_id:str, numVideosTotal:int):
-  def get_block_of_videos(nextPageToken:str, j:int, numVideosBlock:int = 5):
+  def get_block_of_videos(nextPageToken:str, j:int, k:int, numVideosBlock:int = 5):
     result = YOUTUBE.search().list(
       part="snippet",
       channelId=channel_id,
       type='video',
       order='date',
       pageToken=nextPageToken,
-      fields='nextPageToken,items/id/videoId,items/snippet/title',
+      #fields='nextPageToken,items/id/videoId,items/snippet/title',
       maxResults=numVideosBlock,
       ).execute()
 
     for item in result['items']:
-      recentVideos.append({})
       videoID = str(item['id']['videoId'])
       videoTitle = str(item['snippet']['title']).replace("&quot;", "\"").replace("&#39;", "'")
+      commentCount = validate_video_id(videoID)[3]
+      #Skips over video if comment count is zero, or comments disabled / is live stream
+      if str(commentCount) == '0':
+        print(f"{B.YELLOW}{F.BLACK} Skipping {S.R} {F.LIGHTRED_EX}Video with no comments:{S.R} " + str(item['snippet']['title']))
+        k+=1
+        continue
+
+      recentVideos.append({})
       recentVideos[j]['videoID'] = videoID
       recentVideos[j]['videoTitle'] = videoTitle
       commentCount = validate_video_id(videoID)[3]
@@ -1120,32 +1127,34 @@ def get_recent_videos(channel_id:str, numVideosTotal:int):
         return None, None, "MainMenu"
       recentVideos[j]['commentCount'] = commentCount
       j+=1
+      k+=1
 
     # Get token for next page
     try:
       nextPageToken = result['nextPageToken']
     except KeyError:
       nextPageToken = "End"
-    
-    return nextPageToken, j, ""
+
+    #      0              1  2  3
+    return nextPageToken, j, k, ""
     #----------------------------------------------------------------
   
   nextPageToken:str = None
   recentVideos:list = [] #List of dictionaries
   abortCheck:str = "" # Used to receive "MainMenu" if user wants to exit, when entering 
-  i = 0
+  j,k = 0,0 # i = number of videos added to list, k = number of videos checked (different only if one video skipped because no comments)
   if numVideosTotal <=5:
-    result = get_block_of_videos(None, j=i, numVideosBlock=numVideosTotal)
-    if result[2] == "MainMenu":
+    result = get_block_of_videos(None, j, k, numVideosBlock=numVideosTotal)
+    if result[3] == "MainMenu":
       return "MainMenu"
   else:
-    while nextPageToken != "End" and len(recentVideos) < numVideosTotal and str(abortCheck) != "MainMenu":
+    while nextPageToken != "End" and k < numVideosTotal and str(abortCheck) != "MainMenu":
       print("Retrieved " + str(len(recentVideos)) + "/" + str(numVideosTotal) + " videos.", end="\r")
-      remainingVideos = numVideosTotal - len(recentVideos)
+      remainingVideos = numVideosTotal - k
       if remainingVideos <= 5:
-        nextPageToken, i, abortCheck = get_block_of_videos(nextPageToken, j=i, numVideosBlock = remainingVideos)
+        nextPageToken, j, k, abortCheck = get_block_of_videos(nextPageToken, j, k, numVideosBlock = remainingVideos)
       else:
-        nextPageToken, i, abortCheck = get_block_of_videos(nextPageToken, j=i, numVideosBlock = 5)
+        nextPageToken, j, k, abortCheck = get_block_of_videos(nextPageToken, j, k, numVideosBlock = 5)
       if str(nextPageToken[0]) == "MainMenu":
         return "MainMenu"
   print("                                          ")
@@ -3336,6 +3345,7 @@ def main():
         else:
           print(f"\nEnter the {F.YELLOW}number most recent videos{S.R} to scan back-to-back:")
           numVideos = input("\nNumber of Recent Videos: ")
+          print("")
           if str(numVideos).lower() == "x":
             return True # Return to main menu
         try:
@@ -3366,7 +3376,7 @@ def main():
             miscData.totalCommentCount += int(video['commentCount'])
 
           if len(videosToScan) < numVideos:
-            print(f"\n{F.YELLOW} WARNING:{S.R} Only {len(videosToScan)} videos found.")
+            print(f"\n{F.YELLOW} WARNING:{S.R} Only {len(videosToScan)} videos found. Videos may be skipped if there are no comments.")
           print("\nRecent Videos To Be Scanned:")
           for i in range(len(videosToScan)):
             if i == 10 and len(videosToScan) > 11:
