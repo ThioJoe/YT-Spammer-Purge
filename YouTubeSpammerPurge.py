@@ -497,7 +497,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
     authorChannelID = "x"
 
   # Do not even check comment if: Author is Current User, Author is Channel Owner, or Author is in whitelist
-  if CURRENTUSER.id != authorChannelID and miscData['channelOwnerID'] != authorChannelID and authorChannelID not in miscData['Resources']['Whitelist']['WhitelistContents']:
+  if CURRENTUSER.id != authorChannelID and miscData.channelOwnerID != authorChannelID and authorChannelID not in miscData.resources['Whitelist']['WhitelistContents']:
     if "@" in commentText:
       # Logic to avoid false positives from replies to spammers
       if allThreadAuthorNames and (filtersDict['filterMode'] == "AutoSmart" or filtersDict['filterMode'] == "NameAndText"):
@@ -526,8 +526,8 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
       else:
         current.authorMatchCountDict[authorChannelID] = 1
       if config and config['json_log'] == True and config['json_extra_data'] == True:
-        current.matchedCommentsDict[commentID]['uploaderChannelID'] = miscData['channelOwnerID']
-        current.matchedCommentsDict[commentID]['uploaderChannelName'] = miscData['channelOwnerName']
+        current.matchedCommentsDict[commentID]['uploaderChannelID'] = miscData.channelOwnerID
+        current.matchedCommentsDict[commentID]['uploaderChannelName'] = miscData.channelOwnerName
         current.matchedCommentsDict[commentID]['videoTitle'] = get_video_title(current, videoID)
         
       if debugSingleComment == True: 
@@ -696,7 +696,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
         add_spam(commentID, videoID)
       elif sensitive == True and re.search(smartFilter['usernameConfuseRegex'], authorChannelName):
         add_spam(commentID, videoID)
-      elif sensitive == False and findOnlyObfuscated(smartFilter['usernameConfuseRegex'], miscData['channelOwnerName'], authorChannelName):
+      elif sensitive == False and findOnlyObfuscated(smartFilter['usernameConfuseRegex'], miscData.channelOwnerName, authorChannelName):
         add_spam(commentID, videoID)
       # Multi Criteria Tests
       else:
@@ -985,7 +985,7 @@ def exclude_authors(current, inputtedString, miscData):
   # Get author names and IDs from dictionary, and display them
   for author in authorIDsToExclude:
     displayString += f"    User ID: {author}   |   User Name: {current.matchSamplesDict[author]['authorName']}\n"
-    with open(miscData['Resources']['Whitelist']['PathWithName'], "a", encoding="utf-8") as f:
+    with open(miscData.resources['Whitelist']['PathWithName'], "a", encoding="utf-8") as f:
       f.write(f"# [Excluded]  Channel Name: {current.matchSamplesDict[author]['authorName']}  |  Channel ID: " + "\n")
       f.write(f"{author}\n")
 
@@ -1155,7 +1155,7 @@ def get_recent_videos(channel_id, numVideosTotal):
 def print_count_stats(current, miscData, videosToScan, final):
   # Use videosToScan (list of dictionaries) to retrieve total number of comments
   if videosToScan:
-    totalComments = miscData['totalCommentCount']
+    totalComments = miscData.totalCommentCount
     totalScanned = current.scannedRepliesCount + current.scannedCommentsCount
     percent = ((totalScanned / totalComments) * 100)
     progress = f"Total: [{str(totalScanned)}/{str(totalComments)}] ({percent:.0f}%) ".ljust(27, " ") + "|" #Formats percentage to 0 decimal places
@@ -2591,10 +2591,10 @@ def prepare_filter_mode_non_ascii(scanMode, config):
 
 # Auto smart mode
 def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
-  rootDomainList = miscData['rootDomainList']
-  spamDomainsList = miscData['SpamLists']['spamDomainsList'] # List of domains from crowd sourced list
-  spamThreadsList = miscData['SpamLists']['spamThreadsList'] # List of filters associated with spam threads from crowd sourced list
-  spamAccountsList = miscData['SpamLists']['spamAccountsList'] # List of mentioned instagram/telegram scam accounts from crowd sourced list
+  rootDomainList = miscData.rootDomainsList
+  spamDomainsList = miscData.spamLists['spamDomainsList'] # List of domains from crowd sourced list
+  spamThreadsList = miscData.spamLists['spamThreadsList'] # List of filters associated with spam threads from crowd sourced list
+  spamAccountsList = miscData.spamLists['spamAccountsList'] # List of mentioned instagram/telegram scam accounts from crowd sourced list
   utf_16 = "utf-8"
   if config and config['filter_mode'] == "autosmart":
     pass
@@ -2687,7 +2687,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
 
   # Compile regex with upper case, otherwise many false positive character matches
   bufferMatch, addBuffers = "*_~|`", "*_~|`\[\]\(\)'" # Add 'buffer' chars to compensate for obfuscation
-  usernameConfuseRegex = re.compile(confusable_regex(miscData['channelOwnerName']))
+  usernameConfuseRegex = re.compile(confusable_regex(miscData.channelOwnerName))
   m = bufferMatch
   a = addBuffers
   for word in usernameBlackWords:
@@ -2798,7 +2798,13 @@ def main():
   global YOUTUBE
   global CURRENTUSER
   User = namedtuple('User', 'id name configMatch')
- 
+
+  # Some Typehints
+  scanMode: str
+  config: dict
+  jsonData: dict
+  versionInfoJson: dict
+
   # Checks system platform to set correct console clear command
   # Clears console otherwise the windows terminal doesn't work with colorama for some reason  
   clear_command = "cls" if platform.system() == "Windows" else "clear"
@@ -2980,17 +2986,31 @@ def main():
   
   ####### Load Other Data into MiscData #######
   print("\nLoading other assets..\n")
-  miscData = {
-    'Resources': {},
-    'SpamLists':{}
-  }
+  @dataclass
+  class MiscDataStore:
+    resources:dict
+    spamLists:dict
+    rootDomainsList:list
+    totalCommentCount:int
+    channelOwnerID:str
+    channelOwnerName:str    
+
+  miscData = MiscDataStore(
+    resources = {}, 
+    spamLists = {}, 
+    rootDomainsList = [], 
+    totalCommentCount = 0, 
+    channelOwnerID = "", 
+    channelOwnerName = ""
+    )
+
   rootDomainListAssetFile = "rootZoneDomainList.txt"
   rootDomainList = ingest_asset_file(rootDomainListAssetFile)
-  miscData['rootDomainList'] = rootDomainList
-  miscData['SpamLists']['spamDomainsList'] = spamListDict['Lists']['Domains']['FilterContents']
-  miscData['SpamLists']['spamAccountsList'] = spamListDict['Lists']['Accounts']['FilterContents']
-  miscData['SpamLists']['spamThreadsList'] = spamListDict['Lists']['Threads']['FilterContents']
-  miscData['Resources'] = resourcesDict
+  miscData.resources = rootDomainList
+  miscData.spamLists['spamDomainsList'] = spamListDict['Lists']['Domains']['FilterContents']
+  miscData.spamLists['spamAccountsList'] = spamListDict['Lists']['Accounts']['FilterContents']
+  miscData.spamLists['spamThreadsList'] = spamListDict['Lists']['Threads']['FilterContents']
+  miscData.resources = resourcesDict
 
   # Create Whitelist if it doesn't exist, 
   if not os.path.exists(whitelistPathWithName):
@@ -2999,9 +3019,9 @@ def main():
       f.write("# Channel IDs for a channel can be found in the URL after clicking a channel's name while on the watch page or where they've left a comment.\n")
       f.write("# - Channels that were 'excluded' will also appear in this list.\n")
       f.write("# - Lines beginning with a '#' are comments and aren't read by the program. (But do not put a '#' on the same line as actual data)\n\n")
-    miscData['Resources']['Whitelist']['WhitelistContents'] = []
+    miscData.resources['Whitelist']['WhitelistContents'] = []
   else:
-    miscData['Resources']['Whitelist']['WhitelistContents'] = ingest_list_file(whitelistPathWithName, keepCase=True)
+    miscData.resources['Whitelist']['WhitelistContents'] = ingest_list_file(whitelistPathWithName, keepCase=True)
 
   if config:
     moderator_mode = config['moderator_mode']
@@ -3035,6 +3055,7 @@ def main():
       os.system(clear_command)
       YOUTUBE = get_authenticated_service()
 
+  # Declare Classes
   @dataclass
   class ScanInstance:
     matchedCommentsDict: dict
@@ -3045,7 +3066,9 @@ def main():
     scannedRepliesCount: int
     scannedCommentsCount: int
     logTime: str
-    logFileName: str  
+    logFileName: str
+
+
 
   ##############################################
   ######### PRIMARY INSTANCE FUNCTION ##########
@@ -3100,8 +3123,8 @@ def main():
       print(f"{F.LIGHTRED_EX}Notice: Your config file is out of date! Choose 'Create your own config file' to generate a new one.{S.R}\n")
 
     # Make sure input is valid, if not ask again
-    validMode = False
-    validConfigSetting = True
+    validMode:bool = False
+    validConfigSetting:bool = True
     while validMode == False:
       if validConfigSetting == True and config and config['scan_mode'] != 'ask':
         scanMode = config['scan_mode']
@@ -3133,15 +3156,15 @@ def main():
     # If chooses to scan single video - Validate Video ID, get title, and confirm with user
     if scanMode == "chosenVideos":  
       # While loop to get video ID and if invalid ask again
-      confirm = False
+      confirm:bool = False
       validConfigSetting = True
       while confirm == False:
         numVideos = 1
         allVideosMatchBool = True
-        miscData['totalCommentCount'] = 0
+        miscData.totalCommentCount = 0
 
         # Checks if input list is empty and if contains only valid video IDs
-        listNotEmpty = False
+        listNotEmpty:bool = False
         validVideoIDs = False # False just to get into the loop
         while listNotEmpty == False or validVideoIDs == False:
           if validConfigSetting == True and config and config['videos_to_scan'] != 'ask':
@@ -3166,7 +3189,7 @@ def main():
               listNotEmpty = True
 
           # Validates all video IDs/Links, gets necessary info about them
-          validVideoIDs = True
+          validVideoIDs:bool = True
           videosToScan = []
           videoListResult = [] # True/False, video ID, videoTitle, commentCount, channelID, channelTitle
           for i in range(len(enteredVideosList)):
@@ -3185,7 +3208,7 @@ def main():
             videosToScan[i]['commentCount'] = int(videoListResult[i][3])
             videosToScan[i]['channelOwnerID'] = str(videoListResult[i][4])
             videosToScan[i]['channelOwnerName'] = str(videoListResult[i][5])
-            miscData['totalCommentCount'] += int(videoListResult[i][3])
+            miscData.totalCommentCount += int(videoListResult[i][3])
           else:
             print(f"\nInvalid Video: {enteredVideosList[i]}  |  Video ID = {videoListResult[1]}")
             validConfigSetting = False
@@ -3230,8 +3253,8 @@ def main():
           if CURRENTUSER.id != videosToScan[0]['channelOwnerID']:
             userNotChannelOwner = True
 
-          miscData['channelOwnerID'] = videosToScan[0]['channelOwnerID']
-          miscData['channelOwnerName'] = videosToScan[0]['channelOwnerName']
+          miscData.channelOwnerID = videosToScan[0]['channelOwnerID']
+          miscData.channelOwnerName = videosToScan[0]['channelOwnerName']
           
           # Ask if correct videos, or skip if config
           if config and config['skip_confirm_video'] == True:
@@ -3241,8 +3264,8 @@ def main():
               print(f"{F.LIGHTRED_EX}NOTE: This is not your video. Enabling '{F.YELLOW}Not Your Channel Mode{F.LIGHTRED_EX}'. You can report spam comments, but not delete them.{S.R}")
             elif userNotChannelOwner == True and moderator_mode == True:
               print(f"{F.LIGHTRED_EX}NOTE: {F.YELLOW}Moderator Mode is enabled{F.LIGHTRED_EX}. You can hold comments for review when using certain modes{S.R}")
-            print("Total number of comments to scan: " + str(miscData['totalCommentCount']))
-            if miscData['totalCommentCount'] >= 100000:
+            print("Total number of comments to scan: " + str(miscData.totalCommentCount))
+            if miscData.totalCommentCount >= 100000:
               print(f"\n{B.YELLOW}{F.BLACK} WARNING: {S.R} You have chosen to scan a large amount of comments. The default API quota limit ends up")
               print(f" around {F.YELLOW}10,000 comment deletions per day{S.R}. If you find more spam than that you will go over the limit.")
               print(f"        > Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
@@ -3329,9 +3352,9 @@ def main():
           if str(videosToScan) == "MainMenu":
             return True # Return to main menu
           # Get total comment count
-          miscData['totalCommentCount'] = 0
+          miscData.totalCommentCount = 0
           for video in videosToScan:
-            miscData['totalCommentCount'] += int(video['commentCount'])
+            miscData.totalCommentCount += int(video['commentCount'])
 
           if len(videosToScan) < numVideos:
             print(f"\n{F.YELLOW} WARNING:{S.R} Only {len(videosToScan)} videos found.")
@@ -3353,8 +3376,8 @@ def main():
               print(f"{F.LIGHTRED_EX}NOTE: These aren't your videos. Enabling '{F.YELLOW}Not Your Channel Mode{F.LIGHTRED_EX}'. You can report spam comments, but not delete them.{S.R}")
             elif userNotChannelOwner == True and moderator_mode == True:
               print(f"{F.LIGHTRED_EX}NOTE: {F.YELLOW}Moderator Mode is enabled{F.LIGHTRED_EX}. You can hold comments for review when using certain modes{S.R}")
-            print("\nTotal number of comments to scan: " + str(miscData['totalCommentCount']))
-            if miscData['totalCommentCount'] >= 100000:
+            print("\nTotal number of comments to scan: " + str(miscData.totalCommentCount))
+            if miscData.totalCommentCount >= 100000:
               print(f"\n{B.YELLOW}{F.BLACK} WARNING: {S.R} You have chosen to scan a large amount of comments. The default API quota limit ends up")
               print(f" around {F.YELLOW}10,000 comment deletions per day{S.R}. If you find more spam than that you will go over the limit.")
               print(f"        > Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
@@ -3364,8 +3387,8 @@ def main():
             if confirm == None:
               return True # Return to main menu
 
-      miscData['channelOwnerID'] = channelID
-      miscData['channelOwnerName'] = channelTitle
+      miscData.channelOwnerID = channelID
+      miscData.channelOwnerName = channelTitle
 
     # If chooses to scan entire channel - Validate Channel ID
     elif scanMode == "entireChannel":
@@ -3404,8 +3427,8 @@ def main():
           print("\nInvalid Input! - Must be a whole number.")
           validConfigSetting = False
 
-      miscData['channelOwnerID'] = CURRENTUSER.id
-      miscData['channelOwnerName'] = CURRENTUSER.name
+      miscData.channelOwnerID = CURRENTUSER.id
+      miscData.channelOwnerName = CURRENTUSER.name
 
     elif scanMode == 'communityPost':
       print(f"\nNOTES: This mode is {F.YELLOW}experimental{S.R}, and not as polished as other features. Expect some janky-ness.")
@@ -3428,8 +3451,8 @@ def main():
             return True # Return to main menu
         else:
           print("Problem interpreting the post information, please check the link or ID.")
-      miscData['channelOwnerID'] = postOwnerID
-      miscData['channelOwnerName'] = postOwnerUsername 
+      miscData.channelOwnerID = postOwnerID
+      miscData.channelOwnerName = postOwnerUsername 
 
       # Checking config for max comments in config
       if config and config['max_comments'] != 'ask':
@@ -3760,8 +3783,8 @@ def main():
           if config['json_log'] == True:
             jsonLogging = True
             jsonLogFileName = fileNameBase + ".json"
-            jsonSettingsDict['channelOwnerID'] = miscData['channelOwnerID']
-            jsonSettingsDict['channelOwnerName'] = miscData['channelOwnerName']
+            jsonSettingsDict['channelOwnerID'] = miscData.channelOwnerID
+            jsonSettingsDict['channelOwnerName'] = miscData.channelOwnerName
 
             #Encoding
             allowedEncodingModes = ['utf-8', 'utf-16', 'utf-32', 'rtfunicode']
