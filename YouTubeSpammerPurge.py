@@ -1877,34 +1877,32 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
           with tarfile.open(tarFileName) as file:
             file.extractall(f'./{stagingFolder}')
           os.remove(tarFileName)
-
-          # Rename this file
-          try:
-            os.rename(f"{scriptName}", f"{scriptName}-{currentVersion}.old")
-          except OSError:
-            print(f"\n> {F.RED} Error:{S.R}There is already a file by the name '{scriptName}-{currentVersion}.old' already!")
-            if(choice("Would you like to continue and delete the old file (answering no will abort the update)?")):
-              os.remove(f'{scriptName}-{currentVersion}.old')
-              os.rename(f"{scriptName}", f"{scriptName}-{currentVersion}.old")
-            else:
-              print(f"{F.R}Aborting Update!{S.R}")
-              print("Cleaning up...")
-              rmtree(stagingFolder)
-              input("Press Enter to Exit...")
-              sys.exit()
             
           # Retrieve the name of the folder containing the main file, we are assuming there will always be only one folder here
-          contents = os.listdir(f"./{stagingFolder}")
+          extraFolderPath = os.listdir(f"./{stagingFolder}")
           # If there happens to be more then one folder
-          if(len(contents) > 1):
+          if(len(extraFolderPath) > 1):
             print(f"\n> {F.RED} Error:{S.R} more then one folder in {stagingFolder}! Please make a bug report.")
             print(f"{F.RED}Aborting Update!{S.R}")
             print("Cleaning up...")
             rmtree(stagingFolder)
             input("Press Enter to Exit...")
             sys.exit()
+          else:
+            extraFolderPath = f"{cwd}/{stagingFolder}/{extraFolderPath[0]}"
           # Move updated version to old versions place
-          move(f"{cwd}/{stagingFolder}/{contents[0]}/{mainFileName}", f"{cwd}/{scriptName}")
+          # We are moving all .py files over for the future where that is needed
+          src_files = os.listdir(extraFolderPath)
+
+          for file_name in src_files:
+            full_file_name = os.path.join(extraFolderPath, file_name)
+            if os.path.isfile(full_file_name) and full_file_name.endswith(".py"):
+              try:
+                os.remove(file_name)
+              except:
+                # Going to assume error is that the file does not exist
+                pass
+              move(f"{extraFolderPath}/{full_file_name}", f"{cwd}/{full_file_name}")
           rmtree(stagingFolder)
           print(f"> {F.GREEN}App Updated Successfully{S.R}")
           input("Press Enter to Exit...")
