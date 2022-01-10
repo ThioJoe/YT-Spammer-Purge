@@ -2118,7 +2118,7 @@ def load_config_file(forceDefault = False):
   else:
     def default_config_path(relative_path):
       if hasattr(sys, '_MEIPASS'): # If running as a pyinstaller bundle
-          return os.path.join(sys._MEIPASS, relative_path)
+        return os.path.join(sys._MEIPASS, relative_path)
       return os.path.join(os.path.abspath("assets"), relative_path) # If running as script, specifies resource folder as /assets
 
     configFileName = default_config_path("default_config.ini")
