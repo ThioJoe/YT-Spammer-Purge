@@ -1856,8 +1856,6 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
           scriptName = sys.argv[0]
           # Temp folder for update
           stagingFolder = "linuxYoutubeSpammerStaging"
-          # Name of the main file in the tar file
-          mainFileName = "YouTubeSpammerPurge.py"
 
           # Fetch the latest update
           print(f"\nDownloading version: {latestVersion}")
