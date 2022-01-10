@@ -1096,8 +1096,8 @@ def get_current_user(config:dict) -> tuple[str, str, bool]:
 
 ################################# Get Most Recent Videos #####################################
 # Returns a list of lists
-def get_recent_videos(channel_id, numVideosTotal):
-  def get_block_of_videos(nextPageToken, j, numVideosBlock=5):
+def get_recent_videos(channel_id:str, numVideosTotal:int):
+  def get_block_of_videos(nextPageToken:str, j:int, numVideosBlock:int = 5):
     result = YOUTUBE.search().list(
       part="snippet",
       channelId=channel_id,
@@ -1116,7 +1116,7 @@ def get_recent_videos(channel_id, numVideosTotal):
       recentVideos[j]['videoTitle'] = videoTitle
       commentCount = validate_video_id(videoID)[3]
       if str(commentCount)=="MainMenu":
-        return "MainMenu", None
+        return None, None, "MainMenu"
       recentVideos[j]['commentCount'] = commentCount
       j+=1
 
@@ -1126,24 +1126,25 @@ def get_recent_videos(channel_id, numVideosTotal):
     except KeyError:
       nextPageToken = "End"
     
-    return nextPageToken, j
+    return nextPageToken, j, ""
     #----------------------------------------------------------------
   
-  nextPageToken = None
-  recentVideos = [] #List of dictionaries
+  nextPageToken:str = None
+  recentVideos:list = [] #List of dictionaries
+  abortCheck:str = "" # Used to receive "MainMenu" if user wants to exit, when entering 
   i = 0
   if numVideosTotal <=5:
     result = get_block_of_videos(None, j=i, numVideosBlock=numVideosTotal)
-    if result[0] == "MainMenu":
+    if result[2] == "MainMenu":
       return "MainMenu"
   else:
-    while nextPageToken != "End" and len(recentVideos) < numVideosTotal and str(nextPageToken[0]) != "MainMenu":
+    while nextPageToken != "End" and len(recentVideos) < numVideosTotal and str(abortCheck) != "MainMenu":
       print("Retrieved " + str(len(recentVideos)) + "/" + str(numVideosTotal) + " videos.", end="\r")
       remainingVideos = numVideosTotal - len(recentVideos)
       if remainingVideos <= 5:
-        nextPageToken, i = get_block_of_videos(nextPageToken, j=i, numVideosBlock = remainingVideos)
+        nextPageToken, i, abortCheck = get_block_of_videos(nextPageToken, j=i, numVideosBlock = remainingVideos)
       else:
-        nextPageToken, i = get_block_of_videos(nextPageToken, j=i, numVideosBlock = 5)
+        nextPageToken, i, abortCheck = get_block_of_videos(nextPageToken, j=i, numVideosBlock = 5)
       if str(nextPageToken[0]) == "MainMenu":
         return "MainMenu"
   print("                                          ")
@@ -1204,9 +1205,10 @@ def validate_video_id(video_url_or_id, silent=False):
             print(f"\n{F.YELLOW}Are comments disabled on this video?{S.R} If not, please report the bug and include the error info above.")
             print(f"                    Bug Report Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
             input("\nPress Enter to return to the main menu...")
-            return "MainMenu"
+            return "MainMenu", "MainMenu", "MainMenu", "MainMenu", "MainMenu"
 
           return True, possibleVideoID, videoTitle, commentCount, channelID, channelTitle
+
         else:
           if silent == False:
             print("Something very odd happened. YouTube returned a video ID, but it is not equal to what was queried!")
@@ -4120,9 +4122,9 @@ if __name__ == "__main__":
   #   p.sort_stats("calls").print_stats()
   try:
     main()
+    
   except SystemExit:
     sys.exit()
-
   except HttpError as hx:
     traceback.print_exc()
     print("------------------------------------------------")
@@ -4167,6 +4169,13 @@ if __name__ == "__main__":
     else:
       print(f"{F.RED}Unknown Error - Code: X-4{S.R} occurred. This is {F.YELLOW}probably my fault{S.R},")
       print(f"please a {F.LIGHTYELLOW_EX}bug report{S.R} on the GitHub issues page, and include the above error info.")
+    print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+    input("\n Press Enter to Exit...")
+  except TypeError:
+    traceback.print_exc()
+    print("------------------------------------------------")
+    print(f"{F.RED}Unknown Error - Code: X-5{S.R} occurred. This is {F.YELLOW}probably my fault{S.R},")
+    print(f"please a {F.LIGHTYELLOW_EX}bug report{S.R} on the GitHub issues page, and include the above error info.")
     print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
     input("\n Press Enter to Exit...")
   except Exception as x:
