@@ -52,6 +52,7 @@ import time
 import ast
 from dataclasses import dataclass
 from datetime import datetime, date, timedelta
+from collections import namedtuple
 import traceback
 import platform
 import requests
@@ -327,7 +328,7 @@ def add_sample(current, authorID, authorNameRaw, commentText):
 ##########################################################################################
 
 # Call the API's commentThreads.list method to list the existing comments.
-def get_comments(current, currentUser, filtersDict, miscData, config, scanVideoID=None, nextPageToken=None, videosToScan=None):  # None are set as default if no parameters passed into function
+def get_comments(current, filtersDict, miscData, config, scanVideoID=None, nextPageToken=None, videosToScan=None):  # None are set as default if no parameters passed into function
   # Initialize some variables
   authorChannelName = None
   commentText = None
@@ -350,7 +351,7 @@ def get_comments(current, currentUser, filtersDict, miscData, config, scanVideoI
   elif scanVideoID is None:
     results = YOUTUBE.commentThreads().list(
       part="snippet, replies",
-      allThreadsRelatedToChannelId=currentUser[0],
+      allThreadsRelatedToChannelId=CURRENTUSER.id,
       maxResults=100,
       pageToken=nextPageToken,
       fields=fieldsToFetch,
@@ -397,13 +398,13 @@ def get_comments(current, currentUser, filtersDict, miscData, config, scanVideoI
       'commentText':commentText,
       'commentID':parent_id,
       }
-    check_against_filter(current, currentUser, filtersDict, miscData, config, currentCommentDict, videoID)
+    check_against_filter(current, filtersDict, miscData, config, currentCommentDict, videoID)
     current.scannedCommentsCount += 1
     
     if numReplies > 0 and len(limitedRepliesList) < numReplies:
-      get_replies(current, currentUser, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan)
+      get_replies(current, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan)
     elif numReplies > 0 and len(limitedRepliesList) == numReplies: # limitedRepliesList can never be more than numReplies
-      get_replies(current, currentUser, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, repliesList=limitedRepliesList)
+      get_replies(current, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, repliesList=limitedRepliesList)
     else:
       print_count_stats(current, miscData, videosToScan, final=False)  # Updates displayed stats if no replies
 
@@ -415,7 +416,7 @@ def get_comments(current, currentUser, filtersDict, miscData, config, scanVideoI
 ##########################################################################################
 
 # Call the API's comments.list method to list the existing comment replies.
-def get_replies(current, currentUser, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, repliesList=None):
+def get_replies(current, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, repliesList=None):
   # Initialize some variables
   authorChannelName = None
   commentText = None
@@ -470,17 +471,17 @@ def get_replies(current, currentUser, filtersDict, miscData, config, parent_id, 
       'commentText':commentText,
       'commentID':replyID,
       }
-    check_against_filter(current, currentUser, filtersDict, miscData, config, currentCommentDict, videoID, allThreadAuthorNames=allThreadAuthorNames)
+    check_against_filter(current, filtersDict, miscData, config, currentCommentDict, videoID, allThreadAuthorNames=allThreadAuthorNames)
 
     # Update latest stats
-    current.scannedRepliesCount += 1  # Count number of replies scanned, add to global count
-    print_count_stats(current, miscData, videosToScan, final=False) # Prints out current count stats
+    current.scannedRepliesCount += 1 
+    print_count_stats(current, miscData, videosToScan, final=False)
 
   return True
 
 ############################## CHECK AGAINST FILTER ######################################
 # The basic logic that actually checks each comment against filter criteria
-def check_against_filter(current, currentUser, filtersDict, miscData, config, currentCommentDict, videoID, allThreadAuthorNames=None):
+def check_against_filter(current, filtersDict, miscData, config, currentCommentDict, videoID, allThreadAuthorNames=None):
   # Retrieve Data from currentCommentDict
   commentID = currentCommentDict['commentID']
   authorChannelName = currentCommentDict['authorChannelName']
@@ -496,7 +497,7 @@ def check_against_filter(current, currentUser, filtersDict, miscData, config, cu
     authorChannelID = "x"
 
   # Do not even check comment if: Author is Current User, Author is Channel Owner, or Author is in whitelist
-  if currentUser[0] != authorChannelID and miscData['channelOwnerID'] != authorChannelID and authorChannelID not in miscData['Resources']['Whitelist']['WhitelistContents']:
+  if CURRENTUSER.id != authorChannelID and miscData['channelOwnerID'] != authorChannelID and authorChannelID not in miscData['Resources']['Whitelist']['WhitelistContents']:
     if "@" in commentText:
       # Logic to avoid false positives from replies to spammers
       if allThreadAuthorNames and (filtersDict['filterMode'] == "AutoSmart" or filtersDict['filterMode'] == "NameAndText"):
@@ -1022,7 +1023,8 @@ def get_video_title(current, video_id):
 class ChannelIDError(Exception):
     pass
 # Get channel ID and channel title of the currently authorized user
-def get_current_user(config):
+def get_current_user(config:dict) -> tuple[str, str, bool]:
+
   #Define fetch function so it can be re-used if issue and need to re-run it
   def fetch_user():
     results = YOUTUBE.channels().list(
@@ -1044,6 +1046,7 @@ def get_current_user(config):
     print("> When choosing the account to log into, you selected the option showing the Google Account's email address, which might not have a channel attached to it.")
     input("\nPress Enter to try logging in again...")
     os.remove(TOKEN_FILE_NAME)
+
     global YOUTUBE
     YOUTUBE = get_authenticated_service()
     results = fetch_user() # Try again
@@ -1074,7 +1077,7 @@ def get_current_user(config):
     sys.exit()
   
   if config == None:
-    configMatch = None
+    configMatch = None # Used only if channel ID is set in the config
   elif config and config['your_channel_id'] == "ask":
     configMatch = None
   elif validate_channel_id(config['your_channel_id'])[0] == True:
@@ -2336,8 +2339,7 @@ def recover_deleted_comments():
 ##########################################################################################
 
 # For scanning for individual chars
-def prepare_filter_mode_chars(currentUser, scanMode, filterMode, config):
-  currentUserName = currentUser[1]
+def prepare_filter_mode_chars(scanMode, filterMode, config):
   if filterMode == "Username":
     whatToScanMsg = "Usernames"
   elif filterMode == "Text":
@@ -2387,8 +2389,7 @@ def prepare_filter_mode_chars(currentUser, scanMode, filterMode, config):
   return inputChars, None
 
 # For scanning for strings
-def prepare_filter_mode_strings(currentUser, scanMode, filterMode, config):
-  currentUserName = currentUser[1]
+def prepare_filter_mode_strings(scanMode, filterMode, config):
   if filterMode == "Username":
     whatToScanMsg = "Usernames"
   elif filterMode == "Text":
@@ -2440,8 +2441,7 @@ def prepare_filter_mode_strings(currentUser, scanMode, filterMode, config):
   return filterStringList, None
 
 # For scanning for regex expression
-def prepare_filter_mode_regex(currentUser, scanMode, filterMode, config):
-  currentUserName = currentUser[1]
+def prepare_filter_mode_regex(scanMode, filterMode, config):
   if filterMode == "Username":
     whatToScanMsg = "Usernames"
   elif filterMode == "Text":
@@ -2492,8 +2492,7 @@ def prepare_filter_mode_regex(currentUser, scanMode, filterMode, config):
 
 # Filter Mode: User manually enters ID
 # Returns inputtedSpammerChannelID
-def prepare_filter_mode_ID(currentUser, scanMode, config):
-  currentUserID = currentUser[0]
+def prepare_filter_mode_ID(scanMode, config):
   processResult = (False, None) #Tuple, first element is status of validity of channel ID, second element is channel ID
   validConfigSetting = True
   while processResult[0] == False:
@@ -2514,8 +2513,8 @@ def prepare_filter_mode_ID(currentUser, scanMode, config):
   print("\n")
 
   # Check if spammer ID and user's channel ID are the same, and warn
-  # If using channel-wide scanning mode, program will not run for safety purposes
-  if any(currentUserID == i for i in inputtedSpammerChannelID):
+  # If using channel-wide scanning mode, program will just ignore those comments
+  if any(CURRENTUSER.id == i for i in inputtedSpammerChannelID):
     print(f"{B.RED}{F.WHITE} WARNING: {S.R} - You entered your own channel ID!")
     print(f"For safety purposes, this program always {F.YELLOW}ignores{S.R} your own comments.")
 
@@ -2527,7 +2526,7 @@ def prepare_filter_mode_ID(currentUser, scanMode, config):
   return inputtedSpammerChannelID, None
 
 # For Filter mode auto-ascii, user inputs nothing, program scans for non-ascii
-def prepare_filter_mode_non_ascii(currentUser, scanMode, config):
+def prepare_filter_mode_non_ascii(scanMode, config):
 
   print("\n--------------------------------------------------------------------------------------------------------------")
   print("~~~ This mode automatically searches for usernames that contain special characters (aka not letters/numbers) ~~~\n")
@@ -2591,8 +2590,7 @@ def prepare_filter_mode_non_ascii(currentUser, scanMode, config):
     sys.exit()
 
 # Auto smart mode
-def prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive=False):
-  currentUserName = currentUser[1]
+def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   rootDomainList = miscData['rootDomainList']
   spamDomainsList = miscData['SpamLists']['spamDomainsList'] # List of domains from crowd sourced list
   spamThreadsList = miscData['SpamLists']['spamThreadsList'] # List of filters associated with spam threads from crowd sourced list
@@ -2798,6 +2796,8 @@ def main():
 
   # Declare Global Variables
   global YOUTUBE
+  global CURRENTUSER
+  User = namedtuple('User', 'id name configMatch')
  
   # Checks system platform to set correct console clear command
   # Clears console otherwise the windows terminal doesn't work with colorama for some reason  
@@ -3024,9 +3024,10 @@ def main():
   confirmedCorrectLogin = False
   while confirmedCorrectLogin == False:
     # Get channel ID and title of current user, confirm with user
-    currentUser = get_current_user(config) # Returns [channelID, channelTitle]
-    print("\n    >  Currently logged in user: " + f"{F.LIGHTGREEN_EX}" + str(currentUser[1]) + f"{S.R} (Channel ID: {F.LIGHTGREEN_EX}" + str(currentUser[0]) + f"{S.R} )")
-    if choice("       Continue as this user?", currentUser[2]) == True:
+    userInfo = get_current_user(config)
+    CURRENTUSER = User(id=userInfo[0], name=userInfo[1], configMatch=userInfo[2]) # Returns [channelID, channelTitle, configmatch]
+    print("\n    >  Currently logged in user: " + f"{F.LIGHTGREEN_EX}" + str(CURRENTUSER.name) + f"{S.R} (Channel ID: {F.LIGHTGREEN_EX}" + str(CURRENTUSER.id) + f"{S.R} )")
+    if choice("       Continue as this user?", CURRENTUSER.configMatch) == True:
       confirmedCorrectLogin = True
       os.system(clear_command)
     else:
@@ -3068,12 +3069,12 @@ def main():
       )
 
     # Declare Default Variables
-    maxScanNumber = 999999999
-    scanVideoID = None
-    videosToScan = []
-    nextPageToken = "start"
-    loggingEnabled = False
-    userNotChannelOwner = False
+    maxScanNumber:int = 999999999
+    scanVideoID:str = None
+    videosToScan:list = []
+    nextPageToken:str = "start"
+    loggingEnabled:bool = False
+    userNotChannelOwner:bool = False
 
     os.system(clear_command)
     # User selects scanning mode,  while Loop to get scanning mode, so if invalid input, it will keep asking until valid input
@@ -3226,7 +3227,7 @@ def main():
             print(f" {i}. {video['videoTitle']}")
           print("")
           
-          if currentUser[0] != videosToScan[0]['channelOwnerID']:
+          if CURRENTUSER.id != videosToScan[0]['channelOwnerID']:
             userNotChannelOwner = True
 
           miscData['channelOwnerID'] = videosToScan[0]['channelOwnerID']
@@ -3260,8 +3261,8 @@ def main():
         # Get and verify config setting for channel ID
         if config and config['channel_to_scan'] != 'ask':
           if config['channel_to_scan'] == 'mine':
-            channelID = currentUser[0]
-            channelTitle = currentUser[1]
+            channelID = CURRENTUSER.id
+            channelTitle = CURRENTUSER.name
             validChannel = True
             break
           else:
@@ -3275,15 +3276,15 @@ def main():
         print(f"   > If scanning {F.YELLOW}your own channel{S.R}, just hit {F.LIGHTGREEN_EX}Enter{S.R}")
         inputtedChannel = input("\nEnter Here: ")
         if inputtedChannel == "":
-          channelID = currentUser[0]
-          channelTitle = currentUser[1]
+          channelID = CURRENTUSER.id
+          channelTitle = CURRENTUSER.name
           validChannel = True
         elif str(inputtedChannel).lower() == "x":
           return True # Return to main menu
         else:
           validChannel, channelID, channelTitle = validate_channel_id(inputtedChannel)
 
-      if currentUser[0] != channelID:
+      if CURRENTUSER.id != channelID:
         userNotChannelOwner = True
 
       print(f"\nChosen Channel: {F.LIGHTCYAN_EX}{channelTitle}{S.R}")
@@ -3403,8 +3404,8 @@ def main():
           print("\nInvalid Input! - Must be a whole number.")
           validConfigSetting = False
 
-      miscData['channelOwnerID'] = currentUser[0]
-      miscData['channelOwnerName'] = currentUser[1]
+      miscData['channelOwnerID'] = CURRENTUSER.id
+      miscData['channelOwnerName'] = CURRENTUSER.name
 
     elif scanMode == 'communityPost':
       print(f"\nNOTES: This mode is {F.YELLOW}experimental{S.R}, and not as polished as other features. Expect some janky-ness.")
@@ -3419,7 +3420,7 @@ def main():
         isValid, communityPostID, postURL, postOwnerID, postOwnerUsername = validate_post_id(communityPostInput)
         if isValid == True:
           print("\nCommunity Post By: " + postOwnerUsername)
-          if postOwnerID != currentUser[0]:
+          if postOwnerID != CURRENTUSER.id:
             userNotChannelOwner = True
             print("\nWarning: You are scanning someone elses post. 'Not Your Channel Mode' Enabled.")
           confirm = choice("Continue?")
@@ -3595,28 +3596,28 @@ def main():
     regexPattern = ""
 
     if filterMode == "ID":
-      filterSettings = prepare_filter_mode_ID(currentUser, scanMode, config)
+      filterSettings = prepare_filter_mode_ID(scanMode, config)
       inputtedSpammerChannelID = filterSettings[0]
 
     elif filterMode == "AutoASCII":
-      filterSettings = prepare_filter_mode_non_ascii(currentUser, scanMode, config)
+      filterSettings = prepare_filter_mode_non_ascii(scanMode, config)
       regexPattern = filterSettings[0]
 
     elif filterMode == "AutoSmart":
-      filterSettings = prepare_filter_mode_smart(currentUser, scanMode, config, miscData)
+      filterSettings = prepare_filter_mode_smart(scanMode, config, miscData)
       inputtedUsernameFilter = filterSettings[0]
       inputtedCommentTextFilter = filterSettings[0]
     elif filterMode == "SensitiveSmart":
-      filterSettings = prepare_filter_mode_smart(currentUser, scanMode, config, miscData, sensitive=True)
+      filterSettings = prepare_filter_mode_smart(scanMode, config, miscData, sensitive=True)
       inputtedUsernameFilter = filterSettings[0]
       inputtedCommentTextFilter = filterSettings[0]
 
     elif filterSubMode == "chars":
-      filterSettings = prepare_filter_mode_chars(currentUser, scanMode, filterMode, config)
+      filterSettings = prepare_filter_mode_chars(scanMode, filterMode, config)
     elif filterSubMode == "string":
-      filterSettings = prepare_filter_mode_strings(currentUser, scanMode, filterMode, config)
+      filterSettings = prepare_filter_mode_strings(scanMode, filterMode, config)
     elif filterSubMode == "regex":
-      filterSettings = prepare_filter_mode_regex(currentUser, scanMode, filterMode, config)
+      filterSettings = prepare_filter_mode_regex(scanMode, filterMode, config)
       regexPattern = filterSettings[1]
 
     if filterSettings[0] == "MainMenu":
@@ -3644,7 +3645,7 @@ def main():
             'commentText':value['commentText'],
             'commentID':key,
             }
-          check_against_filter(current, currentUser, filtersDict, miscData, config, currentCommentDict, videoID=communityPostID)
+          check_against_filter(current, filtersDict, miscData, config, currentCommentDict, videoID=communityPostID)
       scan_community_post(communityPostID, maxScanNumber)
 
     else:
@@ -3662,8 +3663,8 @@ def main():
                       }
       
       # ----------------------------------------------------------------------------------------------------------------------
-      def scan_video(miscData, config, currentUser, filtersDict, scanVideoID, videosToScan=None, videoTitle=None, showTitle=False, i=1):
-        nextPageToken = get_comments(current, currentUser, filtersDict, miscData, config, scanVideoID, videosToScan=videosToScan)
+      def scan_video(miscData, config, filtersDict, scanVideoID, videosToScan=None, videoTitle=None, showTitle=False, i=1):
+        nextPageToken = get_comments(current, filtersDict, miscData, config, scanVideoID, videosToScan=videosToScan)
         if showTitle == True and len(videosToScan) > 0:
           # Prints video title, progress count, adds enough spaces to cover up previous stat print line
           offset = 95 - len(videoTitle)
@@ -3676,17 +3677,17 @@ def main():
         print_count_stats(current, miscData, videosToScan, final=False)  # Prints comment scan stats, updates on same line
         # After getting first page, if there are more pages, goes to get comments for next page
         while nextPageToken != "End" and current.scannedCommentsCount < maxScanNumber:
-          nextPageToken = get_comments(current, currentUser, filtersDict, miscData, config, scanVideoID, nextPageToken, videosToScan=videosToScan)
+          nextPageToken = get_comments(current, filtersDict, miscData, config, scanVideoID, nextPageToken, videosToScan=videosToScan)
       # ----------------------------------------------------------------------------------------------------------------------
 
       if scanMode == "entireChannel":
-        scan_video(miscData, config, currentUser, filtersDict, scanVideoID)
+        scan_video(miscData, config, filtersDict, scanVideoID)
       elif scanMode == "recentVideos" or scanMode == "chosenVideos":
         i = 1
         for video in videosToScan:
           scanVideoID = str(video['videoID'])
           videoTitle = str(video['videoTitle'])
-          scan_video(miscData, config, currentUser, filtersDict, scanVideoID, videosToScan=videosToScan, videoTitle=videoTitle, showTitle=True, i=i)
+          scan_video(miscData, config, filtersDict, scanVideoID, videosToScan=videosToScan, videoTitle=videoTitle, showTitle=True, i=i)
           i += 1
       print_count_stats(current, miscData, videosToScan, final=True)  # Prints comment scan stats, finalizes
     
