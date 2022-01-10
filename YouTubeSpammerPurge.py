@@ -36,7 +36,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.9.0"
+version = "2.9.1"
 configVersion = 17
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -66,6 +66,7 @@ import tarfile
 from shutil import rmtree
 from shutil import move
 from shutil import copyfile
+from urllib.parse import urlparse
 
 # Non Standard Modules
 import rtfunicode
@@ -1287,7 +1288,7 @@ def validate_channel_id(inputted_channel):
         isolatedChannelID = response.get("items")[0]["snippet"]["channelId"] # Get channel ID from custom channel URL username
   
   # Handle legacy style custom URL (no /c/ for custom URL)
-  elif "youtube.com" in inputted_channel and not any(x in inputted_channel for x in notChannelList):
+  elif not any(x in inputted_channel for x in notChannelList) and (inputted_channel.lower().startswith("youtube.com/") or str(urlparse(inputted_channel).hostname).lower() == "youtube.com"):
     startIndex = inputted_channel.rindex("/") + 1
     endIndex = len(inputted_channel)
 
@@ -3995,6 +3996,8 @@ if __name__ == "__main__":
   # with open("output_calls.txt", "w") as f:
   #   p = pstats.Stats("output.dat", stream=f)
   #   p.sort_stats("calls").print_stats()
+
+
   try:
     main()
   except SystemExit:
