@@ -36,7 +36,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.10.0-Beta2"
+version = "2.10.0-Beta3"
 configVersion = 17
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -2862,7 +2862,9 @@ def main():
       updateChoice = choice("Update Config File?")
       if updateChoice == True:
         update_config_file(oldVersion=int(config['config_version']), newVersion=configVersion, oldConfig=config)
-    if choice(f"\nFound {F.YELLOW}config file{S.R}, use those settings?") == False:
+    if config['use_this_config'] == True:
+      pass
+    elif choice(f"\nFound {F.YELLOW}config file{S.R}, use those settings?") == False:
       config = load_config_file(forceDefault = True)
     os.system(clear_command)
   elif config['use_this_config'] == False:
