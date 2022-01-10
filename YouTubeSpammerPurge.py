@@ -1864,7 +1864,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
 
           url = f'https://codeload.github.com/ThioJoe/YT-Spammer-Purge/tar.gz/refs/tags/v{latestVersion}'
           r = requests.get(url)
-          if(r.status_code == "200"):
+          if(r.status_code == 200):
             with open(tarFileName, 'wb') as file:
               file.write(r.content)
           else:
