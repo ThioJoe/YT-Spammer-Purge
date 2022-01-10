@@ -1861,11 +1861,18 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
 
           # Fetch the latest update
           print(f"\nDownloading version: {latestVersion}")
-          response = os.system(f"curl https://codeload.github.com/ThioJoe/YT-Spammer-Purge/tar.gz/refs/tags/v{latestVersion} -o {tarFileName}")
-          if(response != 0):
-            print(f"\n> {F.RED} Error:{S.R} Something went wrong with downloading the updated version! Please try later. \nIf this keeps happening consider creating a bug report.")
-            input("\nPress Enter to Exit...")
+
+          url = f'https://codeload.github.com/ThioJoe/YT-Spammer-Purge/tar.gz/refs/tags/v{latestVersion}'
+          r = requests.get(url)
+          if(r.status_code == "200"):
+            with open(tarFileName, 'wb') as file:
+              file.write(r.content)
+          else:
+            print("Update Failed!")
+            print(f"Error: GitHub returned a non 200 status code while trying to download newer version.\nStatus returned: {r.status_code}")
+            input("Press Enter to Exit...")
             sys.exit()
+          
           # Extract the tar file and delete it
           with tarfile.open(tarFileName) as file:
             file.extractall(f'./{stagingFolder}')
@@ -1874,13 +1881,17 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
           # Rename this file
           try:
             os.rename(f"{scriptName}", f"{scriptName}-{currentVersion}.old")
-          except:
+          except OSError:
             print(f"\n> {F.RED} Error:{S.R}There is already a file by the name '{scriptName}-{currentVersion}.old' already!")
-            print(f"{F.R}Aborting Update!{S.R}")
-            print("Cleaning up...")
-            rmtree(stagingFolder)
-            input("Press Enter to Exit...")
-            sys.exit()
+            if(choice("Would you like to continue and delete the old file (answering no will abort the update)?")):
+              os.remove(f'{scriptName}-{currentVersion}.old')
+              os.rename(f"{scriptName}", f"{scriptName}-{currentVersion}.old")
+            else:
+              print(f"{F.R}Aborting Update!{S.R}")
+              print("Cleaning up...")
+              rmtree(stagingFolder)
+              input("Press Enter to Exit...")
+              sys.exit()
             
           # Retrieve the name of the folder containing the main file, we are assuming there will always be only one folder here
           contents = os.listdir(f"./{stagingFolder}")
