@@ -40,6 +40,8 @@ version = "2.10.0"
 configVersion = 17
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
+## Attemping to import modules
+
 # GUI Related
 from gui import *
 
