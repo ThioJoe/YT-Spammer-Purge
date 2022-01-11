@@ -1112,7 +1112,7 @@ def get_recent_videos(channel_id:str, numVideosTotal:int):
     for item in result['items']:
       videoID = str(item['id']['videoId'])
       videoTitle = str(item['snippet']['title']).replace("&quot;", "\"").replace("&#39;", "'")
-      commentCount = validate_video_id(videoID)[3]
+      commentCount = validate_video_id(videoID, pass_exception = True)[3]
       #Skips over video if comment count is zero, or comments disabled / is live stream
       if str(commentCount) == '0':
         print(f"{B.YELLOW}{F.BLACK} Skipping {S.R} {F.LIGHTRED_EX}Video with no comments:{S.R} " + str(item['snippet']['title']))
@@ -1122,7 +1122,6 @@ def get_recent_videos(channel_id:str, numVideosTotal:int):
       recentVideos.append({})
       recentVideos[j]['videoID'] = videoID
       recentVideos[j]['videoTitle'] = videoTitle
-      commentCount = validate_video_id(videoID)[3]
       if str(commentCount)=="MainMenu":
         return None, None, "MainMenu"
       recentVideos[j]['commentCount'] = commentCount
@@ -1186,7 +1185,7 @@ def print_count_stats(current, miscData, videosToScan, final):
 
 ##################################### VALIDATE VIDEO ID #####################################
 # Regex matches putting video id into a match group. Then queries youtube API to verify it exists - If so returns true and isolated video ID
-def validate_video_id(video_url_or_id, silent=False):
+def validate_video_id(video_url_or_id, silent=False, pass_exception=False):
     youtube_video_link_regex = r"^\s*(?P<video_url>(?:(?:https?:)?\/\/)?(?:(?:www|m)\.)?(?:youtube\.com|youtu.be)(?:\/(?:[\w\-]+\?v=|embed\/|v\/)?))?(?P<video_id>[\w\-]{11})(?:(?(video_url)\S+|$))?\s*$"
     match = re.match(youtube_video_link_regex, video_url_or_id)
     if match == None:
@@ -1209,6 +1208,10 @@ def validate_video_id(video_url_or_id, silent=False):
           try:
             commentCount = result['items'][0]['statistics']['commentCount']
           except KeyError:
+            if pass_exception == True:
+              # If the video has comments disabled, the commentCount is not included in the response, but the video is still valid
+              return True, possibleVideoID, videoTitle, "0", channelID, channelTitle
+
             traceback.print_exc()
             print("--------------------------------------")
             print(f"\n{B.RED}{F.WHITE} ERROR: {S.R} {F.RED}Unable to get comment count for video: {S.R} {possibleVideoID}  |  {videoTitle}")
@@ -3370,6 +3373,11 @@ def main():
           videosToScan = get_recent_videos(channelID, numVideos)
           if str(videosToScan) == "MainMenu":
             return True # Return to main menu
+          if len(videosToScan) == 0:
+            print(f"\n{F.LIGHTRED_EX}Error:{S.R} No scannable videos found in selected range!  They all may have no comments and/or are live streams.")
+            input("\nPress Enter to return to main menu...")
+            return True
+
           # Get total comment count
           miscData.totalCommentCount = 0
           for video in videosToScan:
