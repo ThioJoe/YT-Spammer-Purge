@@ -1853,33 +1853,37 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
           stagingFolder = "linuxYoutubeSpammerStaging"
 
           # Fetch the latest update
-          print(f"\nDownloading version: {latestVersion}")
+          print(f"\n> Downloading version: {F.GREEN}{latestVersion}{S.R}")
 
           url = f'https://codeload.github.com/ThioJoe/YT-Spammer-Purge/tar.gz/refs/tags/v{latestVersion}'
-          r = requests.get(url)
+          r = requests.get(url, stream=True)
+          total_size_in_bytes = int(response.headers.get('content-length', 0))
           if(r.status_code == 200):
             with open(tarFileName, 'wb') as file:
-              file.write(r.content)
+              for chunk in r.iter_content(chunk_size=1048576):
+                if chunk:
+                  file.write(chunk)
           else:
-            print("Update Failed!")
-            print(f"Error: GitHub returned a non 200 status code while trying to download newer version.\nStatus returned: {r.status_code}")
+            print("Downloading of new version failed!")
+            print(f"\n> {F.RED}Error: {S.R}GitHub returned a non 200 status code while trying to download newer version.\nStatus returned: {r.status_code}")
             input("Press Enter to Exit...")
             sys.exit()
           
           # Extract the tar file and delete it
+          print("\n> Extracting...")
           with tarfile.open(tarFileName) as file:
             file.extractall(f'./{stagingFolder}')
           os.remove(tarFileName)
-            
+          print(f"> Installing...")
           # Retrieve the name of the folder containing the main file, we are assuming there will always be only one folder here
           extraFolderPath = os.listdir(f"./{stagingFolder}")
           # If there happens to be more then one folder
-          if(len(extraFolderPath) > 1):
+          if(len(extraFolderPath) != 1):
             print(f"\n> {F.RED} Error:{S.R} more then one folder in {stagingFolder}! Please make a bug report.")
-            print(f"{F.RED}Aborting Update!{S.R}")
-            print("Cleaning up...")
+            print(f"\n{F.RED}Aborting Update!{S.R}")
+            print("\n> Cleaning up...")
             rmtree(stagingFolder)
-            input("Press Enter to Exit...")
+            input("\nPress Enter to Exit...")
             sys.exit()
           else:
             extraFolderPath = f"{cwd}/{stagingFolder}/{extraFolderPath[0]}"
@@ -1892,13 +1896,13 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
             if os.path.isfile(full_file_name) and full_file_name.endswith(".py"):
               try:
                 os.remove(file_name)
-              except:
-                # Going to assume error is that the file does not exist
+              except FileNotFoundError:
                 pass
               move(f"{extraFolderPath}/{file_name}", f"{cwd}/{file_name}")
           rmtree(stagingFolder)
-          print(f"> {F.GREEN}App Updated Successfully{S.R}")
-          input("Press Enter to Exit...")
+          print(f"\n> Update completed: {currentVersion} ==> {F.GREEN}{latestVersion}{S.R}")
+          print("> Restart the script to apply the update.")
+          input("\nPress Enter to Exit...")
           sys.exit()
 
 
