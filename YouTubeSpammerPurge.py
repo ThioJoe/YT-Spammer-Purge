@@ -1895,7 +1895,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
               except:
                 # Going to assume error is that the file does not exist
                 pass
-              move(f"{extraFolderPath}/{full_file_name}", f"{cwd}/{full_file_name}")
+              move(f"{extraFolderPath}/{file_name}", f"{cwd}/{file_name}")
           rmtree(stagingFolder)
           print(f"> {F.GREEN}App Updated Successfully{S.R}")
           input("Press Enter to Exit...")
