@@ -412,16 +412,20 @@ def get_and_scan_comments(current, filtersDict, miscData, config, scanVideoID, m
       else:
         repliesList = None
 
-      repliesDict = {
+      currentCommentRepliesDict = {
         'parent_id':currentCommentDict['commentID'],
         'videoID' :currentCommentDict['videoID'],
         'parentAuthorChannelID':currentCommentDict['authorChannelID'],
         'repliesList':repliesList
       }
 
-      commentAndReplies = [currentCommentDict, repliesDict, numReplies]
+      currentThreadDict = {
+        'currentCommentDict':currentCommentDict,
+        'repliesDict':currentCommentRepliesDict,
+        'numReplies':numReplies
+      }
 
-      commentThreadList.append(commentAndReplies)
+      commentThreadList.append(currentThreadDict)
 
       #print_count_stats(current, miscData, videosToScan, final=False)  # Updates displayed stats if no replies
 
@@ -499,14 +503,11 @@ def get_and_scan_comments(current, filtersDict, miscData, config, scanVideoID, m
       # Update latest stats
       #print_count_stats(current, miscData, videosToScan, final=False)
 
-    repliesData = processedRepliesDictList, allThreadAuthorNames
-
     return processedRepliesDictList, allThreadAuthorNames
   # ----------------------------------------------------------------------------------------------------------------------
 
-  def commentList_filter_sender(commentThreadList):
-    for commentDict in commentThreadList[0]:
-      check_against_filter(current, filtersDict, miscData, config, commentDict, allThreadAuthorNames=None)
+  def commentList_filter_sender(commentThreadDict):
+    check_against_filter(current, filtersDict, miscData, config, commentThreadDict['currentCommentDict'], allThreadAuthorNames=None)
 
   def replyList_filter_sender(processedRepliesDictList, allThreadAuthorNames):
     for replyDict in processedRepliesDictList:
@@ -517,18 +518,19 @@ def get_and_scan_comments(current, filtersDict, miscData, config, scanVideoID, m
   # Starting Value
   nextPageToken:str = None 
 
-  # Fetch Top Level Comments and some replies
+  # Fetch Comment Threads
   while nextPageToken != "End" and current.scannedCommentsCount < maxScanNumber:
     nextPageToken, commentThreadList = get_comments(nextPageToken) # Thread 1
-    commentList_filter_sender(commentThreadList)
 
-    # Fetch Replies
-    for commentThread in commentThreadList:
-      if commentThread[2] > 0: # Numreplies
-        processedRepliesDictList, allThreadAuthorNames = get_replies(commentThread[1]) # Thread 2
+    for commentThreadDict in commentThreadList:
+
+      #Top Level Comment
+      commentList_filter_sender(commentThreadDict)
+
+      #Replies
+      if int(commentThreadDict['numReplies']) > 0:
+        processedRepliesDictList, allThreadAuthorNames = get_replies(commentThreadDict['repliesDict']) # Thread 2
         replyList_filter_sender(processedRepliesDictList, allThreadAuthorNames) # Thread 3
-
-
 
 
 
