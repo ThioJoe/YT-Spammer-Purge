@@ -54,7 +54,8 @@ body:
       description: Sometimes, problems can be platform-specific.
       multiple: false
       options:
-        - Windows
+        - Windows (.exe file)
+        - Windows (.py script)
         - MacOS
         - Linux (can also be ChromeOS)
     validations:
