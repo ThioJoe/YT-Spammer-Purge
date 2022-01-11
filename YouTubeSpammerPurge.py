@@ -59,6 +59,7 @@ import traceback
 import platform
 import requests
 import json
+import subprocess
 from base64 import b85decode as b64decode
 from configparser import ConfigParser
 from pkg_resources import parse_version
@@ -88,15 +89,11 @@ try:
   from google.auth.transport.requests import Request
 except ModuleNotFoundError as e:
   print("Modules Not Found. Attempting to install...")
-  pip_exe = None
-  if platform.system() == "Windows":
-    pip_exe = "pip"
-  else:
-    pip_exe = "pip3"
-
-  os.system(f"{pip_exe} install -r requirements.txt")
-  print("")
-  print("Modules installed. Please rerun the program.")
+  try:
+    subprocess.check_all(['pip3', "install", "-r requirements.txt"])
+    print("Modules installed. Please rerun the program.")
+  except:
+    print("Modules couldn't be installed. Please make sure \"pip3\" is in your path.")
   input("Press Enter to Exit...")
 
 ##########################################################################################
