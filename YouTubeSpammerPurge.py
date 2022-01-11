@@ -36,7 +36,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.10.0"
+version = "2.11.0-Beta1"
 configVersion = 17
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -329,160 +329,227 @@ def add_sample(current, authorID, authorNameRaw, commentText):
 ##########################################################################################
 
 # Call the API's commentThreads.list method to list the existing comments.
-def get_comments(current, filtersDict, miscData, config, scanVideoID=None, nextPageToken=None, videosToScan=None):  # None are set as default if no parameters passed into function
-  # Initialize some variables
-  authorChannelName = None
-  commentText = None
-  parentAuthorChannelID = None
+def get_and_scan_comments(current, filtersDict, miscData, config, scanVideoID, maxScanNumber, videosToScan=None):  # None are set as default if no parameters passed into function
+   
+  def get_comments(nextPageToken=None):
 
-  fieldsToFetch = "nextPageToken,items/snippet/topLevelComment/id,items/replies/comments,items/snippet/totalReplyCount,items/snippet/topLevelComment/snippet/videoId,items/snippet/topLevelComment/snippet/authorChannelId/value,items/snippet/topLevelComment/snippet/authorDisplayName,items/snippet/topLevelComment/snippet/textDisplay"
+    fieldsToFetch = "nextPageToken,items/snippet/topLevelComment/id,items/replies/comments,items/snippet/totalReplyCount,items/snippet/topLevelComment/snippet/videoId,items/snippet/topLevelComment/snippet/authorChannelId/value,items/snippet/topLevelComment/snippet/authorDisplayName,items/snippet/topLevelComment/snippet/textDisplay"
 
-  # Gets all comment threads for a specific video
-  if scanVideoID is not None:
-    results = YOUTUBE.commentThreads().list(
-      part="snippet, replies",
-      videoId=scanVideoID, 
-      maxResults=100,
-      pageToken=nextPageToken,
-      fields=fieldsToFetch,
-      textFormat="plainText"
-    ).execute()
-  
-  # Get all comment threads across the whole channel
-  elif scanVideoID is None:
-    results = YOUTUBE.commentThreads().list(
-      part="snippet, replies",
-      allThreadsRelatedToChannelId=CURRENTUSER.id,
-      maxResults=100,
-      pageToken=nextPageToken,
-      fields=fieldsToFetch,
-      textFormat="plainText"
-    ).execute()
+    # Gets all comment threads for a specific video
+    if scanVideoID is not None:
+      results = YOUTUBE.commentThreads().list(
+        part="snippet, replies",
+        videoId=scanVideoID, 
+        maxResults=100,
+        pageToken=nextPageToken,
+        fields=fieldsToFetch,
+        textFormat="plainText"
+      ).execute()
     
-  # Get token for next page. If no token, sets to 'End'
-  RetrievedNextPageToken = results.get("nextPageToken", "End")
-  
-  # After getting all comments threads for page, extracts data for each and stores matches in current.matchedCommentsDict
-  # Also goes through each thread and executes get_replies() to get reply content and matches
-  for item in results["items"]:
-    comment = item["snippet"]["topLevelComment"]
-    videoID = comment["snippet"]["videoId"] # Only enable if NOT checking specific video
-    parent_id = item["snippet"]["topLevelComment"]["id"]
-    numReplies = item["snippet"]["totalReplyCount"]
+    # Get all comment threads across the whole channel
+    elif scanVideoID is None:
+      results = YOUTUBE.commentThreads().list(
+        part="snippet, replies",
+        allThreadsRelatedToChannelId=CURRENTUSER.id,
+        maxResults=100,
+        pageToken=nextPageToken,
+        fields=fieldsToFetch,
+        textFormat="plainText"
+      ).execute()
+      
+    # Get token for next page. If no token, sets to 'End'
+    RetrievedNextPageToken = results.get("nextPageToken", "End")
+    
+    # After getting all comments threads for page, extracts data for each and stores matches in current.matchedCommentsDict
+    # Also goes through each thread and executes get_replies() to get reply content and matches
+    commentThreadList = [] # List of dictionaries
+    for item in results["items"]:
+      currentCommentDict = {
+      'authorchannelID': None,
+      'parentAuthorChannelID': None,
+      'authorChannelName': None,
+      'commentText': None,
+      'commentID': None,
+      'videoID': None,
+      }
+      comment = item["snippet"]["topLevelComment"]
 
-    # On rare occasions a comment will be there but the channel name will be empty, so this allows placeholders
-    try:
-      limitedRepliesList = item["replies"]["comments"] # API will return a limited number of replies (~5), but to get all, need to make separate call
-    except KeyError:
-      limitedRepliesList = []
-      pass
-    try: 
-      parentAuthorChannelID = comment["snippet"]["authorChannelId"]["value"]
-    except KeyError:
-      parentAuthorChannelID = "[Deleted Channel]"
+      currentCommentDict['videoID'] = comment["snippet"]["videoId"]
+      currentCommentDict['commentID'] = item["snippet"]["topLevelComment"]["id"]
+      numReplies = item["snippet"]["totalReplyCount"]
+
+      # On rare occasions a comment will be there but the channel name will be empty, so this allows placeholders
+      try:
+        limitedRepliesList = item["replies"]["comments"] # API will return a limited number of replies (~5), but to get all, need to make separate call
+      except KeyError:
+        limitedRepliesList = []
+        pass
+      try: 
+        currentCommentDict['authorChannelID'] = comment["snippet"]["authorChannelId"]["value"]
+      except KeyError:
+        currentCommentDict['authorChannelID'] = "[Deleted Channel]"
+
+      # Need to be able to catch exceptions because sometimes the API will return a comment from non-existent / deleted channel
+      try:
+        currentCommentDict['authorChannelName'] = comment["snippet"]["authorDisplayName"]
+      except KeyError:
+        currentCommentDict['authorChannelName'] = "[Deleted Channel]"
+      try:
+        currentCommentDict['commentText'] = comment["snippet"]["textDisplay"] # Remove Return carriages
+      except KeyError:
+        currentCommentDict['commentText'] = "[Deleted/Missing Comment]"
+      currentCommentDict['parentAuthorChannelID'] = None
+
+      # Add each comment dict to a list
+      #commentsList.append(currentCommentDict.copy())
+
+      #check_against_filter(current, filtersDict, miscData, config, currentCommentDict, videoID, allThreadAuthorNames=None)
+
+      if numReplies > 0 and len(limitedRepliesList) < numReplies:
+        repliesList = None
+      elif numReplies > 0 and len(limitedRepliesList) == numReplies: # limitedRepliesList can never be more than numReplies
+        repliesList = limitedRepliesList
+      else:
+        repliesList = None
+
+      repliesDict = {
+        'parent_id':currentCommentDict['commentID'],
+        'videoID' :currentCommentDict['videoID'],
+        'parentAuthorChannelID':currentCommentDict['authorChannelID'],
+        'repliesList':repliesList
+      }
+
+      commentAndReplies = [currentCommentDict, repliesDict, numReplies]
+
+      commentThreadList.append(commentAndReplies)
+
+      #print_count_stats(current, miscData, videosToScan, final=False)  # Updates displayed stats if no replies
+
+    return RetrievedNextPageToken, commentThreadList
+
+  # ----------------------------------------------------------------------------------------------------------------------
+
+  def get_replies(repliesDict):
+    parent_id = repliesDict['parent_id']
+    videoID = repliesDict['videoID']
+    parentAuthorChannelID = repliesDict['parentAuthorChannelID']
+    repliesList = repliesDict['repliesList']
+
+    # Initialize some variables
+    authorChannelName = None
+    commentText = None
+    
+    if repliesList == None:
+      fieldsToFetch = "items/snippet/authorChannelId/value,items/id,items/snippet/authorDisplayName,items/snippet/textDisplay"
+
+      results = YOUTUBE.comments().list(
+        part="snippet",
+        parentId=parent_id,
+        maxResults=100,
+        fields=fieldsToFetch,
+        textFormat="plainText"
+      ).execute()
+
+      replies = results["items"]
+    else:
+      replies = repliesList
+  
+    # Create list of author names in current thread, add into list - Only necessary when scanning comment text
+    allThreadAuthorNames = []
 
     # Need to be able to catch exceptions because sometimes the API will return a comment from non-existent / deleted channel
-    try:
-      authorChannelName = comment["snippet"]["authorDisplayName"].replace("\r", " ")
-    except KeyError:
-      authorChannelName = "[Deleted Channel]"
-    try:
-      commentText = comment["snippet"]["textDisplay"].replace("\r","") # Remove Return carriages
-    except KeyError:
-      commentText = "[Deleted/Missing Comment]"
-    
-    # Runs check against comment info for whichever filter data is relevant
-    currentCommentDict = {
-      'authorChannelID':parentAuthorChannelID, 
-      'parentAuthorChannelID':None, 
-      'authorChannelName':authorChannelName, 
-      'commentText':commentText,
-      'commentID':parent_id,
-      }
-    check_against_filter(current, filtersDict, miscData, config, currentCommentDict, videoID)
-    current.scannedCommentsCount += 1
-    
-    if numReplies > 0 and len(limitedRepliesList) < numReplies:
-      get_replies(current, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan)
-    elif numReplies > 0 and len(limitedRepliesList) == numReplies: # limitedRepliesList can never be more than numReplies
-      get_replies(current, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, repliesList=limitedRepliesList)
-    else:
-      print_count_stats(current, miscData, videosToScan, final=False)  # Updates displayed stats if no replies
+    # Need individual tries because not all are fetched for each mode
+    processedRepliesDictList = []
+    for reply in replies:  
+      replyID = reply["id"]
+      try:
+        authorChannelID = reply["snippet"]["authorChannelId"]["value"]
+      except KeyError:
+        authorChannelID = "[Deleted Channel]"
 
-  return RetrievedNextPageToken
+      # Get author display name
+      try:
+        authorChannelName = reply["snippet"]["authorDisplayName"]
+        if filtersDict['filterMode'] == "Username" or filtersDict['filterMode'] == "AutoASCII" or filtersDict['filterMode'] == "AutoSmart" or filtersDict['filterMode'] == "NameAndText":
+          allThreadAuthorNames.append(authorChannelName)
+      except KeyError:
+        authorChannelName = "[Deleted Channel]"
+      
+      # Comment Text
+      try:
+        commentText = reply["snippet"]["textDisplay"] # Remove Return carriages
+      except KeyError:
+        commentText = "[Deleted/Missing Comment]"
+
+      # Runs check against comment info for whichever filter data is relevant
+      currentReplyDict = {
+        'authorChannelID':authorChannelID, 
+        'parentAuthorChannelID':parentAuthorChannelID, 
+        'authorChannelName':authorChannelName, 
+        'commentText':commentText,
+        'commentID':replyID,
+        'videoID':videoID
+        }
+
+      processedRepliesDictList.append(currentReplyDict)
+      
+
+      #check_against_filter(current, filtersDict, miscData, config, currentReplyDict, videoID, allThreadAuthorNames)
+
+      # Update latest stats
+      #print_count_stats(current, miscData, videosToScan, final=False)
+
+    repliesData = processedRepliesDictList, allThreadAuthorNames
+
+    return processedRepliesDictList, allThreadAuthorNames
+  # ----------------------------------------------------------------------------------------------------------------------
+
+  def commentList_filter_sender(commentThreadList):
+    for commentDict in commentThreadList[0]:
+      check_against_filter(current, filtersDict, miscData, config, commentDict, allThreadAuthorNames=None)
+
+  def replyList_filter_sender(processedRepliesDictList, allThreadAuthorNames):
+    for replyDict in processedRepliesDictList:
+      check_against_filter(current, filtersDict, miscData, config, replyDict, allThreadAuthorNames)
+
+  # ----------------------------------------------------------------------------------------------------------------------
+
+  # Starting Value
+  nextPageToken:str = None 
+
+  # Fetch Top Level Comments and some replies
+  while nextPageToken != "End" and current.scannedCommentsCount < maxScanNumber:
+    nextPageToken, commentThreadList = get_comments(nextPageToken) # Thread 1
+    commentList_filter_sender(commentThreadList)
+
+    # Fetch Replies
+    for commentThread in commentThreadList:
+      if commentThread[2] > 0: # Numreplies
+        processedRepliesDictList, allThreadAuthorNames = get_replies(commentThread[1]) # Thread 2
+        replyList_filter_sender(processedRepliesDictList, allThreadAuthorNames) # Thread 3
 
 
-##########################################################################################
-##################################### GET REPLIES ########################################
-##########################################################################################
 
-# Call the API's comments.list method to list the existing comment replies.
-def get_replies(current, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, repliesList=None):
-  # Initialize some variables
-  authorChannelName = None
-  commentText = None
-  
-  if repliesList == None:
-    fieldsToFetch = "items/snippet/authorChannelId/value,items/id,items/snippet/authorDisplayName,items/snippet/textDisplay"
 
-    results = YOUTUBE.comments().list(
-      part="snippet",
-      parentId=parent_id,
-      maxResults=100,
-      fields=fieldsToFetch,
-      textFormat="plainText"
-    ).execute()
 
-    replies = results["items"]
-  else:
-    replies = repliesList
- 
-  # Create list of author names in current thread, add into list - Only necessary when scanning comment text
-  allThreadAuthorNames = []
+#############################################################################################################################################
+#############################################################################################################################################
+#############################################################################################################################################
 
-  # Iterates through items in results
-  # Need to be able to catch exceptions because sometimes the API will return a comment from non-existent / deleted channel
-  # Need individual tries because not all are fetched for each mode
-  for reply in replies:  
-    replyID = reply["id"]
-    try:
-      authorChannelID = reply["snippet"]["authorChannelId"]["value"]
-    except KeyError:
-      authorChannelID = "[Deleted Channel]"
-
-    # Get author display name
-    try:
-      authorChannelName = reply["snippet"]["authorDisplayName"]
-      if filtersDict['filterMode'] == "Username" or filtersDict['filterMode'] == "AutoASCII" or filtersDict['filterMode'] == "AutoSmart" or filtersDict['filterMode'] == "NameAndText":
-        allThreadAuthorNames.append(authorChannelName)
-    except KeyError:
-      authorChannelName = "[Deleted Channel]"
-    
-    # Comment Text
-    try:
-      commentText = reply["snippet"]["textDisplay"] # Remove Return carriages
-    except KeyError:
-      commentText = "[Deleted/Missing Comment]"
-
-    # Runs check against comment info for whichever filter data is relevant
-    currentCommentDict = {
-      'authorChannelID':authorChannelID, 
-      'parentAuthorChannelID':parentAuthorChannelID, 
-      'authorChannelName':authorChannelName, 
-      'commentText':commentText,
-      'commentID':replyID,
-      }
-    check_against_filter(current, filtersDict, miscData, config, currentCommentDict, videoID, allThreadAuthorNames=allThreadAuthorNames)
-
-    # Update latest stats
-    current.scannedRepliesCount += 1 
-    print_count_stats(current, miscData, videosToScan, final=False)
-
-  return True
 
 ############################## CHECK AGAINST FILTER ######################################
 # The basic logic that actually checks each comment against filter criteria
-def check_against_filter(current, filtersDict, miscData, config, currentCommentDict, videoID, allThreadAuthorNames=None):
+def check_against_filter(current, filtersDict, miscData, config, currentCommentDict, allThreadAuthorNames=None):
+  # currentCommentDict[0] = Info about individual comment
+  # currentCommentDict[1] = Info about thread
+
+  videoID = currentCommentDict['videoID']
+  # Add to Count
+  if currentCommentDict['parentAuthorChannelID'] == None:
+    current.scannedCommentsCount += 1
+  else:
+    current.scannedRepliesCount += 1
+
   # Retrieve Data from currentCommentDict
   commentID = currentCommentDict['commentID']
   authorChannelName = currentCommentDict['authorChannelName']
@@ -3114,7 +3181,6 @@ def main():
     maxScanNumber:int = 999999999
     scanVideoID:str = None
     videosToScan:list = []
-    nextPageToken:str = "start"
     loggingEnabled:bool = False
     userNotChannelOwner:bool = False
 
@@ -3705,16 +3771,17 @@ def main():
       print("                          --- Scanning --- \n")
 
       filtersDict = { 'filterMode': filterMode,
-                      'filterSubMode': filterSubMode,
-                      'CustomChannelIdFilter': inputtedSpammerChannelID,
-                      'CustomUsernameFilter': inputtedUsernameFilter,
-                      'CustomCommentTextFilter': inputtedCommentTextFilter,
-                      'CustomRegexPattern': regexPattern 
-                      }
+        'filterSubMode': filterSubMode,
+        'CustomChannelIdFilter': inputtedSpammerChannelID,
+        'CustomUsernameFilter': inputtedUsernameFilter,
+        'CustomCommentTextFilter': inputtedCommentTextFilter,
+        'CustomRegexPattern': regexPattern 
+        }
       
       # ----------------------------------------------------------------------------------------------------------------------
-      def scan_video(miscData, config, filtersDict, scanVideoID, videosToScan=None, videoTitle=None, showTitle=False, i=1):
-        nextPageToken = get_comments(current, filtersDict, miscData, config, scanVideoID, videosToScan=videosToScan)
+      # Scans through all pages of comments for a video, or number of comments specified for whole channel
+      def scan_video(miscData, config, filtersDict, scanVideoID, maxScanNumber, videosToScan=None, videoTitle=None, showTitle=False, i=1):
+        
         if showTitle == True and len(videosToScan) > 0:
           # Prints video title, progress count, adds enough spaces to cover up previous stat print line
           offset = 95 - len(videoTitle)
@@ -3723,25 +3790,24 @@ def main():
           else:
             spacesStr = ""
           print(f"Scanning {i}/{len(videosToScan)}: " + videoTitle + spacesStr + "\n")
+        print_count_stats(current, miscData, videosToScan, final=False)
 
-        print_count_stats(current, miscData, videosToScan, final=False)  # Prints comment scan stats, updates on same line
-        # After getting first page, if there are more pages, goes to get comments for next page
-        while nextPageToken != "End" and current.scannedCommentsCount < maxScanNumber:
-          nextPageToken = get_comments(current, filtersDict, miscData, config, scanVideoID, nextPageToken, videosToScan=videosToScan)
+        get_and_scan_comments(current, filtersDict, miscData, config, scanVideoID, maxScanNumber, videosToScan=videosToScan)
       # ----------------------------------------------------------------------------------------------------------------------
 
       if scanMode == "entireChannel":
-        scan_video(miscData, config, filtersDict, scanVideoID)
+        scan_video(miscData, config, filtersDict, scanVideoID, maxScanNumber,)
       elif scanMode == "recentVideos" or scanMode == "chosenVideos":
         i = 1
         for video in videosToScan:
           scanVideoID = str(video['videoID'])
           videoTitle = str(video['videoTitle'])
-          scan_video(miscData, config, filtersDict, scanVideoID, videosToScan=videosToScan, videoTitle=videoTitle, showTitle=True, i=i)
+          scan_video(miscData, config, filtersDict, scanVideoID, maxScanNumber, videosToScan=videosToScan, videoTitle=videoTitle, showTitle=True, i=i)
           i += 1
+
       print_count_stats(current, miscData, videosToScan, final=True)  # Prints comment scan stats, finalizes
     
-    ##########################################################
+    ####################################################################################################################
     bypass = False
     if config and config['enable_logging'] != 'ask':
       logSetting = config['enable_logging']
