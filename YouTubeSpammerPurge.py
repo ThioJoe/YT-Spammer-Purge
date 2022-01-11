@@ -1848,7 +1848,6 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
           # what we want the tar file to be called on the system
           tarFileName = "yt-spammer.tar.gz"
           # Name of this file
-          scriptName = sys.argv[0]
           # Temp folder for update
           stagingFolder = "linuxYoutubeSpammerStaging"
 
@@ -1857,7 +1856,6 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
 
           url = f'https://codeload.github.com/ThioJoe/YT-Spammer-Purge/tar.gz/refs/tags/v{latestVersion}'
           r = requests.get(url, stream=True)
-          total_size_in_bytes = int(response.headers.get('content-length', 0))
           if(r.status_code == 200):
             with open(tarFileName, 'wb') as file:
               for chunk in r.iter_content(chunk_size=1048576):
