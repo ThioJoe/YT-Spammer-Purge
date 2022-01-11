@@ -70,22 +70,34 @@ from shutil import copyfile
 from random import randrange
 from urllib.parse import urlparse
 
-# Non Standard Modules
-import rtfunicode
-from colorama import init, Fore as F, Back as B, Style as S
-from confusables import confusable_regex, normalize
+try:
+  # Non Standard Modules
+  import rtfunicode
+  from colorama import init, Fore as F, Back as B, Style as S
+  from confusables import confusable_regex, normalize
 
-# Local Non Standard Modules
-from community_downloader import main as get_community_comments #Args = post's ID, comment limit
-from community_downloader import get_post_channel_url
+  # Local Non Standard Modules
+  from community_downloader import main as get_community_comments #Args = post's ID, comment limit
+  from community_downloader import get_post_channel_url
 
-# Google Authentication Modules
-from googleapiclient.errors import HttpError
-from googleapiclient.discovery import build
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.oauth2.credentials import Credentials
-from google.auth.transport.requests import Request
+  # Google Authentication Modules
+  from googleapiclient.errors import HttpError
+  from googleapiclient.discovery import build
+  from google_auth_oauthlib.flow import InstalledAppFlow
+  from google.oauth2.credentials import Credentials
+  from google.auth.transport.requests import Request
+except ModuleNotFoundError as e:
+  print("Modules Not Found. Attempting to install...")
+  pip_exe = None
+  if platform.system() == "Windows":
+    pip_exe = "pip"
+  else:
+    pip_exe = "pip3"
 
+  os.system(f"{pip_exe} install -r requirements.txt")
+  print("")
+  print("Modules installed. Please rerun the program.")
+  input("Press Enter to Exit...")
 
 ##########################################################################################
 ################################## AUTHORIZATION #########################################
