@@ -68,6 +68,8 @@ from shutil import copyfile
 from random import randrange
 from urllib.parse import urlparse
 
+import queue
+
 # Non Standard Modules
 import rtfunicode
 from colorama import init, Fore as F, Back as B, Style as S
@@ -498,40 +500,100 @@ def get_and_scan_comments(current, filtersDict, miscData, config, scanVideoID, m
       processedRepliesDictList.append(currentReplyDict)
       
 
-      #check_against_filter(current, filtersDict, miscData, config, currentReplyDict, videoID, allThreadAuthorNames)
-
       # Update latest stats
       #print_count_stats(current, miscData, videosToScan, final=False)
-
-    return processedRepliesDictList, allThreadAuthorNames
+    return tuple((processedRepliesDictList, allThreadAuthorNames))
+    #return processedRepliesDictList, allThreadAuthorNames
   # ----------------------------------------------------------------------------------------------------------------------
 
-  def commentList_filter_sender(commentThreadDict):
+  def comment_filter_sender(commentThreadDict):
     check_against_filter(current, filtersDict, miscData, config, commentThreadDict['currentCommentDict'], allThreadAuthorNames=None)
 
-  def replyList_filter_sender(processedRepliesDictList, allThreadAuthorNames):
-    for replyDict in processedRepliesDictList:
-      check_against_filter(current, filtersDict, miscData, config, replyDict, allThreadAuthorNames)
+  def replyList_filter_sender(replyDict, allThreadAuthorNames):
+    #for replyDict in processedRepliesDictList:
+    check_against_filter(current, filtersDict, miscData, config, replyDict, allThreadAuthorNames)
 
   # ----------------------------------------------------------------------------------------------------------------------
 
+  import concurrent.futures
+  import time
+  # Filter Queue
+  fetchedThreadQueue1 = queue.SimpleQueue()
+  replyDictQueue = queue.SimpleQueue()
+  fetchedReplyQueue = queue.SimpleQueue()
+
+  
   # Starting Value
+  
+  time1 = time.time()
+  # Fetch Comment Threads (Main Thread 1)
   nextPageToken:str = None 
 
-  # Fetch Comment Threads
-  while nextPageToken != "End" and current.scannedCommentsCount < maxScanNumber:
-    nextPageToken, commentThreadList = get_comments(nextPageToken) # Thread 1
+  def get_reply_queue(replyDictQueue):
+    # Get Replies (Thread 2)
+    #while not fetchedThreadQueue1.empty():
+    while not replyDictQueue.empty():
+      print("[1] Queue 1 Length: " + str(replyDictQueue.empty()))
+      try:
+        replyDictUnqueued = replyDictQueue.get(block=False)
+        repliesTupleUnqueued = get_replies(replyDictUnqueued)
+        fetchedReplyQueue.put(repliesTupleUnqueued)
+        #print_count_stats(current, miscData, videosToScan, final=False)
+        print("[2] Queue 1 Length: " + str(replyDictQueue.qsize()))
+      except queue.Empty:
+        pass
+  
+  def send_filter_queue(replyDictQueue, fetchedReplyQueue):
+    # Filter Comments (Thread 3)
+    print("[1] Queue 2 Length:" + str(replyDictQueue.qsize()))
+    print("[1] Reply Queue Length: " + str(fetchedReplyQueue.qsize()))
+    #if not fetchedThreadQueue2.empty():
+    while not replyDictQueue.empty():
+      try:
+        commentThreadListSent = replyDictQueue.get(block=False)
+        for commentThreadDictSent in commentThreadListSent:
+          comment_filter_sender(commentThreadDictSent)
+          print("[2] Queue 2 Length:" + str(replyDictQueue.qsize()))
+          print("[2] Reply Queue Length: " + str(fetchedReplyQueue.qsize()))          
+      except queue.Empty:
+        pass
+      
+      #if not fetchedReplyQueue.empty():
+    while not fetchedReplyQueue.empty():
+      try:
+        repliesListSent, allThreadAuthorNamesSent = fetchedReplyQueue.get(block=False)  
+        for replySent in repliesListSent:
+          replyList_filter_sender(replySent, allThreadAuthorNamesSent)
+          #print_count_stats(current, miscData, videosToScan, final=False)
+          print("[3] Queue 2 Length:" + str(replyDictQueue.qsize()))
+          print("[3] Reply Queue Length: " + str(fetchedReplyQueue.qsize())) 
+      except queue.Empty:
+        pass
 
-    for commentThreadDict in commentThreadList:
+  with concurrent.futures.ThreadPoolExecutor() as executor:
+    while (nextPageToken != "End" and current.scannedCommentsCount < maxScanNumber):
+      #if nextPageToken != "End" and current.scannedCommentsCount < maxScanNumber:
+      nextPageToken, listOfCommentThreadDicts = get_comments(nextPageToken)
+      fetchedThreadQueue1.put(listOfCommentThreadDicts)
+      for commentThreadDict in listOfCommentThreadDicts:
+        if int(commentThreadDict['numReplies']) > 0:
+          replyDictQueue.put(commentThreadDict['repliesDict'])
+      #print_count_stats(current, miscData, videosToScan, final=False)
 
-      #Top Level Comment
-      commentList_filter_sender(commentThreadDict)
+      # f1 = executor.submit(get_reply_queue, replyDictQueue)
+      # f2 = executor.submit(send_filter_queue, fetchedThreadQueue1, fetchedReplyQueue)
 
-      #Replies
-      if int(commentThreadDict['numReplies']) > 0:
-        processedRepliesDictList, allThreadAuthorNames = get_replies(commentThreadDict['repliesDict']) # Thread 2
-        replyList_filter_sender(processedRepliesDictList, allThreadAuthorNames) # Thread 3
+      get_reply_queue(replyDictQueue)
+      send_filter_queue(fetchedThreadQueue1, fetchedReplyQueue)
+      #print_count_stats(current, miscData, videosToScan, final=False)  
 
+
+  print_count_stats(current, miscData, videosToScan, final=False)
+  time2 = time.time()
+  totalTime = time2 - time1
+  pass
+
+  
 
 
 #############################################################################################################################################
@@ -544,7 +606,7 @@ def get_and_scan_comments(current, filtersDict, miscData, config, scanVideoID, m
 def check_against_filter(current, filtersDict, miscData, config, currentCommentDict, allThreadAuthorNames=None):
   # currentCommentDict[0] = Info about individual comment
   # currentCommentDict[1] = Info about thread
-
+  
   videoID = currentCommentDict['videoID']
   # Add to Count
   if currentCommentDict['parentAuthorChannelID'] == None:
