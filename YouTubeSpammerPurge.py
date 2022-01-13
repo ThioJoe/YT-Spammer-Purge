@@ -67,6 +67,7 @@ import zipfile
 from shutil import copyfile
 from random import randrange
 from urllib.parse import urlparse
+import threading
 
 import queue
 
@@ -498,12 +499,9 @@ def get_and_scan_comments(current, filtersDict, miscData, config, scanVideoID, m
         }
 
       processedRepliesDictList.append(currentReplyDict)
-      
 
-      # Update latest stats
       #print_count_stats(current, miscData, videosToScan, final=False)
     return tuple((processedRepliesDictList, allThreadAuthorNames))
-    #return processedRepliesDictList, allThreadAuthorNames
   # ----------------------------------------------------------------------------------------------------------------------
 
   def comment_filter_sender(commentThreadDict):
@@ -514,81 +512,89 @@ def get_and_scan_comments(current, filtersDict, miscData, config, scanVideoID, m
 
   # ----------------------------------------------------------------------------------------------------------------------
 
-  import concurrent.futures
   import time
   # Filter Queue
   fetchedThreadQueue1 = queue.SimpleQueue()
   replyDictQueue = queue.SimpleQueue()
   fetchedReplyQueue = queue.SimpleQueue()
-
-  
-  # Starting Value
-  
-  
-  # Fetch Comment Threads (Main Thread 1)
-  
+ 
   nextPageToken:str = None 
 
-  def get_reply_queue(replyDictQueue):
+  def get_reply_queue(auth, replyDictQueue, stop):
     # Get Replies (Thread 2)
-    #authService = get_authenticated_service()
-    while not replyDictQueue.empty():
-      try:
-        replyDictUnqueued = replyDictQueue.get(block=False)
-        repliesTupleUnqueued = get_replies(YOUTUBE, replyDictUnqueued)
-        fetchedReplyQueue.put(repliesTupleUnqueued)
-        #print_count_stats(current, miscData, videosToScan, final=False)
-      except queue.Empty:
-        pass
-  
-  def send_filter_queue(replyDictQueue, fetchedReplyQueue):
-    # Filter Comments (Thread 3)
-    while not replyDictQueue.empty():
-      try:
-        commentThreadListSent = replyDictQueue.get(block=False)
-        for commentThreadDictSent in commentThreadListSent:
-          comment_filter_sender(commentThreadDictSent)     
-      except queue.Empty:
-        pass
-
-    while not fetchedReplyQueue.empty():
-      try:    
-        repliesListSent, allThreadAuthorNamesSent = fetchedReplyQueue.get(block=False)  
-        for replySent in repliesListSent:
-          replyList_filter_sender(replySent, allThreadAuthorNamesSent)
+    while True:
+      while not replyDictQueue.empty():
+        try:
+          replyDictUnqueued = replyDictQueue.get(block=False)
+          repliesTupleUnqueued = get_replies(auth, replyDictUnqueued)
+          fetchedReplyQueue.put(repliesTupleUnqueued)
           #print_count_stats(current, miscData, videosToScan, final=False)
-      except queue.Empty:
-        pass
+        except queue.Empty:
+          pass
+      if stop():
+        break
+  
+  def send_filter_queue(replyDictQueue, fetchedReplyQueue, stop):
+    # Filter Comments (Thread 3)
+    while True:
+      while not replyDictQueue.empty():
+        try:
+          commentThreadListSent = replyDictQueue.get(block=False)
+          for commentThreadDictSent in commentThreadListSent:
+            comment_filter_sender(commentThreadDictSent)
+        except queue.Empty:
+          pass
+      while not fetchedReplyQueue.empty():
+        try:
+          repliesListSent, allThreadAuthorNamesSent = fetchedReplyQueue.get(block=False)  
+          for replySent in repliesListSent:
+            replyList_filter_sender(replySent, allThreadAuthorNamesSent)
+            #print_count_stats(current, miscData, videosToScan, final=False)
+        except queue.Empty:
+          pass
+      if stop():
+        break
     
-  def new_auth():
-    authService = get_authenticated_service()
-    return authService
-
   def fetch_scan_page(nextPageToken):
+    authObj = get_authenticated_service()
+    stop_threads = False
+    treply = threading.Thread(target=get_reply_queue, args=(authObj, replyDictQueue, lambda : stop_threads), daemon=True)
+    tfilter = threading.Thread(target=send_filter_queue, args=(fetchedThreadQueue1, fetchedReplyQueue, lambda : stop_threads), daemon=True)
+
     nextPageToken, listOfCommentThreadDicts = get_comments(nextPageToken)
     fetchedThreadQueue1.put(listOfCommentThreadDicts)
     for commentThreadDict in listOfCommentThreadDicts:
       if int(commentThreadDict['numReplies']) > 0:
         replyDictQueue.put(commentThreadDict['repliesDict'])
-    #f1 = executor.submit(get_reply_queue, replyDictQueue)
-    get_reply_queue(replyDictQueue)
+    treply.start()
+    tfilter.start()
 
-    f2 = executor.submit(send_filter_queue, fetchedThreadQueue1, fetchedReplyQueue)
-    #send_filter_queue(fetchedThreadQueue1, fetchedReplyQueue)
-    return nextPageToken   
+    while (nextPageToken != "End" and current.scannedCommentsCount < maxScanNumber):
+      nextPageToken, listOfCommentThreadDicts = get_comments(nextPageToken)
+      fetchedThreadQueue1.put(listOfCommentThreadDicts)
+      for commentThreadDict in listOfCommentThreadDicts:
+        if int(commentThreadDict['numReplies']) > 0:
+          replyDictQueue.put(commentThreadDict['repliesDict'])
+      #print_count_stats(current, miscData, videosToScan, final=False)
+      #get_reply_queue(YOUTUBE, replyDictQueue)
+      #send_filter_queue(fetchedThreadQueue1, fetchedReplyQueue)
+
+    while not fetchedReplyQueue.empty() or not fetchedThreadQueue1.empty() or not replyDictQueue.empty():
+      pass
+
+    stop_threads=True
+    treply.join()
+    tfilter.join()
+    #print_count_stats(current, miscData, videosToScan, final=True)
 
   time1 = time.time()
-  with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-    nextPageToken = fetch_scan_page(nextPageToken)
-    while (nextPageToken != "End" and current.scannedCommentsCount < maxScanNumber):
-      nextPageToken = fetch_scan_page(nextPageToken)
-
-
-      #print_count_stats(current, miscData, videosToScan, final=False)  
-    #----------------------------------------------------------------------------------------------------------------------
-    
+  #fetch_scan_page(nextPageToken)
+  t1 = threading.Thread(target=fetch_scan_page, args=(nextPageToken,))
+  t1.start()
+  t1.join()
+  
   time2 = time.time()
-  print_count_stats(current, miscData, videosToScan, final=False)
+  print_count_stats(current, miscData, videosToScan, final=True)
   totalTime = time2 - time1
   pass
 
@@ -601,8 +607,6 @@ def get_and_scan_comments(current, filtersDict, miscData, config, scanVideoID, m
 ############################## CHECK AGAINST FILTER ######################################
 # The basic logic that actually checks each comment against filter criteria
 def check_against_filter(current, filtersDict, miscData, config, currentCommentDict, allThreadAuthorNames=None):
-  # currentCommentDict[0] = Info about individual comment
-  # currentCommentDict[1] = Info about thread
   
   videoID = currentCommentDict['videoID']
   # Add to Count
