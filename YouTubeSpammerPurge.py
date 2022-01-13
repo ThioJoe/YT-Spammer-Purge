@@ -435,7 +435,7 @@ def get_and_scan_comments(current, filtersDict, miscData, config, scanVideoID, m
 
   # ----------------------------------------------------------------------------------------------------------------------
 
-  def get_replies(repliesDict):
+  def get_replies(authService, repliesDict):
     parent_id = repliesDict['parent_id']
     videoID = repliesDict['videoID']
     parentAuthorChannelID = repliesDict['parentAuthorChannelID']
@@ -448,7 +448,7 @@ def get_and_scan_comments(current, filtersDict, miscData, config, scanVideoID, m
     if repliesList == None:
       fieldsToFetch = "items/snippet/authorChannelId/value,items/id,items/snippet/authorDisplayName,items/snippet/textDisplay"
 
-      results = YOUTUBE.comments().list(
+      results = authService.comments().list(  
         part="snippet",
         parentId=parent_id,
         maxResults=100,
@@ -510,7 +510,6 @@ def get_and_scan_comments(current, filtersDict, miscData, config, scanVideoID, m
     check_against_filter(current, filtersDict, miscData, config, commentThreadDict['currentCommentDict'], allThreadAuthorNames=None)
 
   def replyList_filter_sender(replyDict, allThreadAuthorNames):
-    #for replyDict in processedRepliesDictList:
     check_against_filter(current, filtersDict, miscData, config, replyDict, allThreadAuthorNames)
 
   # ----------------------------------------------------------------------------------------------------------------------
@@ -525,77 +524,75 @@ def get_and_scan_comments(current, filtersDict, miscData, config, scanVideoID, m
   
   # Starting Value
   
-  time1 = time.time()
+  
   # Fetch Comment Threads (Main Thread 1)
+  
   nextPageToken:str = None 
 
   def get_reply_queue(replyDictQueue):
     # Get Replies (Thread 2)
-    #while not fetchedThreadQueue1.empty():
+    #authService = get_authenticated_service()
     while not replyDictQueue.empty():
-      print("[1] Queue 1 Length: " + str(replyDictQueue.empty()))
       try:
         replyDictUnqueued = replyDictQueue.get(block=False)
-        repliesTupleUnqueued = get_replies(replyDictUnqueued)
+        repliesTupleUnqueued = get_replies(YOUTUBE, replyDictUnqueued)
         fetchedReplyQueue.put(repliesTupleUnqueued)
         #print_count_stats(current, miscData, videosToScan, final=False)
-        print("[2] Queue 1 Length: " + str(replyDictQueue.qsize()))
       except queue.Empty:
         pass
   
   def send_filter_queue(replyDictQueue, fetchedReplyQueue):
     # Filter Comments (Thread 3)
-    print("[1] Queue 2 Length:" + str(replyDictQueue.qsize()))
-    print("[1] Reply Queue Length: " + str(fetchedReplyQueue.qsize()))
-    #if not fetchedThreadQueue2.empty():
     while not replyDictQueue.empty():
       try:
         commentThreadListSent = replyDictQueue.get(block=False)
         for commentThreadDictSent in commentThreadListSent:
-          comment_filter_sender(commentThreadDictSent)
-          print("[2] Queue 2 Length:" + str(replyDictQueue.qsize()))
-          print("[2] Reply Queue Length: " + str(fetchedReplyQueue.qsize()))          
+          comment_filter_sender(commentThreadDictSent)     
       except queue.Empty:
         pass
-      
-      #if not fetchedReplyQueue.empty():
+
     while not fetchedReplyQueue.empty():
-      try:
+      try:    
         repliesListSent, allThreadAuthorNamesSent = fetchedReplyQueue.get(block=False)  
         for replySent in repliesListSent:
           replyList_filter_sender(replySent, allThreadAuthorNamesSent)
           #print_count_stats(current, miscData, videosToScan, final=False)
-          print("[3] Queue 2 Length:" + str(replyDictQueue.qsize()))
-          print("[3] Reply Queue Length: " + str(fetchedReplyQueue.qsize())) 
       except queue.Empty:
         pass
+    
+  def new_auth():
+    authService = get_authenticated_service()
+    return authService
 
-  with concurrent.futures.ThreadPoolExecutor() as executor:
+  def fetch_scan_page(nextPageToken):
+    nextPageToken, listOfCommentThreadDicts = get_comments(nextPageToken)
+    fetchedThreadQueue1.put(listOfCommentThreadDicts)
+    for commentThreadDict in listOfCommentThreadDicts:
+      if int(commentThreadDict['numReplies']) > 0:
+        replyDictQueue.put(commentThreadDict['repliesDict'])
+    #f1 = executor.submit(get_reply_queue, replyDictQueue)
+    get_reply_queue(replyDictQueue)
+
+    f2 = executor.submit(send_filter_queue, fetchedThreadQueue1, fetchedReplyQueue)
+    #send_filter_queue(fetchedThreadQueue1, fetchedReplyQueue)
+    return nextPageToken   
+
+  time1 = time.time()
+  with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+    nextPageToken = fetch_scan_page(nextPageToken)
     while (nextPageToken != "End" and current.scannedCommentsCount < maxScanNumber):
-      #if nextPageToken != "End" and current.scannedCommentsCount < maxScanNumber:
-      nextPageToken, listOfCommentThreadDicts = get_comments(nextPageToken)
-      fetchedThreadQueue1.put(listOfCommentThreadDicts)
-      for commentThreadDict in listOfCommentThreadDicts:
-        if int(commentThreadDict['numReplies']) > 0:
-          replyDictQueue.put(commentThreadDict['repliesDict'])
-      #print_count_stats(current, miscData, videosToScan, final=False)
+      nextPageToken = fetch_scan_page(nextPageToken)
 
-      # f1 = executor.submit(get_reply_queue, replyDictQueue)
-      # f2 = executor.submit(send_filter_queue, fetchedThreadQueue1, fetchedReplyQueue)
 
-      get_reply_queue(replyDictQueue)
-      send_filter_queue(fetchedThreadQueue1, fetchedReplyQueue)
       #print_count_stats(current, miscData, videosToScan, final=False)  
-
-
-  print_count_stats(current, miscData, videosToScan, final=False)
+    #----------------------------------------------------------------------------------------------------------------------
+    
   time2 = time.time()
+  print_count_stats(current, miscData, videosToScan, final=False)
   totalTime = time2 - time1
   pass
 
   
-
-
 #############################################################################################################################################
 #############################################################################################################################################
 #############################################################################################################################################
