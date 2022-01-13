@@ -36,7 +36,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.10.0"
+version = "2.11.0-Beta1"
 configVersion = 17
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -841,18 +841,24 @@ class CommentFoundError(Exception):
     pass
 
 # Takes in list of comment IDs and video IDs, and checks if comments still exist individually
-def check_deleted_comments(checkDict):
+def check_deleted_comments(commentInput):
     i = 0 # Count number of remaining comments
     j = 1 # Count number of checked
-    total = len(checkDict)
+    total = len(commentInput)
     unsuccessfulResults = []
+    commentList = []
 
+    if type(commentInput) == list:
+      commentList = commentInput
+    elif type(commentInput) == dict:
+      commentList = list(commentInput.keys())
+      
     # Wait 2 seconds so YouTube API has time to update comment status
     print("Preparing...", end="\r")
     time.sleep(1)
     print("                               ")
     print("    (Note: You can disable deletion success checking in the config file, to save time and API quota)\n")
-    for commentID, metadata in checkDict.items():
+    for commentID in commentList:
       try:
         results = YOUTUBE.comments().list(
           part="snippet",
@@ -870,12 +876,18 @@ def check_deleted_comments(checkDict):
 
       # If comment is found and possibly not deleted, print out video ID and comment ID
       except CommentFoundError:
-        print("Possible Issue Deleting Comment: " + str(commentID) + " |  Check Here: " + "https://www.youtube.com/watch?v=" + str(metadata['videoID']) + "&lc=" + str(commentID))
+        if type(commentInput) == dict:
+          print("Possible Issue Deleting Comment: " + str(commentID) + " |  Check Here: " + "https://www.youtube.com/watch?v=" + str(commentInput[commentID]['videoID']) + "&lc=" + str(commentID))
+        elif type(commentInput) == list:
+          print("Possible Issue Deleting Comment: " + str(commentID))
         i += 1
         unsuccessfulResults.append(results)
         pass
       except Exception:
-        print("Unhandled Exception While Deleting Comment: " + str(commentID) + " |  Check Here: " + "https://www.youtube.com/watch?v=" + str(metadata['videoID']) + "&lc=" + str(commentID))
+        if type(commentInput) == dict:
+          print("Unhandled Exception While Deleting Comment: " + str(commentID) + " |  Check Here: " + "https://www.youtube.com/watch?v=" + str(commentInput[commentID]['videoID']) + "&lc=" + str(commentID))
+        elif type(commentInput) == list:
+          print("Unhandled Exception While Deleting Comment: " + str(commentID))
         i += 1
         unsuccessfulResults.append(results)
         pass
@@ -2250,35 +2262,40 @@ def update_config_file(oldVersion, newVersion, oldConfig):
   print("\nConfig Updated! Please restart the program...")
   input("\nPress enter to Exit...")
   sys.exit()
-
-################################ RECOVERY MODE ###########################################
-def recover_deleted_comments():
-  print(f"\n\n-------------------- {F.LIGHTGREEN_EX}Comment Recovery Mode{S.R} --------------------\n")
-  print("Believe it or not, the YouTube API actually allows you to re-instate \"deleted\" comments.")
-  print(f"This is {F.YELLOW}only possible if you have stored the comment IDs{S.R} of the deleted comments, such as {F.YELLOW}having kept the log file{S.R} of that session.")
-  print("If you don't have the comment IDs you can't recover the comments, and there is no way to find them. \n")
+##########################################################################################
+################################# LIST MODES  ############################################
+##########################################################################################
+def parse_comment_list(recovery=False, removal=False):
+  if recovery == True:
+    actionVerb = "recover"
+    actionNoun = "recovery"
+  elif removal == True:
+    actionVerb = "remove"
+    actionNoun = "removal"
 
   validFile = False
   manuallyEnter = False
   while validFile == False and manuallyEnter == False:
-    print("Enter the name of the log file containing the comments to recover (you could rename it to something easier like \'log.rtf\')")
+    print(f"Enter the name of the log file containing the comments to {actionVerb} (you could rename it to something easier like \'log.rtf\')")
     print("     > (Or, just hit Enter to manually paste in the list of IDs next)")
-    recoveryFileName = input("\nLog File Name (Example: \"log.rtf\" or \"log\"):  ")
-    if str(recoveryFileName).lower() == "x":
+    listFileName = input("\nLog File Name (Example: \"log.rtf\" or \"log\"):  ")
+    if str(listFileName).lower() == "x":
       return "MainMenu"
 
-    if len(recoveryFileName) > 0:
-      if os.path.exists(recoveryFileName):
+    if len(listFileName) > 0:
+      if os.path.exists(listFileName):
         pass
-      elif os.path.exists(recoveryFileName+".rtf"):
-        recoveryFileName = recoveryFileName + ".rtf"
+      elif os.path.exists(listFileName+".rtf"):
+        listFileName = listFileName + ".rtf"
+      elif os.path.exists(listFileName+".txt"):
+        listFileName = listFileName + ".txt"
 
       # Get file path
-      if os.path.exists(recoveryFileName):
+      if os.path.exists(listFileName):
         try:
-          with open(recoveryFileName, 'r', encoding="utf-8") as recoveryFile:
-            data = recoveryFile.read()
-          recoveryFile.close()
+          with open(listFileName, 'r', encoding="utf-8") as listFile:
+            data = listFile.read()
+          listFile.close()
           validFile = True
         except:
           print("Error Code F-5: Log File was found but there was a problem reading it.")
@@ -2309,15 +2326,15 @@ def recover_deleted_comments():
   if manuallyEnter == False and '[' in data and ']' in data:
     matchBetweenBrackets = '(?<=\[)(.*?)(?=\])' # Matches text between first set of two square brackets
     #matchIncludeBracktes = '\[(.*?)\]' # Matches between square brackets, including brackets
-    result = str(re.search(matchBetweenBrackets, data).group(0))
-  else: result = data
-  result = result.replace("\'", "")
-  result = result.replace("[", "")
-  result = result.replace("]", "")
-  result = result.replace(" ", "")
-  result = result.split(",")
+    resultList = str(re.search(matchBetweenBrackets, data).group(0))
+  else: resultList = data
+  resultList = resultList.replace("\'", "")
+  resultList = resultList.replace("[", "")
+  resultList = resultList.replace("]", "")
+  resultList = resultList.replace(" ", "")
+  resultList = resultList.split(",")
 
-  if len(result) == 0:
+  if len(resultList) == 0:
     print("Error Code R-1: No comment IDs detected, try entering them manually and make sure they are formatted correctly.")
     input("Press Enter to return to main menu...")
     return "MainMenu"
@@ -2326,7 +2343,7 @@ def recover_deleted_comments():
   validCount = 0
   notValidCount = 0
   notValidList = []
-  for id in result:
+  for id in resultList:
     if id[0:2] == "Ug":
       validCount += 1
     else:
@@ -2338,18 +2355,63 @@ def recover_deleted_comments():
 
   if notValidCount == 0:
     print("\nLoaded all " + str(validCount) + " comment IDs successfully!")
-    input("\nPress Enter to begin recovery... ")
+    input(f"\nPress Enter to begin {actionNoun}... ")
   elif validCount > 0 and notValidCount > 0:
     print(f"\{F.RED}Warning!{S.R} {str(validCount)} valid comment IDs loaded successfully, but {str(notValidCount)} may be invalid. See them above.")
-    input("\nPress Enter to try recovering anyway...\n")
+    input("\nPress Enter to try {actionNoun} anyway...\n")
   elif validCount == 0 and notValidCount > 0:
     print(f"\n{F.RED}Warning!{S.R} All loaded comment IDs appear to be invalid. See them above.")
-    input("Press Enter to try recovering anyway...\n")
-  print("\n")
+    input("Press Enter to try {actionNoun} anyway...\n")
+  return resultList
 
-  delete_found_comments(commentsList=result, banChoice=False, deletionMode="published", recoveryMode=True)
-  check_recovered_comments(commentsList=result)
+################################ RECOVERY MODE ###########################################
+def recover_deleted_comments():
+  print(f"\n\n-------------------- {F.LIGHTGREEN_EX}Comment Recovery Mode{S.R} --------------------\n")
+  print("Believe it or not, the YouTube API actually allows you to re-instate \"deleted\" comments.")
+  print(f"This is {F.YELLOW}only possible if you have stored the comment IDs{S.R} of the deleted comments, such as {F.YELLOW}having kept the log file{S.R} of that session.")
+  print("If you don't have the comment IDs you can't recover the comments, and there is no way to find them. \n")
 
+  recoveryList = parse_comment_list(recovery=True)
+  if recoveryList == "MainMenu":
+    return "MainMenu"
+
+  delete_found_comments(commentsList=recoveryList, banChoice=False, deletionMode="published", recoveryMode=True)
+  check_recovered_comments(commentsList=recoveryList)
+
+################################ RECOVERY MODE ###########################################
+def delete_comment_list():
+  print(f"\n\n-------------------- {F.LIGHTRED_EX}Delete Using a List / Log{S.R} --------------------\n")
+  removalList = parse_comment_list(removal=True)
+  if removalList == "MainMenu":
+    return "MainMenu"
+  print("\nWhat do you want to do with the comments in the list?")
+  print("1. Delete them")
+  print("2. Hide them for review")
+
+  validInput = False
+  while validInput == False:
+    userChoice = input("Selection (1 or 2): ")
+    if userChoice == "1":
+      removalMode = "rejected"
+      validInput = True
+    elif userChoice == "2":
+      removalMode = "heldForReview"
+      validInput = True
+    elif userChoice.lower() == "x":
+      return "MainMenu"
+    else:
+      print("Invalid input, try again.")
+    
+  if removalMode == "rejected":
+    banChoice = choice("\Also ban the commenters?")
+
+  input("Press Enter to Begin Removal...")
+  delete_found_comments(commentsList=removalList, banChoice=banChoice, deletionMode=removalMode)
+
+  print("Check that the comments were deleted? (Warning: Costs 1 API quota unit each, default daily max is 10,000)")
+  check_deleted_comments(removalList)
+  input("Operation Complete. Press Enter to return to main menu...")
+  return "MainMenu"
 
 ##########################################################################################
 ################################## FILTERING MODES #######################################
@@ -3120,16 +3182,17 @@ def main():
 
     os.system(clear_command)
     # User selects scanning mode,  while Loop to get scanning mode, so if invalid input, it will keep asking until valid input
-    print(f"   [At any prompt, you can enter 'X' to return to this menu]")
+    print(f"  [At any prompt, enter 'X' to return to this menu. Enter 'Q' now to quit.]")
     print(f"\n----------------------- {F.YELLOW}Scanning Options{S.R} -----------------------")
     print(f"      1. Scan {F.LIGHTBLUE_EX}specific videos{S.R}")
     print(f"      2. Scan {F.LIGHTCYAN_EX}recent videos{S.R} for a channel")
     print(f"      3. Scan recent comments across your {F.LIGHTMAGENTA_EX}Entire Channel{S.R}")
     print(f"      4. Scan a {F.LIGHTMAGENTA_EX}community post{S.R} (Experimental)")
-    print(f"------------------------ {F.LIGHTRED_EX}Other Options{S.R} -------------------------")
-    print(f"      5. Create your own config file to quickly run the program with pre-set settings")
-    print(f"      6. Recover deleted comments using log file")
-    print(f"      7. Check For Updates\n")
+    print(f"------------------------ {F.YELLOW}Other Options{S.R} -------------------------")
+    print(f"      5. Create your own {F.LIGHTGREEN_EX}config file{S.R} to quickly run the program with pre-set settings")
+    print(f"      6. Remove comments using a {F.LIGHTRED_EX}pre-existing list{S.R} or log file")
+    print(f"      7. Recover deleted comments using log file")
+    print(f"      8. Check For Updates\n")
     
     # Check for updates silently
     if updateAvailable == True:
@@ -3148,12 +3211,12 @@ def main():
       if validConfigSetting == True and config and config['scan_mode'] != 'ask':
         scanMode = config['scan_mode']
       else:
-        scanMode = input("Choice (1-7): ")
+        scanMode = input("Choice (1-8): ")
       if scanMode.lower() == "q":
         sys.exit()
 
       # Set scanMode Variable Names
-      validModeValues = ['1', '2', '3', '4', '5', '6', '7', 'chosenvideos', 'recentvideos', 'entirechannel', 'communitypost']
+      validModeValues = ['1', '2', '3', '4', '5', '6', '7', '8', 'chosenvideos', 'recentvideos', 'entirechannel', 'communitypost', 'commentlist']
       if scanMode in validModeValues:
         validMode = True
         if scanMode == "1" or scanMode == "chosenvideos":
@@ -3166,12 +3229,14 @@ def main():
           scanMode = "communityPost"
         elif scanMode == "5":
           scanMode = "makeConfig"
-        elif scanMode == "6":
-          scanMode = "recoverMode"
+        elif scanMode == "6" or scanMode == "commentlist":
+          scanMode = "commentList"          
         elif scanMode == "7":
+          scanMode = "recoverMode"
+        elif scanMode == "8":
           scanMode = "checkUpdates"
       else:
-        print(f"\nInvalid choice: {scanMode} - Enter either 1, 2, 3, 4, 5, 6, or 7. ")
+        print(f"\nInvalid choice: {scanMode} - Enter either 1, 2, 3, 4, 5, 6, 7, or 8. ")
         validConfigSetting = False
 
     # If chooses to scan single video - Validate Video ID, get title, and confirm with user
@@ -3539,6 +3604,11 @@ def main():
       if str(result) == "MainMenu":
         return True
 
+    elif scanMode == "commentList":
+      result = delete_comment_list()
+      if str(result) == "MainMenu":
+        return True
+
     # User inputs filtering mode
     print("\n-------------------------------------------------------")
     print(f"~~~~~~~~~~~ Choose how to identify spammers ~~~~~~~~~~~")
@@ -3835,13 +3905,11 @@ def main():
             jsonSettingsDict['logTime'] = current.logTime
           elif config['json_profile_picture'] == False:
             jsonSettingsDict['json_profile_picture'] = False
-            
 
         except KeyError:
           print("Problem getting json settings, is your config file correct?")
       else:
         jsonLogging = False
-      
 
       # Set where to put log files      
       defaultLogPath = "logs"
@@ -4065,7 +4133,6 @@ def main():
           input(f"\nDeletion {F.YELLOW}CANCELLED{S.R} (Because no matching option entered). Press Enter to return to main menu...")
           return True
 
-    
     # Set deletion mode friendly name
     if deletionMode == "rejected":
       deletionModeFriendlyName = "Removed"
@@ -4095,7 +4162,7 @@ def main():
         pass
       elif deletionMode == "reportSpam":
         pass
-      
+
       ### ---------------- Reporting / Deletion Begins  ----------------
       delete_found_comments(list(current.matchedCommentsDict), banChoice, deletionMode)
       if deletionMode != "reportSpam":
@@ -4125,7 +4192,11 @@ def main():
     else:
       input(f"\nDeletion {F.LIGHTRED_EX}Cancelled{S.R}. Press Enter to to return to main menu...")
       return True
+  # -------------------------------------------------------------------------------------------------------------------------------------------------
+  # ------------------------------------------------END PRIMARY INSTANCE-----------------------------------------------------------------------------
+  # -------------------------------------------------------------------------------------------------------------------------------------------------
 
+  # Loops Entire Program to Main Menu
   continueRunning = True
   while continueRunning == True:
     continueRunning = primaryInstance(miscData)
