@@ -1193,7 +1193,7 @@ def main():
         print(f" > To {F.LIGHTCYAN_EX}just report the comments for spam{S.R}, type ' {F.LIGHTCYAN_EX}REPORT{S.R} '. (Can be done even if you're not the channel owner)")
         print(f" > To do nothing, simply hit Enter")
 
-        if config['json_extra_data'] == True and loggingEnabled:
+        if config['json_log'] == True and config['json_extra_data'] == True and loggingEnabled:
           print(f"\n{F.WHITE}{B.BLUE} JSON NOTE: {S.R} You must proceed to write the JSON log file, even if you choose nothing")
         confirmDelete = input("\nInput: ")
         if confirmDelete == "DELETE" and userNotChannelOwner == False:
@@ -1224,6 +1224,8 @@ def main():
             break    
           else:
             input(f"\n{F.YELLOW}Removal / Reporting declined{S.R} (Because no matching option entered). Press Enter to return to main menu...")
+            returnToMenu = True
+            break
 
     if loggingEnabled:
       print(" Finishing Log File...", end="\r")

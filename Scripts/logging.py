@@ -49,14 +49,15 @@ def print_comments(current, scanVideoID, comments, loggingEnabled, scanMode, log
     elif logMode == "plaintext":
       matchSamplesContent = "-------------------- Match Samples: One comment per matched-comment author --------------------\n" + valuesPreparedToWrite
       write_plaintext_log(current.logFileName, matchSamplesContent)
+    # Entire Contents of Log File
+    logFileContents = commentsContents + matchSamplesContent      
   else:
     logFileContents = None
     logMode = None
   print(valuesPreparedToPrint)
   print(f"{F.LIGHTMAGENTA_EX}---------------------------- (See log file for channel IDs of matched authors above) ---------------------------{S.R}")
 
-  # Entire Contents of Log File
-  logFileContents = commentsContents + matchSamplesContent
+
 
   return logFileContents, logMode
 
