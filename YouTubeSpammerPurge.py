@@ -36,7 +36,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.10.0"
+version = "2.10.1"
 configVersion = 17
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -3684,6 +3684,15 @@ def main():
 
     ##################### START SCANNING #####################
 
+    filtersDict = { 
+      'filterMode': filterMode,
+      'filterSubMode': filterSubMode,
+      'CustomChannelIdFilter': inputtedSpammerChannelID,
+      'CustomUsernameFilter': inputtedUsernameFilter,
+      'CustomCommentTextFilter': inputtedCommentTextFilter,
+      'CustomRegexPattern': regexPattern 
+      }
+
     if scanMode == "communityPost":
       def scan_community_post(communityPostID, limit):
         allCommunityCommentsDict = get_community_comments(communityPostID=communityPostID, limit=limit)
@@ -3703,14 +3712,6 @@ def main():
       print("\n------------------------------------------------------------------------------")
       print("(Note: If the program appears to freeze, try right clicking within the window)\n")
       print("                          --- Scanning --- \n")
-
-      filtersDict = { 'filterMode': filterMode,
-                      'filterSubMode': filterSubMode,
-                      'CustomChannelIdFilter': inputtedSpammerChannelID,
-                      'CustomUsernameFilter': inputtedUsernameFilter,
-                      'CustomCommentTextFilter': inputtedCommentTextFilter,
-                      'CustomRegexPattern': regexPattern 
-                      }
       
       # ----------------------------------------------------------------------------------------------------------------------
       def scan_video(miscData, config, filtersDict, scanVideoID, videosToScan=None, videoTitle=None, showTitle=False, i=1):
