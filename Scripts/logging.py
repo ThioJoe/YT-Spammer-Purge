@@ -18,17 +18,17 @@ import json
 # Then uses print_prepared_comments() to print / log the comments
 def print_comments(current, scanVideoID, comments, loggingEnabled, scanMode, logMode):
   j = 0 # Counting index when going through comments all comment segments
-  groupSize = 2500 # Number of comments to process per iteration
+  groupSize = 999999 # Number of comments to process per iteration
 
-  if len(comments) > groupSize:
-    remainder = len(comments) % groupSize
-    numDivisions = int((len(comments)-remainder)/groupSize)
-    for i in range(numDivisions):
-      j = print_prepared_comments(current, scanVideoID,comments[i*groupSize:i*groupSize+groupSize], j, loggingEnabled, scanMode, logMode)
-    if remainder > 0:
-      j = print_prepared_comments(current, scanVideoID,comments[numDivisions*groupSize:len(comments)],j, loggingEnabled, scanMode, logMode)
-  else:
-    j = print_prepared_comments(current, scanVideoID,comments, j, loggingEnabled, scanMode, logMode)
+  # if len(comments) > groupSize:
+  #   remainder = len(comments) % groupSize
+  #   numDivisions = int((len(comments)-remainder)/groupSize)
+  #   for i in range(numDivisions):
+  #     j = print_prepared_comments(current, scanVideoID,comments[i*groupSize:i*groupSize+groupSize], j, loggingEnabled, scanMode, logMode)
+  #   if remainder > 0:
+  #     j = print_prepared_comments(current, scanVideoID,comments[numDivisions*groupSize:len(comments)],j, loggingEnabled, scanMode, logMode)
+  # else:
+  j, commentsContents = print_prepared_comments(current, scanVideoID,comments, j, loggingEnabled, scanMode, logMode)
 
   # Print Sample Match List
   valuesPreparedToWrite = ""
@@ -41,17 +41,26 @@ def print_comments(current, scanVideoID, comments, loggingEnabled, scanMode, log
       valuesPreparedToWrite = valuesPreparedToWrite + value['iString'] + value['cString'] + f"{str(value['authorID'])} | {str(value['nameAndText'])}\n"
     valuesPreparedToPrint = valuesPreparedToPrint + value['iString'] + value['cString'] + f"{str(value['nameAndText'])}\n"
   
+  # Write Match Samples to log
   if loggingEnabled == True:
     if logMode == "rtf":
-      write_rtf(current.logFileName, "-------------------- Match Samples: One comment per matched-comment author -------------------- \\line\\line \n")
-      write_rtf(current.logFileName, valuesPreparedToWrite)
+      matchSamplesContent = "-------------------- Match Samples: One comment per matched-comment author -------------------- \\line\\line \n" + valuesPreparedToWrite
+      write_rtf(current.logFileName, matchSamplesContent)
     elif logMode == "plaintext":
-      write_plaintext_log(current.logFileName, "-------------------- Match Samples: One comment per matched-comment author --------------------\n")
-      write_plaintext_log(current.logFileName, valuesPreparedToWrite)
+      matchSamplesContent = "-------------------- Match Samples: One comment per matched-comment author --------------------\n" + valuesPreparedToWrite
+      write_plaintext_log(current.logFileName, matchSamplesContent)
+  else:
+    logFileContents = None
+    logMode = None
   print(valuesPreparedToPrint)
   print(f"{F.LIGHTMAGENTA_EX}---------------------------- (See log file for channel IDs of matched authors above) ---------------------------{S.R}")
 
-  return None
+  # Entire Contents of Log File
+  logFileContents = commentsContents + matchSamplesContent
+
+  return logFileContents, logMode
+
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 # Uses comments.list YouTube API Request to get text and author of specific set of comments, based on comment ID
 def print_prepared_comments(current, scanVideoID, comments, j, loggingEnabled, scanMode, logMode):
@@ -152,7 +161,7 @@ def print_prepared_comments(current, scanVideoID, comments, j, loggingEnabled, s
       write_plaintext_log(current.logFileName, dataPreparedToWrite)
     print("                                    ")
 
-  return j
+  return j, dataPreparedToWrite
 
 
 ############################ RTF & Log File Handling ###############################
@@ -163,8 +172,8 @@ def make_rtf_compatible(text):
   return text.encode('rtfunicode').decode('utf-8')
 
 # Writes properly to rtf file, also can prepare with necessary header information and formatting settings
-def write_rtf(fileName, newText=None, firstWrite=False):
-  if firstWrite == True:
+def write_rtf(fileName, newText=None, firstWrite=False, fullWrite=False):
+  if firstWrite == True or fullWrite == True:
     # If directory does not exist for desired log file path, create it
     logFolderPath = os.path.dirname(os.path.realpath(fileName))
     if not os.path.isdir(logFolderPath):
@@ -176,17 +185,18 @@ def write_rtf(fileName, newText=None, firstWrite=False):
       except:
         print(f"{F.LIGHTRED_EX}Error:{S.R} Could not create desired directory for log files. Will place them in current directory.")
         fileName = os.path.basename(fileName)
+    with open(fileName, 'w', encoding="utf-8") as file:
+      # Some header information for RTF file, sets courier as font
+      file.write(r"{\rtf1\ansi\deff0 {\fonttbl {\f0 Courier;}}"+"\n")
 
-    file = open(fileName, "w", encoding="utf-8") # Opens log file in write mode
-    # Some header information for RTF file, sets courier as font
-    file.write(r"{\rtf1\ansi\deff0 {\fonttbl {\f0 Courier;}}"+"\n")
-
-    # Sets color table to be able to set colors for text, each color set with RGB values in raw string
-    # To use color, use '\cf1 ' (with space) for black, cf2 = red, cf3 = green, cf4 = blue, cf5 = orange, cf6 = purple
-    #                       cf1                cf2                  cf3                  cf4                  cf5                    cf6                 
-    file.write(r"{\colortbl;\red0\green0\blue0;\red255\green0\blue0;\red0\green255\blue0;\red0\green0\blue255;\red143\green81\blue0;\red102\green0\blue214;}"+"\n\n")
-    file.write(r"}")
-    file.close()
+      # Sets color table to be able to set colors for text, each color set with RGB values in raw string
+      # To use color, use '\cf1 ' (with space) for black, cf2 = red, cf3 = green, cf4 = blue, cf5 = orange, cf6 = purple
+      #                       cf1                cf2                  cf3                  cf4                  cf5                    cf6                 
+      file.write(r"{\colortbl;\red0\green0\blue0;\red255\green0\blue0;\red0\green255\blue0;\red0\green0\blue255;\red143\green81\blue0;\red102\green0\blue214;}"+"\n\n")
+      if fullWrite == True:
+        file.write(newText)
+      file.write(r"}")
+      file.close()
 
   # If the string might have unicode, use unicode mode to convert for rtf
   else:
@@ -210,8 +220,8 @@ def write_rtf(fileName, newText=None, firstWrite=False):
 
 ############################ Plaintext Log & File Handling ###############################
 
-def write_plaintext_log(fileName, newText=None, firstWrite=False):
-  if firstWrite == True:
+def write_plaintext_log(fileName, newText=None, firstWrite=False, fullWrite=False):
+  if firstWrite == True or fullWrite == True:
     # If directory does not exist for desired log file path, create it
     logFolderPath = os.path.dirname(os.path.realpath(fileName))
     if not os.path.isdir(logFolderPath):
@@ -224,7 +234,10 @@ def write_plaintext_log(fileName, newText=None, firstWrite=False):
         print(f"{F.LIGHTRED_EX}Error:{S.R} Could not create desired directory for log files. Will place them in current directory.")
         fileName = os.path.basename(fileName)
     with open(fileName, "w", encoding="utf-8") as file:
-      file.write("")
+      if fullWrite == True:
+        file.write(newText)
+      else:
+        file.write("")
       file.close()
   else:
     with open(fileName, 'a', encoding="utf-8") as file:
@@ -233,24 +246,30 @@ def write_plaintext_log(fileName, newText=None, firstWrite=False):
       file.close()
 
 ############################ JSON Log & File Handling ###############################
-def write_json_log(jsonSettingsDict, dictionaryToWrite, firstWrite=True):
+def write_json_log(jsonSettingsDict, commentsDict, jsonDataDict=None):
+  if jsonDataDict:
+    jsonDataDict['Comments'] = commentsDict
+    dictionaryToWrite = jsonDataDict
+  else:
+    dictionaryToWrite = commentsDict
+
   fileName = jsonSettingsDict['jsonLogFileName']
   jsonEncoding = jsonSettingsDict['encoding']
-  if firstWrite == True:
-    # If directory does not exist for desired log file path, create it
-    logFolderPath = os.path.dirname(os.path.realpath(fileName))
-    if not os.path.isdir(logFolderPath):
-      try:
-        os.mkdir(logFolderPath)
-        # If relative path, make it absolute
-        if not os.path.isabs(fileName):
-          fileName = os.path.join(logFolderPath, os.path.basename(fileName))
-      except:
-        print(f"{F.LIGHTRED_EX}Error:{S.R} Could not create desired directory for log files. Will place them in current directory.")
-        fileName = os.path.basename(fileName)
-    with open(fileName, "w", encoding=jsonEncoding) as file:
-      file.write(json.dumps(dictionaryToWrite, indent=4, ensure_ascii=False))
-      file.close()
+
+  # If directory does not exist for desired log file path, create it
+  logFolderPath = os.path.dirname(os.path.realpath(fileName))
+  if not os.path.isdir(logFolderPath):
+    try:
+      os.mkdir(logFolderPath)
+      # If relative path, make it absolute
+      if not os.path.isabs(fileName):
+        fileName = os.path.join(logFolderPath, os.path.basename(fileName))
+    except:
+      print(f"{F.LIGHTRED_EX}Error:{S.R} Could not create desired directory for log files. Will place them in current directory.")
+      fileName = os.path.basename(fileName)
+  with open(fileName, "w", encoding=jsonEncoding) as file:
+    file.write(json.dumps(dictionaryToWrite, indent=4, ensure_ascii=False))
+    file.close()
 
 ############################ Get Extra JSON Data and Profile Pictures ###############################
 
@@ -331,6 +350,7 @@ def get_extra_json_data(channelIDs, jsonSettingsDict):
   
   return jsonExtraDataDict
 
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 def download_profile_pictures(pictureUrlsDict, jsonSettingsDict):
   fileName = jsonSettingsDict['jsonLogFileName']
@@ -364,7 +384,7 @@ def download_profile_pictures(pictureUrlsDict, jsonSettingsDict):
   except:
     return False
 
-
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 # Adds a sample to current.matchSamplesDict and preps formatting
 def add_sample(current, authorID, authorNameRaw, commentText):
@@ -388,3 +408,164 @@ def add_sample(current, authorID, authorNameRaw, commentText):
 
   # Add comment sample, author ID, name, and counter
   current.matchSamplesDict[authorID] = {'index':index, 'cString':cString, 'iString':iString, 'count':authorNumComments, 'authorID':authorID, 'authorName':authorNameRaw, 'nameAndText':authorName + commentText}
+
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Determine log file and json log file locations and names
+def prepare_logFile_settings(current, config, miscData, jsonSettingsDict, filtersDict, bypass):
+
+  logMode = None
+  logFileType = None
+  jsonLogging = False
+
+  logMode = config['log_mode']
+  if logMode == "rtf":
+    logFileType = ".rtf"
+  elif logMode == "plaintext":
+    logFileType = ".txt"
+  else:
+    print("Invalid value for 'log_mode' in config file:  " + logMode)
+    print("Defaulting to .rtf file")
+    logMode = "rtf"
+
+  # Prepare log file names
+  fileNameBase = "Spam_Log_" + current.logTime
+  fileName = fileNameBase + logFileType
+
+  if config:
+    try:
+      # Get json logging settings
+      if config['json_log'] == True:
+        jsonLogging = True
+        jsonLogFileName = fileNameBase + ".json"
+        jsonSettingsDict['channelOwnerID'] = miscData.channelOwnerID
+        jsonSettingsDict['channelOwnerName'] = miscData.channelOwnerName
+
+        #Encoding
+        allowedEncodingModes = ['utf-8', 'utf-16', 'utf-32', 'rtfunicode']
+        if config['json_encoding'] in allowedEncodingModes:
+          jsonSettingsDict['encoding'] = config['json_encoding']
+
+      elif config['json_log'] == False:
+        jsonLogging = False
+      else:
+        print("Invalid value for 'json_log' in config file:  " + config['json_log'])
+        print("Defaulting to False (no json log file will be created)")
+        jsonLogging = False
+
+      if config['json_extra_data'] == True:
+        jsonSettingsDict['json_extra_data'] = True
+      elif config['json_extra_data'] == False:
+        jsonSettingsDict['json_extra_data'] = False
+      
+      if config['json_profile_picture'] != False:
+        jsonSettingsDict['json_profile_picture'] = config['json_profile_picture']
+        jsonSettingsDict['logTime'] = current.logTime
+      elif config['json_profile_picture'] == False:
+        jsonSettingsDict['json_profile_picture'] = False
+
+    except KeyError:
+      print("Problem getting json settings, is your config file correct?")
+  else:
+    jsonLogging = False
+
+  # Set where to put log files
+  defaultLogPath = "logs"
+  if config and config['log_path']:
+    if config['log_path'] == "default": # For backwards compatibility, can remove later on
+      logPath = defaultLogPath
+    else:
+      logPath = config['log_path']
+    current.logFileName = os.path.normpath(logPath + "/" + fileName)
+    print(f"Log file will be located at {F.YELLOW}" + current.logFileName + f"{S.R}\n")
+    if jsonLogging == True:
+      jsonLogFileName = os.path.normpath(logPath + "/" + jsonLogFileName)
+      jsonSettingsDict['jsonLogFileName'] = jsonLogFileName
+      print(f"JSON log file will be located at {F.YELLOW}" + jsonLogFileName + f"{S.R}\n")
+  else:
+    current.logFileName = os.path.normpath(defaultLogPath + "/" + fileName)
+    print(f"Log file will be called {F.YELLOW}" + current.logFileName + f"{S.R}\n")
+
+  if bypass == False:
+    input(f"Press {F.YELLOW}Enter{S.R} to display comments...")
+
+  # Write heading info to log file
+  write_log_heading(current, logMode, filtersDict)
+
+  jsonSettingsDict['jsonLogging'] = jsonLogging
+
+  return current, logMode, jsonSettingsDict
+
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+def write_log_heading(current, logMode, filtersDict, afterExclude=False):
+  filterMode = filtersDict['filterMode']
+  inputtedSpammerChannelID = filtersDict['CustomChannelIdFilter']
+  inputtedUsernameFilter = filtersDict['CustomUsernameFilter']
+  inputtedCommentTextFilter = filtersDict['CustomCommentTextFilter']
+  filterSettings = filtersDict['filterSettings']
+
+  def write_func(logFileName, string, logMode, numLines):
+    rtfLineEnd = ("\\line"*numLines) + " "
+    newLines = "\n"*numLines
+    if logMode == "rtf":
+      write_rtf(logFileName, make_rtf_compatible(string) + rtfLineEnd)
+    elif logMode == "plaintext":
+      write_plaintext_log(logFileName, string + newLines)
+
+  # Creates log file and writes first line
+  if logMode == "rtf":
+    write_rtf(current.logFileName, firstWrite=True)
+    write_func(current.logFileName, "----------- YouTube Spammer Purge Log File -----------", logMode, 2)
+  elif logMode == "plaintext":
+    write_plaintext_log(current.logFileName, firstWrite=True)
+    write_func(current.logFileName, "----------- YouTube Spammer Purge Log File -----------", logMode, 2)
+
+  if filterMode == "ID":
+    write_func(current.logFileName, "Channel IDs of spammer searched: " + ", ".join(inputtedSpammerChannelID), logMode, 2)
+  elif filterMode == "Username":
+    write_func(current.logFileName, "Characters searched in Usernames: " + ", ".join(inputtedUsernameFilter), logMode, 2)
+  elif filterMode == "Text":
+    write_func(current.logFileName, "Characters searched in Comment Text: " + ", ".join(inputtedCommentTextFilter), logMode, 2)
+  elif filterMode == "NameAndText":
+    write_func(current.logFileName, "Characters searched in Usernames and Comment Text: " + ", ".join(filterSettings[1]), logMode, 2)
+  elif filterMode == "AutoASCII":
+    write_func(current.logFileName, "Automatic Search Mode: " + str(filterSettings[1]), logMode, 2)
+  elif filterMode == "AutoSmart":
+    write_func(current.logFileName, "Automatic Search Mode: Smart Mode ", logMode, 2)
+  elif filterMode == "SensitiveSmart":
+    write_func(current.logFileName, "Automatic Search Mode: Sensitive Smart ", logMode, 2)
+  write_func(current.logFileName, "Number of Matched Comments Found: " + str(len(current.matchedCommentsDict)), logMode, 2)
+  if afterExclude == False:
+    write_func(current.logFileName, f"IDs of Matched Comments: \n[ {', '.join(current.matchedCommentsDict)} ] ", logMode, 3)
+  else:
+    write_func(current.logFileName, f"IDs of Matched Comments (Excluded Comments Removed): \n[ {', '.join(current.matchedCommentsDict)} ] ", logMode, 3)
+
+# -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+def write_log_completion_summary(current, exclude, logMode, banChoice, deletionModeFriendlyName, rtfExclude=None, plaintextExclude=None):
+  if logMode == "rtf":
+    write_rtf(current.logFileName, "\n\n \\line\\line Spammers Banned: " + str(banChoice)) # Write whether or not spammer is banned to log file
+    write_rtf(current.logFileName, "\n\n \\line\\line Action Taken on Comments: " + str(deletionModeFriendlyName) + " \\line\\line \n\n")
+    #if exclude == True: #Printing Exclude moved to exclude function
+    #  write_rtf(current.logFileName, str(rtfExclude))
+  elif logMode == "plaintext":
+    write_plaintext_log(current.logFileName, "\n\n Spammers Banned: " + str(banChoice) + "\n\n") # Write whether or not spammer is banned to log file
+    write_plaintext_log(current.logFileName, "Action Taken on Comments: " + str(deletionModeFriendlyName) + "\n\n")
+    #if exclude == True: #Printing Exclude moved to exclude function
+    #  write_plaintext_log(current.logFileName, str(plaintextExclude))
+
+
+# Re-Writes Log Files if authors excluded
+def rewrite_log_file(current, logInfo):
+  logMode = logInfo['logMode']
+  logFileContents = logInfo['logFileContents']
+  #jsonSettingsDict = logInfo['jsonSettingsDict']
+  filtersDict = logInfo['filtersDict']
+
+  write_log_heading(current, logMode, filtersDict, afterExclude=True)
+  if logMode == "rtf":
+    write_rtf(current.logFileName, logFileContents)
+  elif logMode == "plaintext":
+    write_plaintext_log(current.logFileName, logFileContents)
+

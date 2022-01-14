@@ -948,6 +948,15 @@ def main():
         inputtedCommentTextFilter = filterSettings[0]
 
     ##################### START SCANNING #####################
+    filtersDict = { 
+      'filterSettings': filterSettings,
+      'filterMode': filterMode,
+      'filterSubMode': filterSubMode,
+      'CustomChannelIdFilter': inputtedSpammerChannelID,
+      'CustomUsernameFilter': inputtedUsernameFilter,
+      'CustomCommentTextFilter': inputtedCommentTextFilter,
+      'CustomRegexPattern': regexPattern
+      }
 
     if scanMode == "communityPost":
       def scan_community_post(communityPostID, limit):
@@ -968,15 +977,7 @@ def main():
       print("\n------------------------------------------------------------------------------")
       print("(Note: If the program appears to freeze, try right clicking within the window)\n")
       print("                          --- Scanning --- \n")
-
-      filtersDict = { 'filterMode': filterMode,
-                      'filterSubMode': filterSubMode,
-                      'CustomChannelIdFilter': inputtedSpammerChannelID,
-                      'CustomUsernameFilter': inputtedUsernameFilter,
-                      'CustomCommentTextFilter': inputtedCommentTextFilter,
-                      'CustomRegexPattern': regexPattern 
-                      }
-      
+   
       # ----------------------------------------------------------------------------------------------------------------------
       def scan_video(miscData, config, filtersDict, scanVideoID, videosToScan=None, videoTitle=None, showTitle=False, i=1):
         nextPageToken = operations.get_comments(current, filtersDict, miscData, config, scanVideoID, videosToScan=videosToScan)
@@ -1045,142 +1046,22 @@ def main():
         return True # Return to main menu
       print("")
 
-    # Prepare logging
-    logMode = None
-    logFileType = None
+    # Prepare log file and json log file settings - Location and names
     jsonSettingsDict = {}
-    jsonLogging = False
-    if loggingEnabled == True:
-      if config and config['log_mode']:
-        logMode = config['log_mode']
-        if logMode == "rtf":
-          logFileType = ".rtf"
-        elif logMode == "plaintext":
-          logFileType = ".txt"
-        else:
-          print("Invalid value for 'log_mode' in config file:  " + logMode)
-          print("Defaulting to .rtf file")
-          logMode = "rtf"
-      else:
-        logMode =  "rtf"
-        logFileType = ".rtf"
-
-      # Prepare log file names
-      fileNameBase = "Spam_Log_" + current.logTime
-      fileName = fileNameBase + logFileType
-
-      if config:
-        try:
-          # Get json logging settings
-          if config['json_log'] == True:
-            jsonLogging = True
-            jsonLogFileName = fileNameBase + ".json"
-            jsonSettingsDict['channelOwnerID'] = miscData.channelOwnerID
-            jsonSettingsDict['channelOwnerName'] = miscData.channelOwnerName
-
-            #Encoding
-            allowedEncodingModes = ['utf-8', 'utf-16', 'utf-32', 'rtfunicode']
-            if config['json_encoding'] in allowedEncodingModes:
-              jsonSettingsDict['encoding'] = config['json_encoding']
-
-          elif config['json_log'] == False:
-            jsonLogging = False
-          else:
-            print("Invalid value for 'json_log' in config file:  " + config['json_log'])
-            print("Defaulting to False (no json log file will be created)")
-            jsonLogging = False
-
-          if config['json_extra_data'] == True:
-            jsonSettingsDict['json_extra_data'] = True
-          elif config['json_extra_data'] == False:
-            jsonSettingsDict['json_extra_data'] = False
-          
-          if config['json_profile_picture'] != False:
-            jsonSettingsDict['json_profile_picture'] = config['json_profile_picture']
-            jsonSettingsDict['logTime'] = current.logTime
-          elif config['json_profile_picture'] == False:
-            jsonSettingsDict['json_profile_picture'] = False
-
-        except KeyError:
-          print("Problem getting json settings, is your config file correct?")
-      else:
-        jsonLogging = False
-
-      # Set where to put log files      
-      defaultLogPath = "logs"
-      if config and config['log_path']:
-        if config['log_path'] == "default": # For backwards compatibility, can remove later on
-          logPath = defaultLogPath
-        else:
-          logPath = config['log_path']
-        current.logFileName = os.path.normpath(logPath + "/" + fileName)
-        print(f"Log file will be located at {F.YELLOW}" + current.logFileName + f"{S.R}\n")
-        if jsonLogging == True:
-          jsonLogFileName = os.path.normpath(logPath + "/" + jsonLogFileName)
-          jsonSettingsDict['jsonLogFileName'] = jsonLogFileName
-          print(f"JSON log file will be located at {F.YELLOW}" + jsonLogFileName + f"{S.R}\n")
-      else:
-        current.logFileName = os.path.normpath(defaultLogPath + "/" + fileName)
-        print(f"Log file will be called {F.YELLOW}" + current.logFileName + f"{S.R}\n")
-
-      if bypass == False:
-        input(f"Press {F.YELLOW}Enter{S.R} to display comments...")
-
-      # Write heading info to log file
-      def write_func(logFileName, string, logMode, numLines):
-        rtfLineEnd = ("\\line"*numLines) + " "
-        newLines = "\n"*numLines
-        if logMode == "rtf":
-          logging.write_rtf(logFileName, logging.make_rtf_compatible(string) + rtfLineEnd)
-        elif logMode == "plaintext":
-          logging.write_plaintext_log(logFileName, string + newLines)
-
-      # Creates log file and writes first line
-      if logMode == "rtf":
-        logging.write_rtf(current.logFileName, firstWrite=True)
-        write_func(current.logFileName, "\\par----------- YouTube Spammer Purge Log File -----------", logMode, 2)
-      elif logMode == "plaintext":
-        logging.write_plaintext_log(current.logFileName, firstWrite=True)
-        write_func(current.logFileName, "----------- YouTube Spammer Purge Log File -----------", logMode, 2)
-
-      if filterMode == "ID":
-        write_func(current.logFileName, "Channel IDs of spammer searched: " + ", ".join(inputtedSpammerChannelID), logMode, 2)
-      elif filterMode == "Username":
-        write_func(current.logFileName, "Characters searched in Usernames: " + ", ".join(inputtedUsernameFilter), logMode, 2)
-      elif filterMode == "Text":
-        write_func(current.logFileName, "Characters searched in Comment Text: " + ", ".join(inputtedCommentTextFilter), logMode, 2)
-      elif filterMode == "NameAndText":
-        write_func(current.logFileName, "Characters searched in Usernames and Comment Text: " + ", ".join(filterSettings[1]), logMode, 2)
-      elif filterMode == "AutoASCII":
-        write_func(current.logFileName, "Automatic Search Mode: " + str(filterSettings[1]), logMode, 2)
-      elif filterMode == "AutoSmart":
-        write_func(current.logFileName, "Automatic Search Mode: Smart Mode ", logMode, 2)
-      elif filterMode == "SensitiveSmart":
-        write_func(current.logFileName, "Automatic Search Mode: Sensitive Smart ", logMode, 2)
-      write_func(current.logFileName, "Number of Matched Comments Found: " + str(len(current.matchedCommentsDict)), logMode, 2)
-      write_func(current.logFileName, f"IDs of Matched Comments: \n[ {', '.join(current.matchedCommentsDict)} ] ", logMode, 3)
+    if loggingEnabled == True:    
+      current, logMode, jsonSettingsDict = logging.prepare_logFile_settings(current, config, miscData, jsonSettingsDict, filtersDict, bypass)
     else:
       print("Continuing without logging... \n")
+      jsonSettingsDict['jsonLogging'] = False
 
-    jsonSettingsDict['jsonLogging'] = jsonLogging
 
     # Prints list of spam comments
     if scanMode == "communityPost":
       scanVideoID = communityPostID
     print("\n\nAll Matched Comments: \n")
 
-    logging.print_comments(current, scanVideoID, list(current.matchedCommentsDict.keys()), loggingEnabled, scanMode, logMode)
-
-    try:
-      if jsonSettingsDict['jsonLogging']:
-        if config['json_extra_data'] == True:
-          jsonDataDict = logging.get_extra_json_data(list(current.matchSamplesDict.keys()), jsonSettingsDict)
-          jsonDataDict['Comments'] = current.matchedCommentsDict
-          logging.write_json_log(jsonSettingsDict, jsonDataDict, firstWrite=True)
-        else:
-          logging.write_json_log(jsonSettingsDict, current.matchedCommentsDict, firstWrite=True)
-    except KeyError:
-      print("Problem getting json config settings. Is your config file up to date / correct?")
+    # Print comments  and write to log files
+    logFileContents, logMode = logging.print_comments(current, scanVideoID, list(current.matchedCommentsDict.keys()), loggingEnabled, scanMode, logMode)
 
     print(f"\n{F.WHITE}{B.RED} NOTE: {S.R} Check that all comments listed above are indeed spam.")
     print(f" > If you see missed spam or false positives, you can submit a filter suggestion here: {F.YELLOW}TJoe.io/filter-feedback{S.R}")
@@ -1273,8 +1154,10 @@ def main():
         input("\nPress Enter to return to main menu...")
         return True
 
-
     ### ---------------- Set Up How To Handle Comments  ----------------
+    rtfExclude = None
+    plaintextExclude = None
+    returnToMenu = False
     # If not skipped by config, ask user what to do
     if confirmDelete == None:
       exclude = False
@@ -1306,11 +1189,11 @@ def main():
             print(f" > To {F.LIGHTRED_EX}delete the rest of the comments{S.R}: Type ' {F.LIGHTRED_EX}DELETE{S.R} ' exactly (in all caps), then hit Enter.")
           if userNotChannelOwner == False or moderator_mode == True:
             print(f" > To {F.LIGHTRED_EX}move rest of comments above to 'Held For Review' in YT Studio{S.R}: Type ' {F.LIGHTRED_EX}HOLD{S.R} ' exactly (in all caps), then hit Enter.")
-        
-        # Report Instructions
         print(f" > To {F.LIGHTCYAN_EX}just report the comments for spam{S.R}, type ' {F.LIGHTCYAN_EX}REPORT{S.R} '. (Can be done even if you're not the channel owner)")
-        if config and config['json_extra_data'] == True:
-          print(f"\n{F.WHITE}{B.BLUE} JSON NOTE: {S.R} At this time, excluding comments will {F.RED}NOT{S.R} remove them from the JSON log file.")
+        print(f" > To do nothing, simply hit Enter")
+
+        if config['json_extra_data'] == True:
+          print(f"\n{F.WHITE}{B.BLUE} JSON NOTE: {S.R} You must proceed to write the JSON log file, even if you choose nothing")
         confirmDelete = input("\nInput: ")
         if confirmDelete == "DELETE" and userNotChannelOwner == False:
           deletionEnabled = True
@@ -1322,11 +1205,42 @@ def main():
           deletionEnabled = True
           deletionMode = "reportSpam" 
         elif "exclude" in confirmDelete.lower():
-          excludedDict, rtfExclude, plaintextExclude = operations.exclude_authors(current, inputtedString=confirmDelete, miscData=miscData)
+          if loggingEnabled:
+            logInfo = {
+              'logMode': logMode,
+              'logFileContents': logFileContents,
+              'jsonSettingsDict': jsonSettingsDict,
+              'filtersDict': filtersDict,
+            }
+          else:
+            logInfo = None
+          current, excludedDict, rtfExclude, plaintextExclude = operations.exclude_authors(current, miscData, inputtedString=confirmDelete, logInfo=logInfo)
           exclude = True
         else:
-          input(f"\nDeletion {F.YELLOW}CANCELLED{S.R} (Because no matching option entered). Press Enter to return to main menu...")
-          return True
+          if jsonSettingsDict['jsonLogging'] == False:
+            input(f"\n{F.YELLOW}Removal / Reporting declined{S.R} (Because no matching option entered). Press Enter to return to main menu...")
+          else:
+            input(f"\nRemoval / Reporting declined. Press {F.LIGHTCYAN_EX}Enter to write JSON log{S.R}...")
+          returnToMenu = True
+          break
+
+    print(" Finishing Log File...", end="\r")
+    logging.write_log_completion_summary(current, exclude, logMode, banChoice=False, deletionModeFriendlyName="Nothing: Log Only", rtfExclude=rtfExclude, plaintextExclude=plaintextExclude)
+    print("                               ")
+
+    # Write Json Log File
+    if config['json_log'] == True:
+      print("\nWriting JSON log file...")
+      if config['json_extra_data'] == True:
+        jsonDataDict = logging.get_extra_json_data(list(current.matchSamplesDict.keys()), jsonSettingsDict)
+        logging.write_json_log(jsonSettingsDict, current.matchedCommentsDict, jsonDataDict)
+      else:
+        logging.write_json_log(jsonSettingsDict, current.matchedCommentsDict)
+      if returnToMenu == True:
+        input("\nJSON Operation Finished. Press Enter to return to main menu...")
+
+    if returnToMenu == True:
+      return True
 
     # Set deletion mode friendly name
     if deletionMode == "rejected":
@@ -1367,16 +1281,7 @@ def main():
           print("\nSkipped checking if deletion was successful.\n")
 
       if loggingEnabled == True:
-        if logMode == "rtf":
-          logging.write_rtf(current.logFileName, "\n\n \\line\\line Spammers Banned: " + str(banChoice)) # Write whether or not spammer is banned to log file
-          logging.write_rtf(current.logFileName, "\n\n \\line\\line Action Taken on Comments: " + str(deletionModeFriendlyName) + " \\line\\line \n\n")
-          if exclude == True:
-            logging.write_rtf(current.logFileName, str(rtfExclude))
-        elif logMode == "plaintext":
-          logging.write_plaintext_log(current.logFileName, "\n\n Spammers Banned: " + str(banChoice) + "\n\n") # Write whether or not spammer is banned to log file
-          logging.write_plaintext_log(current.logFileName, "Action Taken on Comments: " + str(deletionModeFriendlyName) + "\n\n")
-          if exclude == True:
-            logging.write_plaintext_log(current.logFileName, str(plaintextExclude))
+        logging.write_log_completion_summary(current, exclude, logMode, banChoice, deletionModeFriendlyName, rtfExclude, plaintextExclude)
 
       input(f"\nProgram {F.LIGHTGREEN_EX}Complete{S.R}. Press Enter to to return to main menu...")
       return True

@@ -5,6 +5,7 @@ from Scripts.shared_imports import *
 import Scripts.utils as utils
 import Scripts.auth as auth
 import Scripts.validation as validation
+import Scripts.logging as logging
 
 import unicodedata
 from time import time
@@ -635,7 +636,7 @@ def check_recovered_comments(commentsList):
   return True
 
 # Removes comments by user-selected authors from list of comments to delete
-def exclude_authors(current, inputtedString, miscData):
+def exclude_authors(current, miscData, inputtedString, logInfo=None):
   expression = r"(?<=exclude ).*" # Match everything after 'exclude '
   result = str(re.search(expression, inputtedString).group(0))
   result = result.replace(" ", "")
@@ -662,9 +663,9 @@ def exclude_authors(current, inputtedString, miscData):
       excludedCommentsDict[comment] = current.matchedCommentsDict.pop(comment)
 
   # Create strings that can be used in log files
-  rtfFormattedExcludes += f"Comments Excluded From Deletion: \\line \n"
+  rtfFormattedExcludes += f"\\line \n Comments Excluded From Deletion: \\line \n"
   rtfFormattedExcludes += f"(Values = Comment ID | Author ID | Author Name | Comment Text) \\line \n"
-  plaintextFormattedExcludes += f"Comments Excluded From Deletion:\n"
+  plaintextFormattedExcludes += f"\nComments Excluded From Deletion:\n"
   plaintextFormattedExcludes += f"(Values = Comment ID | Author ID | Author Name | Comment Text)\n"
   for commentID, meta in excludedCommentsDict.items():
     rtfFormattedExcludes += f"{str(commentID)}  |  {str(excludedCommentsDict[commentID]['authorID'])}  |  {str(excludedCommentsDict[commentID]['authorName'])}  |   {str(excludedCommentsDict[commentID]['text'])} \\line \n"
@@ -679,7 +680,7 @@ def exclude_authors(current, inputtedString, miscData):
       print("Provide the error code: X-1")
       input("Press Enter to Exit...")
       sys.exit()
-  
+
   # Get author names and IDs from dictionary, and display them
   for author in authorIDsToExclude:
     displayString += f"    User ID: {author}   |   User Name: {current.matchSamplesDict[author]['authorName']}\n"
@@ -688,10 +689,21 @@ def exclude_authors(current, inputtedString, miscData):
       f.write(f"{author}\n")
 
   print(f"\n{F.CYAN}All {len(excludedCommentsDict)} comments{S.R} from the {F.CYAN}following {len(authorIDsToExclude)} users{S.R} are now {F.LIGHTGREEN_EX}excluded{S.R} from deletion:")
-  print(displayString+"\n")
-  input("Press Enter to decide what to do with the rest...")
+  print(displayString)
+
+  # Re-Write Log File
+  if logInfo:
+    print("Updating log file, please wait...", end="\r")
+    logging.rewrite_log_file(current, logInfo)
+    if logInfo['logMode'] == "rtf":
+      logging.write_rtf(current.logFileName, str(rtfFormattedExcludes))
+    elif logInfo['logMode'] == "plaintext":
+      logging.write_plaintext_log(current.logFileName, str(plaintextFormattedExcludes))
+    print("                                          ")
   
-  return excludedCommentsDict, rtfFormattedExcludes, plaintextFormattedExcludes # May use excludedCommentsDict later for printing them to log file
+  input("\nPress Enter to decide what to do with the rest...")
+  
+  return current, excludedCommentsDict, rtfFormattedExcludes, plaintextFormattedExcludes # May use excludedCommentsDict later for printing them to log file
 
   
 ################################# Get Most Recent Videos #####################################
