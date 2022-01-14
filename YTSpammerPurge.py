@@ -1217,6 +1217,14 @@ def main():
             logInfo = None
           current, excludedDict, rtfExclude, plaintextExclude = operations.exclude_authors(current, miscData, inputtedString=confirmDelete, logInfo=logInfo)
           exclude = True
+
+          # Check that remaining comments list to remove is not empty
+          if not current.matchedCommentsDict:
+            print(f"\n{F.YELLOW}All authors excluded, no comments left to remove!{S.R}")
+            input("\nPress Enter to return to main menu...")
+            returnToMenu = True
+            break
+
         else:
           if jsonSettingsDict['jsonLogging'] == True and loggingEnabled==True:
             input(f"\nRemoval / Reporting declined. Press {F.LIGHTCYAN_EX}Enter to write JSON log{S.R}...")
@@ -1233,7 +1241,7 @@ def main():
       print("                               ")
 
     # Write Json Log File
-    if config['json_log'] == True and loggingEnabled:
+    if config['json_log'] == True and loggingEnabled and current.matchedCommentsDict:
       print("\nWriting JSON log file...")
       if config['json_extra_data'] == True:
         jsonDataDict = logging.get_extra_json_data(list(current.matchSamplesDict.keys()), jsonSettingsDict)
