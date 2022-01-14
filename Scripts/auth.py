@@ -100,7 +100,7 @@ def first_authentication():
 class ChannelIDError(Exception):
     pass
 # Get channel ID and channel title of the currently authorized user
-def get_current_user(config:dict) -> tuple[str, str, bool]:
+def get_current_user(config):
 
   #Define fetch function so it can be re-used if issue and need to re-run it
   def fetch_user():

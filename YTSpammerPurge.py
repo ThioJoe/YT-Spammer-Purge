@@ -368,12 +368,12 @@ def main():
       )
 
     # Declare Default Variables
-    maxScanNumber:int = 999999999
-    scanVideoID:str = None
-    videosToScan:list = []
-    nextPageToken:str = "start"
-    loggingEnabled:bool = False
-    userNotChannelOwner:bool = False
+    maxScanNumber = 999999999
+    scanVideoID = None
+    videosToScan = []
+    nextPageToken = "start"
+    loggingEnabled = False
+    userNotChannelOwner = False
 
     os.system(clear_command)
     # User selects scanning mode,  while Loop to get scanning mode, so if invalid input, it will keep asking until valid input

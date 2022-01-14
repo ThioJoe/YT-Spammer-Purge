@@ -712,8 +712,8 @@ def exclude_authors(current, miscData, inputtedString, logInfo=None):
   
 ################################# Get Most Recent Videos #####################################
 # Returns a list of lists
-def get_recent_videos(channel_id:str, numVideosTotal:int):
-  def get_block_of_videos(nextPageToken:str, j:int, k:int, numVideosBlock:int = 5):
+def get_recent_videos(channel_id, numVideosTotal):
+  def get_block_of_videos(nextPageToken, j, k, numVideosBlock = 5):
     result = auth.YOUTUBE.search().list(
       part="snippet",
       channelId=channel_id,
@@ -753,9 +753,9 @@ def get_recent_videos(channel_id:str, numVideosTotal:int):
     return nextPageToken, j, k, ""
     #----------------------------------------------------------------
   
-  nextPageToken:str = None
-  recentVideos:list = [] #List of dictionaries
-  abortCheck:str = "" # Used to receive "MainMenu" if user wants to exit, when entering 
+  nextPageToken = None
+  recentVideos = [] #List of dictionaries
+  abortCheck = "" # Used to receive "MainMenu" if user wants to exit, when entering 
   j,k = 0,0 # i = number of videos added to list, k = number of videos checked (different only if one video skipped because no comments)
   if numVideosTotal <=5:
     result = get_block_of_videos(None, j, k, numVideosBlock=numVideosTotal)
