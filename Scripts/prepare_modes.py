@@ -336,7 +336,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   regexTest1 = f"[{y}] ?[1]"
   regexTest2 = f"[+] ?[{z}]"
   regexTest3 = f"[{y}] ?[{z}]"
-  compiledRegex = re.compile(f"({regexTest1}|{regexTest2}|{regexTest3})")
+  compiledNumRegex = re.compile(f"({regexTest1}|{regexTest2}|{regexTest3})")
 
   # Type 2 Spammer Criteria
   blackAdWords_Raw = [b'V`yb#YanfTAaHVTW@&5', b'Z*XO9AZ>XdaB^>EX>0', b'b7f^9ZFwMYa&Km7Yy', b'V`yb#YanfTAa-eFWp4', b'V`yb#YanoPZ)Rz1', b'V`yb#Yan)MWMyv', b'bYXBHZ*CxMc>', b'Z*CxMc_46UV{~<LWd']
@@ -364,7 +364,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   compiledRegexDict['onlyVideoLinkRegex'] = onlyVideoLinkRegex
 
   # Compile regex with upper case, otherwise many false positive character matches
-  bufferChars = r"*_~|`[]()'-."
+  bufferChars = r"*_~|`[]()'-.•"
   compiledRegexDict['bufferChars'] = bufferChars
   bufferMatch, addBuffers = "\\*_~|`\\-\\.", re.escape(bufferChars) # Add 'buffer' chars
   usernameConfuseRegex = re.compile(confusable_regex(miscData.channelOwnerName))
@@ -411,13 +411,13 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
 
   # Prepare spam domain regex
   for domain in spamDomainsList:
-    expression = re.compile(confusable_regex(domain.upper(), include_character_padding=False))
+    expression = re.compile(confusable_regex(domain.upper(), include_character_padding=False).replace(m, a).replace("\.|", "\.|•|"))
     spamDomainsRegex.append(expression)
   for account in spamAccountsList:
-    expression = re.compile(confusable_regex(account.upper(), include_character_padding=True))
+    expression = re.compile(confusable_regex(account.upper(), include_character_padding=True).replace(m, a))
     spamAccountsRegex.append(expression)
   for thread in spamThreadsList:
-    expression = re.compile(confusable_regex(thread.upper(), include_character_padding=True))
+    expression = re.compile(confusable_regex(thread.upper(), include_character_padding=True).replace(m, a))
     spamThreadsRegex.append(expression)
 
   # Prepare Multi Language Detection
@@ -431,7 +431,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
 
   filterSettings = {
     'spammerNumbersSet': spammerNumbersSet, 
-    'compiledRegex': compiledRegex, 
+    'compiledRegex': compiledNumRegex, 
     'minNumbersMatchCount': minNumbersMatchCount, 
     'blackAdWords': blackAdWords, 
     'redAdWords': redAdWords, 

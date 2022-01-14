@@ -180,15 +180,12 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
 
   # Debugging
   # print("Comment ID: " + commentID)
-
-  # debugSingleComment = False #Debug usage
+  # debugSingleComment = True #Debug usage
   # if debugSingleComment == True:
   #   authorChannelName = input("Channel Name: ")
   #   commentText = input("Comment Text: ")
   #   authorChannelID = "x"
   
-  # Debugging
-
   # Do not even check comment if: Author is Current User, Author is Channel Owner, or Author is in whitelist
   if auth.CURRENTUSER.id != authorChannelID and miscData.channelOwnerID != authorChannelID and authorChannelID not in miscData.resources['Whitelist']['WhitelistContents']:
     if "@" in commentText:
@@ -290,7 +287,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
       # Receive Variables
       compiledRegexDict = smartFilter['compiledRegexDict']
       numberFilterSet = smartFilter['spammerNumbersSet']
-      compiledRegex = smartFilter['compiledRegex']
+      compiledNumRegex = smartFilter['compiledNumRegex']
       minNumbersMatchCount = smartFilter['minNumbersMatchCount']
       bufferChars = compiledRegexDict['bufferChars']
       #usernameBlackCharsSet = smartFilter['usernameBlackCharsSet']
@@ -371,7 +368,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
         pass
       elif len(numberFilterSet.intersection(combinedSet)) >= minNumbersMatchCount:
         add_spam(commentID, videoID)
-      elif compiledRegex.search(combinedString):
+      elif compiledNumRegex.search(combinedString):
         add_spam(commentID, videoID)
       # Black Tests
         #elif usernameBlackCharsSet.intersection(usernameSet):
