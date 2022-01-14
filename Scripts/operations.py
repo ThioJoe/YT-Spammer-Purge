@@ -9,6 +9,7 @@ import Scripts.logging as logging
 
 import unicodedata
 import time
+import itertools
 
 ##########################################################################################
 ############################## GET COMMENT THREADS #######################################
@@ -177,11 +178,16 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
   commentTextRaw = str(currentCommentDict['commentText']) # Use str() to ensure not pointing to same place in memory
   commentText = str(currentCommentDict['commentText']).replace("\r", "")
 
-  debugSingleComment = False #Debug usage
-  if debugSingleComment == True:
-    authorChannelName = input("Channel Name: ")
-    commentText = input("Comment Text: ")
-    authorChannelID = "x"
+  # Debugging
+  # print("Comment ID: " + commentID)
+
+  # debugSingleComment = False #Debug usage
+  # if debugSingleComment == True:
+  #   authorChannelName = input("Channel Name: ")
+  #   commentText = input("Comment Text: ")
+  #   authorChannelID = "x"
+  
+  # Debugging
 
   # Do not even check comment if: Author is Current User, Author is Channel Owner, or Author is in whitelist
   if auth.CURRENTUSER.id != authorChannelID and miscData.channelOwnerID != authorChannelID and authorChannelID not in miscData.resources['Whitelist']['WhitelistContents']:
@@ -217,8 +223,8 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
         current.matchedCommentsDict[commentID]['uploaderChannelName'] = miscData.channelOwnerName
         current.matchedCommentsDict[commentID]['videoTitle'] = utils.get_video_title(current, videoID)
         
-      if debugSingleComment == True: 
-        input("--- Yes, Matched -----")
+      # if debugSingleComment == True: 
+      #   input("--- Yes, Matched -----")
 
     # Checks author of either parent comment or reply (both passed in as commentID) against channel ID inputted by user
     if filtersDict['filterMode'] == "ID":
@@ -286,6 +292,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
       numberFilterSet = smartFilter['spammerNumbersSet']
       compiledRegex = smartFilter['compiledRegex']
       minNumbersMatchCount = smartFilter['minNumbersMatchCount']
+      bufferChars = compiledRegexDict['bufferChars']
       #usernameBlackCharsSet = smartFilter['usernameBlackCharsSet']
       spamGenEmojiSet = smartFilter['spamGenEmojiSet']
       redAdEmojiSet = smartFilter['redAdEmojiSet']
@@ -300,18 +307,13 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
       spamThreadsRegex = smartFilter['spamListsRegex']['spamThreadsRegex']
       
 
-      if debugSingleComment == True: 
-        if input("Sensitive True/False: ").lower() == 'true': sensitive = True
-        else: sensitive = False
+      # if debugSingleComment == True: 
+      #   if input("Sensitive True/False: ").lower() == 'true': sensitive = True
+      #   else: sensitive = False
 
       # Check for sensitive smart mode  
       if sensitive == True:
         rootDomainRegex = smartFilter['sensitiveRootDomainRegex']
-
-      # Processed Variables
-      combinedString = authorChannelName + commentText
-      combinedSet = utils.make_char_set(combinedString, stripLettersNumbers=True, stripPunctuation=True)
-      usernameSet = utils.make_char_set(authorChannelName)
 
       # Functions --------------------------------------------------------------
       def findOnlyObfuscated(regexExpression, originalWord, stringToSearch):
@@ -348,16 +350,21 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
           return True
         else:
           return False
-
       # ------------------------------------------------------------------------
-
+      
       # Normalize usernames and text, remove multiple whitespace and invisible chars
-      combinedString = re.sub(' +', ' ',combinedString)
-      combinedString = remove_unicode_categories(combinedString)
+      commentText = re.sub(' +', ' ', commentText)
+      # https://stackoverflow.com/a/49695605/17312053
+      commentText = "".join(k if k in bufferChars else "".join(v) for k,v in itertools.groupby(commentText, lambda c: c))
+      commentText = remove_unicode_categories(commentText)
+      
       authorChannelName = re.sub(' +', ' ', authorChannelName)
       authorChannelName = remove_unicode_categories(authorChannelName)
-      commentText = re.sub(' +', ' ', commentText)
-      commentText = remove_unicode_categories(commentText)
+
+      # Processed Variables
+      combinedString = authorChannelName + commentText
+      combinedSet = utils.make_char_set(combinedString, stripLettersNumbers=True, stripPunctuation=True)
+      #usernameSet = utils.make_char_set(authorChannelName)
 
       # Run Checks
       if authorChannelID == parentAuthorChannelID:

@@ -364,7 +364,9 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   compiledRegexDict['onlyVideoLinkRegex'] = onlyVideoLinkRegex
 
   # Compile regex with upper case, otherwise many false positive character matches
-  bufferMatch, addBuffers = "*_~|`", "*_~|`\[\]\(\)'" # Add 'buffer' chars to compensate for obfuscation
+  bufferChars = r"*_~|`[]()'-."
+  compiledRegexDict['bufferChars'] = bufferChars
+  bufferMatch, addBuffers = "\\*_~|`\\-\\.", re.escape(bufferChars) # Add 'buffer' chars
   usernameConfuseRegex = re.compile(confusable_regex(miscData.channelOwnerName))
   m = bufferMatch
   a = addBuffers
@@ -452,7 +454,6 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
         'spamAccountsRegex':spamAccountsRegex,
         'spamThreadsRegex':spamThreadsRegex
         },
-    'spamDomainsRegex': spamDomainsRegex,
     }
   print("                                ") # Erases line that says "loading filters"  
   return filterSettings, None
