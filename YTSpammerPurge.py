@@ -1052,6 +1052,7 @@ def main():
       current, logMode, jsonSettingsDict = logging.prepare_logFile_settings(current, config, miscData, jsonSettingsDict, filtersDict, bypass)
     else:
       print("Continuing without logging... \n")
+      logMode = None
       jsonSettingsDict['jsonLogging'] = False
 
 
@@ -1192,7 +1193,7 @@ def main():
         print(f" > To {F.LIGHTCYAN_EX}just report the comments for spam{S.R}, type ' {F.LIGHTCYAN_EX}REPORT{S.R} '. (Can be done even if you're not the channel owner)")
         print(f" > To do nothing, simply hit Enter")
 
-        if config['json_extra_data'] == True:
+        if config['json_extra_data'] == True and loggingEnabled:
           print(f"\n{F.WHITE}{B.BLUE} JSON NOTE: {S.R} You must proceed to write the JSON log file, even if you choose nothing")
         confirmDelete = input("\nInput: ")
         if confirmDelete == "DELETE" and userNotChannelOwner == False:
@@ -1217,19 +1218,20 @@ def main():
           current, excludedDict, rtfExclude, plaintextExclude = operations.exclude_authors(current, miscData, inputtedString=confirmDelete, logInfo=logInfo)
           exclude = True
         else:
-          if jsonSettingsDict['jsonLogging'] == False:
-            input(f"\n{F.YELLOW}Removal / Reporting declined{S.R} (Because no matching option entered). Press Enter to return to main menu...")
-          else:
+          if jsonSettingsDict['jsonLogging'] == True and loggingEnabled==True:
             input(f"\nRemoval / Reporting declined. Press {F.LIGHTCYAN_EX}Enter to write JSON log{S.R}...")
-          returnToMenu = True
-          break
+            returnToMenu = True
+            break    
+          else:
+            input(f"\n{F.YELLOW}Removal / Reporting declined{S.R} (Because no matching option entered). Press Enter to return to main menu...")
 
-    print(" Finishing Log File...", end="\r")
-    logging.write_log_completion_summary(current, exclude, logMode, banChoice=False, deletionModeFriendlyName="Nothing: Log Only", rtfExclude=rtfExclude, plaintextExclude=plaintextExclude)
-    print("                               ")
+    if loggingEnabled:
+      print(" Finishing Log File...", end="\r")
+      logging.write_log_completion_summary(current, exclude, logMode, banChoice=False, deletionModeFriendlyName="Nothing: Log Only", rtfExclude=rtfExclude, plaintextExclude=plaintextExclude)
+      print("                               ")
 
     # Write Json Log File
-    if config['json_log'] == True:
+    if config['json_log'] == True and loggingEnabled:
       print("\nWriting JSON log file...")
       if config['json_extra_data'] == True:
         jsonDataDict = logging.get_extra_json_data(list(current.matchSamplesDict.keys()), jsonSettingsDict)

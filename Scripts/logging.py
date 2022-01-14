@@ -16,7 +16,7 @@ import json
 
 # First prepared comments into segments of 50 to be submitted to API simultaneously
 # Then uses print_prepared_comments() to print / log the comments
-def print_comments(current, scanVideoID, comments, loggingEnabled, scanMode, logMode):
+def print_comments(current, scanVideoID, comments, loggingEnabled, scanMode, logMode=None):
   j = 0 # Counting index when going through comments all comment segments
   groupSize = 999999 # Number of comments to process per iteration
 
