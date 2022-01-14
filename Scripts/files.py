@@ -694,9 +694,9 @@ def parse_comment_list(recovery=False, removal=False):
     print("\nLoaded all " + str(validCount) + " comment IDs successfully!")
     input(f"\nPress Enter to begin {actionNoun}... ")
   elif validCount > 0 and notValidCount > 0:
-    print(f"\{F.RED}Warning!{S.R} {str(validCount)} valid comment IDs loaded successfully, but {str(notValidCount)} may be invalid. See them above.")
-    input("\nPress Enter to try {actionNoun} anyway...\n")
+    print(f"{F.RED}Warning!{S.R} {str(validCount)} valid comment IDs loaded successfully, but {str(notValidCount)} may be invalid. See them above.")
+    input(f"\nPress Enter to try {actionNoun} anyway...\n")
   elif validCount == 0 and notValidCount > 0:
     print(f"\n{F.RED}Warning!{S.R} All loaded comment IDs appear to be invalid. See them above.")
-    input("Press Enter to try {actionNoun} anyway...\n")
+    input(f"Press Enter to try {actionNoun} anyway...\n")
   return resultList  

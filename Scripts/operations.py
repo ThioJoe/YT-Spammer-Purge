@@ -8,7 +8,7 @@ import Scripts.validation as validation
 import Scripts.logging as logging
 
 import unicodedata
-from time import time
+import time
 
 ##########################################################################################
 ############################## GET COMMENT THREADS #######################################

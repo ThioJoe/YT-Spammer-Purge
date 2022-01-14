@@ -490,7 +490,7 @@ def delete_comment_list():
 
   validInput = False
   while validInput == False:
-    userChoice = input("Selection (1 or 2): ")
+    userChoice = input("\nSelection (1 or 2): ")
     if userChoice == "1":
       removalMode = "rejected"
       validInput = True
@@ -503,12 +503,14 @@ def delete_comment_list():
       print("Invalid input, try again.")
     
   if removalMode == "rejected":
-    banChoice = choice("\Also ban the commenters?")
+    banChoice = choice("Also ban the commenters?")
 
-  input("Press Enter to Begin Removal...")
+  input("\nPress Enter to Begin Removal...")
   operations.delete_found_comments(commentsList=removalList, banChoice=banChoice, deletionMode=removalMode)
 
   print("Check that the comments were deleted? (Warning: Costs 1 API quota unit each, default daily max is 10,000)")
-  operations.check_deleted_comments(removalList)
-  input("Operation Complete. Press Enter to return to main menu...")
-  return "MainMenu"  
+  userChoice = choice("Check Deletion Success?")
+  if userChoice == True:
+    operations.check_deleted_comments(removalList)
+  input("\nOperation Complete. Press Enter to return to main menu...")
+  return "MainMenu"
