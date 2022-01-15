@@ -36,7 +36,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.10.1"
+version = "2.10.2"
 configVersion = 17
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -67,6 +67,7 @@ import zipfile
 from shutil import copyfile
 from random import randrange
 from urllib.parse import urlparse
+import itertools
 
 # Non Standard Modules
 import rtfunicode
@@ -491,11 +492,11 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
   commentTextRaw = str(currentCommentDict['commentText']) # Use str() to ensure not pointing to same place in memory
   commentText = str(currentCommentDict['commentText']).replace("\r", "")
 
-  debugSingleComment = False #Debug usage
-  if debugSingleComment == True:
-    authorChannelName = input("Channel Name: ")
-    commentText = input("Comment Text: ")
-    authorChannelID = "x"
+  # debugSingleComment = False #Debug usage
+  # if debugSingleComment == True:
+  #   authorChannelName = input("Channel Name: ")
+  #   commentText = input("Comment Text: ")
+  #   authorChannelID = "x"
 
   # Do not even check comment if: Author is Current User, Author is Channel Owner, or Author is in whitelist
   if CURRENTUSER.id != authorChannelID and miscData.channelOwnerID != authorChannelID and authorChannelID not in miscData.resources['Whitelist']['WhitelistContents']:
@@ -531,8 +532,8 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
         current.matchedCommentsDict[commentID]['uploaderChannelName'] = miscData.channelOwnerName
         current.matchedCommentsDict[commentID]['videoTitle'] = get_video_title(current, videoID)
         
-      if debugSingleComment == True: 
-        input("--- Yes, Matched -----")
+      # if debugSingleComment == True: 
+      #   input("--- Yes, Matched -----")
 
     # Checks author of either parent comment or reply (both passed in as commentID) against channel ID inputted by user
     if filtersDict['filterMode'] == "ID":
@@ -600,6 +601,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
       numberFilterSet = smartFilter['spammerNumbersSet']
       compiledRegex = smartFilter['compiledRegex']
       minNumbersMatchCount = smartFilter['minNumbersMatchCount']
+      bufferChars = compiledRegexDict['bufferChars']
       #usernameBlackCharsSet = smartFilter['usernameBlackCharsSet']
       spamGenEmojiSet = smartFilter['spamGenEmojiSet']
       redAdEmojiSet = smartFilter['redAdEmojiSet']
@@ -614,18 +616,15 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
       spamThreadsRegex = smartFilter['spamListsRegex']['spamThreadsRegex']
       
 
-      if debugSingleComment == True: 
-        if input("Sensitive True/False: ").lower() == 'true': sensitive = True
-        else: sensitive = False
+      # if debugSingleComment == True: 
+      #   if input("Sensitive True/False: ").lower() == 'true': sensitive = True
+      #   else: sensitive = False
 
       # Check for sensitive smart mode  
       if sensitive == True:
         rootDomainRegex = smartFilter['sensitiveRootDomainRegex']
 
-      # Processed Variables
-      combinedString = authorChannelName + commentText
-      combinedSet = make_char_set(combinedString, stripLettersNumbers=True, stripPunctuation=True)
-      usernameSet = make_char_set(authorChannelName)
+
 
       # Functions --------------------------------------------------------------
       def findOnlyObfuscated(regexExpression, originalWord, stringToSearch):
@@ -637,6 +636,8 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
         else:
           for match in result:
             lowerWord = originalWord.lower()
+            for char in compiledRegexDict['bufferChars']:
+              match = match.strip(char)            
             if match.lower() != lowerWord and match.lower() != lowerWord.translate(ignoredConfusablesConverter):
               return True
 
@@ -666,12 +667,18 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
       # ------------------------------------------------------------------------
 
       # Normalize usernames and text, remove multiple whitespace and invisible chars
-      combinedString = re.sub(' +', ' ',combinedString)
-      combinedString = remove_unicode_categories(combinedString)
+      commentText = re.sub(' +', ' ', commentText)
+      # https://stackoverflow.com/a/49695605/17312053
+      commentText = "".join(k if k in bufferChars else "".join(v) for k,v in itertools.groupby(commentText, lambda c: c))      
+      commentText = remove_unicode_categories(commentText)
+
       authorChannelName = re.sub(' +', ' ', authorChannelName)
       authorChannelName = remove_unicode_categories(authorChannelName)
-      commentText = re.sub(' +', ' ', commentText)
-      commentText = remove_unicode_categories(commentText)
+
+      # Processed Variables
+      combinedString = authorChannelName + commentText
+      combinedSet = make_char_set(combinedString, stripLettersNumbers=True, stripPunctuation=True)
+      #usernameSet = make_char_set(authorChannelName)
 
       # Run Checks
       if authorChannelID == parentAuthorChannelID:
@@ -2662,7 +2669,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   for x in usernameObfuBlackWords_Raw: usernameObfuBlackWords.append(b64decode(x).decode(utf_16))
 
   # Type 1 Spammer Criteria
-  minNumbersMatchCount = 3 # Choice of minimum number of matches from spamNums before considered spam
+  minNumbersMatchCount = 6 # Choice of minimum number of matches from spamNums before considered spam
   spamNums = b'@4S%jypiv`lJC5e@4S@nyp`{~mhZfm@4T4ryqWL3kng;a@4S-lyp!*|l<&Ni@4S}pyqE91nD4xq-+|(hpyH9V;*yBsleOZVw&I?E;+~4|pM-+ovAy7_sN#{K;*quDl8NGzw&I<);+}!xo{R9GgoEI*sp65M;*qxEl8WM!x8j|+;+}%yo{aFHgoNO$sp65N;*q!Fl8fS#xZ<6;;+})zo{jLIgoWafq~ejd;*yNwleyxZy5gRM;+~G;o`m9_j_{v^hT@T>;*q)Hl8xe%y5gO?;+}=#o{#XKgoomhrs9#h;*yTyle^-byyBjQ;+~N3k%YbQpM;3vf|%lwr{a;j;*yWzlf2@cz2csS;+~Q4pM;6xk*MO4yyB9O;*-7Noxb9ph~l1-@SlW=;*+Z4lfUqvgp2T>gpBZ?gn{s%gn;m!pN{aIpP2BSpQ7-cpRDkmpO5gJpPBHTpRMqnpQG@dpSJLwpOEmKpPKNUpRVwopQP}epSSRxpONsLpPTTVpRe$ppQZ4fpSbXypOWyMpPcZWpRn+qpQiAgpSkdzpOf&NpPlfXpRw?rpQrGhpStj!pOo;OpPulYpR(|spQ!MipS$p#pOx^PpP%rZpR@3tpQ-SjpS<v$pO)~QpP=xapS19upQ`YkpS|#%pO^5RpP}%bpSAFvpR4elpT6*&pT7'
   spamPlus = b';+&e|oSEXDmBO*hmf?`8;(@y2f{NmZlj4Y!;)<2xik{-1wBo0_;-|afsDa|BgyN{8;;5tIsHEbkrQ)cj;;5(MsHozot>UPz;;6aesj=dzvf`|=@42Gyyo=$Rt>S^4;+U!8n5g2IrsA2f;+e7Ho2cTPnc|$9;+&h}oSfpEo#LFH;+&u2oS^EOn(CUH@Sl}{@Sl}|@Sl}}@Sl~2@Sl~3@Sl~4@SmQc@SmQd@SmQe@SmQf@SmQg@SmQh@SmQi'
   spamOne = b'@4S)lou7~Jou8TTou8xdou94nou9Yjl8EAywc?$&;+}xwo{I3Fgo59J;*p@@k+c'
@@ -2703,7 +2710,9 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   compiledRegexDict['onlyVideoLinkRegex'] = onlyVideoLinkRegex
 
   # Compile regex with upper case, otherwise many false positive character matches
-  bufferMatch, addBuffers = "*_~|`", "*_~|`\[\]\(\)'" # Add 'buffer' chars to compensate for obfuscation
+  bufferChars = r"*_~|`[]()'-."
+  compiledRegexDict['bufferChars'] = bufferChars
+  bufferMatch, addBuffers = "\\*_~|`\\-\\.", re.escape(bufferChars) # Add 'buffer' chars
   usernameConfuseRegex = re.compile(confusable_regex(miscData.channelOwnerName))
   m = bufferMatch
   a = addBuffers
