@@ -37,7 +37,7 @@
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
 version = "2.10.2"
-configVersion = 17
+configVersion = 18
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 # GUI Related
@@ -3772,15 +3772,17 @@ def main():
     if spam_count == 0: # If no spam comments found, exits
       print(f"{B.RED}{F.BLACK} No matched comments or users found! {F.R}{B.R}{S.R}\n")
       print(f"If you see missed spam or false positives, you can submit a filter suggestion here: {F.YELLOW}TJoe.io/filter-feedback{S.R}")
-      if bypass == False:
+      if config['auto_close'] == False:
         input("\nPress Enter to return to main menu...")
         return True
-      elif bypass == True:
-        print("Exiting in 5 seconds...")
+      elif config['auto_close'] == True:
+        print("Auto-close enabled in config. Exiting in 5 seconds...")
         time.sleep(5)
         sys.exit()
+
     print(f"Number of Matched Comments Found: {B.RED}{F.WHITE} {str(len(current.matchedCommentsDict))} {F.R}{B.R}{S.R}")
 
+    # If spam comments were found
     if bypass == False:
       # Asks user if they want to save list of spam comments to a file
       print(f"\nSpam comments ready to display. Also {F.LIGHTGREEN_EX}save a log file?{S.R} {B.GREEN}{F.BLACK} Highly Recommended! {F.R}{B.R}{S.R}")
@@ -4017,8 +4019,13 @@ def main():
         print("\nThe deletion functionality was not enabled. Cannot delete or report comments.")
         print("Possible Cause: You're scanning someone elses video with a non-supported filter mode.\n")
         print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
-        input("\nPress Enter to return to main menu...")
-        return True
+        if config['auto_close'] == True:
+          print("Auto-close enabled in config. Exiting in 5 seconds...")
+          time.sleep(5)
+          sys.exit()
+        else:
+          input("\nPress Enter to return to main menu...")
+          return True
 
 
     ### ---------------- Set Up How To Handle Comments  ----------------
@@ -4057,7 +4064,7 @@ def main():
         # Report Instructions
         print(f" > To {F.LIGHTCYAN_EX}just report the comments for spam{S.R}, type ' {F.LIGHTCYAN_EX}REPORT{S.R} '. (Can be done even if you're not the channel owner)")
         if config and config['json_extra_data'] == True:
-          print(f"\n{F.WHITE}{B.BLUE} JSON NOTE: {S.R} At this time, excluding comments will {F.RED}NOT{S.R} remove them from the JSON log file.")
+          print(f"\n{F.WHITE}{B.BLUE} JSON NOTE: {S.R} At this time, excluding comments will {F.RED}NOT{S.R} remove them from the JSON log file (version 2.11+ has that feature).")
         confirmDelete = input("\nInput: ")
         if confirmDelete == "DELETE" and userNotChannelOwner == False:
           deletionEnabled = True
@@ -4126,12 +4133,24 @@ def main():
           if exclude == True:
             write_plaintext_log(current.logFileName, str(plaintextExclude))
 
-      input(f"\nProgram {F.LIGHTGREEN_EX}Complete{S.R}. Press Enter to to return to main menu...")
-      return True
+      if config['auto_close'] == True:
+        print("Program Complete.")
+        print("Auto-close enabled in config. Exiting in 5 seconds...")
+        time.sleep(5)
+        sys.exit()
+      else:
+        input(f"\nProgram {F.LIGHTGREEN_EX}Complete{S.R}. Press Enter to to return to main menu...")
+        return True
 
     elif config['deletion_enabled'] == False:
-      input(f"\nDeletion is disabled in config file. Press Enter to to return to main menu...")
-      return True
+      if config['auto_close'] == True:
+        print("Deletion disabled in config file.")
+        print("Auto-close enabled in config. Exiting in 5 seconds...")
+        time.sleep(5)
+        sys.exit()
+      else:
+        input(f"\nDeletion is disabled in config file. Press Enter to to return to main menu...")
+        return True
     else:
       input(f"\nDeletion {F.LIGHTRED_EX}Cancelled{S.R}. Press Enter to to return to main menu...")
       return True
