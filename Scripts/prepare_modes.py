@@ -292,7 +292,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
 
   # Create Variables
   blackAdWords, redAdWords, yellowAdWords, exactRedAdWords, usernameBlackWords = [], [], [], [], []
-  usernameBlackWords, usernameObfuBlackWords = [], []
+  usernameBlackWords, usernameObfuBlackWords, textExactBlackWords = [], [], []
   spamDomainsRegex, spamAccountsRegex, spamThreadsRegex = [], [], []
   compiledRegexDict = {
     'usernameBlackWords': [],
@@ -303,6 +303,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
     'usernameRedWords': [],
     'textObfuBlackWords': [],
     'usernameObfuBlackWords': [],
+    'textExactBlackWords': [],
   }
 
   # General Spammer Criteria
@@ -312,6 +313,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   usernameObfuBlackWords_Raw = [b'c4Bp7YjX', b'b|7MPV{3B']
   usernameRedWords = ["whatsapp", "telegram"]
   textObfuBlackWords = ['telegram']
+  textExactBlackWords_Raw = [b'Z*6BRAZ2)AV{~kJAa`hCbRcOUZe?X;Wn=', b'Z*6BRAZ2)AV{~kJAa`hCbRc<ebs%nKWn^V!', b'Z*6BRAZ2)AV{~kJAa`hCbRckLZ*Xj7AZ}%4WMyO', b'ZDnU+ZaN?$Xm50MWpW|']
   
   # General Settings
   unicodeCategoriesStrip = ["Mn", "Cc", "Cf", "Cs", "Co", "Cn"] # Categories of unicode characters to strip during normalization
@@ -321,6 +323,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
     #usernameBlackCharsSet = make_char_set(usernameBlackChars)
   for x in usernameBlackWords_Raw: usernameBlackWords.append(b64decode(x).decode(utf_16))
   for x in usernameObfuBlackWords_Raw: usernameObfuBlackWords.append(b64decode(x).decode(utf_16))
+  for x in textExactBlackWords_Raw: textExactBlackWords.append(b64decode(x).decode(utf_16))
 
   # Type 1 Spammer Criteria
   minNumbersMatchCount = 3 # Choice of minimum number of matches from spamNums before considered spam
@@ -394,6 +397,9 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   for word in usernameObfuBlackWords:
     value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
     compiledRegexDict['usernameObfuBlackWords'].append([word, value])
+  for word in textExactBlackWords:
+    value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
+    compiledRegexDict['textExactBlackWords'].append([word, value])
 
   # Prepare All-domain Regex Expression
   prepString = "\.("
@@ -431,14 +437,10 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
 
   filterSettings = {
     'spammerNumbersSet': spammerNumbersSet, 
-    'compiledRegex': compiledNumRegex, 
+    'compiledNumRegex': compiledNumRegex, 
     'minNumbersMatchCount': minNumbersMatchCount, 
-    'blackAdWords': blackAdWords, 
-    'redAdWords': redAdWords, 
-    'yellowAdWords': yellowAdWords, 
     #'usernameBlackCharsSet': usernameBlackCharsSet, 
     'spamGenEmojiSet': spamGenEmojiSet,
-    'usernameBlackWords': usernameBlackWords,
     'redAdEmojiSet': redAdEmojiSet,
     'yellowAdEmojiSet': yellowAdEmojiSet,
     'hrtSet': hrtSet,

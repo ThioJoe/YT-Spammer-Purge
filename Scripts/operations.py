@@ -379,6 +379,8 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
         add_spam(commentID, videoID)
       elif any(findOnlyObfuscated(expression[1], expression[0], commentText) for expression in compiledRegexDict['textObfuBlackWords']):
         add_spam(commentID, videoID)
+      elif any(re.search(expression[1], commentText) for expression in compiledRegexDict['textExactBlackWords']):
+        add_spam(commentID, videoID)
       elif any(findOnlyObfuscated(expression[1], expression[0], authorChannelName) for expression in compiledRegexDict['usernameObfuBlackWords']):
         add_spam(commentID, videoID)
       elif check_spam_lists(spamDomainsRegex, spamAccountsRegex, spamThreadsRegex) == True:
