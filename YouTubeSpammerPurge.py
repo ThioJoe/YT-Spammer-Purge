@@ -3776,7 +3776,7 @@ def main():
         input("\nPress Enter to return to main menu...")
         return True
       elif config['auto_close'] == True:
-        print("Auto-close enabled in config. Exiting in 5 seconds...")
+        print("\nAuto-close enabled in config. Exiting in 5 seconds...")
         time.sleep(5)
         sys.exit()
 
@@ -4020,7 +4020,7 @@ def main():
         print("Possible Cause: You're scanning someone elses video with a non-supported filter mode.\n")
         print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
         if config['auto_close'] == True:
-          print("Auto-close enabled in config. Exiting in 5 seconds...")
+          print("\nAuto-close enabled in config. Exiting in 5 seconds...")
           time.sleep(5)
           sys.exit()
         else:
@@ -4134,7 +4134,7 @@ def main():
             write_plaintext_log(current.logFileName, str(plaintextExclude))
 
       if config['auto_close'] == True:
-        print("Program Complete.")
+        print("\nProgram Complete.")
         print("Auto-close enabled in config. Exiting in 5 seconds...")
         time.sleep(5)
         sys.exit()
@@ -4144,7 +4144,7 @@ def main():
 
     elif config['deletion_enabled'] == False:
       if config['auto_close'] == True:
-        print("Deletion disabled in config file.")
+        print("\nDeletion disabled in config file.")
         print("Auto-close enabled in config. Exiting in 5 seconds...")
         time.sleep(5)
         sys.exit()
