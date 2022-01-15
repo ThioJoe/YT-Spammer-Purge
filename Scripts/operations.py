@@ -178,7 +178,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
   commentTextRaw = str(currentCommentDict['commentText']) # Use str() to ensure not pointing to same place in memory
   commentText = str(currentCommentDict['commentText']).replace("\r", "")
 
-  # Debugging
+  ##Debugging
   # print("Comment ID: " + commentID)
   # debugSingleComment = True #Debug usage
   # if debugSingleComment == True:
@@ -322,6 +322,8 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
         else:
           for match in result:
             lowerWord = originalWord.lower()
+            for char in compiledRegexDict['bufferChars']:
+              match = match.strip(char)
             if match.lower() != lowerWord and match.lower() != lowerWord.translate(ignoredConfusablesConverter):
               return True
 

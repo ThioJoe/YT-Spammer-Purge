@@ -1009,7 +1009,7 @@ def main():
     
     ##########################################################
     bypass = False
-    if config and config['enable_logging'] != 'ask':
+    if config['enable_logging'] != 'ask':
       logSetting = config['enable_logging']
       if logSetting == True:
         loggingEnabled = True
