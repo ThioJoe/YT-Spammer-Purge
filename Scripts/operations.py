@@ -299,9 +299,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
       sensitive =  smartFilter['sensitive']
       rootDomainRegex = smartFilter['rootDomainRegex']
       # Spam Lists
-      spamDomainsRegex = smartFilter['spamListsRegex']['spamDomainsRegex']
-      spamAccountsRegex = smartFilter['spamListsRegex']['spamAccountsRegex']
-      spamThreadsRegex = smartFilter['spamListsRegex']['spamThreadsRegex']
+      spamListCombinedRegex = smartFilter['spamListCombinedRegex']
       
 
       # if debugSingleComment == True: 
@@ -339,16 +337,6 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
         else:
           return False
 
-      # Check all spam lists
-      def check_spam_lists(spamDomainsRegex, spamAccountsRegex, spamThreadsRegex):
-        if any(re.search(expression, combinedString) for expression in spamDomainsRegex):
-          return True
-        elif any(re.search(expression, combinedString) for expression in spamAccountsRegex):
-          return True
-        elif any(re.search(expression, combinedString) for expression in spamThreadsRegex):
-          return True
-        else:
-          return False
       # ------------------------------------------------------------------------
       
       # Normalize usernames and text, remove multiple whitespace and invisible chars
@@ -385,7 +373,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
         add_spam(commentID, videoID)
       elif any(findOnlyObfuscated(expression[1], expression[0], authorChannelName) for expression in compiledRegexDict['usernameObfuBlackWords']):
         add_spam(commentID, videoID)
-      elif check_spam_lists(spamDomainsRegex, spamAccountsRegex, spamThreadsRegex) == True:
+      elif re.search(spamListCombinedRegex, combinedString):
         add_spam(commentID, videoID)
       elif check_if_only_a_link(commentText.strip()):
         add_spam(commentID, videoID)

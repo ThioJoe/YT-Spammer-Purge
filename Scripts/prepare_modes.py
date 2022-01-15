@@ -293,7 +293,6 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   # Create Variables
   blackAdWords, redAdWords, yellowAdWords, exactRedAdWords, usernameBlackWords = [], [], [], [], []
   usernameBlackWords, usernameObfuBlackWords, textExactBlackWords = [], [], []
-  spamDomainsRegex, spamAccountsRegex, spamThreadsRegex = [], [], []
   compiledRegexDict = {
     'usernameBlackWords': [],
     'blackAdWords': [],
@@ -415,16 +414,15 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   rootDomainRegex = re.compile(prepString)
   sensitiveRootDomainRegex = re.compile(sensitivePrepString)
 
+  spamListExpressionsList = []
   # Prepare spam domain regex
   for domain in spamDomainsList:
-    expression = re.compile(confusable_regex(domain.upper(), include_character_padding=False).replace(m, a).replace("\.|", "\.|•|"))
-    spamDomainsRegex.append(expression)
+    spamListExpressionsList.append(confusable_regex(domain.upper(), include_character_padding=False).replace(m, a).replace("\.|", "\.|•|"))
   for account in spamAccountsList:
-    expression = re.compile(confusable_regex(account.upper(), include_character_padding=True).replace(m, a))
-    spamAccountsRegex.append(expression)
+    spamListExpressionsList.append(confusable_regex(account.upper(), include_character_padding=True).replace(m, a))
   for thread in spamThreadsList:
-    expression = re.compile(confusable_regex(thread.upper(), include_character_padding=True).replace(m, a))
-    spamThreadsRegex.append(expression)
+    spamListExpressionsList.append(confusable_regex(thread.upper(), include_character_padding=True).replace(m, a))
+  spamListCombinedRegex = re.compile('|'.join(spamListExpressionsList))
 
   # Prepare Multi Language Detection
   turkish = 'ÇçŞşĞğİ'
@@ -451,11 +449,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
     'sensitive': sensitive,
     'sensitiveRootDomainRegex': sensitiveRootDomainRegex,
     'unicodeCategoriesStrip': unicodeCategoriesStrip,
-    'spamListsRegex': {
-        'spamDomainsRegex':spamDomainsRegex, 
-        'spamAccountsRegex':spamAccountsRegex,
-        'spamThreadsRegex':spamThreadsRegex
-        },
+    'spamListCombinedRegex': spamListCombinedRegex,
     }
   print("                                ") # Erases line that says "loading filters"  
   return filterSettings, None

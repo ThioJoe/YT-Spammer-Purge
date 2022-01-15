@@ -1352,7 +1352,7 @@ def print_exception_reason(reason):
 
 # Runs the program
 if __name__ == "__main__":
-  #For speed testing
+#   #For speed testing
 
   # import cProfile
   # cProfile.run('main()', "output.dat")
@@ -1365,10 +1365,8 @@ if __name__ == "__main__":
   #   p = pstats.Stats("output.dat", stream=f)
   #   p.sort_stats("calls").print_stats()
 
-  # def remind():
-  #   print(f"{B.LIGHTRED_EX}                                 {S.R}")
-  #   print(f"{B.LIGHTRED_EX}{F.BLACK} REMEMBER TO RE-ENABLE EXCEPTIONS {S.R}")
-  #   print(f"{B.LIGHTRED_EX}                                 {S.R}")
+
+# -------------------------------------------------------------------------------------------------------------------------------------------------
 
   try:
     #remind()
