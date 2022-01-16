@@ -111,7 +111,7 @@ def get_comments(current, filtersDict, miscData, config, currentVideoDict, scanV
   if RetrievedNextPageToken == "End" and allCommentsDict != None:
     dupeCheckModes = utils.string_to_list(config['duplicate_check_modes'])
     if filtersDict['filterMode'].lower() in dupeCheckModes:
-      print(" Checking for Duplicates...                                                                                 ", end="\r")
+      print(" Scanning For Duplicates                                                                                 ", end="\r")
       check_duplicates(current, config, miscData, allCommentsDict, videoID)
       print("                                                                                                                  ")
 
@@ -221,6 +221,7 @@ def add_spam(current, config, miscData, currentCommentDict, videoID, matchReason
 
 ############################## Check Duplicats ######################################
 def check_duplicates(current, config, miscData, allCommentsDict, videoID):
+  # Get Lenvenshtein Distance Setting
   try:
     levenshtein = float(config['levenshtein_distance'])
     if levenshtein < 0 or levenshtein > 1:
@@ -232,6 +233,7 @@ def check_duplicates(current, config, miscData, allCommentsDict, videoID):
     input("\nPress Enter to continue...")
     levenshtein = 0.9
 
+  # Get dupliate count setting
   try:
     minimum_duplicates = int(config['minimum_duplicates'])
     if minimum_duplicates < 2:
@@ -242,11 +244,17 @@ def check_duplicates(current, config, miscData, allCommentsDict, videoID):
     minimum_duplicates = 5
     print("\nError: Minimum_Duplicates config setting is invalid. Defaulting to 5.")
     input("\nPress Enter to continue...")
-    
+  
+  # Calculate number of authors to check, for progress
+  authorCount = len(allCommentsDict)
+  scannedCount = 0
+
+  # Run the actual duplicate checking
   for authorID, authorCommentsList in allCommentsDict.items():
     # Don't bother if author is already in matchedCommentsDict
     if any(authorID == value['authorID'] for key,value in current.matchedCommentsDict.items()):
-      pass
+      scannedCount +=1
+      print(f" Scanning For Duplicates - Progress: [ {scannedCount/authorCount*100:.2f}% ]".ljust(75, " "), end="\r")
     else:
       numDupes = 0
       commentTextList = []
@@ -272,6 +280,8 @@ def check_duplicates(current, config, miscData, allCommentsDict, videoID):
       if numDupes > 0:
         for commentDict in authorCommentsList:
           add_spam(current, config, miscData, commentDict, videoID, matchReason="Duplicates")
+      scannedCount +=1
+      print(f" Scanning For Duplicates - Progress: [ {scannedCount/authorCount*100:.2f}% ]".ljust(75, " "), end="\r")
 
 
 ############################## CHECK AGAINST FILTER ######################################
