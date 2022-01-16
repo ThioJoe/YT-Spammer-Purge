@@ -36,8 +36,8 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.11.0-Beta3"
-configVersion = 18
+version = "2.12.0-Beta1"
+configVersion = 19
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 # Import other module files
@@ -339,6 +339,7 @@ def main():
     vidTitleDict: dict
     matchSamplesDict: dict
     authorMatchCountDict: dict
+    allScannedCommentsDict: dict
     scannedRepliesCount: int
     scannedCommentsCount: int
     logTime: str
@@ -360,7 +361,8 @@ def main():
       vidIdDict={}, 
       vidTitleDict={}, 
       matchSamplesDict={}, 
-      authorMatchCountDict={}, 
+      authorMatchCountDict={},
+      allScannedCommentsDict={},
       scannedRepliesCount=0, 
       scannedCommentsCount=0,
       logTime = timestamp, 
@@ -979,8 +981,8 @@ def main():
       print("                          --- Scanning --- \n")
    
       # ----------------------------------------------------------------------------------------------------------------------
-      def scan_video(miscData, config, filtersDict, scanVideoID, videosToScan=None, videoTitle=None, showTitle=False, i=1):
-        nextPageToken = operations.get_comments(current, filtersDict, miscData, config, scanVideoID, videosToScan=videosToScan)
+      def scan_video(miscData, config, filtersDict, scanVideoID, videosToScan=None, currentVideoDict=None, videoTitle=None, showTitle=False, i=1):
+        nextPageToken, currentVideoDict = operations.get_comments(current, filtersDict, miscData, config, currentVideoDict, scanVideoID, videosToScan=videosToScan)
         if showTitle == True and len(videosToScan) > 0:
           # Prints video title, progress count, adds enough spaces to cover up previous stat print line
           offset = 95 - len(videoTitle)
@@ -993,7 +995,7 @@ def main():
         operations.print_count_stats(current, miscData, videosToScan, final=False)  # Prints comment scan stats, updates on same line
         # After getting first page, if there are more pages, goes to get comments for next page
         while nextPageToken != "End" and current.scannedCommentsCount < maxScanNumber:
-          nextPageToken = operations.get_comments(current, filtersDict, miscData, config, scanVideoID, nextPageToken, videosToScan=videosToScan)
+          nextPageToken, currentVideoDict = operations.get_comments(current, filtersDict, miscData, config, currentVideoDict, scanVideoID, nextPageToken, videosToScan=videosToScan)
       # ----------------------------------------------------------------------------------------------------------------------
 
       if scanMode == "entireChannel":
@@ -1001,12 +1003,13 @@ def main():
       elif scanMode == "recentVideos" or scanMode == "chosenVideos":
         i = 1
         for video in videosToScan:
+          currentVideoDict = {}
           scanVideoID = str(video['videoID'])
           videoTitle = str(video['videoTitle'])
-          scan_video(miscData, config, filtersDict, scanVideoID, videosToScan=videosToScan, videoTitle=videoTitle, showTitle=True, i=i)
+          scan_video(miscData, config, filtersDict, scanVideoID, videosToScan=videosToScan, currentVideoDict=currentVideoDict, videoTitle=videoTitle, showTitle=True, i=i)
           i += 1
       operations.print_count_stats(current, miscData, videosToScan, final=True)  # Prints comment scan stats, finalizes
-    
+
     ##########################################################
     bypass = False
     if config['enable_logging'] != 'ask':
@@ -1063,7 +1066,7 @@ def main():
     print("\n\nAll Matched Comments: \n")
 
     # Print comments  and write to log files
-    logFileContents, logMode = logging.print_comments(current, scanVideoID, list(current.matchedCommentsDict.keys()), loggingEnabled, scanMode, logMode)
+    logFileContents, logMode = logging.print_comments(current, config, scanVideoID, list(current.matchedCommentsDict.keys()), loggingEnabled, scanMode, logMode)
 
     print(f"\n{F.WHITE}{B.RED} NOTE: {S.R} Check that all comments listed above are indeed spam.")
     print(f" > If you see missed spam or false positives, you can submit a filter suggestion here: {F.YELLOW}TJoe.io/filter-feedback{S.R}")
@@ -1243,7 +1246,7 @@ def main():
 
     if loggingEnabled:
       print(" Finishing Log File...", end="\r")
-      logging.write_log_completion_summary(current, exclude, logMode, banChoice=False, deletionModeFriendlyName="Nothing: Log Only", rtfExclude=rtfExclude, plaintextExclude=plaintextExclude)
+      logging.write_log_completion_summary(current, exclude, logMode, banChoice=False, deletionModeFriendlyName="Nothing (Log Only)", rtfExclude=rtfExclude, plaintextExclude=plaintextExclude)
       print("                               ")
 
     # Write Json Log File

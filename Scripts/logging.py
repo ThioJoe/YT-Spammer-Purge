@@ -16,7 +16,7 @@ import json
 
 # First prepared comments into segments of 50 to be submitted to API simultaneously
 # Then uses print_prepared_comments() to print / log the comments
-def print_comments(current, scanVideoID, comments, loggingEnabled, scanMode, logMode=None):
+def print_comments(current, config, scanVideoID, comments, loggingEnabled, scanMode, logMode=None):
   j = 0 # Counting index when going through comments all comment segments
   groupSize = 999999 # Number of comments to process per iteration
 
@@ -33,29 +33,58 @@ def print_comments(current, scanVideoID, comments, loggingEnabled, scanMode, log
   # Print Sample Match List
   valuesPreparedToWrite = ""
   valuesPreparedToPrint = ""
-  print(f"{F.LIGHTMAGENTA_EX}---------------------------- Match Samples: One comment per matched-comment author ----------------------------{S.R}")
-  for value in current.matchSamplesDict.values():
+  duplicateValuesToWrite = ""
+  duplicateValuesToPrint = ""
+  duplicateSamplesContent = ""
+  hasDuplicates = False
+
+  def print_and_write(value, writeValues, printValues):
     if loggingEnabled == True and logMode == "rtf":
-      valuesPreparedToWrite = valuesPreparedToWrite + value['iString'] + value['cString'] + f"{str(value['authorID'])} | {make_rtf_compatible(str(value['nameAndText']))} \\line \n"
+      writeValues = writeValues + value['iString'] + value['cString'] + f"{str(value['authorID'])} | {make_rtf_compatible(str(value['nameAndText']))} \\line \n"
     elif loggingEnabled == True and logMode == "plaintext":
-      valuesPreparedToWrite = valuesPreparedToWrite + value['iString'] + value['cString'] + f"{str(value['authorID'])} | {str(value['nameAndText'])}\n"
-    valuesPreparedToPrint = valuesPreparedToPrint + value['iString'] + value['cString'] + f"{str(value['nameAndText'])}\n"
-  
+      writeValues = writeValues + value['iString'] + value['cString'] + f"{str(value['authorID'])} | {str(value['nameAndText'])}\n"
+    printValues = printValues + value['iString'] + value['cString'] + f"{str(value['nameAndText'])}\n"
+    return writeValues, printValues
+
+  print(f"{F.LIGHTMAGENTA_EX}============================ Match Samples: One comment per matched-comment author ============================{S.R}")
+  for value in current.matchSamplesDict.values():
+    if value['matchReason'] != "Duplicates":
+      valuesPreparedToWrite, valuesPreparedToPrint = print_and_write(value, valuesPreparedToWrite, valuesPreparedToPrint)
+    else:
+      hasDuplicates = True
+  print(valuesPreparedToPrint)
+
+  # Print Duplicates Match Samples
+  if hasDuplicates == True:
+    print(f"{F.LIGHTMAGENTA_EX}----------------------- {F.LIGHTCYAN_EX}Non-Matched{F.LIGHTMAGENTA_EX} Commenters, but who wrote {F.LIGHTCYAN_EX}many similar comments{F.LIGHTMAGENTA_EX} -----------------------{S.R}")
+  for value in current.matchSamplesDict.values():
+    if value['matchReason'] == "Duplicates":
+      duplicateValuesToWrite, duplicateValuesToPrint = print_and_write(value, duplicateValuesToWrite, duplicateValuesToPrint)
+  print(duplicateValuesToPrint)
+
+  # --------------------------------------------------
+
   # Write Match Samples to log
   if loggingEnabled == True:
     if logMode == "rtf":
-      matchSamplesContent = "-------------------- Match Samples: One comment per matched-comment author -------------------- \\line\\line \n" + valuesPreparedToWrite
+      matchSamplesContent = "==================== Match Samples: One comment per matched-comment author ==================== \\line\\line \n" + valuesPreparedToWrite
       write_rtf(current.logFileName, matchSamplesContent)
+      if hasDuplicates == True:
+        duplicateSamplesContent = " \n \\line\\line -------------------- Non-Matched Commenters, but who wrote many similar comments -------------------- \\line\\line \n" + duplicateValuesToWrite
+        write_rtf(current.logFileName, duplicateSamplesContent)
     elif logMode == "plaintext":
-      matchSamplesContent = "-------------------- Match Samples: One comment per matched-comment author --------------------\n" + valuesPreparedToWrite
+      matchSamplesContent = "==================== Match Samples: One comment per matched-comment author ====================\n" + valuesPreparedToWrite
       write_plaintext_log(current.logFileName, matchSamplesContent)
+      if hasDuplicates == True:
+        duplicateSamplesContent = "\n-------------------- Non-Matched Commenters, but who wrote many similar comments --------------------\n" + duplicateValuesToWrite
+        write_plaintext_log(current.logFileName, duplicateSamplesContent)
+
     # Entire Contents of Log File
-    logFileContents = commentsContents + matchSamplesContent      
+    logFileContents = commentsContents + matchSamplesContent + duplicateSamplesContent
   else:
     logFileContents = None
     logMode = None
-  print(valuesPreparedToPrint)
-  print(f"{F.LIGHTMAGENTA_EX}---------------------------- (See log file for channel IDs of matched authors above) ---------------------------{S.R}")
+  print(f"{F.LIGHTMAGENTA_EX}==================== (See log file for channel IDs of matched authors above) ===================={S.R}")
 
 
 
@@ -79,6 +108,7 @@ def print_prepared_comments(current, scanVideoID, comments, j, loggingEnabled, s
     author_id_local = metadata['authorID']
     comment_id_local = comment
     videoID = metadata['videoID']
+    matchReason = metadata['matchReason']
    
     # Truncates very long comments, and removes excessive multiple lines
     if len(text) > 1500:
@@ -88,7 +118,7 @@ def print_prepared_comments(current, scanVideoID, comments, j, loggingEnabled, s
 
     # Add one sample from each matching author to current.matchSamplesDict, containing author ID, name, and text
     if author_id_local not in current.matchSamplesDict.keys():
-      add_sample(current, author_id_local, author, text)
+      add_sample(current, author_id_local, author, text, matchReason)
 
     # Build comment direct link
     if scanMode == "communityPost":
@@ -388,7 +418,7 @@ def download_profile_pictures(pictureUrlsDict, jsonSettingsDict):
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 # Adds a sample to current.matchSamplesDict and preps formatting
-def add_sample(current, authorID, authorNameRaw, commentText):
+def add_sample(current, authorID, authorNameRaw, commentText, matchReason):
 
   # Make index number and string formatted version
   index = len(current.matchSamplesDict) + 1
@@ -408,7 +438,7 @@ def add_sample(current, authorID, authorNameRaw, commentText):
   commentText = commentText[0:82].ljust(82)
 
   # Add comment sample, author ID, name, and counter
-  current.matchSamplesDict[authorID] = {'index':index, 'cString':cString, 'iString':iString, 'count':authorNumComments, 'authorID':authorID, 'authorName':authorNameRaw, 'nameAndText':authorName + commentText}
+  current.matchSamplesDict[authorID] = {'index':index, 'cString':cString, 'iString':iString, 'count':authorNumComments, 'authorID':authorID, 'authorName':authorNameRaw, 'nameAndText':authorName + commentText, 'matchReason':matchReason}
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
