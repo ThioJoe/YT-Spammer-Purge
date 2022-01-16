@@ -36,7 +36,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.11.0-Beta3"
+version = "2.11.0"
 configVersion = 18
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -795,7 +795,7 @@ def main():
 
     # Recove deleted comments mode
     elif scanMode == "recoverMode":
-      result = modes.prepare_modes.recover_deleted_comments()
+      result = modes.recover_deleted_comments()
       if str(result) == "MainMenu":
         return True
 
