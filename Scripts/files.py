@@ -615,8 +615,10 @@ def parse_comment_list(config, recovery=False, removal=False, returnFileName=Fal
   validFile = False
   manuallyEnter = False
   while validFile == False and manuallyEnter == False:
-    print(f"Enter the name of the log file containing the comments to {actionVerb} (you could rename it to something easier like \'log.rtf\')")
-    print("     > (Or, just hit Enter to manually paste in the list of IDs next)")
+    print("--------------------------------------------------------------------------------")
+    print(f"\nEnter the {F.YELLOW}name of the log file{S.R} with the comments to {actionVerb} (you can rename it to something easier like \'log.rtf\')")
+    print(f"     > {F.BLACK}{B.LIGHTGREEN_EX} TIP: {S.R} You can just drag the file into this window instead of typing it")
+    print(F"{F.YELLOW}Or:{S.R} Just hit Enter to manually paste in the list of IDs next)")
     listFileName = input("\nLog File Name (Example: \"log.rtf\" or \"log\"):  ")
     if str(listFileName).lower() == "x":
       return "MainMenu", None
@@ -630,7 +632,7 @@ def parse_comment_list(config, recovery=False, removal=False, returnFileName=Fal
         listFileName = listFileName + ".txt"
       else:
         # Try in the log folder
-        listFileName = os.path.join(config['log_path'])
+        listFileName = os.path.join(config['log_path'], listFileName)
         if os.path.exists(listFileName):
           pass
         elif os.path.exists(listFileName+".rtf"):
@@ -646,10 +648,10 @@ def parse_comment_list(config, recovery=False, removal=False, returnFileName=Fal
           listFile.close()
           validFile = True
         except:
-          print("Error Code F-5: Log File was found but there was a problem reading it.")
+          print(f"{F.RED}Error Code F-5:{S.R} Log File was found but there was a problem reading it.")
       else:
         print(f"\n{F.LIGHTRED_EX}Error: File not found.{S.R} Make sure it is in the same folder as the program.\n")
-        print("Enter 'Y' to try again, or 'N' to manually paste in the comment IDs.")
+        print(f"Enter '{F.YELLOW}Y{S.R}' to try again, or '{F.YELLOW}N{S.R}' to manually paste in the comment IDs.")
         userChoice = choice("Try entering file name again?")
         if userChoice == True:
           pass
@@ -662,8 +664,8 @@ def parse_comment_list(config, recovery=False, removal=False, returnFileName=Fal
 
   if manuallyEnter == True:
     print("\n\n--- Manual Comment ID Entry Instructions ---")
-    print("1. Open the log file and look for where it shows the list of \"IDs of Matched Comments\".")
-    print("2. Copy that list, and paste it below (In windows console try pasting by right clicking).")
+    print(f"1. {F.YELLOW}Open the log file{S.R} and look for where it shows the list of {F.YELLOW}\"IDs of Matched Comments\".{S.R}")
+    print(f"2. {F.YELLOW}Copy that list{S.R}, and {F.YELLOW}paste it below{S.R} (In windows console try pasting by right clicking).")
     print("3. If not using a log file, instead enter the ID list in this format: FirstID, SecondID, ThirdID, ... \n")
     data = str(input("Paste the list here, then hit Enter: "))
     if str(data).lower() == "x":
@@ -683,8 +685,8 @@ def parse_comment_list(config, recovery=False, removal=False, returnFileName=Fal
   resultList = resultList.split(",")
 
   if len(resultList) == 0:
-    print("Error Code R-1: No comment IDs detected, try entering them manually and make sure they are formatted correctly.")
-    input("Press Enter to return to main menu...")
+    print(f"\n{F.RED}Error Code R-1:{S.R} No comment IDs detected, try entering them manually and make sure they are formatted correctly.")
+    input("\nPress Enter to return to main menu...")
     return "MainMenu", None
 
   # Check for valid comment IDs
@@ -702,7 +704,7 @@ def parse_comment_list(config, recovery=False, removal=False, returnFileName=Fal
     print(f"{F.YELLOW}Possibly Invalid Comment IDs:{S.R} " + str(notValidList)+ "\n")
 
   if notValidCount == 0:
-    print("\nLoaded all " + str(validCount) + " comment IDs successfully!")
+    print(f"\n{F.GREEN}Loaded all {str(validCount)} comment IDs successfully!{S.R}")
     input(f"\nPress Enter to begin {actionNoun}... ")
   elif validCount > 0 and notValidCount > 0:
     print(f"{F.RED}Warning!{S.R} {str(validCount)} valid comment IDs loaded successfully, but {str(notValidCount)} may be invalid. See them above.")
@@ -791,3 +793,33 @@ def read_dict_pickle_file(fileNameNoPath, relativeFolderPath=RESOURCES_FOLDER_NA
       failedAttemptCount += 1
 
   return False
+
+
+def try_remove_file(fileNameWithPath):
+  attempts = 1
+  while attempts < 3:
+    try:
+      os.remove(fileNameWithPath)
+      return True
+    except:
+      print(f"\n{F.RED}ERROR:{S.R} Could not remove file: '{fileNameWithPath}'. Is it open? If so, try closing it.")
+      input("\nPress Enter to try again...")
+      attempts += 1
+  print(f"\n{F.RED}ERROR:{S.R} The File '{fileNameWithPath}' still could not be removed. You may have to delete it yourself.")
+  input("\nPress Enter to continue...")
+  return False
+
+
+def check_existing_save():
+  relativeSaveDir = os.path.join(RESOURCES_FOLDER_NAME, "Removal_List_Progress")
+  savesList = list()
+  if os.path.isdir(relativeSaveDir):
+    fileList = list()
+    for (_, _, filenames) in os.walk(relativeSaveDir):
+      fileList.extend(filenames)
+    if len(fileList) > 0:
+      for fileName in fileList:
+        if fileName[-5:] == ".save":
+          savesList.extend([fileName])
+
+  return savesList
