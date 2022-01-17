@@ -16,6 +16,8 @@ import requests
 import zipfile
 import time
 import hashlib
+import pathlib
+import pickle
 
 ########################### Check Lists Updates ###########################
 def check_lists_update(spamListDict, silentCheck = False):
@@ -602,7 +604,7 @@ def update_config_file(oldVersion, newVersion, oldConfig):
 
 
 
-def parse_comment_list(recovery=False, removal=False):
+def parse_comment_list(config, recovery=False, removal=False, returnFileName=False):
   if recovery == True:
     actionVerb = "recover"
     actionNoun = "recovery"
@@ -617,7 +619,7 @@ def parse_comment_list(recovery=False, removal=False):
     print("     > (Or, just hit Enter to manually paste in the list of IDs next)")
     listFileName = input("\nLog File Name (Example: \"log.rtf\" or \"log\"):  ")
     if str(listFileName).lower() == "x":
-      return "MainMenu"
+      return "MainMenu", None
 
     if len(listFileName) > 0:
       if os.path.exists(listFileName):
@@ -626,6 +628,15 @@ def parse_comment_list(recovery=False, removal=False):
         listFileName = listFileName + ".rtf"
       elif os.path.exists(listFileName+".txt"):
         listFileName = listFileName + ".txt"
+      else:
+        # Try in the log folder
+        listFileName = os.path.join(config['log_path'])
+        if os.path.exists(listFileName):
+          pass
+        elif os.path.exists(listFileName+".rtf"):
+          listFileName = listFileName + ".rtf"
+        elif os.path.exists(listFileName+".txt"):
+          listFileName = listFileName + ".txt"
 
       # Get file path
       if os.path.exists(listFileName):
@@ -645,7 +656,7 @@ def parse_comment_list(recovery=False, removal=False):
         elif userChoice == False:
           manuallyEnter = True
         elif userChoice == None:
-          return "MainMenu"
+          return "MainMenu", None
     else: 
       manuallyEnter = True
 
@@ -656,7 +667,7 @@ def parse_comment_list(recovery=False, removal=False):
     print("3. If not using a log file, instead enter the ID list in this format: FirstID, SecondID, ThirdID, ... \n")
     data = str(input("Paste the list here, then hit Enter: "))
     if str(data).lower() == "x":
-      return "MainMenu"
+      return "MainMenu", None
     print("\n")
 
   # Parse data into list
@@ -674,7 +685,7 @@ def parse_comment_list(recovery=False, removal=False):
   if len(resultList) == 0:
     print("Error Code R-1: No comment IDs detected, try entering them manually and make sure they are formatted correctly.")
     input("Press Enter to return to main menu...")
-    return "MainMenu"
+    return "MainMenu", None
 
   # Check for valid comment IDs
   validCount = 0
@@ -699,4 +710,84 @@ def parse_comment_list(recovery=False, removal=False):
   elif validCount == 0 and notValidCount > 0:
     print(f"\n{F.RED}Warning!{S.R} All loaded comment IDs appear to be invalid. See them above.")
     input(f"Press Enter to try {actionNoun} anyway...\n")
-  return resultList  
+  if returnFileName == False:
+    return resultList, None
+  else:
+    return resultList, pathlib.Path(os.path.relpath(listFileName)).stem
+
+
+######################################### Read & Write Dict to Pickle File #########################################
+def write_dict_pickle_file(dictToWrite, fileName, relativeFolderPath=RESOURCES_FOLDER_NAME, forceOverwrite=False):
+
+  fileNameWithPath = os.path.join(relativeFolderPath, fileName)
+
+  success = False
+  while success == False:
+    if os.path.isdir(relativeFolderPath):
+      success = True
+    else:
+      try:
+        os.mkdir(relativeFolderPath)
+        success = True
+      except:
+        print(f"Error: Could not create folder. Try creating the folder {relativeFolderPath} to continue.")
+        input("Press Enter to try again...")
+
+  if os.path.exists(fileNameWithPath):
+    if forceOverwrite == False:
+      print(f"\n File '{fileName}' already exists! Either overwrite, or you'll need to enter a new name.")
+      if choice("Overwrite File?") == True:
+        pass
+      else:
+        confirm = False
+        while confirm == False:
+          newFileName = input("\nEnter a new file name, NOT including the extension: ") + ".save"
+          print("\nNew file name: " + newFileName)
+          confirm = choice("Is this correct?")
+        fileNameWithPath = os.path.join(relativeFolderPath, newFileName)
+
+  success = False
+  while success == False:
+    try:
+      with open(fileNameWithPath, 'wb') as pickleFile:
+        pickle.dump(dictToWrite, pickleFile)
+        #json.dump(dictToWrite, jsonFile, indent=4)
+      pickleFile.close()
+      success = True
+    except:
+      traceback.print_exc()
+      print("--------------------------------------------------------------------------------")
+      print("Something went wrong when writing your pickle file. Did you open it or something?")
+      input(f"\nPress Enter to try loading file again: {fileNameWithPath}")
+  return True
+
+
+def read_dict_pickle_file(fileNameNoPath, relativeFolderPath=RESOURCES_FOLDER_NAME):
+  failedAttemptCount = 0
+  fileNameWithPath = os.path.join(relativeFolderPath, fileNameNoPath)
+  while True and not failedAttemptCount > 2:
+    if os.path.exists(fileNameWithPath):
+
+      failedAttemptCount = 0
+      while True and not failedAttemptCount > 2:
+        try:
+          with open(fileNameWithPath, 'rb') as pickleFile:
+            #dictToRead = json.load(jsonFile)
+            dictToRead = pickle.load(pickleFile)
+          pickleFile.close()
+          return dictToRead
+
+        except:
+          traceback.print_exc()
+          print("--------------------------------------------------------------------------------")
+          print("Something went wrong when reading your pickle file. Is it in use? Try closing it.")
+          input(f"\nPress Enter to try loading file again: {fileNameWithPath}")
+          failedAttemptCount += 1
+      return False
+
+    else:
+      print(f"\nFile '{fileNameNoPath}' not found! Try entering the name manually.")
+      input(f"\nPress Enter to try loading file again: {fileNameWithPath}")
+      failedAttemptCount += 1
+
+  return False

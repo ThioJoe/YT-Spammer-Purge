@@ -11,6 +11,7 @@ import Scripts.files as files
 
 from confusables import confusable_regex, normalize
 from base64 import b85decode as b64decode
+import pathlib
 
 ##########################################################################################
 ################################## FILTERING MODES #######################################
@@ -462,25 +463,90 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
 
 
 ################################ RECOVERY MODE ###########################################
-def recover_deleted_comments():
+def recover_deleted_comments(config):
   print(f"\n\n-------------------- {F.LIGHTGREEN_EX}Comment Recovery Mode{S.R} --------------------\n")
   print("Believe it or not, the YouTube API actually allows you to re-instate \"deleted\" comments.")
   print(f"This is {F.YELLOW}only possible if you have stored the comment IDs{S.R} of the deleted comments, such as {F.YELLOW}having kept the log file{S.R} of that session.")
   print("If you don't have the comment IDs you can't recover the comments, and there is no way to find them. \n")
 
-  recoveryList = files.parse_comment_list(recovery=True)
+  recoveryList = files.parse_comment_list(config, recovery=True)
   if recoveryList == "MainMenu":
     return "MainMenu"
 
   operations.delete_found_comments(commentsList=recoveryList, banChoice=False, deletionMode="published", recoveryMode=True)
   operations.check_recovered_comments(commentsList=recoveryList)
 
-################################ RECOVERY MODE ###########################################
-def delete_comment_list():
+################################ DELETE COMMENT LIST ###########################################
+def delete_comment_list(config):
+  progressFileFolder = os.path.join(RESOURCES_FOLDER_NAME, "removal_list_progress")
   print(f"\n\n-------------------- {F.LIGHTRED_EX}Delete Using a List / Log{S.R} --------------------\n")
-  removalList = files.parse_comment_list(removal=True)
-  if removalList == "MainMenu":
-    return "MainMenu"
+  print("\nUse new comment list, or continue where you left off with another list?")
+  print("1. Use New List")
+  print("2. Continue With a List")
+  listChoice = input("\nSelection (1 or 2): ")
+
+  if listChoice == "1":
+    continued = False
+    previousRemovedComments=set()
+    remainingCommentsSet = set()
+    previousFailedComments = list()
+    sessionNum = 1
+
+    removalList, listFileNameBase = files.parse_comment_list(config, removal=True, returnFileName=True)
+    if removalList == "MainMenu":
+      return "MainMenu"
+
+    progressFileName = listFileNameBase + "_removal_progress.save"
+
+  if listChoice == "2":
+    continued = True
+    valid = False
+    while valid == False:
+      input("\nNext, follow the process of loading the same comment list/log you used before. Press Enter to continue...")
+      removalList, listFileNameBase = files.parse_comment_list(config, removal=True, returnFileName=True)
+      if removalList == "MainMenu":
+        return "MainMenu"
+
+      # Read pickle into dictionary of deleted and non-deleted files from last time
+      print("\nChecking for saved progress file...")
+      progressFileName = listFileNameBase + "_removal_progress.save"
+      progressFileNameWithPath = os.path.join(progressFileFolder, progressFileName)
+      if os.path.isfile(progressFileNameWithPath):
+        progressDict = files.read_dict_pickle_file(progressFileName, progressFileFolder)
+        valid = True
+      else:
+        print("\nError: No progress file found for that log file. Try again.")
+
+    # Get data from list
+    lastSessionNum = int(len(progressDict))
+    previousRemovedComments = set(progressDict[lastSessionNum]['removed'])
+    remainingCommentsSet = set(progressDict[lastSessionNum]['notRemoved'])
+    previousFailedComments = progressDict[lastSessionNum]['failedCommentsList']
+    sessionNum = int(len(progressDict))+1
+
+    if len(remainingCommentsSet) + len(previousRemovedComments) + len(previousFailedComments)== len(removalList):
+      pass
+    else:
+      print(f"{F.LIGHTRED_EX}Error:{S.R} The length of the comment list you loaded doesn't match the comment list you saved last time.")
+      if choice(f"{F.YELLOW}Continue anyway?{S.R} (Will use previous save and ignore the file you just loaded)") != True:
+        return "MainMenu"
+
+    # Set removal list based on previous save
+    removalList = list(remainingCommentsSet)
+    if len(previousFailedComments)>0:
+      print(f"{F.LIGHTREX_EX}NOTE:{S.R} During previous sessions, {F.YELLOW}{len(previousFailedComments)} comments{S.R} failed to be deleted.")
+      failChoice = choice("\nAdd these back into the list to try again? (Otherwise will skip them for later) ")
+      if failChoice == True:
+        removalList = removalList + list(previousFailedComments)
+        previousFailedComments = list()
+      else:
+        removalList = list(remainingCommentsSet)
+  
+    print(f"\n {F.YELLOW}{len(removalList)} Remaining Comments{S.R} Loaded.")
+    input(f"\n Press Enter to continue...")
+
+
+  # --- Begin removal process using list ------
   print("\nWhat do you want to do with the comments in the list?")
   print("1. Delete them")
   print("2. Hide them for review")
@@ -494,20 +560,101 @@ def delete_comment_list():
     elif userChoice == "2":
       removalMode = "heldForReview"
       validInput = True
+    elif userChoice == "99": # For Testing
+      removalMode = "reportSpam"
+      validInput = True
     elif userChoice.lower() == "x":
       return "MainMenu"
     else:
       print("Invalid input, try again.")
-    
   if removalMode == "rejected":
     banChoice = choice("Also ban the commenters?")
+  elif removalMode == "reportSpam":
+    banChoice = False
 
+  # Set limit based on quota
+  quotaLimit = int(config['quota_limit'])-100
+  halfQuotaLimit = round(quotaLimit / 2)-100
+
+  validInput = False
+  while validInput == False:
+    print(f"\nHow many comments (out of {len(removalList)}) do you want to remove this session? (Input '0' or 'all' to do them all)")
+    countChoice = input(f"\nNumber of comments (1-{str(quotaLimit)}): ")
+    if countChoice.lower() == "all" or countChoice == "0":
+        countChoice = len(removalList)
+    try:
+        countChoice = int(countChoice)
+        if countChoice > 0 and countChoice <= quotaLimit:
+          validInput = True
+        elif countChoice >= quotaLimit:
+          print(f"\n{F.LIGHTRED_EX}Error:{S.R} {countChoice} is too many comments, you'll run out of API Quota. Read Here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
+        else:
+          print(f"Invalid input, must be 'all' or a whole number from 1 to {str(quotaLimit)}.")
+    except:
+      print("Invalid input, must be a whole number. Try again.")
+
+  # Extract selected amount of comment IDs from list
+  if countChoice >= len(removalList):
+    partial = False
+  else:
+    partial = True
+  
+  if partial == True:
+    selectedRemovalList = removalList[:countChoice]
+    notRemovedList = removalList[countChoice:]
+  else:
+    selectedRemovalList = removalList
+    notRemovedList = list()
+  
   input("\nPress Enter to Begin Removal...")
-  operations.delete_found_comments(commentsList=removalList, banChoice=banChoice, deletionMode=removalMode)
+  failedCommentsList = operations.delete_found_comments(commentsList=selectedRemovalList, banChoice=banChoice, deletionMode=removalMode)
 
-  print("Check that the comments were deleted? (Warning: Costs 1 API quota unit each, default daily max is 10,000)")
-  userChoice = choice("Check Deletion Success?")
-  if userChoice == True:
-    operations.check_deleted_comments(removalList)
-  input("\nOperation Complete. Press Enter to return to main menu...")
+  ### Handle Results ###
+  if len(failedCommentsList) > 0:
+    print(f"\n{F.LIGHTRED_EX}Warning!{S.R} {len(failedCommentsList)} apparently failed to be removed. They'll be saved to be tried later.")
+    input("\nPress Enter to continue...")
+    failedCommentsSet = set(failedCommentsList)
+  else:
+    failedCommentsSet = set()
+
+  selectedRemovalSet = set(selectedRemovalList)
+  remainingCommentsSet = set(notRemovedList)
+
+  # Calculating final results for save progress file
+  if len(failedCommentsSet) > 0:
+    partial = True
+    finalRemovedSet = selectedRemovalSet - failedCommentsSet
+  else:
+    finalRemovedSet = selectedRemovalSet
+
+  if partial == True or continued == True:
+    print("\nSaving progress...")
+    # Initialize progress dictionary
+    if continued == True:
+      progressDict[sessionNum] = {'removed': previousRemovedComments.union(finalRemovedSet), 'notRemoved': remainingCommentsSet, 'failedCommentsList': failedCommentsList+previousFailedComments}
+    else:
+      progressDict = dict()
+      progressDict[sessionNum] = {'removed': finalRemovedSet, 'notRemoved': remainingCommentsSet, 'failedCommentsList': failedCommentsList+previousFailedComments}
+
+
+  if len(progressDict[sessionNum]['notRemoved']) == 0 and len(progressDict[sessionNum]['failedCommentsList']) == 0:
+    if continued == True:
+      print(f"\n{F.LIGHTGREEN_EX}Success!{S.R} All comments should be removed. Will now remove save progress file. (Log file will remain)")
+    else:
+      print(f"\n{F.LIGHTGREEN_EX}Success!{S.R} All comments should be removed.")
+  else:
+    # Add write to file
+    progressFileName = listFileNameBase + "_removal_progress.save"
+    result = files.write_dict_pickle_file(progressDict, progressFileName, progressFileFolder, forceOverwrite=True)
+    if result == True:
+      print(f"Progress file saved.")
+    removed = len(progressDict[sessionNum]['removed'])
+    notRemoved = len(progressDict[sessionNum]['notRemoved'])
+    failed = len(progressDict[sessionNum]['failedCommentsList'])
+
+    print(f"\n{F.LIGHTCYAN_EX}----------------------- Comment List Status -----------------------{S.R}")
+    print(f"{F.LIGHTGREEN_EX}{removed} removed{S.R}  |  {F.YELLOW}{notRemoved} not removed yet{S.R}  |  {F.LIGHTRED_EX}{failed} failed to be removed{S.R}")
+    print("\nYou will be able to continue / try again later using the same log file.")
+
+  input("\nPress Enter to return to Main Menu...")
   return "MainMenu"

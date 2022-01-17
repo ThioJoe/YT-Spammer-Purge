@@ -12,6 +12,7 @@ import time
 import itertools
 #from collections import Counter
 from Levenshtein import ratio
+from googleapiclient.errors import HttpError
 
 ##########################################################################################
 ############################## GET COMMENT THREADS #######################################
@@ -558,7 +559,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
 ########################################################################################## 
 
 # Takes in list of comment IDs to delete, breaks them into 50-comment chunks, and deletes them in groups
-def delete_found_comments(commentsList, banChoice, deletionMode, recoveryMode=False):
+def delete_found_comments(commentsList, banChoice, deletionMode, recoveryMode=False, skipCheck = False):
   print("\n")
   if deletionMode == "rejected":
     actionPresent = "Deleting"
@@ -573,19 +574,29 @@ def delete_found_comments(commentsList, banChoice, deletionMode, recoveryMode=Fa
     actionPresent = "Processing"
     actionPast = "Processed"
 
+  failedComments = []
   # Local Functions 
-  def setStatus(commentIDs): #Does the actual deletion
+  def setStatus(commentIDs, failedComments): #Does the actual deletion
     if deletionMode == "reportSpam":
       result = auth.YOUTUBE.comments().markAsSpam(id=commentIDs).execute()
       if len(result) > 0:
-        print("\nSomething may gone wrong when reporting the comments.")    
+        print("\nSomething may gone wrong when reporting the comments.")
+        failedComments += commentIDs
     elif deletionMode == "heldForReview" or deletionMode == "rejected" or deletionMode == "published":
-      auth.YOUTUBE.comments().setModerationStatus(id=commentIDs, moderationStatus=deletionMode, banAuthor=banChoice).execute()
+      try:
+        response = auth.YOUTUBE.comments().setModerationStatus(id=commentIDs, moderationStatus=deletionMode, banAuthor=banChoice).execute()
+        if len(response) > 0:
+          failedComments += commentIDs
+      except HttpError:
+        print("\nSomething has gone wrong when removing some comments...")
+        failedComments += commentIDs
+
     else:
       print("Invalid deletion mode. This is definitely a bug, please report it here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
       print("Deletion Mode Is: " + deletionMode)
       input("Press Enter to Exit...")
       sys.exit()
+    return failedComments
 
 
   def print_progress(d, t, recoveryMode=False): 
@@ -602,22 +613,27 @@ def delete_found_comments(commentsList, banChoice, deletionMode, recoveryMode=Fa
     remainder = total % 50                      # Gets how many left over after dividing into chunks of 50
     numDivisions = int((total-remainder)/50)    # Gets how many full chunks of 50 there are
     for i in range(numDivisions):               # Loops through each full chunk of 50
-      setStatus(commentsList[i*50:i*50+50])
+      failedComments = (commentsList[i*50:i*50+50], failedComments)
       deletedCounter += 50
       print_progress(deletedCounter, total, recoveryMode)
     if remainder > 0:
-      setStatus(commentsList[numDivisions*50:total]) # Handles any leftover comments range after last full chunk
+      failedComments = setStatus(commentsList[numDivisions*50:total], failedComments) # Handles any leftover comments range after last full chunk
       deletedCounter += remainder
       print_progress(deletedCounter, total, recoveryMode)
   else:
-      setStatus(commentsList)
+      failedComments = setStatus(commentsList, failedComments)
       print_progress(deletedCounter, total, recoveryMode)
   if deletionMode == "reportSpam":
     print(f"{F.YELLOW}Comments Reported!{S.R} If no error messages were displayed, then everything was successful.")
-  elif recoveryMode == False:
+    return failedComments
+  elif recoveryMode == False and skipCheck == False:
     print("Comments " + actionPast + "! Will now verify each is gone.                          \n")
+  elif recoveryMode == False and skipCheck == True:
+    print("Comments " + actionPast + "!                                                   \n")
   elif recoveryMode == True:
     print("Comments Recovered! Will now verify each is back.                          \n")
+
+  return failedComments
 
 # Class for custom exception to throw if a comment is found to remain
 class CommentFoundError(Exception):

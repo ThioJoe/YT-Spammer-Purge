@@ -36,8 +36,8 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.12.0-Beta1"
-configVersion = 19
+version = "2.12.0-Beta2"
+configVersion = 20
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 # Import other module files
@@ -147,7 +147,7 @@ def main():
     sys.exit()
 
            #### Prepare Resources ####
-  resourceFolder = "SpamPurge_Resources"
+  resourceFolder = RESOURCES_FOLDER_NAME
   whitelistPathWithName = os.path.join(resourceFolder, "whitelist.txt")
   spamListFolder = os.path.join(resourceFolder, "Spam_Lists")
   spamListDict = {
@@ -797,12 +797,12 @@ def main():
 
     # Recove deleted comments mode
     elif scanMode == "recoverMode":
-      result = modes.prepare_modes.recover_deleted_comments()
+      result = modes.prepare_modes.recover_deleted_comments(config)
       if str(result) == "MainMenu":
         return True
 
     elif scanMode == "commentList":
-      result = modes.delete_comment_list()
+      result = modes.delete_comment_list(config)
       if str(result) == "MainMenu":
         return True
 
