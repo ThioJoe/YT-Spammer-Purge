@@ -112,7 +112,7 @@ def get_comments(current, filtersDict, miscData, config, currentVideoDict, scanV
   if RetrievedNextPageToken == "End" and allCommentsDict != None:
     dupeCheckModes = utils.string_to_list(config['duplicate_check_modes'])
     if filtersDict['filterMode'].lower() in dupeCheckModes:
-      print(" Scanning For Duplicates                                                                                 ", end="\r")
+      print(" Scanning For Duplicates                                                                                     ", end="\r")
       check_duplicates(current, config, miscData, allCommentsDict, videoID)
       print("                                                                                                                  ")
 
@@ -285,7 +285,10 @@ def check_duplicates(current, config, miscData, allCommentsDict, videoID):
       print(f" Scanning For Duplicates - Progress: [ {scannedCount/authorCount*100:.2f}% ]".ljust(75, " "), end="\r")
 
 
+##########################################################################################
 ############################## CHECK AGAINST FILTER ######################################
+##########################################################################################
+
 # The basic logic that actually checks each comment against filter criteria
 def check_against_filter(current, filtersDict, miscData, config, currentCommentDict, videoID, allThreadAuthorNames=None):
   # Retrieve Data from currentCommentDict
@@ -430,7 +433,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
       def remove_unicode_categories(string):
         return "".join(char for char in string if unicodedata.category(char) not in smartFilter['unicodeCategoriesStrip'])
 
-      def check_if_only_a_link(string):
+      def check_if_only_link(string):
         result = re.match(compiledRegexDict['onlyVideoLinkRegex'], string)
         if result == None:
           return False
@@ -477,7 +480,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
         add_spam(current, config, miscData, currentCommentDict, videoID)
       elif re.search(spamListCombinedRegex, combinedString):
         add_spam(current, config, miscData, currentCommentDict, videoID)
-      elif check_if_only_a_link(commentText.strip()):
+      elif config['detect_link_spam'] == True and check_if_only_link(commentText.strip()):
         add_spam(current, config, miscData, currentCommentDict, videoID)
       elif sensitive == True and re.search(smartFilter['usernameConfuseRegex'], authorChannelName):
         add_spam(current, config, miscData, currentCommentDict, videoID)
