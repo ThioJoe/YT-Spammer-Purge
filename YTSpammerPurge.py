@@ -268,7 +268,7 @@ def main():
     rootDomainsList:list
     totalCommentCount:int
     channelOwnerID:str
-    channelOwnerName:str    
+    channelOwnerName:str
 
   miscData = MiscDataStore(
     resources = {}, 
@@ -276,7 +276,7 @@ def main():
     rootDomainsList = [], 
     totalCommentCount = 0, 
     channelOwnerID = "", 
-    channelOwnerName = ""
+    channelOwnerName = "",
     )
 
   rootDomainListAssetFile = "rootZoneDomainList.txt"
@@ -344,7 +344,7 @@ def main():
     scannedCommentsCount: int
     logTime: str
     logFileName: str
-
+    errorOccurred:bool
 
 
   ##############################################
@@ -367,6 +367,7 @@ def main():
       scannedCommentsCount=0,
       logTime = timestamp, 
       logFileName = None,
+      errorOccurred = False,
       )
 
     # Declare Default Variables
@@ -983,6 +984,9 @@ def main():
       # ----------------------------------------------------------------------------------------------------------------------
       def scan_video(miscData, config, filtersDict, scanVideoID, videosToScan=None, currentVideoDict=None, videoTitle=None, showTitle=False, i=1):
         nextPageToken, currentVideoDict = operations.get_comments(current, filtersDict, miscData, config, currentVideoDict, scanVideoID, videosToScan=videosToScan)
+        if nextPageToken == "Error":
+            return "Error"
+            
         if showTitle == True and len(videosToScan) > 0:
           # Prints video title, progress count, adds enough spaces to cover up previous stat print line
           offset = 95 - len(videoTitle)
@@ -996,20 +1000,31 @@ def main():
         # After getting first page, if there are more pages, goes to get comments for next page
         while nextPageToken != "End" and current.scannedCommentsCount < maxScanNumber:
           nextPageToken, currentVideoDict = operations.get_comments(current, filtersDict, miscData, config, currentVideoDict, scanVideoID, nextPageToken, videosToScan=videosToScan)
+          if nextPageToken == "Error":
+            return "Error"
+        return "OK"
       # ----------------------------------------------------------------------------------------------------------------------
 
       if scanMode == "entireChannel":
-        scan_video(miscData, config, filtersDict, scanVideoID)
+        status = scan_video(miscData, config, filtersDict, scanVideoID)
+        if status == "Error":
+          pass
+
       elif scanMode == "recentVideos" or scanMode == "chosenVideos":
         i = 1
         for video in videosToScan:
           currentVideoDict = {}
           scanVideoID = str(video['videoID'])
           videoTitle = str(video['videoTitle'])
-          scan_video(miscData, config, filtersDict, scanVideoID, videosToScan=videosToScan, currentVideoDict=currentVideoDict, videoTitle=videoTitle, showTitle=True, i=i)
+          status = scan_video(miscData, config, filtersDict, scanVideoID, videosToScan=videosToScan, currentVideoDict=currentVideoDict, videoTitle=videoTitle, showTitle=True, i=i)
+          if status == "Error":
+            break
           i += 1
-      operations.print_count_stats(current, miscData, videosToScan, final=True)  # Prints comment scan stats, finalizes
 
+      if current.errorOccurred == False:
+        operations.print_count_stats(current, miscData, videosToScan, final=True)  # Prints comment scan stats, finalizes
+      else:
+        utils.print_break_finished(scanMode)
     ##########################################################
     bypass = False
     if config['enable_logging'] != 'ask':
@@ -1174,6 +1189,8 @@ def main():
       # Menu for deletion mode
       while confirmDelete != "DELETE" and confirmDelete != "REPORT" and confirmDelete != "HOLD":
         # Title
+        if current.errorOccurred == True:
+          print(f"\n--- {F.WHITE}{B.RED} NOTE: {S.R} Options limited due to error during scanning ---")
         if exclude == False:
           print(f"{F.YELLOW}How do you want to handle the matched comments above?{S.R}")
         elif exclude == True:
@@ -1190,16 +1207,17 @@ def main():
 
         # Delete Instructions
         if exclude == False:
-          if userNotChannelOwner == False:
+          if userNotChannelOwner == False and current.errorOccurred == False:
             print(f" > To {F.LIGHTRED_EX}delete ALL of the above comments{S.R}: Type ' {F.LIGHTRED_EX}DELETE{S.R} ' exactly (in all caps), then hit Enter.")
-          if userNotChannelOwner == False or moderator_mode == True:
+          if (userNotChannelOwner == False or moderator_mode == True) and current.errorOccurred == False:
             print(f" > To {F.LIGHTRED_EX}move ALL comments above to 'Held For Review' in YT Studio{S.R}: Type ' {F.LIGHTRED_EX}HOLD{S.R} ' exactly (in all caps), then hit Enter.")
         elif exclude == True:
-          if userNotChannelOwner == False:
+          if userNotChannelOwner == False and current.errorOccurred == False:
             print(f" > To {F.LIGHTRED_EX}delete the rest of the comments{S.R}: Type ' {F.LIGHTRED_EX}DELETE{S.R} ' exactly (in all caps), then hit Enter.")
-          if userNotChannelOwner == False or moderator_mode == True:
+          if (userNotChannelOwner == False or moderator_mode == True) and current.errorOccurred == False:
             print(f" > To {F.LIGHTRED_EX}move rest of comments above to 'Held For Review' in YT Studio{S.R}: Type ' {F.LIGHTRED_EX}HOLD{S.R} ' exactly (in all caps), then hit Enter.")
-        print(f" > To {F.LIGHTCYAN_EX}just report the comments for spam{S.R}, type ' {F.LIGHTCYAN_EX}REPORT{S.R} '. (Can be done even if you're not the channel owner)")
+        if current.errorOccurred == False:
+          print(f" > To {F.LIGHTCYAN_EX}just report the comments for spam{S.R}, type ' {F.LIGHTCYAN_EX}REPORT{S.R} '. (Can be done even if you're not the channel owner)")
         print(f" > To do nothing, simply hit Enter")
 
         if config['json_log'] == True and config['json_extra_data'] == True and loggingEnabled:
@@ -1253,8 +1271,11 @@ def main():
     if config['json_log'] == True and loggingEnabled and current.matchedCommentsDict:
       print("\nWriting JSON log file...")
       if config['json_extra_data'] == True:
-        jsonDataDict = logging.get_extra_json_data(list(current.matchSamplesDict.keys()), jsonSettingsDict)
-        logging.write_json_log(jsonSettingsDict, current.matchedCommentsDict, jsonDataDict)
+        if current.errorOccurred == False:
+          jsonDataDict = logging.get_extra_json_data(list(current.matchSamplesDict.keys()), jsonSettingsDict)
+          logging.write_json_log(jsonSettingsDict, current.matchedCommentsDict, jsonDataDict)
+        else:
+          print(f"\n{F.LIGHTRED_EX}NOTE:{S.R} Extra JSON data collection disabled due to error during scanning")
       else:
         logging.write_json_log(jsonSettingsDict, current.matchedCommentsDict)
       if returnToMenu == True:
@@ -1272,7 +1293,7 @@ def main():
       deletionModeFriendlyName = "Reported for spam"
 
     # Set or choose ban mode, check if valid based on deletion mode
-    if (confirmDelete == "DELETE" or confirmDelete == "REPORT" or confirmDelete == "HOLD") and deletionEnabled == True:  
+    if (confirmDelete == "DELETE" or confirmDelete == "REPORT" or confirmDelete == "HOLD") and deletionEnabled == True and current.errorOccurred == False:  
       banChoice = False
       if config and config['enable_ban'] != "ask":
         if config['enable_ban'] == False:
@@ -1312,6 +1333,9 @@ def main():
       else:
         input(f"\nProgram {F.LIGHTGREEN_EX}Complete{S.R}. Press Enter to to return to main menu...")
         return True
+    elif current.errorOccurred == True:
+      input(f"\nDeletion disabled due to error during scanning. Press Enter to return to main menu...")
+      return True
 
     elif config['deletion_enabled'] == False:
       if config['auto_close'] == True:
@@ -1335,24 +1359,6 @@ def main():
     continueRunning = primaryInstance(miscData)
 
 
-############################ EXCEPTION MESSAGES ###########################
-def print_exception_reason(reason):
-  print("    Reason: " + str(reason))
-  if reason == "processingFailure":
-    print(f"\n {F.LIGHTRED_EX}[!!] Processing Error{S.R} - Sometimes this error fixes itself. Try just running the program again. !!")
-    print("This issue is often on YouTube's side, so if it keeps happening try again later.")
-    print("(This also occurs if you try deleting comments on someone elses video, which is not possible.)")
-  elif reason == "commentsDisabled":
-    print(f"\n{F.LIGHTRED_EX}[!] Error:{S.R} Comments are disabled on this video. This error can also occur if scanning a live stream.")
-  elif reason == "quotaExceeded":
-    print(f"\n{F.LIGHTRED_EX}Error:{S.R} You have exceeded the YouTube API quota. To do more scanning you must wait until the quota resets.")
-    print(" > There is a daily limit of 10,000 units/day, which works out to around reporting 10,000 comments/day.")
-    print(" > You can check your quota by searching 'quota' in the google cloud console.")
-    print(f"{F.YELLOW}Solutions: Either wait until tomorrow, or create additional projects in the cloud console.{S.R}")
-    print(f"  > Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
-    input("\n Press Enter to Exit...")
-
-
 # Runs the program
 if __name__ == "__main__":
 #   #For speed testing
@@ -1374,7 +1380,7 @@ if __name__ == "__main__":
   try:
     #remind()
     main()
-    
+
 
   except SystemExit:
     sys.exit()
@@ -1386,7 +1392,7 @@ if __name__ == "__main__":
       print("Status Code: " + str(hx.status_code))
       if hx.error_details[0]["reason"]: # If error reason is available, print it
           reason = str(hx.error_details[0]["reason"])
-          print_exception_reason(reason)
+          utils.print_exception_reason(reason)
       print(f"\nAn {F.LIGHTRED_EX}'HttpError'{S.R} was raised. This is sometimes caused by a remote server error. See the error info above.")
       print(f"If this keeps happening, consider posting a bug report on the GitHub issues page, and include the above error info.")
       print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")

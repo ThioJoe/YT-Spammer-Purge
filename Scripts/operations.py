@@ -28,27 +28,38 @@ def get_comments(current, filtersDict, miscData, config, currentVideoDict, scanV
 
   fieldsToFetch = "nextPageToken,items/snippet/topLevelComment/id,items/replies/comments,items/snippet/totalReplyCount,items/snippet/topLevelComment/snippet/videoId,items/snippet/topLevelComment/snippet/authorChannelId/value,items/snippet/topLevelComment/snippet/authorDisplayName,items/snippet/topLevelComment/snippet/textDisplay"
 
-  # Gets all comment threads for a specific video
-  if scanVideoID is not None:
-    results = auth.YOUTUBE.commentThreads().list(
-      part="snippet, replies",
-      videoId=scanVideoID, 
-      maxResults=100,
-      pageToken=nextPageToken,
-      fields=fieldsToFetch,
-      textFormat="plainText"
-    ).execute()
-  
-  # Get all comment threads across the whole channel
-  elif scanVideoID is None:
-    results = auth.YOUTUBE.commentThreads().list(
-      part="snippet, replies",
-      allThreadsRelatedToChannelId=auth.CURRENTUSER.id,
-      maxResults=100,
-      pageToken=nextPageToken,
-      fields=fieldsToFetch,
-      textFormat="plainText"
-    ).execute()
+  try:
+    # Gets all comment threads for a specific video
+    if scanVideoID is not None:
+      results = auth.YOUTUBE.commentThreads().list(
+        part="snippet, replies",
+        videoId=scanVideoID, 
+        maxResults=100,
+        pageToken=nextPageToken,
+        fields=fieldsToFetch,
+        textFormat="plainText"
+      ).execute()
+    
+    # Get all comment threads across the whole channel
+    elif scanVideoID is None:
+      results = auth.YOUTUBE.commentThreads().list(
+        part="snippet, replies",
+        allThreadsRelatedToChannelId=auth.CURRENTUSER.id,
+        maxResults=100,
+        pageToken=nextPageToken,
+        fields=fieldsToFetch,
+        textFormat="plainText"
+      ).execute()
+  except HttpError as hx:
+    traceback.print_exc()
+    utils.print_http_error_during_scan(hx)
+    current.errorOccurred = True
+    return "Error", None
+  except Exception as ex:
+    traceback.print_exc()
+    utils.print_exception_during_scan(ex)
+    current.errorOccurred = True
+    return "Error", None
     
   # Get token for next page. If no token, sets to 'End'
   RetrievedNextPageToken = results.get("nextPageToken", "End")
@@ -103,8 +114,12 @@ def get_comments(current, filtersDict, miscData, config, currentVideoDict, scanV
     
     if numReplies > 0 and len(limitedRepliesList) < numReplies:
       allCommentsDict = get_replies(current, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, allCommentsDict)
+      if allCommentsDict == "Error":
+        return "Error", None
     elif numReplies > 0 and len(limitedRepliesList) == numReplies: # limitedRepliesList can never be more than numReplies
       allCommentsDict = get_replies(current, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, allCommentsDict, repliesList=limitedRepliesList)
+      if allCommentsDict == "Error":
+        return "Error", None
     else:
       print_count_stats(current, miscData, videosToScan, final=False)  # Updates displayed stats if no replies
 
@@ -132,13 +147,24 @@ def get_replies(current, filtersDict, miscData, config, parent_id, videoID, pare
   if repliesList == None:
     fieldsToFetch = "items/snippet/authorChannelId/value,items/id,items/snippet/authorDisplayName,items/snippet/textDisplay"
 
-    results = auth.YOUTUBE.comments().list(
-      part="snippet",
-      parentId=parent_id,
-      maxResults=100,
-      fields=fieldsToFetch,
-      textFormat="plainText"
-    ).execute()
+    try:
+      results = auth.YOUTUBE.comments().list(
+        part="snippet",
+        parentId=parent_id,
+        maxResults=100,
+        fields=fieldsToFetch,
+        textFormat="plainText"
+      ).execute()
+    except HttpError as hx:
+      traceback.print_exc()
+      utils.print_http_error_during_scan(hx)
+      current.errorOccurred = True
+      return "Error"
+    except Exception as ex:
+      traceback.print_exc()
+      utils.print_exception_during_scan(ex)
+      current.errorOccurred = True
+      return "Error"
 
     replies = results["items"]
   else:
