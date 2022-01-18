@@ -753,10 +753,31 @@ def check_recovered_comments(commentsList):
 
 # Removes comments by user-selected authors from list of comments to delete
 def exclude_authors(current, miscData, inputtedString, logInfo=None):
-  expression = r"(?<=exclude ).*" # Match everything after 'exclude '
-  result = str(re.search(expression, inputtedString).group(0))
-  result = result.replace(" ", "")
-  SampleIDsToExclude = result.split(",")
+  valid = False
+  while valid == False:
+    if "exclude" in inputtedString: # Account for if user is trying again
+      isolateExpression = r"(?<=exclude ).*" # Matches everything after 'exclude '
+      result = str(re.search(isolateExpression, inputtedString).group(0))
+    else:
+      result = inputtedString
+
+    result = result.replace(" ", "")
+    validInputExpression = r'^[0-9,-]+$' # Ensures only digits, commas, and dashes are used
+    if re.match(validInputExpression, result) == None:
+      print(f"\n{F.LIGHTRED_EX}Invalid input!{S.R} Must be a comma separated list of numbers and/or range of numbers. Please try again.")
+      inputtedString = input("\nEnter the list of authors to exclude from deletion: ")
+    else:
+      result = utils.expand_ranges(result) # Expands ranges of numbers into a list of numbers
+      SampleIDsToExclude = result.split(",")
+      valid = True
+      for num in SampleIDsToExclude: # Check if any numbers outside max range
+        if int(num) > len(current.matchSamplesDict) or int(num)<1:
+          print(f"\n{F.LIGHTRED_EX}Invalid input!{S.R} Number is outside the range of samples: {num} --  Please try again.")
+          valid = False
+          break
+      if valid == False:
+        inputtedString = input("\nEnter the comma separated list of numbers and/or ranges to exclude: ")
+
   authorIDsToExclude = []
   displayString = ""
   excludedCommentsDict = {}

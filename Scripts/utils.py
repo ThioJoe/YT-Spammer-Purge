@@ -104,6 +104,20 @@ def process_spammer_ids(rawString):
   
   return True, IDList  
 
+
+########################## Expand Number Ranges #############################
+def expand_ranges(stringInput):
+    return re.sub(
+        r'(\d+)-(\d+)',
+        lambda match: ','.join(
+            str(i) for i in range(
+                int(match.group(1)),
+                int(match.group(2)) + 1
+            )   
+        ),  
+        stringInput
+    )
+
 ############################### User Choice #################################
 # User inputs Y/N for choice, returns True or False
 # Takes in message to display

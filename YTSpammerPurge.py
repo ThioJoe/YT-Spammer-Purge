@@ -1185,8 +1185,8 @@ def main():
 
         # Exclude
         if exclude == False:
-          print(f" > To {F.LIGHTGREEN_EX}exclude certain authors{S.R}: Type \'{F.LIGHTGREEN_EX}exclude{S.R}\' followed by a list of the numbers {F.LIGHTMAGENTA_EX}in the sample list{S.R} next to those authors")
-          print("      > Example:  exclude 1, 12, 9")
+          print(f" > To {F.LIGHTGREEN_EX}exclude certain authors{S.R}: Type \'{F.LIGHTGREEN_EX}exclude{S.R}\' followed by a list of the numbers (or ranges of #'s) {F.LIGHTMAGENTA_EX}from the sample list{S.R}")
+          print("      > Example:  exclude 1, 3-5, 7, 12-15")
 
         # Delete Instructions
         if exclude == False:
