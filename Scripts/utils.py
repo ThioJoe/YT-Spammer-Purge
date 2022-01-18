@@ -3,7 +3,7 @@
 from Scripts.shared_imports import *
 import Scripts.validation as validation
 import Scripts.auth as auth
-
+from googleapiclient.errors import HttpError
 
 ##########################################################################################
 ############################## UTILITY FUNCTIONS #########################################
@@ -15,12 +15,27 @@ def get_video_title(current, video_id):
   if video_id in current.vidTitleDict.keys():
     title = current.vidTitleDict[video_id]
   elif current.errorOccurred == False:
-    results = auth.YOUTUBE.videos().list(
-      part="snippet",
-      id=video_id,
-      fields="items/snippet/title",
-      maxResults=1
-    ).execute()
+    try:
+      results = auth.YOUTUBE.videos().list(
+        part="snippet",
+        id=video_id,
+        fields="items/snippet/title",
+        maxResults=1
+      ).execute()
+    except HttpError as hx:
+      traceback.print_exc()
+      print_http_error_during_scan(hx)
+      print_error_title_fetch()
+      current.errorOccurred = True
+      return "[Unavailable]"
+
+    except Exception as ex:
+      traceback.print_exc()
+      print_exception_during_scan(ex)
+      print_error_title_fetch()
+      current.errorOccurred = True
+      return "[Unavailable]"
+
     title = results["items"][0]["snippet"]["title"]
     current.vidTitleDict[video_id] = title
   else:
@@ -176,10 +191,18 @@ def print_exception_during_scan(ex):
 
 def print_break_finished(scanMode):
   print("------------------------------------------------")
-  print(f"\n{F.LIGHTRED_EX}[!] Fatal Error Occurred During Scan! Read the important info below!{S.R}")
-  print(f"\nProgram must skip the rest of the scan. {F.YELLOW}Comments already scanned can still be used to create a log file (if you choose){S.R}")
-  print(f"  > You won't be able to delete/hide any comments like usual, but you can {F.YELLOW}exclude users before saving the log file{S.R}")
-  print(f"  > Then, you can {F.YELLOW}delete the comments later{S.R} using the mode that removes comments using a pre-existing list")
+  print(f"\n{F.LIGHTRED_EX}[!] Fatal Error Occurred During Scan! {F.BLACK}{B.LIGHTRED_EX} Read the important info below! {S.R}")
+  print(f"\nProgram must skip the rest of the scan. {F.LIGHTGREEN_EX}Comments already scanned can still be used to create a log file (if you choose){S.R}")
+  print(f"  > You won't be able to delete/hide any comments like usual, but you can {F.LIGHTMAGENTA_EX}exclude users before saving the log file{S.R}")
+  print(f"  > Then, you can {F.LIGHTGREEN_EX}delete the comments later{S.R} using the {F.YELLOW}mode that removes comments using a pre-existing list{S.R}")
   if scanMode == "entireChannel":
     print(f"{F.RED}NOTE: {S.R} Because of the scanning mode (entire channel) the log will be missing the video IDs and video names.")
+  input("\n Press Enter to continue...")
+
+def print_error_title_fetch():
+  print("--------------------------------------------------------------------------------------------------------------------------")
+  print(f"\n{F.BLACK}{B.RED} ERROR OCCURRED {S.R} While Fetching Video Title... {F.BLACK}{B.LIGHTRED_EX} READ THE INFO BELOW {S.R}")
+  print(f"Program will {F.LIGHTGREEN_EX}attempt to continue{S.R}, but the {F.YELLOW}video title may not be available{S.R} in the log file.")
+  print(f"  > You won't be able to delete/hide any comments like usual, but you can {F.LIGHTMAGENTA_EX}exclude users before saving the log file{S.R}")
+  print(f"  > Then, you can {F.LIGHTGREEN_EX}delete the comments later{S.R} using the {F.YELLOW}mode that removes comments using a pre-existing log file{S.R}")
   input("\n Press Enter to continue...")
