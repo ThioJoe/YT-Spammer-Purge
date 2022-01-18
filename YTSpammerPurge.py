@@ -1243,6 +1243,7 @@ def main():
           else:
             logInfo = None
           current, excludedDict, rtfExclude, plaintextExclude = operations.exclude_authors(current, miscData, inputtedString=confirmDelete, logInfo=logInfo)
+          miscData.resources['Whitelist']['WhitelistContents'] = files.ingest_list_file(whitelistPathWithName, keepCase=True)
           exclude = True
 
           # Check that remaining comments list to remove is not empty
