@@ -246,7 +246,7 @@ def add_spam(current, config, miscData, currentCommentDict, videoID, matchReason
   # if debugSingleComment == True: 
   #   input("--- Yes, Matched -----")
 
-############################## Check Duplicats ######################################
+############################## Check Duplicates ######################################
 def check_duplicates(current, config, miscData, allCommentsDict, videoID):
   # Get Lenvenshtein Distance Setting
   try:
@@ -278,8 +278,8 @@ def check_duplicates(current, config, miscData, allCommentsDict, videoID):
 
   # Run the actual duplicate checking
   for authorID, authorCommentsList in allCommentsDict.items():
-    # Don't bother if author is already in matchedCommentsDict
-    if any(authorID == value['authorID'] for key,value in current.matchedCommentsDict.items()):
+    # Don't scan channel owner, current user, or any user in whitelist. Also don't bother if author is already in matchedCommentsDict
+    if auth.CURRENTUSER.id == authorID or miscData.channelOwnerID == authorID or authorID in miscData.resources['Whitelist']['WhitelistContents'] or any(authorID == value['authorID'] for key,value in current.matchedCommentsDict.items()):
       scannedCount +=1
       print(f" Analyzing For Duplicates: [ {scannedCount/authorCount*100:.2f}% ]   (Can be disabled & customized in config)".ljust(75, " "), end="\r")
     else:
