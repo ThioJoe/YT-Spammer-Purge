@@ -725,10 +725,10 @@ def check_deleted_comments(commentInput):
     elif i > 0:
       print("\n\nWarning: " + str(i) + " comments may remain. Check links above or try running the program again. An error log file has been created: 'Deletion_Error_Log.txt'")
       # Write error log
-      f = open("Deletion_Error_Log.txt", "a")
-      f.write("----- YT Spammer Purge Error Log: Possible Issue Deleting Comments ------\n\n")
-      f.write(str(unsuccessfulResults))
-      f.write("\n\n")
+      with open("Deletion_Error_Log.txt", "a", encoding="utf-8") as f:
+        f.write("----- YT Spammer Purge Error Log: Possible Issue Deleting Comments ------\n\n")
+        f.write(str(unsuccessfulResults))
+        f.write("\n\n")
       f.close()
     else:
       print("\n\nSomething strange happened... The comments may or may have not been deleted.")
