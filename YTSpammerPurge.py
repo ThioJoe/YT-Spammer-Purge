@@ -36,8 +36,8 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.12.1"
-configVersion = 21
+version = "2.13.0-Beta1"
+configVersion = 22
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 # Import other module files
@@ -109,42 +109,7 @@ def main():
  
   YOUTUBE = auth.first_authentication()
 
-  # Check for config file, load into dictionary 'config'. If no config found, loads data from default config in assets folder
-  config = files.load_config_file()
-  if config:
-    try:
-      configFileVersion = int(config['config_version'])
-      if configFileVersion < configVersion:
-        configOutOfDate = True
-      else:
-        configOutOfDate = False
-    except:
-      configOutOfDate = True
-  else:
-    configOutOfDate = False
-  
-  os.system(clear_command)
 
-  if config['use_this_config'] == 'ask' or config['use_this_config'] == True:
-    if configOutOfDate == True:
-      print(f"{F.YELLOW} WARNING! {S.R} Your config file is {F.YELLOW}out of date{S.R}. If you don't update it or a new one, you might get errors")
-      print(f"\n  {F.LIGHTGREEN_EX}> Update it now?{S.R} (Program will {F.CYAN}back up the old file{S.R}, and also attempt to {F.CYAN}copy the settings over{S.R})")
-      updateChoice = choice("Update Config File?")
-      if updateChoice == True:
-        files.update_config_file(oldVersion=int(config['config_version']), newVersion=configVersion, oldConfig=config)
-    if config['use_this_config'] == True:
-      pass
-    elif choice(f"\nFound {F.YELLOW}config file{S.R}, use those settings?") == False:
-      config = files.load_config_file(forceDefault = True)
-    os.system(clear_command)
-  elif config['use_this_config'] == False:
-    config = files.load_config_file(forceDefault = True)
-  elif config['use_this_config'] == True:
-    pass
-  else:
-    print("Error C-1: Invalid value in config file for setting 'use_this_config' - Must be 'True', 'False', or 'Ask'")
-    input("Press Enter to exit...")
-    sys.exit()
 
            #### Prepare Resources ####
   resourceFolder = RESOURCES_FOLDER_NAME
@@ -221,6 +186,11 @@ def main():
   versionInfo = ast.literal_eval(versionInfoJson) # Parses json string into a dictionary
   spamListDict['Meta']['VersionInfo']['LatestRelease'] = versionInfo['LatestRelease']
   spamListDict['Meta']['VersionInfo']['LastChecked'] = versionInfo['LastChecked']
+
+  # Check for primary config file, load into dictionary 'config'. If no config found, loads data from default config in assets folder
+  os.system(clear_command)
+  config = files.load_config_file(configVersion)
+  os.system(clear_command)
 
   # Check for program and list updates if auto updates enabled in config
   try:
@@ -387,7 +357,7 @@ def main():
     print(f"      3. Scan recent comments across your {F.LIGHTMAGENTA_EX}Entire Channel{S.R}")
     print(f"      4. Scan a {F.LIGHTMAGENTA_EX}community post{S.R} (Experimental)")
     print(f"------------------------ {F.YELLOW}Other Options{S.R} -------------------------")
-    print(f"      5. Create your own {F.LIGHTGREEN_EX}config file{S.R} to quickly run the program with pre-set settings")
+    print(f"      5. Create your own {F.LIGHTGREEN_EX}config file(s){S.R} to quickly run the program with pre-set settings")
     print(f"      6. Remove comments using a {F.LIGHTRED_EX}pre-existing list{S.R} or log file")
     print(f"      7. Recover deleted comments using log file")
     print(f"      8. Check For Updates\n")
@@ -398,9 +368,6 @@ def main():
         print(f"{F.LIGHTGREEN_EX}Notice: A new version is available! Choose 'Check For Updates' option for details.{S.R}\n")
       else:
         print(f"{F.LIGHTGREEN_EX}Notice: A new {F.CYAN}beta{F.LIGHTGREEN_EX} version is available! Choose 'Check For Updates' option for details.{S.R}\n")
-
-    if config and configOutOfDate == True:
-      print(f"{F.LIGHTRED_EX}Notice: Your config file is out of date! Choose 'Create your own config file' to generate a new one.{S.R}\n")
 
     # Make sure input is valid, if not ask again
     validMode:bool = False
@@ -462,7 +429,7 @@ def main():
           else:
             print(f"\nEnter a list of {F.YELLOW}Video Links{S.R} or {F.YELLOW}Video IDs{S.R} to scan, separated by commas.")
             print(" > Note: All videos must be from the same channel.")
-            enteredVideosList = utils.string_to_list(input("Enter here: "))
+            enteredVideosList = utils.string_to_list(input("\nEnter here: "))
             if str(enteredVideosList).lower() == "['x']":
               return True # Return to main menu
             validConfigSetting = False
@@ -773,21 +740,9 @@ def main():
         
     # Create config file
     elif scanMode == "makeConfig":
-      if configOutOfDate == False:
-        print(f"\n{F.LIGHTGREEN_EX}Config file already up to date!{S.R}")
-        print(f"\nDo you want to {F.YELLOW}restore the default{S.R} config settings? (Overwrites current config file)")
-        confirm = choice("Overwrite config and restore defaults?")
-        if confirm == True:
-          result = files.create_config_file(dontWarn=True)
-        elif confirm == False or confirm == None:
-          input("Press Enter to Return to main menu...")
-          return True
-        input("Press Enter to Return to main menu...")
+      result = files.create_config_file()
+      if str(result) == "MainMenu":
         return True
-      else:
-        result = files.create_config_file()
-        if str(result) == "MainMenu":
-          return True
 
     # Check for latest version
     elif scanMode == "checkUpdates":
