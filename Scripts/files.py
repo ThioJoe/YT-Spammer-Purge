@@ -694,7 +694,7 @@ def create_config_file(updating=False, dontWarn=False, configFileName="SpamPurge
       parser.read("SpamPurgeConfig.ini", encoding="utf-8")
       if parser.get("info", "config_version"):
         if updating == False:
-          print(f"\n{B.GREEN}{F.BLACK} SUCCESS! {S.R} {F.YELLOW} SpamPurgeConfig.ini{S.R} file created successfully.")
+          print(f"\n{B.GREEN}{F.BLACK} SUCCESS! {S.R}  {F.YELLOW}{configFileName}{S.R} file created successfully.")
           print(f"\nYou can now edit the file to your liking. You can also {F.YELLOW}create additional{S.R} configs using this same menu.\n")
           input("Press Enter to return to main menu...")
           return "MainMenu"
