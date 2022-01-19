@@ -329,7 +329,7 @@ def getRemoteFile(url, stream, silent=False, headers=None):
 
 ############################# Load a Config File ##############################
 # Put config settings into dictionary
-def load_config_file(configVersion=None, forceDefault=False, skipConfigChoice=False, configFileName = "SpamPurgeConfig.ini"):
+def load_config_file(configVersion=None, forceDefault=False, skipConfigChoice=False, configFileName="SpamPurgeConfig.ini"):
   configDict = {}
 
   def default_config_path(relative_path):
@@ -537,13 +537,13 @@ def choose_config_file(configDict, newestConfigVersion):
     # Print Available Configs, and add to dictionary  
     for file in configFileList:
       configNum = re.search(configNumExpression, file.lower()).group(0)
-      configDescription = load_config_file(file, True)['this_config_description']
+      configDescription = load_config_file(configFileName=file, skipConfigChoice=True)['this_config_description']
       configChoiceDict[configNum] = file
       print(f"    {F.LIGHTCYAN_EX}{configNum}:{S.R} {configDescription}")
     
     valid = False
     while valid == False:
-      configChoice = input("\n Config Choice (Y/N/#): ")
+      configChoice = input("\n Config Choice (Y/N or #): ")
       if configChoice.lower() == "y":
         return configDict
       elif configChoice.lower() == "n":
