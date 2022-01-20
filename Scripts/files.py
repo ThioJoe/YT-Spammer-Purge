@@ -490,10 +490,10 @@ def check_update_config_file(newVersion, existingConfig, configFileName):
         success = True
       except PermissionError:
         if attempts < 3:
-          print(f"\n{F.YELLOW}ERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{configFileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
+          print(f"\n{F.YELLOW}\nERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{configFileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
           input("\n Press Enter to Try Again...")
         else:
-          print(f"{F.LIGHTRED_EX}ERROR! Still cannot write to {F.LIGHTCYAN_EX}{configFileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Updating Config (May Cause Errors)?{S.R} (N)")
+          print(f"{F.LIGHTRED_EX}\nERROR! Still cannot write to {F.LIGHTCYAN_EX}{configFileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Updating Config (May Cause Errors)?{S.R} (N)")
           if choice("Choice:") == False:
             break 
 
@@ -703,10 +703,10 @@ def create_config_file(updating=False, dontWarn=False, configFileName="SpamPurge
       success = True
     except PermissionError:
       if attempts < 3:
-        print(f"\n{F.YELLOW}ERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{configFileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
+        print(f"\n{F.YELLOW}\nERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{configFileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
         input("\n Press Enter to Try Again...")
       else:
-        print(f"{F.LIGHTRED_EX}ERROR! Still cannot write to {F.LIGHTCYAN_EX}{configFileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Abandon Writing Config?{S.R} (N)")
+        print(f"{F.LIGHTRED_EX}\nERROR! Still cannot write to {F.LIGHTCYAN_EX}{configFileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Abandon Writing Config?{S.R} (N)")
         if choice("Choice:") == False:
           break 
     except:
@@ -942,10 +942,10 @@ def try_remove_file(fileNameWithPath):
       os.remove(fileNameWithPath)
       return True
     except:
-      print(f"\n{F.RED}ERROR:{S.R} Could not remove file: '{fileNameWithPath}'. Is it open? If so, try closing it.")
+      print(f"\n{F.RED}\nERROR:{S.R} Could not remove file: '{fileNameWithPath}'. Is it open? If so, try closing it.")
       input("\nPress Enter to try again...")
       attempts += 1
-  print(f"\n{F.RED}ERROR:{S.R} The File '{fileNameWithPath}' still could not be removed. You may have to delete it yourself.")
+  print(f"\n{F.RED}\nERROR:{S.R} The File '{fileNameWithPath}' still could not be removed. You may have to delete it yourself.")
   input("\nPress Enter to continue...")
   return False
 
