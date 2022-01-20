@@ -14,6 +14,7 @@ import re
 import requests
 
 YOUTUBE_VIDEO_URL = 'https://www.youtube.com/post/{youtube_id}'
+YOUTUBE_COMMUNITY_TAB_URL = 'https://www.youtube.com/channel/{channel_id}/community'
 
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36'
 
@@ -62,6 +63,37 @@ def get_post_channel_url(youtube_id):
         return channelURL
     except KeyError:
         return None
+
+# -----------------------------------------------------------------------------
+
+def fetch_recent_community_posts(channel_id):
+    session = requests.Session()
+    session.headers['User-Agent'] = USER_AGENT
+    response = session.get(YOUTUBE_COMMUNITY_TAB_URL.format(channel_id=channel_id))
+
+    if 'uxe=' in response.request.url:
+        session.cookies.set('CONSENT', 'YES+cb', domain='.youtube.com')
+        response = session.get(YOUTUBE_COMMUNITY_TAB_URL.format(channel_id=channel_id))
+
+    html = response.text
+    data = json.loads(regex_search(html, YT_INITIAL_DATA_RE, default=''))
+    section = next(search_dict(data, 'itemSectionRenderer'), None)
+
+    postURLList = list(search_dict(section, 'canonicalBaseUrl'))
+    postIsolateExpression = r"(?<=/post/).*" # Matches everything after 'exclude'
+    postIdList = []
+    for post in postURLList:
+        try:
+            result = str(re.search(postIsolateExpression, post).group(0))
+            postIdList.append(result)
+        except AttributeError as ax:
+            if "NoneType" in str(ax):
+                pass
+            
+
+    return postIdList
+
+# -----------------------------------------------------------------------------        
 
 def download_comments(youtube_id, sort_by=SORT_BY_RECENT, language=None, sleep=.1):
     session = requests.Session()

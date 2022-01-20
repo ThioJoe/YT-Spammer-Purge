@@ -36,7 +36,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.13.0"
+version = "2.14.0-Beta1"
 configVersion = 23
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -50,6 +50,7 @@ import Scripts.logging as logging
 import Scripts.operations as operations
 import Scripts.prepare_modes as modes
 from Scripts.community_downloader import main as get_community_comments #Args = post's ID, comment limit
+import Scripts.community_downloader as community_downloader
 from Scripts.utils import choice
 
 
@@ -352,15 +353,16 @@ def main():
     # User selects scanning mode,  while Loop to get scanning mode, so if invalid input, it will keep asking until valid input
     print(f"  [At any prompt, enter 'X' to return to this menu. Enter 'Q' now to quit.]")
     print(f"\n----------------------- {F.YELLOW}Scanning Options{S.R} -----------------------")
-    print(f"      1. Scan {F.LIGHTBLUE_EX}specific videos{S.R}")
+    print(f"      1. Scan {F.LIGHTCYAN_EX}specific videos{S.R}")
     print(f"      2. Scan {F.LIGHTCYAN_EX}recent videos{S.R} for a channel")
-    print(f"      3. Scan recent comments across your {F.LIGHTMAGENTA_EX}Entire Channel{S.R}")
+    print(f"      3. Scan recent comments across your {F.LIGHTBLUE_EX}Entire Channel{S.R}")
     print(f"      4. Scan a {F.LIGHTMAGENTA_EX}community post{S.R} (Experimental)")
+    print(f"      5. Scan {F.LIGHTMAGENTA_EX}recent community posts{S.R} for a channel (Experimental)")
     print(f"------------------------ {F.YELLOW}Other Options{S.R} -------------------------")
-    print(f"      5. Create your own {F.LIGHTGREEN_EX}config file(s){S.R} to quickly run the program with pre-set settings")
-    print(f"      6. Remove comments using a {F.LIGHTRED_EX}pre-existing list{S.R} or log file")
-    print(f"      7. Recover deleted comments using log file")
-    print(f"      8. Check For Updates\n")
+    print(f"      6. Create your own {F.LIGHTGREEN_EX}config file(s){S.R} to quickly run the program with pre-set settings")
+    print(f"      7. Remove comments using a {F.LIGHTRED_EX}pre-existing list{S.R} or log file")
+    print(f"      8. Recover deleted comments using log file")
+    print(f"      9. Check For Updates\n")
     
     # Check for updates silently
     if updateAvailable == True:
@@ -376,12 +378,12 @@ def main():
       if validConfigSetting == True and config and config['scan_mode'] != 'ask':
         scanMode = config['scan_mode']
       else:
-        scanMode = input("Choice (1-8): ")
+        scanMode = input("Choice (1-9): ")
       if scanMode.lower() == "q":
         sys.exit()
 
       # Set scanMode Variable Names
-      validModeValues = ['1', '2', '3', '4', '5', '6', '7', '8', 'chosenvideos', 'recentvideos', 'entirechannel', 'communitypost', 'commentlist']
+      validModeValues = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'chosenvideos', 'recentvideos', 'entirechannel', 'communitypost', 'commentlist', 'recentcommunityposts']
       if scanMode in validModeValues:
         validMode = True
         if scanMode == "1" or scanMode == "chosenvideos":
@@ -392,16 +394,18 @@ def main():
           scanMode = "entireChannel"
         elif scanMode == "4" or scanMode == "communitypost":
           scanMode = "communityPost"
-        elif scanMode == "5":
+        elif scanMode == "5" or scanMode == "recentcommunityposts":
+          scanMode = "recentCommunityPosts"
+        elif scanMode == "6":
           scanMode = "makeConfig"
-        elif scanMode == "6" or scanMode == "commentlist":
+        elif scanMode == "7" or scanMode == "commentlist":
           scanMode = "commentList"          
-        elif scanMode == "7":
-          scanMode = "recoverMode"
         elif scanMode == "8":
+          scanMode = "recoverMode"
+        elif scanMode == "9":
           scanMode = "checkUpdates"
       else:
-        print(f"\nInvalid choice: {scanMode} - Enter either 1, 2, 3, 4, 5, 6, 7, or 8. ")
+        print(f"\nInvalid choice: {scanMode} - Enter a number from 1 to 9")
         validConfigSetting = False
 
     # If chooses to scan single video - Validate Video ID, get title, and confirm with user
@@ -687,6 +691,7 @@ def main():
       miscData.channelOwnerID = CURRENTUSER.id
       miscData.channelOwnerName = CURRENTUSER.name
 
+
     elif scanMode == 'communityPost':
       print(f"\nNOTES: This mode is {F.YELLOW}experimental{S.R}, and not as polished as other features. Expect some janky-ness.")
       print("   > It is also much slower to retrieve comments, because it does not use the API")
@@ -737,7 +742,73 @@ def main():
               print("\nInvalid Input! Number must a whole number be greater than zero.")
           except:
             print("\nInvalid Input! - Must be a whole number greater than zero.")
+
+    # Recent Community Posts
+    elif scanMode == 'recentCommunityPosts':
+      print(f"\nNOTES: This mode is {F.YELLOW}experimental{S.R}, and not as polished as other features. Expect some janky-ness.")
+      print("   > It is also much slower to retrieve comments, because it does not use the API")
+      print(f"   > You should only scan {F.YELLOW}your own{S.R} community posts, or things might not work right")      
         
+      confirm = False
+      validEntry = False
+      validChannel = False
+      
+      while validChannel == False:
+        # Get and verify config setting for channel ID
+        if config and config['channel_to_scan'] != 'ask':
+          if config['channel_to_scan'] == 'mine':
+            channelID = CURRENTUSER.id
+            channelTitle = CURRENTUSER.name
+            validChannel = True
+            break
+          else:
+            validChannel, channelID, channelTitle = validation.validate_channel_id(config['channel_to_scan'])
+            if validChannel == True:
+              break
+            else:
+              print("Invalid Channel ID or Link in config file!")
+
+        print(f"\nEnter a {F.YELLOW}channel ID or Link{S.R} to scan {F.LIGHTCYAN_EX}recent community posts{S.R} from")
+        print(f"   > If scanning {F.YELLOW}your own channel{S.R}, just hit {F.LIGHTGREEN_EX}Enter{S.R}")
+        inputtedChannel = input("\nEnter Here: ")
+        if inputtedChannel == "":
+          channelID = CURRENTUSER.id
+          channelTitle = CURRENTUSER.name
+          validChannel = True
+        elif str(inputtedChannel).lower() == "x":
+          return True # Return to main menu
+        else:
+          validChannel, channelID, channelTitle = validation.validate_channel_id(inputtedChannel)
+
+      if CURRENTUSER.id != channelID:
+        userNotChannelOwner = True
+
+      print(f"\nChosen Channel: {F.LIGHTCYAN_EX}{channelTitle}{S.R}")
+
+      # Get and print community posts
+      communityPostList = community_downloader.fetch_recent_community_posts(channelID)
+      print(f"\nRetrieved {F.YELLOW}{len(communityPostList)}{S.R} community posts from {F.LIGHTCYAN_EX}{channelTitle}{S.R}")
+      print("How many of the most recent posts do you want to scan?")
+      while True:
+        inputStr = input("Number of Recent Posts: ")
+        if str(inputStr).lower() == "x":
+          return True
+        else:
+          try:
+            numRecentPosts = int(inputStr)
+            if numRecentPosts > len(communityPostList):
+              print("Number entered is more than posts available. Will just scan all posts available.")
+              numPosts = len(communityPostList)
+            elif numRecentPosts <= 0:
+              print("Please enter a whole number greater than zero.")
+            break
+          except ValueError:
+            print("Invalid Input! - Must be a whole number.")
+
+      miscData.channelOwnerID = channelID
+      miscData.channelOwnerName = channelTitle 
+
+
     # Create config file
     elif scanMode == "makeConfig":
       result = files.create_config_file()
@@ -917,7 +988,7 @@ def main():
       'CustomRegexPattern': regexPattern
       }
 
-    if scanMode == "communityPost":
+    if scanMode == "communityPost" or scanMode == "recentCommunityPosts":
       def scan_community_post(communityPostID, limit):
         allCommunityCommentsDict = get_community_comments(communityPostID=communityPostID, limit=limit)
         for key, value in allCommunityCommentsDict.items():
@@ -929,7 +1000,15 @@ def main():
             'commentID':key,
             }
           operations.check_against_filter(current, filtersDict, miscData, config, currentCommentDict, videoID=communityPostID)
-      scan_community_post(communityPostID, maxScanNumber)
+        dupeCheckModes = utils.string_to_list(config['duplicate_check_modes'])
+        # if filtersDict['filterMode'].lower() in dupeCheckModes:
+        #   operations.check_duplicates(current, config, miscData, allCommunityCommentsDict, communityPostID) # Need to fix different format of all comments dict
+
+      if scanMode == "communityPost":
+        scan_community_post(communityPostID, maxScanNumber)
+      elif scanMode == "recentCommunityPosts":
+        for i in range(numRecentPosts):
+          scan_community_post(communityPostList[i], maxScanNumber)
 
     else:
       # Goes to get comments for first page
