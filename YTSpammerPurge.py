@@ -1401,6 +1401,9 @@ if __name__ == "__main__":
     print(f"please a {F.LIGHTYELLOW_EX}bug report{S.R} on the GitHub issues page, and include the above error info.")
     print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
     input("\n Press Enter to Exit...")
+  except KeyboardInterrupt:
+    print("\n\nProcess Cancelled via Keyboard Shortcut")
+    sys.exit()
   except Exception as x:
     traceback.print_exc()
     print("------------------------------------------------")
