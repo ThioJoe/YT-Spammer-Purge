@@ -990,6 +990,7 @@ def main():
 
     if scanMode == "communityPost" or scanMode == "recentCommunityPosts":
       def scan_community_post(communityPostID, limit):
+        authorKeyAllCommentsDict = {}
         allCommunityCommentsDict = get_community_comments(communityPostID=communityPostID, limit=limit)
         for key, value in allCommunityCommentsDict.items():
           currentCommentDict = {
@@ -999,11 +1000,19 @@ def main():
             'commentText':value['commentText'],
             'commentID':key,
             }
+          try:
+            authorKeyAllCommentsDict[value['authorChannelID']].append(currentCommentDict)
+          except KeyError:
+            authorKeyAllCommentsDict[value['authorChannelID']] = [currentCommentDict]
+          except TypeError:
+            pass
           operations.check_against_filter(current, filtersDict, miscData, config, currentCommentDict, videoID=communityPostID)
+        
         dupeCheckModes = utils.string_to_list(config['duplicate_check_modes'])
-        # if filtersDict['filterMode'].lower() in dupeCheckModes:
-        #   operations.check_duplicates(current, config, miscData, allCommunityCommentsDict, communityPostID) # Need to fix different format of all comments dict
-
+        if filtersDict['filterMode'].lower() in dupeCheckModes:
+          operations.check_duplicates(current, config, miscData, authorKeyAllCommentsDict, communityPostID) # Need to fix different format of all comments dict
+          print("                                                                                                                       ")
+          
       if scanMode == "communityPost":
         scan_community_post(communityPostID, maxScanNumber)
       elif scanMode == "recentCommunityPosts":
