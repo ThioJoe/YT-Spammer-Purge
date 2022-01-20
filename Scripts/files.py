@@ -204,21 +204,21 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
           ignoreHash = False
           # Validate Retrieved Info    
           if j > 1: # More than one exe file in release
-            print(f"{S.YELLOW}Warning!{S.R} Multiple exe files found in release. You must be updating from the future when that was not anticipated.")
+            print(f"{F.YELLOW}Warning!{S.R} Multiple exe files found in release. You must be updating from the future when that was not anticipated.")
             print("You should instead manually download the latest version from: https://github.com/ThioJoe/YT-Spammer-Purge/releases")
             print("You can try continuing anyway, but it might not be successful, or might download the wrong exe file.")
             input("\nPress enter to continue...")
           elif j == 0: # No exe file in release
-            print(f"{S.LIGHTRED_EX}Warning!{S.R} No exe file found in release. You'll have to manually download the latest version from:")
+            print(f"{F.LIGHTRED_EX}Warning!{S.R} No exe file found in release. You'll have to manually download the latest version from:")
             print("https://github.com/ThioJoe/YT-Spammer-Purge/releases")
             return False
           if k == 0: # No hash file in release
-            print(f"{S.YELLOW}Warning!{S.R} No verification sha256 hash found in release. If download fails, you can manually download latest version here:")
+            print(f"{F.YELLOW}Warning!{S.R} No verification sha256 hash found in release. If download fails, you can manually download latest version here:")
             print("https://github.com/ThioJoe/YT-Spammer-Purge/releases")
             input("\nPress Enter to try to continue...")
             ignoreHash = True
           elif k>0 and k!=j:
-            print(f"{S.YELLOW}Warning!{S.R} Too many or too few sha256 files found in release. If download fails, you should manually download latest version here:")
+            print(f"{F.YELLOW}Warning!{S.R} Too many or too few sha256 files found in release. If download fails, you should manually download latest version here:")
             print("https://github.com/ThioJoe/YT-Spammer-Purge/releases")
             input("\nPress Enter to try to continue...")
 
