@@ -3,6 +3,7 @@
 from Scripts.shared_imports import *
 import Scripts.utils as utils
 import Scripts.auth as auth
+from utils import choice
 
 import rtfunicode
 import os
@@ -209,6 +210,8 @@ def make_rtf_compatible(text):
 
 # Writes properly to rtf file, also can prepare with necessary header information and formatting settings
 def write_rtf(fileName, newText=None, firstWrite=False, fullWrite=False):
+  success = False
+  attempts = 0
   if firstWrite == True or fullWrite == True:
     # If directory does not exist for desired log file path, create it
     logFolderPath = os.path.dirname(os.path.realpath(fileName))
@@ -221,42 +224,68 @@ def write_rtf(fileName, newText=None, firstWrite=False, fullWrite=False):
       except:
         print(f"{F.LIGHTRED_EX}Error:{S.R} Could not create desired directory for log files. Will place them in current directory.")
         fileName = os.path.basename(fileName)
-    with open(fileName, 'w', encoding="utf-8") as file:
-      # Some header information for RTF file, sets courier as font
-      file.write(r"{\rtf1\ansi\deff0 {\fonttbl {\f0 Courier;}}"+"\n")
+    while success == False:
+      try:
+        attempts += 1
+        with open(fileName, 'w', encoding="utf-8") as file:
+          # Some header information for RTF file, sets courier as font
+          file.write(r"{\rtf1\ansi\deff0 {\fonttbl {\f0 Courier;}}"+"\n")
 
-      # Sets color table to be able to set colors for text, each color set with RGB values in raw string
-      # To use color, use '\cf1 ' (with space) for black, cf2 = red, cf3 = green, cf4 = blue, cf5 = orange, cf6 = purple
-      #                       cf1                cf2                  cf3                  cf4                  cf5                    cf6                 
-      file.write(r"{\colortbl;\red0\green0\blue0;\red255\green0\blue0;\red0\green255\blue0;\red0\green0\blue255;\red143\green81\blue0;\red102\green0\blue214;}"+"\n\n")
-      if fullWrite == True:
-        file.write(newText)
-      file.write(r"}")
-      file.close()
+          # Sets color table to be able to set colors for text, each color set with RGB values in raw string
+          # To use color, use '\cf1 ' (with space) for black, cf2 = red, cf3 = green, cf4 = blue, cf5 = orange, cf6 = purple
+          #                       cf1                cf2                  cf3                  cf4                  cf5                    cf6                 
+          file.write(r"{\colortbl;\red0\green0\blue0;\red255\green0\blue0;\red0\green255\blue0;\red0\green0\blue255;\red143\green81\blue0;\red102\green0\blue214;}"+"\n\n")
+          if fullWrite == True:
+            file.write(newText)
+          file.write(r"}")
+          file.close()
+        success = True
+      except PermissionError:
+        if attempts < 3:
+          print(f"\n{F.YELLOW}ERROR!{S.R} Cannot write to {F.LIGHTCYAN}{fileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
+          input("\n Press Enter to Try Again...")
+        else:
+          print(f"{F.LIGHTRED_EX}ERROR! Still cannot write to {F.LIGHTCYAN}{fileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Writing Log?{S.R} (N)")
+          if choice("Choice:") == False:
+            break
 
   # If the string might have unicode, use unicode mode to convert for rtf
   else:
     # Writes to line just before last, to preserve required ending bracket in rtf file
     # Slightly modified from: https://stackoverflow.com/a/50567967/17312053   
-    with open(fileName, 'r+', encoding="utf-8") as file:
-      pos, text = 0, ''
-      while True:
-          # save last line value and cursor position
-          prev_pos, pos = pos, file.tell()
-          prev_text, text = text, file.readline()  
-          if text == '': # Checks for last line with only ending bracket
+    while success == False:
+      try:
+        attempts += 1
+        with open(fileName, 'r+', encoding="utf-8") as file:
+          pos, text = 0, ''
+          while True:
+            # save last line value and cursor position
+            prev_pos, pos = pos, file.tell()
+            prev_text, text = text, file.readline()  
+            if text == '': # Checks for last line with only ending bracket
               break
-      file.seek(prev_pos, 0) # replace cursor to the last line
-      for line in newText: # write new lines. If any brackets, add escape backslash
-          line.replace("}", "\\}")
-          line.replace("{", "\\{")
-          file.write(line)
-      file.write("\n}") # Re-write new line with ending bracket again. Could put prev_text in here if being dynamic
-      file.close()
+          file.seek(prev_pos, 0) # replace cursor to the last line
+          for line in newText: # write new lines. If any brackets, add escape backslash
+            line.replace("}", "\\}")
+            line.replace("{", "\\{")
+            file.write(line)
+          file.write("\n}") # Re-write new line with ending bracket again. Could put prev_text in here if being dynamic
+          file.close()
+          success = True
+      except PermissionError:
+        if attempts < 3:
+          print(f"\n{F.YELLOW}ERROR!{S.R} Cannot write to {F.LIGHTCYAN}{fileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
+          input("\n Press Enter to Try Again...")
+        else:
+          print(f"{F.LIGHTRED_EX}ERROR! Still cannot write to {F.LIGHTCYAN}{fileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Writing Log?{S.R} (N)")
+          if choice("Choice:") == False:
+            break
 
 ############################ Plaintext Log & File Handling ###############################
 
 def write_plaintext_log(fileName, newText=None, firstWrite=False, fullWrite=False):
+  success = False
+  attempts = 0
   if firstWrite == True or fullWrite == True:
     # If directory does not exist for desired log file path, create it
     logFolderPath = os.path.dirname(os.path.realpath(fileName))
@@ -269,20 +298,47 @@ def write_plaintext_log(fileName, newText=None, firstWrite=False, fullWrite=Fals
       except:
         print(f"{F.LIGHTRED_EX}Error:{S.R} Could not create desired directory for log files. Will place them in current directory.")
         fileName = os.path.basename(fileName)
-    with open(fileName, "w", encoding="utf-8") as file:
-      if fullWrite == True:
-        file.write(newText)
-      else:
-        file.write("")
-      file.close()
+    while success == False:
+      try:
+        attempts += 1
+        with open(fileName, "w", encoding="utf-8") as file:
+          if fullWrite == True:
+            file.write(newText)
+          else:
+            file.write("")
+          file.close()
+        success = True
+      except PermissionError:
+        if attempts < 3:
+          print(f"\n{F.YELLOW}ERROR!{S.R} Cannot write to {F.LIGHTCYAN}{fileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
+          input("\n Press Enter to Try Again...")
+        else:
+          print(f"{F.LIGHTRED_EX}ERROR! Still cannot write to {F.LIGHTCYAN}{fileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Writing Log?{S.R} (N)")
+          if choice("Choice:") == False:
+            break 
+
   else:
-    with open(fileName, 'a', encoding="utf-8") as file:
-      for line in newText:
-        file.write(line)
-      file.close()
+    while success == False:
+      try:
+        attempts += 1
+        with open(fileName, 'a', encoding="utf-8") as file:
+          for line in newText:
+            file.write(line)
+          file.close()
+        success = True
+      except PermissionError:
+        if attempts < 3:
+          print(f"\n{F.YELLOW}ERROR!{S.R} Cannot write to {F.LIGHTCYAN}{fileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
+          input("\n Press Enter to Try Again...")
+        else:
+          print(f"{F.LIGHTRED_EX}ERROR! Still cannot write to {F.LIGHTCYAN}{fileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Writing Log?{S.R} (N)")
+          if choice("Choice:") == False:
+            break 
 
 ############################ JSON Log & File Handling ###############################
 def write_json_log(jsonSettingsDict, commentsDict, jsonDataDict=None):
+  success = False
+  attempts = 0
   if jsonDataDict:
     jsonDataDict['Comments'] = commentsDict
     dictionaryToWrite = jsonDataDict
@@ -303,9 +359,21 @@ def write_json_log(jsonSettingsDict, commentsDict, jsonDataDict=None):
     except:
       print(f"{F.LIGHTRED_EX}Error:{S.R} Could not create desired directory for log files. Will place them in current directory.")
       fileName = os.path.basename(fileName)
-  with open(fileName, "w", encoding=jsonEncoding) as file:
-    file.write(json.dumps(dictionaryToWrite, indent=4, ensure_ascii=False))
-    file.close()
+  while success == False:
+    try:
+      attempts += 1
+      with open(fileName, "w", encoding=jsonEncoding) as file:
+        file.write(json.dumps(dictionaryToWrite, indent=4, ensure_ascii=False))
+        file.close()
+      success = True
+    except PermissionError:
+      if attempts < 3:
+        print(f"\n{F.YELLOW}ERROR!{S.R} Cannot write to {F.LIGHTCYAN}{fileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
+        input("\n Press Enter to Try Again...")
+      else:
+        print(f"{F.LIGHTRED_EX}ERROR! Still cannot write to {F.LIGHTCYAN}{fileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Writing Log?{S.R} (N)")
+        if choice("Choice:") == False:
+          break 
 
 ############################ Get Extra JSON Data and Profile Pictures ###############################
 
@@ -405,20 +473,31 @@ def download_profile_pictures(pictureUrlsDict, jsonSettingsDict):
       print(f"{F.LIGHTRED_EX}Error:{S.R} Unable to create image folder. Try creating a folder called 'ProfileImages' in the log file folder.")
       return False, None
 
+  attempts = 0
+  success = False
   print("\nFetching Profile Pictures...")
   # Download and save pictures
-  try:
-    for channelID, pictureURL in pictureUrlsDict.items():
-      filedownload = requests.get(pictureURL, stream=True)
-      downloadFileName = channelID + ".jpg"
-      # Make absolute path
-      downloadFileName = os.path.join(imageFolderPath, channelID + ".jpg")
-      with open(downloadFileName, 'wb') as file:
-        for data in filedownload.iter_content(block_size):
-          file.write(data)
-    print("Successfully downloaded profile pictures.")
-  except:
-    return False
+  while success == False:
+    try:
+      attempts += 1
+      for channelID, pictureURL in pictureUrlsDict.items():
+        filedownload = requests.get(pictureURL, stream=True)
+        downloadFileName = channelID + ".jpg"
+        # Make absolute path
+        downloadFileName = os.path.join(imageFolderPath, channelID + ".jpg")
+        with open(downloadFileName, 'wb') as file:
+          for data in filedownload.iter_content(block_size):
+            file.write(data)
+      success = True
+      print("Successfully downloaded profile pictures.")
+    except PermissionError:
+      if attempts < 3:
+        print(f"\n{F.YELLOW}ERROR!{S.R} Cannot write to {F.LIGHTCYAN}{fileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
+        input("\n Press Enter to Try Again...")
+      else:
+        print(f"{F.LIGHTRED_EX}ERROR! Still cannot write to {F.LIGHTCYAN}{fileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Downloading Profile Pictures?{S.R} (N)")
+        if choice("Choice:") == False:
+          break 
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 

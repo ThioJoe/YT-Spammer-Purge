@@ -90,6 +90,7 @@ def check_lists_update(spamListDict, silentCheck = False):
       # Unzip files into folder and delete zip file
       attempts = 0
       print("Extracting updated lists...")
+      # While loop continues until file no longer exists, or too many errors
       while True:
         try:
           attempts += 1
@@ -106,7 +107,7 @@ def check_lists_update(spamListDict, silentCheck = False):
             print(f"This can happen if an antivirus takes a while to scan the file. You may need to manually extract the zip file.")
             input("\nPress enter to Continue anyway...")
             break
-        # This means success, the zip file was deleted after extracting
+        # THIS MEANS SUCCESS, the zip file was deleted after extracting, so returns
         except FileNotFoundError:
           update_last_checked()
           return spamListDict
@@ -479,9 +480,22 @@ def check_update_config_file(newVersion, existingConfig, configFileName):
             break
       # The new config file writes itself again, but with the modified newLine's
       newDataList.append(newLine)
-
-    with open(configFileName, "w", encoding="utf-8") as newFile:
-      newFile.writelines(newDataList)
+    success = False
+    attempts = 0
+    while success == False:
+      try:
+        attempts += 1
+        with open(configFileName, "w", encoding="utf-8") as newFile:
+          newFile.writelines(newDataList)
+        success = True
+      except PermissionError:
+        if attempts < 3:
+          print(f"\n{F.YELLOW}ERROR!{S.R} Cannot write to {F.LIGHTCYAN}{configFileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
+          input("\n Press Enter to Try Again...")
+        else:
+          print(f"{F.LIGHTRED_EX}ERROR! Still cannot write to {F.LIGHTCYAN}{configFileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Updating Config (May Cause Errors)?{S.R} (N)")
+          if choice("Choice:") == False:
+            break 
 
     return load_config_file(configVersion=None, skipConfigChoice=True, configFileName=configFileName)
   except:
@@ -678,15 +692,28 @@ def create_config_file(updating=False, dontWarn=False, configFileName="SpamPurge
     sys.exit()
 
   # Create config file
-  try:
-    configFile = open(configFileName, "w", encoding="utf-8")
-    configFile.write(data)
-    configFile.close()
-  except:
-    traceback.print_exc()
-    print(f"{B.RED}{F.WHITE}Error Code: F-3{S.R} Problem creating config file! The info above may help if it's a bug.")
-    input("Press enter to Exit...")
-    sys.exit()
+  attempts = 0
+  success = False
+  while success == False:
+    try:
+      attempts += 1
+      with open(configFileName, "w", encoding="utf-8") as configFile:
+        configFile.write(data)
+        configFile.close()
+      success = True
+    except PermissionError:
+      if attempts < 3:
+        print(f"\n{F.YELLOW}ERROR!{S.R} Cannot write to {F.LIGHTCYAN}{configFileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
+        input("\n Press Enter to Try Again...")
+      else:
+        print(f"{F.LIGHTRED_EX}ERROR! Still cannot write to {F.LIGHTCYAN}{configFileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Abandon Writing Config?{S.R} (N)")
+        if choice("Choice:") == False:
+          break 
+    except:
+      traceback.print_exc()
+      print(f"{B.RED}{F.WHITE}Error Code: F-3{S.R} Problem creating config file! The info above may help if it's a bug.")
+      input("Press enter to Exit...")
+      sys.exit()
 
   if os.path.exists(configFileName):
     parser = ConfigParser()
@@ -704,8 +731,6 @@ def create_config_file(updating=False, dontWarn=False, configFileName="SpamPurge
         print("Something might have gone wrong. Check if SpamPurgeConfig.ini file exists and has contents.")
         input("Press enter to Exit...")
         sys.exit()
-    except SystemExit:
-      sys.exit()
     except:
       traceback.print_exc()
       print("Something went wrong when checking the created file. Check if SpamPurgeConfig.ini exists and has text. The info above may help if it's a bug.")
