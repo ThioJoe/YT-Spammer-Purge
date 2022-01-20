@@ -3,7 +3,7 @@
 from Scripts.shared_imports import *
 import Scripts.utils as utils
 import Scripts.auth as auth
-from utils import choice
+from Scripts.utils import choice
 
 import rtfunicode
 import os
