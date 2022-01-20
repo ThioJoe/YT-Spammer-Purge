@@ -490,10 +490,10 @@ def check_update_config_file(newVersion, existingConfig, configFileName):
         success = True
       except PermissionError:
         if attempts < 3:
-          print(f"\n{F.YELLOW}ERROR!{S.R} Cannot write to {F.LIGHTCYAN}{configFileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
+          print(f"\n{F.YELLOW}ERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{configFileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
           input("\n Press Enter to Try Again...")
         else:
-          print(f"{F.LIGHTRED_EX}ERROR! Still cannot write to {F.LIGHTCYAN}{configFileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Updating Config (May Cause Errors)?{S.R} (N)")
+          print(f"{F.LIGHTRED_EX}ERROR! Still cannot write to {F.LIGHTCYAN_EX}{configFileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Updating Config (May Cause Errors)?{S.R} (N)")
           if choice("Choice:") == False:
             break 
 
@@ -703,10 +703,10 @@ def create_config_file(updating=False, dontWarn=False, configFileName="SpamPurge
       success = True
     except PermissionError:
       if attempts < 3:
-        print(f"\n{F.YELLOW}ERROR!{S.R} Cannot write to {F.LIGHTCYAN}{configFileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
+        print(f"\n{F.YELLOW}ERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{configFileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
         input("\n Press Enter to Try Again...")
       else:
-        print(f"{F.LIGHTRED_EX}ERROR! Still cannot write to {F.LIGHTCYAN}{configFileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Abandon Writing Config?{S.R} (N)")
+        print(f"{F.LIGHTRED_EX}ERROR! Still cannot write to {F.LIGHTCYAN_EX}{configFileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Abandon Writing Config?{S.R} (N)")
         if choice("Choice:") == False:
           break 
     except:
