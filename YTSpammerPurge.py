@@ -36,8 +36,8 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.13.0-Beta2"
-configVersion = 22
+version = "2.13.0-Beta3"
+configVersion = 23
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 # Import other module files
@@ -1160,6 +1160,8 @@ def main():
         if exclude == False:
           print(f" > To {F.LIGHTGREEN_EX}exclude certain authors{S.R}: Type \'{F.LIGHTGREEN_EX}exclude{S.R}\' followed by a list of the numbers (or ranges of #'s) {F.LIGHTMAGENTA_EX}from the sample list{S.R}")
           print("      > Example:  exclude 1, 3-5, 7, 12-15")
+          print(f" > To {F.LIGHTGREEN_EX}only process certain authors{S.R}: Type \'{F.LIGHTGREEN_EX}only{S.R}\' followed by a list of the numbers (or ranges of #'s) {F.LIGHTMAGENTA_EX}from the sample list{S.R}")
+          print("      > Example:  only 1, 3-5, 7, 12-15")
 
         # Delete Instructions
         if exclude == False:
@@ -1188,7 +1190,12 @@ def main():
         elif confirmDelete == "REPORT":
           deletionEnabled = True
           deletionMode = "reportSpam" 
-        elif "exclude" in confirmDelete.lower():
+        elif "exclude" in confirmDelete.lower() or "only" in confirmDelete.lower():
+          if "exclude" in confirmDelete.lower():
+            onlyBool = False
+          elif "only" in confirmDelete.lower():
+            onlyBool = True
+
           if loggingEnabled:
             logInfo = {
               'logMode': logMode,
@@ -1198,7 +1205,7 @@ def main():
             }
           else:
             logInfo = None
-          current, excludedDict, rtfExclude, plaintextExclude = operations.exclude_authors(current, miscData, inputtedString=confirmDelete, logInfo=logInfo)
+          current, excludedDict, rtfExclude, plaintextExclude = operations.exclude_authors(current, config, miscData, inputtedString=confirmDelete, logInfo=logInfo, only=onlyBool)
           miscData.resources['Whitelist']['WhitelistContents'] = files.ingest_list_file(whitelistPathWithName, keepCase=True)
           exclude = True
 

@@ -6,6 +6,7 @@ import Scripts.utils as utils
 import Scripts.auth as auth
 import Scripts.validation as validation
 import Scripts.logging as logging
+from Scripts.utils import choice
 
 import unicodedata
 import time
@@ -778,12 +779,15 @@ def check_recovered_comments(commentsList):
   return True
 
 # Removes comments by user-selected authors from list of comments to delete
-def exclude_authors(current, miscData, inputtedString, logInfo=None):
+def exclude_authors(current, config, miscData, inputtedString, logInfo=None, only=False):
   valid = False
   while valid == False:
-    if "exclude" in inputtedString: # Account for if user is trying again
-      isolateExpression = r"(?<=exclude ).*" # Matches everything after 'exclude '
-      result = str(re.search(isolateExpression, inputtedString).group(0))
+    if "exclude" in inputtedString.lower(): # Account for if user is trying again
+      isolateExpression = r"(?<=exclude ).*" # Matches everything after 'exclude'
+      result = str(re.search(isolateExpression, inputtedString.lower()).group(0))
+    elif "only" in inputtedString.lower():
+      isolateExpression = r"(?<=only ).*" # Matches everything after 'exclude'
+      result = str(re.search(isolateExpression, inputtedString.lower()).group(0))
     else:
       result = inputtedString
 
@@ -791,18 +795,25 @@ def exclude_authors(current, miscData, inputtedString, logInfo=None):
     validInputExpression = r'^[0-9,-]+$' # Ensures only digits, commas, and dashes are used
     if re.match(validInputExpression, result) == None:
       print(f"\n{F.LIGHTRED_EX}Invalid input!{S.R} Must be a comma separated list of numbers and/or range of numbers. Please try again.")
-      inputtedString = input("\nEnter the list of authors to exclude from deletion: ")
+      if only == False:
+        inputtedString = input("\nEnter the list of authors to exclude from deletion: ")
+      elif only == True:
+        inputtedString = input("\nEnter the list of only authors to delete: ")
+      
     else:
       result = utils.expand_ranges(result) # Expands ranges of numbers into a list of numbers
-      SampleIDsToExclude = result.split(",")
+      chosenSampleIndexes = result.split(",")
       valid = True
-      for num in SampleIDsToExclude: # Check if any numbers outside max range
+      for num in chosenSampleIndexes: # Check if any numbers outside max range
         if int(num) > len(current.matchSamplesDict) or int(num)<1:
           print(f"\n{F.LIGHTRED_EX}Invalid input!{S.R} Number is outside the range of samples: {num} --  Please try again.")
           valid = False
           break
       if valid == False:
-        inputtedString = input("\nEnter the comma separated list of numbers and/or ranges to exclude: ")
+        if only == False:
+          inputtedString = input("\nEnter the comma separated list of numbers and/or ranges to exclude: ")
+        elif only == True:
+          inputtedString = input("\nEnter the comma separated list of numbers and/or ranges to delete: ")
 
   authorIDsToExclude = []
   displayString = ""
@@ -811,10 +822,14 @@ def exclude_authors(current, miscData, inputtedString, logInfo=None):
   plaintextFormattedExcludes = ""
   commentIDExcludeList = []
 
-  # Get authorIDs for selected sample comments
+  # Go through all the sample numbers, check if they are on the list given by user
   for authorID, info in current.matchSamplesDict.items():
-    if str(info['index']) in SampleIDsToExclude:
-      authorIDsToExclude += [authorID]
+    if only == False:
+      if str(info['index']) in chosenSampleIndexes:
+        authorIDsToExclude += [authorID]
+    elif only == True:
+      if str(info['index']) not in chosenSampleIndexes:
+        authorIDsToExclude += [authorID]
 
   # Get comment IDs to be excluded
   for comment, metadata in current.matchedCommentsDict.items():
@@ -847,12 +862,24 @@ def exclude_authors(current, miscData, inputtedString, logInfo=None):
   # Get author names and IDs from dictionary, and display them
   for author in authorIDsToExclude:
     displayString += f"    User ID: {author}   |   User Name: {current.matchSamplesDict[author]['authorName']}\n"
-    with open(miscData.resources['Whitelist']['PathWithName'], "a", encoding="utf-8") as f:
-      f.write(f"# [Excluded]  Channel Name: {current.matchSamplesDict[author]['authorName']}  |  Channel ID: " + "\n")
-      f.write(f"{author}\n")
+    
 
   print(f"\n{F.CYAN}All {len(excludedCommentsDict)} comments{S.R} from the {F.CYAN}following {len(authorIDsToExclude)} users{S.R} are now {F.LIGHTGREEN_EX}excluded{S.R} from deletion:")
   print(displayString)
+
+  if config['whitelist_excluded'] == 'ask':
+    print(f"\nAdd these {F.LIGHTGREEN_EX}excluded{S.R} users to the {F.LIGHTGREEN_EX}whitelist{S.R} for future scans?")
+    addWhitelist = choice("Choose")
+  elif config['whitelist_excluded'] == "True":
+    addWhitelist = True
+  elif config['whitelist_excluded'] == "False":
+    addWhitelist = False
+
+  if addWhitelist == True:
+    with open(miscData.resources['Whitelist']['PathWithName'], "a", encoding="utf-8") as f:
+      for author in authorIDsToExclude:
+        f.write(f"# [Excluded]  Channel Name: {current.matchSamplesDict[author]['authorName']}  |  Channel ID: " + "\n")
+        f.write(f"{author}\n")
 
   # Re-Write Log File
   if logInfo:
