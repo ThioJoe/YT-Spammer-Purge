@@ -70,4 +70,4 @@ body:
     id: screenshots
     attributes:
       label: Screenshots
-      description: (Screenshots can be uploaded by simply dragging an image file into this box)
+      description: (Screenshots can be uploaded by simply dragging an image file into this box or by copying the image into your clipboard and pasting it in the box.)
