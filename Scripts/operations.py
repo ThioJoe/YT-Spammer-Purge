@@ -643,7 +643,7 @@ def delete_found_comments(commentsList, banChoice, deletionMode, recoveryMode=Fa
     remainder = total % 50                      # Gets how many left over after dividing into chunks of 50
     numDivisions = int((total-remainder)/50)    # Gets how many full chunks of 50 there are
     for i in range(numDivisions):               # Loops through each full chunk of 50
-      failedComments = (commentsList[i*50:i*50+50], failedComments)
+      failedComments = setStatus(commentsList[i*50:i*50+50], failedComments)
       deletedCounter += 50
       print_progress(deletedCounter, total, recoveryMode)
     if remainder > 0:
