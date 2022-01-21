@@ -178,16 +178,21 @@ def search_dict(partial, search_key):
                 stack.append(value)
 
 
-def main(communityPostID=None, limit=1000, sort=SORT_BY_RECENT, language=None):
+def main(communityPostID=None, limit=1000, sort=SORT_BY_RECENT, language=None, postScanProgressDict=None):
     try:
         if not communityPostID:
             raise ValueError('you need to specify a Youtube ID')
-
-        print('\nLoading Youtube comments for post:', communityPostID)
+        
+        if postScanProgressDict:
+            i = postScanProgressDict['scanned']
+            j = postScanProgressDict['total']
+            print(f'\n\n [{i}/{j}] Loading Comments For Post: {communityPostID}')
+        else:
+            print(f'\n Loading Comments For Post: {communityPostID}')
         count = 0
-        sys.stdout.write(' Loaded %d comment(s)\r' % count)
+        sys.stdout.write('    > Loaded %d comment(s)\r' % count)
         sys.stdout.flush()
-        start_time = time.time()
+        #start_time = time.time()
 
         commentsDict = {}
         for comment in download_comments(communityPostID, sort, language):
@@ -199,11 +204,11 @@ def main(communityPostID=None, limit=1000, sort=SORT_BY_RECENT, language=None):
 
             #comment_json = json.dumps(comment, ensure_ascii=False)
             count += 1
-            sys.stdout.write(' Loaded %d comment(s)\r' % count)
+            sys.stdout.write('    > Loaded %d comment(s)\r' % count)
             sys.stdout.flush()
             if limit and count >= limit:
                 break
-        print('\n[{:.2f} seconds] Done!'.format(time.time() - start_time))
+        #print('\n[{:.2f} seconds] Done!'.format(time.time() - start_time))
 
         return commentsDict
 

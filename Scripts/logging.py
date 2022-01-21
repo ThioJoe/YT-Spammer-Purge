@@ -127,7 +127,7 @@ def print_prepared_comments(current, scanVideoID, comments, j, loggingEnabled, s
       add_sample(current, author_id_local, author, text, matchReason)
 
     # Build comment direct link
-    if scanMode == "communityPost":
+    if scanMode == "communityPost" or scanMode == "recentCommunityPosts":
       directLink = "https://www.youtube.com/post/" + videoID + "?lc=" + comment_id_local
     else:
       directLink = "https://www.youtube.com/watch?v=" + videoID + "&lc=" + comment_id_local
