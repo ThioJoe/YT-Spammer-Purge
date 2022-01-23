@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # Modified from original at: https://github.com/egbertbouman/youtube-comment-downloader
-
 from __future__ import print_function
+from Scripts.shared_imports import *
 
 import argparse
 import io
@@ -78,20 +78,16 @@ def fetch_recent_community_posts(channel_id):
     html = response.text
     data = json.loads(regex_search(html, YT_INITIAL_DATA_RE, default=''))
     section = next(search_dict(data, 'itemSectionRenderer'), None)
+    rawPosts = list(search_dict(section, 'backstagePostRenderer'))
 
-    postURLList = list(search_dict(section, 'canonicalBaseUrl'))
-    postIsolateExpression = r"(?<=/post/).*" # Matches everything after 'exclude'
-    postIdList = []
-    for post in postURLList:
-        try:
-            result = str(re.search(postIsolateExpression, post).group(0))
-            postIdList.append(result)
-        except AttributeError as ax:
-            if "NoneType" in str(ax):
-                pass
-            
-
-    return postIdList
+    recentPostsListofDicts = []
+    # Gets the Post IDs and sample of post text
+    for post in rawPosts:
+        # Use list to keep in order
+        recentPostsListofDicts.append({post['postId']:post['contentText']['runs'][0]['text']})
+        #recentPostsDict[post['postId']] = post['contentText']['runs'][0]['text']
+    
+    return recentPostsListofDicts
 
 # -----------------------------------------------------------------------------        
 
@@ -178,7 +174,7 @@ def search_dict(partial, search_key):
                 stack.append(value)
 
 
-def main(communityPostID=None, limit=1000, sort=SORT_BY_RECENT, language=None, postScanProgressDict=None):
+def main(communityPostID=None, limit=1000, sort=SORT_BY_RECENT, language=None, postScanProgressDict=None, postText=None):
     try:
         if not communityPostID:
             raise ValueError('you need to specify a Youtube ID')
@@ -186,12 +182,16 @@ def main(communityPostID=None, limit=1000, sort=SORT_BY_RECENT, language=None, p
         if postScanProgressDict:
             i = postScanProgressDict['scanned']
             j = postScanProgressDict['total']
-            print(f'\n\n [{i}/{j}] Loading Comments For Post: {communityPostID}')
+            print(f'\n\n [{i}/{j}] Post ID: {communityPostID}')
         else:
             print(f'\n Loading Comments For Post: {communityPostID}')
+
+        if postText:
+                print(f"    >  {F.LIGHTCYAN_EX}Post Text Sample:{S.R} {postText[0:90]}")
+
         count = 0
-        sys.stdout.write('    > Loaded %d comment(s)\r' % count)
-        sys.stdout.flush()
+        print(f'    >  Loaded {F.YELLOW}{count}{S.R} comment(s)', end='\r')
+
         #start_time = time.time()
 
         commentsDict = {}
@@ -204,8 +204,7 @@ def main(communityPostID=None, limit=1000, sort=SORT_BY_RECENT, language=None, p
 
             #comment_json = json.dumps(comment, ensure_ascii=False)
             count += 1
-            sys.stdout.write('    > Loaded %d comment(s)\r' % count)
-            sys.stdout.flush()
+            print(f'    >  Loaded {F.YELLOW}{count}{S.R} comment(s)', end='\r')
             if limit and count >= limit:
                 break
         #print('\n[{:.2f} seconds] Done!'.format(time.time() - start_time))

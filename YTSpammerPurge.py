@@ -784,8 +784,9 @@ def main():
       print(f"\nChosen Channel: {F.LIGHTCYAN_EX}{channelTitle}{S.R}")
 
       # Get and print community posts
-      communityPostList = community_downloader.fetch_recent_community_posts(channelID)
-      print(f"\nRetrieved {F.YELLOW}{len(communityPostList)}{S.R} community posts from {F.LIGHTCYAN_EX}{channelTitle}{S.R}")
+      recentPostsListofDicts = community_downloader.fetch_recent_community_posts(channelID)
+      recentPostsListofDicts.reverse() # Reverse list so newest posts are first
+      print(f"\nRetrieved {F.YELLOW}{len(recentPostsListofDicts)}{S.R} community posts from {F.LIGHTCYAN_EX}{channelTitle}{S.R}")
       print("How many of the most recent posts do you want to scan?")
       while True:
         inputStr = input("\nNumber of Recent Posts: ")
@@ -794,9 +795,9 @@ def main():
         else:
           try:
             numRecentPosts = int(inputStr)
-            if numRecentPosts > len(communityPostList):
+            if numRecentPosts > len(recentPostsListofDicts):
               print("Number entered is more than posts available. Will just scan all posts available.")
-              numPosts = len(communityPostList)
+              numRecentPosts = len(recentPostsListofDicts)
             elif numRecentPosts <= 0:
               print("Please enter a whole number greater than zero.")
             break
@@ -987,9 +988,9 @@ def main():
       }
 
     if scanMode == "communityPost" or scanMode == "recentCommunityPosts":
-      def scan_community_post(config, communityPostID, limit, postScanProgressDict=None):
+      def scan_community_post(config, communityPostID, limit, postScanProgressDict=None, postText=None):
         authorKeyAllCommentsDict = {}
-        allCommunityCommentsDict = get_community_comments(communityPostID=communityPostID, limit=limit, postScanProgressDict=postScanProgressDict)
+        allCommunityCommentsDict = get_community_comments(communityPostID=communityPostID, limit=limit, postScanProgressDict=postScanProgressDict, postText=postText)
         for key, value in allCommunityCommentsDict.items():
           currentCommentDict = {
             'authorChannelID':value['authorChannelID'], 
@@ -1015,9 +1016,15 @@ def main():
         scan_community_post(config, communityPostID, maxScanNumber)
       elif scanMode == "recentCommunityPosts":
         postScanProgressDict = {'scanned':0, 'total':numRecentPosts}
-        for i in range(numRecentPosts):
+        for post in recentPostsListofDicts:
           postScanProgressDict['scanned'] += 1
-          scan_community_post(config, [i], maxScanNumber, postScanProgressDict=postScanProgressDict)
+          # Each dict only has one key/value pair
+          id = list(post.keys())[0]
+          postText = list(post.values())[0]
+          current.vidTitleDict[id] = f"[Community Post]: {postText}"
+          scan_community_post(config, id, maxScanNumber, postScanProgressDict=postScanProgressDict, postText=postText)
+          if postScanProgressDict['scanned'] == numRecentPosts:
+            break
 
     else:
       # Goes to get comments for first page
