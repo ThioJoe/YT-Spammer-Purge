@@ -510,7 +510,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
         #  add_spam(current, config, miscData, currentCommentDict, videoID)
       elif any(re.search(expression[1], authorChannelName) for expression in compiledRegexDict['usernameBlackWords']):
         add_spam(current, config, miscData, currentCommentDict, videoID)
-      elif config['detect_without_vids'] == True and any(re.search(expression[1], authorChannelName) for expression in compiledRegexDict['usernameNovidBlackWords']):
+      elif config['detect_sub_challenge_spam'] == True and any(re.search(expression[1], authorChannelName) for expression in compiledRegexDict['usernameNovidBlackWords']):
         add_spam(current, config, miscData, currentCommentDict, videoID)
       elif any(findOnlyObfuscated(expression[1], expression[0], combinedString) for expression in compiledRegexDict['blackAdWords']):
         add_spam(current, config, miscData, currentCommentDict, videoID)
