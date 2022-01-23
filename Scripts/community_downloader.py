@@ -80,13 +80,18 @@ def fetch_recent_community_posts(channel_id):
     section = next(search_dict(data, 'itemSectionRenderer'), None)
     rawPosts = list(search_dict(section, 'backstagePostRenderer'))
 
-    recentPostsListofDicts = []
+    recentPostsListofDicts = [] # Use list to keep in order - Puts post ID and sample of text into dictionary keypair, strips newlines
     # Gets the Post IDs and sample of post text
     for post in rawPosts:
-        # Use list to keep in order
-        recentPostsListofDicts.append({post['postId']:post['contentText']['runs'][0]['text']})
-        #recentPostsDict[post['postId']] = post['contentText']['runs'][0]['text']
-    
+        id = post['postId']
+        try:
+            text = post['contentText']['runs'][0]['text'].strip().replace('\n', '').replace('\r', '')
+        except KeyError:
+            text = "[No Text For This Post]"
+        recentPostsListofDicts.append({id:text})
+
+    recentPostsListofDicts.reverse() # Reverse list so newest posts are first
+
     return recentPostsListofDicts
 
 # -----------------------------------------------------------------------------        

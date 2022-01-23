@@ -520,8 +520,15 @@ def list_config_files(relativePath=None):
       # Only exact matches, no backups
       if file.lower() == "spampurgeconfig" + match + ".ini":
         fileList.append(file)
-    except:
-      pass
+    except AttributeError as ax:
+      if "NoneType" in str(ax):
+        pass
+      else:
+        traceback.print_exc()
+        print("--------------------------------------------------------------------------------")
+        print("Something went wrong when getting list of config files. Check your regex.")
+        input("\nPress Enter to exit...")
+        sys.exit()
     
   return fileList
 

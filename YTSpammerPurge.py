@@ -781,13 +781,16 @@ def main():
       if CURRENTUSER.id != channelID:
         userNotChannelOwner = True
 
-      print(f"\nChosen Channel: {F.LIGHTCYAN_EX}{channelTitle}{S.R}")
-
       # Get and print community posts
       recentPostsListofDicts = community_downloader.fetch_recent_community_posts(channelID)
-      recentPostsListofDicts.reverse() # Reverse list so newest posts are first
-      print(f"\nRetrieved {F.YELLOW}{len(recentPostsListofDicts)}{S.R} community posts from {F.LIGHTCYAN_EX}{channelTitle}{S.R}")
-      print("How many of the most recent posts do you want to scan?")
+      
+      print("\n------------------------------------------------------------")
+      print(f"Retrieved {F.YELLOW}{len(recentPostsListofDicts)} recent posts{S.R} from {F.LIGHTCYAN_EX}{channelTitle}{S.R}")
+      print(f"\n  Post Content Samples:")
+      for i in range(len(recentPostsListofDicts)):
+        print(f"    {i+1}.".ljust(9, " ") + f"{list(recentPostsListofDicts[i].values())[0][0:50]}")
+
+      print(f"\n{F.YELLOW}How many{S.R} of the most recent posts do you want to scan?")
       while True:
         inputStr = input("\nNumber of Recent Posts: ")
         if str(inputStr).lower() == "x":
@@ -1023,7 +1026,7 @@ def main():
           id = list(post.keys())[0] # Each dict only has one key/value pair
           postText = list(post.values())[0]
           current.vidTitleDict[id] = f"[Community Post]: {postText}"
-          
+
           scan_community_post(config, id, maxScanNumber, postScanProgressDict=postScanProgressDict, postText=postText)
           if postScanProgressDict['scanned'] == numRecentPosts:
             break
