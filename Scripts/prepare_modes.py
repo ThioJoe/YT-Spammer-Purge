@@ -292,10 +292,11 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
     print(" Loading Filters...              ", end="\r")
 
   # Create Variables
-  blackAdWords, redAdWords, yellowAdWords, exactRedAdWords, usernameBlackWords = [], [], [], [], []
-  usernameBlackWords, usernameObfuBlackWords, textExactBlackWords = [], [], []
+  blackAdWords, redAdWords, yellowAdWords, exactRedAdWords, = [], [], [], []
+  usernameBlackWords, usernameNovidBlackWords, usernameObfuBlackWords, textExactBlackWords, textUpLowBlackWords = [], [], [], [], []
   compiledRegexDict = {
     'usernameBlackWords': [],
+    'usernameNovidBlackWords': [],
     'blackAdWords': [],
     'redAdWords': [],
     'yellowAdWords': [],
@@ -304,26 +305,33 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
     'textObfuBlackWords': [],
     'usernameObfuBlackWords': [],
     'textExactBlackWords': [],
+    'textUpLowBlackWords': [],
   }
 
   # General Spammer Criteria
   #usernameBlackChars = ""
   spamGenEmoji_Raw = b'@Sl-~@Sl-};+UQApOJ|0pOJ~;q_yw3kMN(AyyC2e@3@cRnVj&SlB@'
-  usernameBlackWords_Raw = [b'aA|ICWn^M`', b'aA|ICWn>^?c>', b'Z*CxTWo%_<a$#)', b'c4=WCbY*O1XL4a}', b'Z*CxIZgX^DXL4a}', b'Z*CxIX8', b'V`yb#YanfTAY*7@', b'b7f^9ZFwMLXkh', b'c4>2IbRcbcAY*7@', b'cWHEJATS_yX=D', b'cWHEJAZ~9Uc4=e', b'cWHEJZ*_DaVQzUKc4=e', b'X>N0LVP|q-Z8`', b'Z*CxIZgX^D', b'Z*CxIZgX^DAZK!6Z2', b'c4=WCX>N0LVP|q-Z2']
+  usernameBlackWords_Raw = [b'aA|ICWn^M`', b'aA|ICWn>^?c>', b'Z*CxTWo%_<a$#)', b'c4=WCbY*O1XL4a}', b'Z*CxIZgX^DXL4a}', b'Z*CxIX8', b'V`yb#YanfTAY*7@', b'b7f^9ZFwMLXkh', b'c4>2IbRcbcAY*7@', b'cWHEJATS_yX=D', b'cWHEJAZ~9Uc4=e', b'cWHEJZ*_DaVQzUKc4=e', b'X>N0LVP|q-Z8`', b'Z*CxIZgX^D', b'Z*CxIZgX^DAZK!6Z2', b'c4=WCX>N0LVP|q-Z2', b'b9G`gb9G_', b'b9G`MG$3<zVg']
+  usernameNovidBlackWords_Raw = [b'cWHEJATS_yX=D', b'cWHEJAZ~9Uc4=e', b'cWHEJZ*_DaVQzUKc4=e']
   usernameObfuBlackWords_Raw = [b'c4Bp7YjX', b'b|7MPV{3B']
   usernameRedWords = ["whatsapp", "telegram"]
   textObfuBlackWords = ['telegram']
   textExactBlackWords_Raw = [b'Z*6BRAZ2)AV{~kJAa`hCbRcOUZe?X;Wn=', b'Z*6BRAZ2)AV{~kJAa`hCbRc<ebs%nKWn^V!', b'Z*6BRAZ2)AV{~kJAa`hCbRckLZ*Xj7AZ}%4WMyO', b'ZDnU+ZaN?$Xm50MWpW|']
+  textUpLowBlackWords_Raw = [b'O<5pAPfk=tPE;UCQv', b'Ngz!@OGO}8L0KR|MO0KpQXoT5PE<usQ~']
   
   # General Settings
   unicodeCategoriesStrip = ["Mn", "Cc", "Cf", "Cs", "Co", "Cn"] # Categories of unicode characters to strip during normalization
+  lowAl = b'VPa!sWoBn+X=-b1ZEkOHadLBXb#`}nd3p'
 
   # Create General Lists
   spamGenEmojiSet = make_char_set(b64decode(spamGenEmoji_Raw).decode(utf_16))
+  lowAlSet = make_char_set(b64decode(lowAl).decode(utf_16))
     #usernameBlackCharsSet = make_char_set(usernameBlackChars)
   for x in usernameBlackWords_Raw: usernameBlackWords.append(b64decode(x).decode(utf_16))
+  for x in usernameNovidBlackWords_Raw: usernameNovidBlackWords.append(b64decode(x).decode(utf_16))
   for x in usernameObfuBlackWords_Raw: usernameObfuBlackWords.append(b64decode(x).decode(utf_16))
   for x in textExactBlackWords_Raw: textExactBlackWords.append(b64decode(x).decode(utf_16))
+  for x in textUpLowBlackWords_Raw: textUpLowBlackWords.append(b64decode(x).decode(utf_16))
 
   # Type 1 Spammer Criteria
   minNumbersMatchCount = 6 # Choice of minimum number of matches from spamNums before considered spam
@@ -376,6 +384,9 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   for word in usernameBlackWords:
     value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
     compiledRegexDict['usernameBlackWords'].append([word, value])
+  for word in usernameNovidBlackWords:
+    value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
+    compiledRegexDict['usernameNovidBlackWords'].append([word, value])
   for word in blackAdWords:
     value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
     compiledRegexDict['blackAdWords'].append([word, value])
@@ -397,9 +408,11 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   for word in usernameObfuBlackWords:
     value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
     compiledRegexDict['usernameObfuBlackWords'].append([word, value])
+
   for word in textExactBlackWords:
-    value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
-    compiledRegexDict['textExactBlackWords'].append([word, value])
+    compiledRegexDict['textExactBlackWords'].append(word)
+  for word in textUpLowBlackWords:
+      compiledRegexDict['textUpLowBlackWords'].append(word)
 
   # Prepare All-domain Regex Expression
   prepString = "\.("
@@ -443,6 +456,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
     'redAdEmojiSet': redAdEmojiSet,
     'yellowAdEmojiSet': yellowAdEmojiSet,
     'hrtSet': hrtSet,
+    'lowAlSet': lowAlSet,
     'rootDomainRegex': rootDomainRegex,
     'compiledRegexDict': compiledRegexDict,
     'usernameConfuseRegex': usernameConfuseRegex,

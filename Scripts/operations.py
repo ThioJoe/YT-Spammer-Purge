@@ -146,28 +146,39 @@ def get_replies(current, filtersDict, miscData, config, parent_id, videoID, pare
   commentText = None
   
   if repliesList == None:
-    fieldsToFetch = "items/snippet/authorChannelId/value,items/id,items/snippet/authorDisplayName,items/snippet/textDisplay"
+    fieldsToFetch = "nextPageToken,items/snippet/authorChannelId/value,items/id,items/snippet/authorDisplayName,items/snippet/textDisplay"
+    replies = []
+    replyPageToken = None
 
-    try:
-      results = auth.YOUTUBE.comments().list(
-        part="snippet",
-        parentId=parent_id,
-        maxResults=100,
-        fields=fieldsToFetch,
-        textFormat="plainText"
-      ).execute()
-    except HttpError as hx:
-      traceback.print_exc()
-      utils.print_http_error_during_scan(hx)
-      current.errorOccurred = True
-      return "Error"
-    except Exception as ex:
-      traceback.print_exc()
-      utils.print_exception_during_scan(ex)
-      current.errorOccurred = True
-      return "Error"
+    while replyPageToken != "End":
+      try:
+        results = auth.YOUTUBE.comments().list(
+          part="snippet",
+          parentId=parent_id,
+          pageToken=replyPageToken,
+          maxResults=100,
+          fields=fieldsToFetch,
+          textFormat="plainText"
+        ).execute()
+      except HttpError as hx:
+        traceback.print_exc()
+        utils.print_http_error_during_scan(hx)
+        current.errorOccurred = True
+        return "Error"
+      except Exception as ex:
+        traceback.print_exc()
+        utils.print_exception_during_scan(ex)
+        current.errorOccurred = True
+        return "Error"
 
-    replies = results["items"]
+      replies.extend(results["items"])
+
+      # Get token for next page
+      try:
+        replyPageToken = results['nextPageToken']
+      except KeyError:
+        replyPageToken = "End"
+
   else:
     replies = repliesList
  
@@ -427,6 +438,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
       redAdEmojiSet = smartFilter['redAdEmojiSet']
       yellowAdEmojiSet = smartFilter['yellowAdEmojiSet']
       hrtSet = smartFilter['hrtSet']
+      lowAlSet = smartFilter['lowAlSet']
       languages = smartFilter['languages']
       sensitive =  smartFilter['sensitive']
       rootDomainRegex = smartFilter['rootDomainRegex']
@@ -483,6 +495,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
       # Processed Variables
       combinedString = authorChannelName + commentText
       combinedSet = utils.make_char_set(combinedString, stripLettersNumbers=True, stripPunctuation=True)
+      textSet = set(commentText)
       #usernameSet = utils.make_char_set(authorChannelName)
 
       # Run Checks
@@ -497,11 +510,15 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
         #  add_spam(current, config, miscData, currentCommentDict, videoID)
       elif any(re.search(expression[1], authorChannelName) for expression in compiledRegexDict['usernameBlackWords']):
         add_spam(current, config, miscData, currentCommentDict, videoID)
+      elif config['detect_without_vids'] == True and any(re.search(expression[1], authorChannelName) for expression in compiledRegexDict['usernameNovidBlackWords']):
+        add_spam(current, config, miscData, currentCommentDict, videoID)
       elif any(findOnlyObfuscated(expression[1], expression[0], combinedString) for expression in compiledRegexDict['blackAdWords']):
         add_spam(current, config, miscData, currentCommentDict, videoID)
       elif any(findOnlyObfuscated(expression[1], expression[0], commentText) for expression in compiledRegexDict['textObfuBlackWords']):
         add_spam(current, config, miscData, currentCommentDict, videoID)
-      elif any(re.search(expression[1], commentText) for expression in compiledRegexDict['textExactBlackWords']):
+      elif any(word in commentText.lower() for word in compiledRegexDict['textExactBlackWords']):
+        add_spam(current, config, miscData, currentCommentDict, videoID)
+      elif any((word in commentText and not textSet.intersection(lowAlSet)) for word in compiledRegexDict['textUpLowBlackWords']):
         add_spam(current, config, miscData, currentCommentDict, videoID)
       elif any(findOnlyObfuscated(expression[1], expression[0], authorChannelName) for expression in compiledRegexDict['usernameObfuBlackWords']):
         add_spam(current, config, miscData, currentCommentDict, videoID)

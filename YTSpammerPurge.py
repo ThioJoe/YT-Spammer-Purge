@@ -37,7 +37,7 @@
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
 version = "2.14.0-Beta1"
-configVersion = 23
+configVersion = 24
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 # Import other module files
@@ -345,7 +345,6 @@ def main():
     maxScanNumber = 999999999
     scanVideoID = None
     videosToScan = []
-    nextPageToken = "start"
     loggingEnabled = False
     userNotChannelOwner = False
 
