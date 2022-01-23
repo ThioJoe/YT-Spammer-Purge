@@ -1014,14 +1014,16 @@ def main():
           
       if scanMode == "communityPost":
         scan_community_post(config, communityPostID, maxScanNumber)
+
       elif scanMode == "recentCommunityPosts":
         postScanProgressDict = {'scanned':0, 'total':numRecentPosts}
+
         for post in recentPostsListofDicts:
           postScanProgressDict['scanned'] += 1
-          # Each dict only has one key/value pair
-          id = list(post.keys())[0]
+          id = list(post.keys())[0] # Each dict only has one key/value pair
           postText = list(post.values())[0]
           current.vidTitleDict[id] = f"[Community Post]: {postText}"
+          
           scan_community_post(config, id, maxScanNumber, postScanProgressDict=postScanProgressDict, postText=postText)
           if postScanProgressDict['scanned'] == numRecentPosts:
             break

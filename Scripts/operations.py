@@ -444,14 +444,13 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
       rootDomainRegex = smartFilter['rootDomainRegex']
       # Spam Lists
       spamListCombinedRegex = smartFilter['spamListCombinedRegex']
-      
 
       # if debugSingleComment == True: 
       #   if input("Sensitive True/False: ").lower() == 'true': sensitive = True
       #   else: sensitive = False
 
       # Check for sensitive smart mode  
-      if sensitive == True:
+      if sensitive:
         rootDomainRegex = smartFilter['sensitiveRootDomainRegex']
 
       # Functions --------------------------------------------------------------
@@ -459,7 +458,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
         # Confusable thinks s and f look similar, have to compensate to avoid false positive
         ignoredConfusablesConverter = {ord('f'):ord('s'),ord('s'):ord('f')} 
         result = re.findall(regexExpression, stringToSearch.lower())  
-        if result == None:
+        if not result:
           return False
         else:
           for match in result:
@@ -474,7 +473,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
 
       def check_if_only_link(string):
         result = re.match(compiledRegexDict['onlyVideoLinkRegex'], string)
-        if result == None:
+        if not result:
           return False
         elif result.group(0) and len(result.group(0)) == len(string):
           return True
@@ -510,7 +509,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
         #  add_spam(current, config, miscData, currentCommentDict, videoID)
       elif any(re.search(expression[1], authorChannelName) for expression in compiledRegexDict['usernameBlackWords']):
         add_spam(current, config, miscData, currentCommentDict, videoID)
-      elif config['detect_sub_challenge_spam'] == True and any(re.search(expression[1], authorChannelName) for expression in compiledRegexDict['usernameNovidBlackWords']):
+      elif config['detect_sub_challenge_spam'] and any(re.search(expression[1], authorChannelName) for expression in compiledRegexDict['usernameNovidBlackWords']):
         add_spam(current, config, miscData, currentCommentDict, videoID)
       elif any(findOnlyObfuscated(expression[1], expression[0], combinedString) for expression in compiledRegexDict['blackAdWords']):
         add_spam(current, config, miscData, currentCommentDict, videoID)
@@ -524,11 +523,11 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
         add_spam(current, config, miscData, currentCommentDict, videoID)
       elif re.search(spamListCombinedRegex, combinedString):
         add_spam(current, config, miscData, currentCommentDict, videoID)
-      elif config['detect_link_spam'] == True and check_if_only_link(commentText.strip()):
+      elif config['detect_link_spam'] and check_if_only_link(commentText.strip()):
         add_spam(current, config, miscData, currentCommentDict, videoID)
-      elif sensitive == True and re.search(smartFilter['usernameConfuseRegex'], authorChannelName):
+      elif sensitive and re.search(smartFilter['usernameConfuseRegex'], authorChannelName):
         add_spam(current, config, miscData, currentCommentDict, videoID)
-      elif sensitive == False and findOnlyObfuscated(smartFilter['usernameConfuseRegex'], miscData.channelOwnerName, authorChannelName):
+      elif not sensitive and findOnlyObfuscated(smartFilter['usernameConfuseRegex'], miscData.channelOwnerName, authorChannelName):
         add_spam(current, config, miscData, currentCommentDict, videoID)
       # Multi Criteria Tests
       else:
@@ -547,17 +546,17 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
 
         hrtTest = len(hrtSet.intersection(combinedSet))
         if hrtTest >= 2:
-          if sensitive == False:
+          if not sensitive:
             yellowCount += 1
-          if sensitive == True:
+          else:
             redCount += 1
-        elif hrtTest >= 1 and sensitive == True:
+        elif sensitive and hrtTest >= 1:
           yellowCount += 1
 
         if yellowAdEmojiSet.intersection(combinedSet):
           yellowCount += 1
 
-        if spamGenEmojiSet.intersection(combinedSet) and sensitive == False:
+        if not sensitive and spamGenEmojiSet.intersection(combinedSet):
           yellowCount += 1
 
         if combinedString.count('#') >= 5:
@@ -583,7 +582,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
         if redAdEmojiSet.intersection(combinedSet):
           redCount += 1
 
-        if spamGenEmojiSet.intersection(combinedSet) and sensitive == True:
+        if sensitive and spamGenEmojiSet.intersection(combinedSet):
           redCount += 1
 
         if any(re.search(expression[1], authorChannelName) for expression in compiledRegexDict['usernameRedWords']):
@@ -596,7 +595,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
           add_spam(current, config, miscData, currentCommentDict, videoID)
         elif redCount >= 1 and yellowCount >= 1:
           add_spam(current, config, miscData, currentCommentDict, videoID)
-        elif redCount >= 1 and sensitive == True:
+        elif sensitive and redCount >= 1:
           add_spam(current, config, miscData, currentCommentDict, videoID)
   else:
     pass
