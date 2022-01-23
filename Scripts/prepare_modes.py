@@ -207,7 +207,7 @@ def prepare_filter_mode_ID(scanMode, config):
 # For Filter mode auto-ascii, user inputs nothing, program scans for non-ascii
 def prepare_filter_mode_non_ascii(scanMode, config):
 
-  print("\n--------------------------------------------------------------------------------------------------------------")
+  print("\n-------------------------------------------------- ASCII Mode--------------------------------------------------")
   print("~~~ This mode automatically searches for usernames that contain special characters (aka not letters/numbers) ~~~\n")
   print("Choose the sensitivity level of the filter. You will be shown examples after you choose.")
   print(f"   1. Allow {F.LIGHTMAGENTA_EX}Standard + Extended ASCII{S.R}:    Filter rare unicode & Emojis only")
@@ -278,7 +278,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   if config and config['filter_mode'] == "autosmart":
     pass
   else:
-    print("\n--------------------------------------------------------------------------------------------------------------")
+    print("\n----------------------------------------------- Auto-Smart Mode -----------------------------------------------")
     print(f"~~~ This mode is a {F.LIGHTCYAN_EX}spammer's worst nightmare{S.R}. It automatically scans for multiple spammer techniques ~~~\n")
     print(" > Extremely low (near 0%) false positives")
     print(" > Detects whatsapp scammers and '18+ spam' bots")

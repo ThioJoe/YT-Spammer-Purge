@@ -265,12 +265,12 @@ def check_duplicates(current, config, miscData, allCommentsDict, videoID):
   try:
     minimum_duplicates = int(config['minimum_duplicates'])
     if minimum_duplicates < 2:
-      minimum_duplicates = 5
-      print("\nError: Minimum_Duplicates config setting must be greater than 1. Defaulting to 5.")
+      minimum_duplicates = 4
+      print("\nError: Minimum_Duplicates config setting must be greater than 1. Defaulting to 4.")
       input("\nPress Enter to continue...")
   except ValueError:
-    minimum_duplicates = 5
-    print("\nError: Minimum_Duplicates config setting is invalid. Defaulting to 5.")
+    minimum_duplicates = 4
+    print("\nError: Minimum_Duplicates config setting is invalid. Defaulting to 4.")
     input("\nPress Enter to continue...")
   
   # Calculate number of authors to check, for progress
