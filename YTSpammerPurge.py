@@ -995,6 +995,11 @@ def main():
       def scan_community_post(config, communityPostID, limit, postScanProgressDict=None, postText=None):
         authorKeyAllCommentsDict = {}
         allCommunityCommentsDict = get_community_comments(communityPostID=communityPostID, limit=limit, postScanProgressDict=postScanProgressDict, postText=postText)
+        retrievedCount = len(allCommunityCommentsDict)
+        print(f"\nRetrieved {retrievedCount} comments from post.\n")
+        scannedCount = 0
+
+        # Analyze and store comments
         for key, value in allCommunityCommentsDict.items():
           currentCommentDict = {
             'authorChannelID':value['authorChannelID'], 
@@ -1010,6 +1015,13 @@ def main():
           except TypeError:
             pass
           operations.check_against_filter(current, filtersDict, miscData, config, currentCommentDict, videoID=communityPostID)
+          scannedCount += 1
+
+          # Print Progress
+          percent = ((scannedCount / retrievedCount) * 100)
+          progressStats = f"[ {str(scannedCount)} / {str(retrievedCount)} ]".ljust(15, " ") + f" ({percent:.2f}%)"
+          print(f'  {progressStats}  -  Analyzing Comments For Spam ', end='\r')
+        print("                                                                                        ")
         
         dupeCheckModes = utils.string_to_list(config['duplicate_check_modes'])
         if filtersDict['filterMode'].lower() in dupeCheckModes:

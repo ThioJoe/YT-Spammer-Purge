@@ -119,6 +119,7 @@ def download_comments(youtube_id, sort_by=SORT_BY_RECENT, language=None, sleep=.
     renderer = next(search_dict(section, 'continuationItemRenderer'), None) if section else None
     if not renderer:
         # Comments disabled?
+        print("\nError: 'continuationItemRenderer' not found in page data. Are comments disabled?")
         return
 
     needs_sorting = sort_by != SORT_BY_POPULAR
@@ -151,17 +152,37 @@ def download_comments(youtube_id, sort_by=SORT_BY_RECENT, language=None, sleep=.
                     # Process the 'Show more replies' button
                     continuations.append(next(search_dict(item, 'buttonRenderer'))['command'])
 
-        for comment in reversed(list(search_dict(response, 'commentRenderer'))):
-            yield {'cid': comment['commentId'],
-                   'text': ''.join([c['text'] for c in comment['contentText'].get('runs', [])]),
-                   'time': comment['publishedTimeText']['runs'][0]['text'],
-                   'author': comment.get('authorText', {}).get('simpleText', ''),
-                   'channel': comment['authorEndpoint']['browseEndpoint'].get('browseId', ''),
-                   'votes': comment.get('voteCount', {}).get('simpleText', '0'),
-                   'photo': comment['authorThumbnail']['thumbnails'][-1]['url'],
-                   'heart': next(search_dict(comment, 'isHearted'), False)}
+        # Get total comments amount for post
+        try:
+            commentsHeader = list(search_dict(response, 'commentsHeaderRenderer'))
+            if commentsHeader:
+                postCommentsText = commentsHeader[0]['countText']['runs'][0]['text'].replace(',', '')
+                if 'k' in postCommentsText.lower():
+                    totalPostComments = int(postCommentsText.replace('k', ''))*1000
+                else:
+                    totalPostComments = int(postCommentsText)
+            else:
+                totalPostComments = None
+        except (KeyError, ValueError):
+            totalPostComments = -1
 
-        time.sleep(sleep)
+        for comment in reversed(list(search_dict(response, 'commentRenderer'))):
+            # Yield instead of return, function called by for loop
+            yield {
+                'cid': comment['commentId'],
+                'text': ''.join([c['text'] for c in comment['contentText'].get('runs', [])]),
+                'time': comment['publishedTimeText']['runs'][0]['text'],
+                'author': comment.get('authorText', {}).get('simpleText', ''),
+                'channel': comment['authorEndpoint']['browseEndpoint'].get('browseId', ''),
+                'votes': comment.get('voteCount', {}).get('simpleText', '0'),
+                'photo': comment['authorThumbnail']['thumbnails'][-1]['url'],
+                'heart': next(search_dict(comment, 'isHearted'), False),
+
+                # Extra data not specific to comment:
+                'totalPostComments': totalPostComments
+                }
+
+        #time.sleep(sleep)
 
 
 def search_dict(partial, search_key):
@@ -180,45 +201,51 @@ def search_dict(partial, search_key):
 
 
 def main(communityPostID=None, limit=1000, sort=SORT_BY_RECENT, language=None, postScanProgressDict=None, postText=None):
-    try:
-        if not communityPostID:
-            raise ValueError('you need to specify a Youtube ID')
+    if not communityPostID:
+        raise ValueError('you need to specify a Youtube ID')
+    
+    if postScanProgressDict:
+        i = postScanProgressDict['scanned']
+        j = postScanProgressDict['total']
+        print(f'\n\n [{i}/{j}] Post ID: {communityPostID}')
+    else:
+        print(f'\n Loading Comments For Post: {communityPostID}')
+
+    if postText:
+            print(f"    >  {F.LIGHTCYAN_EX}Post Text Sample:{S.R} {postText[0:90]}")
+
+    count = 0
+    #print(f'    >  Loaded {F.YELLOW}{count}{S.R} comment(s)', end='\r')
+
+    totalComments = 0
+    commentsDict = {}
+    for comment in download_comments(communityPostID, sort, language):
+        commentID = comment['cid']
+        commentText = comment['text']
+        authorName = comment['author']
+        authorChannelID = comment['channel']
+        commentsDict[commentID] = {'commentText': commentText, 'authorName':authorName, 'authorChannelID':authorChannelID}
+
+        # Print Stats
+        count += 1
+
+        # Doesn't return a number after first page, so don't update after that
+        if comment['totalPostComments']:
+            totalComments = comment['totalPostComments']
         
-        if postScanProgressDict:
-            i = postScanProgressDict['scanned']
-            j = postScanProgressDict['total']
-            print(f'\n\n [{i}/{j}] Post ID: {communityPostID}')
-        else:
-            print(f'\n Loading Comments For Post: {communityPostID}')
-
-        if postText:
-                print(f"    >  {F.LIGHTCYAN_EX}Post Text Sample:{S.R} {postText[0:90]}")
-
-        count = 0
-        print(f'    >  Loaded {F.YELLOW}{count}{S.R} comment(s)', end='\r')
-
-        #start_time = time.time()
-
-        commentsDict = {}
-        for comment in download_comments(communityPostID, sort, language):
-            commentID = comment['cid']
-            commentText = comment['text']
-            authorName = comment['author']
-            authorChannelID = comment['channel']
-            commentsDict[commentID] = {'commentText': commentText, 'authorName':authorName, 'authorChannelID':authorChannelID}
-
-            #comment_json = json.dumps(comment, ensure_ascii=False)
-            count += 1
+        if totalComments >= 0:
+            percent = ((count / totalComments) * 100)
+            progressStats = f"[ {str(count)} / {str(totalComments)} ]".ljust(15, " ") + f" ({percent:.2f}%)"
+            print(f'    >  Retrieving Post Comments - {progressStats}', end='\r')
+        else: 
             print(f'    >  Loaded {F.YELLOW}{count}{S.R} comment(s)', end='\r')
-            if limit and count >= limit:
-                break
-        #print('\n[{:.2f} seconds] Done!'.format(time.time() - start_time))
 
-        return commentsDict
+        if limit and count >= limit:
+            print("                                                                                 ")
+            break
 
-    except Exception as e:
-        print('Error:', str(e))
-        sys.exit(1)
+    print("                                                                                 ")
+    return commentsDict
 
 
 if __name__ == "__main__":
