@@ -487,9 +487,9 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
 ################################ RECOVERY MODE ###########################################
 def recover_deleted_comments(config):
   print(f"\n\n-------------------- {F.LIGHTGREEN_EX}Comment Recovery Mode{S.R} --------------------\n")
-  print("Believe it or not, the YouTube API actually allows you to re-instate \"deleted\" comments.")
-  print(f"This is {F.YELLOW}only possible if you have stored the comment IDs{S.R} of the deleted comments, such as {F.YELLOW}having kept the log file{S.R} of that session.")
-  print("If you don't have the comment IDs you can't recover the comments, and there is no way to find them. \n")
+  print("> Believe it or not, the YouTube API actually allows you to re-instate \"deleted\" comments.")
+  print(f"> This is {F.YELLOW}only possible if you have stored the comment IDs{S.R} of the deleted comments, \n   such as {F.YELLOW}having kept the log file{S.R} of that session.")
+  print("> If you don't have the comment IDs you can't recover the comments, and there is no way to find them. \n")
 
   recoveryList = files.parse_comment_list(config, recovery=True)
   if recoveryList == "MainMenu":
