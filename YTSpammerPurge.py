@@ -1335,7 +1335,11 @@ def main():
             returnToMenu = True
             break    
           else:
-            input(f"\n{F.YELLOW}Removal / Reporting declined{S.R} (Because no matching option entered). Press Enter to return to main menu...")
+            if userNotChannelOwner:
+              input(f"\n{F.YELLOW}Removal / Reporting declined{S.R} (Because no matching option entered). Press Enter to return to main menu...")
+            else:
+              print(f"\n\n{F.YELLOW}Removal / Reporting declined{S.R} (No valid option entered) - Note: The log file {F.YELLOW}can still be used{S.R} to delete the comments later.")
+              input(f"\nPress Enter to return to main menu...")
             returnToMenu = True
             break
 
