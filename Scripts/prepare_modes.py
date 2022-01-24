@@ -289,7 +289,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
       print(f" > {F.LIGHTRED_EX}NOTE:{S.R} In sensitive mode, {F.LIGHTRED_EX}expect more false positives{S.R}. Recommended to run this AFTER regular Auto Smart Mode.\n")
     input("Press Enter to Begin Scanning...")
     print ("\033[A                                     \033[A") # Erases previous line
-    print(" Loading Filters...              ", end="\r")
+    print("  Loading Filters  [                              ]", end="\r")
 
   # Create Variables
   blackAdWords, redAdWords, yellowAdWords, exactRedAdWords, = [], [], [], []
@@ -363,7 +363,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   for x in redAdWords_Raw: redAdWords.append(b64decode(x).decode(utf_16))
   for x in yellowAdWords_Raw: yellowAdWords.append(b64decode(x).decode(utf_16))
   for x in exactRedAdWords_Raw: exactRedAdWords.append(b64decode(x).decode(utf_16))
-  
+  print("  Loading Filters  [===                           ]", end="\r")
 
   # Prepare Filters for Type 2 Spammers
   redAdEmojiSet = make_char_set(redAdEmoji)
@@ -373,6 +373,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   # Prepare Regex to detect nothing but video link in comment
   onlyVideoLinkRegex = re.compile(r"^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$")
   compiledRegexDict['onlyVideoLinkRegex'] = onlyVideoLinkRegex
+  
 
   # Compile regex with upper case, otherwise many false positive character matches
   bufferChars = r"*_~|`[]()'-.•"
@@ -399,6 +400,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   for word in exactRedAdWords:
     value = re.compile(confusable_regex(word.upper(), include_character_padding=False))
     compiledRegexDict['exactRedAdWords'].append([word, value])
+  print("  Loading Filters  [=====                         ]", end="\r") 
   for word in usernameRedWords:
     value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
     compiledRegexDict['usernameRedWords'].append([word, value])
@@ -408,11 +410,13 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   for word in usernameObfuBlackWords:
     value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
     compiledRegexDict['usernameObfuBlackWords'].append([word, value])
+  
 
   for word in textExactBlackWords:
     compiledRegexDict['textExactBlackWords'].append(word)
   for word in textUpLowBlackWords:
       compiledRegexDict['textUpLowBlackWords'].append(word)
+  print("  Loading Filters  [==============                ]", end="\r")   
 
   # Prepare All-domain Regex Expression
   prepString = "\.("
@@ -427,16 +431,19 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   prepString = prepString + ")\/"
   rootDomainRegex = re.compile(prepString)
   sensitiveRootDomainRegex = re.compile(sensitivePrepString)
+  print("  Loading Filters  [===================           ]", end="\r")   
 
   spamListExpressionsList = []
   # Prepare spam domain regex
   for domain in spamDomainsList:
-    spamListExpressionsList.append(confusable_regex(domain.upper(), include_character_padding=False).replace(m, a).replace("\.|", "\.|•|"))
+    spamListExpressionsList.append(confusable_regex(domain.upper(), include_character_padding=False).replace(m, a).replace("\.|", "\.|•|"))  
   for account in spamAccountsList:
     spamListExpressionsList.append(confusable_regex(account.upper(), include_character_padding=True).replace(m, a))
   for thread in spamThreadsList:
     spamListExpressionsList.append(confusable_regex(thread.upper(), include_character_padding=True).replace(m, a))
+  print("  Loading Filters  [======================        ]", end="\r")     
   spamListCombinedRegex = re.compile('|'.join(spamListExpressionsList))
+  print("  Loading Filters  [============================  ]", end="\r")  
 
   # Prepare Multi Language Detection
   turkish = 'ÇçŞşĞğİ'
@@ -446,6 +453,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   languages = [['turkish', turkish, []], ['germanic', germanic, []], ['cyrillic', cyrillic, []], ['japanese', japanese, []]]
   for item in languages:
     item[2] = make_char_set(item[1])
+  print("  Loading Filters  [==============================]", end="\r")
 
   filterSettings = {
     'spammerNumbersSet': spammerNumbersSet, 
@@ -466,7 +474,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
     'unicodeCategoriesStrip': unicodeCategoriesStrip,
     'spamListCombinedRegex': spamListCombinedRegex,
     }
-  print("                                ") # Erases line that says "loading filters"  
+  print("                                                                 ") # Erases line that says "loading filters"  
   return filterSettings, None
 
 
