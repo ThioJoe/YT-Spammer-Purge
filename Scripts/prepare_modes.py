@@ -376,7 +376,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   
 
   # Compile regex with upper case, otherwise many false positive character matches
-  bufferChars = r"*_~|`[]()'-.•"
+  bufferChars = r"*_~|`[]()'-.•,"
   compiledRegexDict['bufferChars'] = bufferChars
   bufferMatch, addBuffers = "\\*_~|`\\-\\.", re.escape(bufferChars) # Add 'buffer' chars
   usernameConfuseRegex = re.compile(confusable_regex(miscData.channelOwnerName))
