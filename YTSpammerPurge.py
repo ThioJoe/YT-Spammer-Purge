@@ -354,7 +354,7 @@ def main():
     print(f"      1. Scan {F.LIGHTCYAN_EX}specific videos{S.R}")
     print(f"      2. Scan {F.LIGHTCYAN_EX}recent videos{S.R} for a channel")
     print(f"      3. Scan recent comments across your {F.LIGHTBLUE_EX}Entire Channel{S.R}")
-    print(f"      4. Scan a {F.LIGHTMAGENTA_EX}community post{S.R} (Experimental)")
+    print(f"      4. Scan a specific {F.LIGHTMAGENTA_EX}community post{S.R} (Experimental)")
     print(f"      5. Scan {F.LIGHTMAGENTA_EX}recent community posts{S.R} for a channel (Experimental)")
     print(f"------------------------ {F.YELLOW}Other Options{S.R} -------------------------")
     print(f"      6. Create your own {F.LIGHTGREEN_EX}config file(s){S.R} to quickly run the program with pre-set settings")
@@ -693,7 +693,6 @@ def main():
     elif scanMode == 'communityPost':
       print(f"\nNOTES: This mode is {F.YELLOW}experimental{S.R}, and not as polished as other features. Expect some janky-ness.")
       print("   > It is also much slower to retrieve comments, because it does not use the API")
-      print(f"   > You should only scan {F.YELLOW}your own{S.R} community posts, or things might not work right")
       confirm = False
       while confirm == False:
         communityPostInput = input("\nEnter the ID or link of the community post: ")
@@ -705,7 +704,7 @@ def main():
           print("\nCommunity Post By: " + postOwnerUsername)
           if postOwnerID != CURRENTUSER.id:
             userNotChannelOwner = True
-            print("\nWarning: You are scanning someone elses post. 'Not Your Channel Mode' Enabled.")
+            print(f"\n{F.YELLOW}Warning:{S.R} You are scanning someone elses post. '{F.LIGHTRED_EX}Not Your Channel Mode{S.R}' Enabled.")
           confirm = choice("Continue?")
           if confirm == None:
             return True # Return to main menu
@@ -745,7 +744,6 @@ def main():
     elif scanMode == 'recentCommunityPosts':
       print(f"\nNOTES: This mode is {F.YELLOW}experimental{S.R}, and not as polished as other features. Expect some janky-ness.")
       print("   > It is also much slower to retrieve comments, because it does not use the API")
-      print(f"   > You should only scan {F.YELLOW}your own{S.R} community posts, or things might not work right")      
         
       confirm = False
       validEntry = False
@@ -789,6 +787,9 @@ def main():
       print(f"\n  Post Content Samples:")
       for i in range(len(recentPostsListofDicts)):
         print(f"    {i+1}.".ljust(9, " ") + f"{list(recentPostsListofDicts[i].values())[0][0:50]}")
+
+      if userNotChannelOwner == True:
+              print(f"\n > {F.LIGHTRED_EX}Warning:{S.R} You are scanning someone elses post. {F.LIGHTRED_EX}'Not Your Channel Mode'{S.R} Enabled.")
 
       print(f"\n{F.YELLOW}How many{S.R} of the most recent posts do you want to scan?")
       while True:
