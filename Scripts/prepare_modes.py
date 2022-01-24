@@ -436,12 +436,12 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   spamListExpressionsList = []
   # Prepare spam domain regex
   for domain in spamDomainsList:
-    spamListExpressionsList.append(confusable_regex(domain.upper(), include_character_padding=False).replace(m, a).replace("\.|", "\.|•|"))  
+    spamListExpressionsList.append(confusable_regex(domain.upper().replace(".", "⚫"), include_character_padding=False).replace("(?:⚫)", "(?:.{1,2})"))
   for account in spamAccountsList:
     spamListExpressionsList.append(confusable_regex(account.upper(), include_character_padding=True).replace(m, a))
   for thread in spamThreadsList:
     spamListExpressionsList.append(confusable_regex(thread.upper(), include_character_padding=True).replace(m, a))
-  print("  Loading Filters  [======================        ]", end="\r")     
+  print("  Loading Filters  [======================        ]", end="\r")
   spamListCombinedRegex = re.compile('|'.join(spamListExpressionsList))
   print("  Loading Filters  [============================  ]", end="\r")  
 
