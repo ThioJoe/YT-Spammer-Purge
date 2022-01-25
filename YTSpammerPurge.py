@@ -382,7 +382,7 @@ def main():
     print(f"      6. Create your own {F.LIGHTGREEN_EX}config file(s){S.R} to run the program with pre-set settings")
     print(f"      7. Remove comments using a {F.LIGHTRED_EX}pre-existing list{S.R} or log file")
     print(f"      8. Recover deleted comments using log file")
-    print(f"      9. Check & Download Updates\n")
+    print(f"      9. Check & Download {F.LIGHTCYAN_EX}Updates{S.R}\n")
     
 
 
