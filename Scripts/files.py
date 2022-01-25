@@ -146,6 +146,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
           print(f"This means you have been {F.YELLOW}rate limited by github.com{S.R}. Please try again in a while.\n")
           return None
         else:
+          print(f"\n{B.RED}{F.WHITE}Error [U-4]:{S.R} Got an 403 (ratelimit_reached) when attempting to check for update.")
           return None
       else:
         if silentCheck == False:
@@ -154,6 +155,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
           if silentCheck == False:
             return None
         else:
+          print(f"{B.RED}{F.WHITE}Error [U-3]:{S.R} Got non 200 status code (got: {response.status_code}) when attempting to check for update.\n")
           return None
     else:
       # assume 200 response
@@ -164,12 +166,11 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
         latestVersion = response.json()[0]["name"]
         isBeta = response.json()[0]["prerelease"]
   except OSError as ox:
-    if silentCheck == True:
+    if "WinError 10013" in str(ox):
+      print(f"{B.RED}{F.WHITE}WinError 10013:{S.R} The OS blocked the connection to GitHub. Check your firewall settings.\n")
       return None
     else:
-      if "WinError 10013" in str(ox):
-        print(f"{B.RED}{F.WHITE}WinError 10013:{S.R} The OS blocked the connection to GitHub. Check your firewall settings.\n")
-        return None
+      print(f"{B.RED}{F.WHITE}Unknown OSError{S.R} Error occurred while checking for updates\n")
   except Exception as e:
     if silentCheck == False:
       print(e + "\n")
@@ -177,6 +178,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
       print("If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
       return None
     elif silentCheck == True:
+      print(f"{B.RED}{F.WHITE}Error [Code U-1]:{S.R} Unknown problem while checking for updates. See above error for more details.\n")
       return None
 
   if parse_version(latestVersion) > parse_version(currentVersion):

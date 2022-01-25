@@ -209,7 +209,7 @@ def main():
     input("\nPress Enter to continue...")
     updateReleaseChannel = "all"
 
-  if not config or config['auto_check_update'] == True:
+  if config['auto_check_update'] == True:
     try:
       updateAvailable = files.check_for_update(version, updateReleaseChannel, silentCheck=True, )
     except Exception as e:
@@ -351,6 +351,7 @@ def main():
 
     # ----------------------------------------------------------------------------------------
     if updateAvailable != False:
+      updateStringLabel = "Update Available: "
       if updateAvailable == True:
         if updateReleaseChannel == "stable":
           updateString = f"{F.LIGHTGREEN_EX}Yes{S.R}"
@@ -362,12 +363,17 @@ def main():
         updateString = f"{F.LIGHTRED_EX}Error{S.R}"
         print("> Note: Error during check for updates. Select 'Check For Updates' for details.")  
     else:
-      updateString = ""
+      if config['auto_check_update'] == False:
+        updateStringLabel = "Update Checking: "
+        updateString = "Off"
+      else:
+        updateStringLabel = ""
+        updateString = ""
 
     
     #print("> At any prompt, enter 'X' to return here")
     # User selects scanning mode,  while Loop to get scanning mode, so if invalid input, it will keep asking until valid input
-    print("\n{:<60}{:<18}{:>5}".format("> At any prompt, enter 'X' to return here","Update Available: ",updateString))
+    print("\n{:<59}{:<18}{:>5}".format("> At any prompt, enter 'X' to return here", updateStringLabel, updateString))
     print("> Enter 'Q' now to quit")
     print(f"\n\n-------------------------------- {F.YELLOW}Scanning Options{S.R} --------------------------------")
     print(f"      1. Scan {F.LIGHTCYAN_EX}specific videos{S.R}")
