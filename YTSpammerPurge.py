@@ -109,8 +109,6 @@ def main():
  
   YOUTUBE = auth.first_authentication()
 
-
-
            #### Prepare Resources ####
   resourceFolder = RESOURCES_FOLDER_NAME
   whitelistPathWithName = os.path.join(resourceFolder, "whitelist.txt")
@@ -349,7 +347,7 @@ def main():
 
     os.system(clear_command)
 
-    # ----------------------------------------------------------------------------------------
+    # -----------------------------------------------------------------------------------------------------------------------------
     if updateAvailable != False:
       updateStringLabel = "Update Available: "
       if updateAvailable == True:
@@ -370,11 +368,10 @@ def main():
         updateStringLabel = ""
         updateString = ""
 
-    
-    #print("> At any prompt, enter 'X' to return here")
     # User selects scanning mode,  while Loop to get scanning mode, so if invalid input, it will keep asking until valid input
     print("\n{:<59}{:<18}{:>5}".format("> At any prompt, enter 'X' to return here", updateStringLabel, updateString))
     print("> Enter 'Q' now to quit")
+
     print(f"\n\n-------------------------------- {F.YELLOW}Scanning Options{S.R} --------------------------------")
     print(f"      1. Scan {F.LIGHTCYAN_EX}specific videos{S.R}")
     print(f"      2. Scan {F.LIGHTCYAN_EX}recent videos{S.R} for a channel")
