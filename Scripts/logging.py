@@ -586,7 +586,7 @@ def prepare_logFile_settings(current, config, miscData, jsonSettingsDict, filter
 
   # Set where to put log files
   defaultLogPath = "logs"
-  if config and config['log_path']:
+  if config['log_path']:
     if config['log_path'] == "default": # For backwards compatibility, can remove later on
       logPath = defaultLogPath
     else:

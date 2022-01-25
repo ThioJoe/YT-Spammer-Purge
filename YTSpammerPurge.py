@@ -192,7 +192,7 @@ def main():
 
   # Check for program and list updates if auto updates enabled in config
   try:
-    if not config or config['release_channel'] == "all":
+    if config['release_channel'] == "all":
       updateReleaseChannel = "all"
     elif config['release_channel'] == "stable":
       updateReleaseChannel = "stable"
@@ -527,7 +527,7 @@ def main():
           miscData.channelOwnerName = videosToScan[0]['channelOwnerName']
           
           # Ask if correct videos, or skip if config
-          if config and config['skip_confirm_video'] == True:
+          if config['skip_confirm_video'] == True:
             confirm = True
           else:
             if userNotChannelOwner == True and moderator_mode == False:
@@ -552,7 +552,7 @@ def main():
       
       while validChannel == False:
         # Get and verify config setting for channel ID
-        if config and config['channel_to_scan'] != 'ask':
+        if config['channel_to_scan'] != 'ask':
           if config['channel_to_scan'] == 'mine':
             channelID = CURRENTUSER.id
             channelTitle = CURRENTUSER.name
@@ -586,7 +586,7 @@ def main():
       while validEntry == False or confirm == False:
         videosToScan=[]
         validConfigSetting = True
-        if config and config['recent_videos_amount'] != 'ask' and validConfigSetting == True:
+        if config['recent_videos_amount'] != 'ask' and validConfigSetting == True:
           numVideos = config['recent_videos_amount']
           try:
             numVideos = int(numVideos)
@@ -645,7 +645,7 @@ def main():
                 return True # Return to main menu         
             print(f"  {i+1}. {videosToScan[i]['videoTitle']}")
 
-          if config and (config['skip_confirm_video'] == True and validConfigSetting == True):
+          if config['skip_confirm_video'] == True and validConfigSetting == True:
             confirm = True
           else:
             if userNotChannelOwner == True and moderator_mode == False:
@@ -731,7 +731,7 @@ def main():
       miscData.channelOwnerName = postOwnerUsername 
 
       # Checking config for max comments in config
-      if config and config['max_comments'] != 'ask':
+      if config['max_comments'] != 'ask':
         validInteger = False 
         try:
           maxScanNumber = int(config['max_comments'])
@@ -768,7 +768,7 @@ def main():
       
       while validChannel == False:
         # Get and verify config setting for channel ID
-        if config and config['channel_to_scan'] != 'ask':
+        if config['channel_to_scan'] != 'ask':
           if config['channel_to_scan'] == 'mine':
             channelID = CURRENTUSER.id
             channelTitle = CURRENTUSER.name
@@ -912,7 +912,7 @@ def main():
 
     ## Get filter sub-mode to decide if searching characters or string
     validConfigSetting = None
-    if config and config['filter_submode'] != 'ask':
+    if config['filter_submode'] != 'ask':
       filterSubMode = config['filter_submode']
       validConfigSetting = True
     else:
@@ -1188,8 +1188,6 @@ def main():
     if userNotChannelOwner == True and filterMode not in filterModesAllowedforNonOwners:
       confirmDelete = False
       deletionEnabled = False
-    elif not config:
-      deletionEnabled = "Allowed" # If no config, no need to use all the below, skip right to prompt how to process
 
     # Test skip_deletion preference - If passes both, will either delete or ask user to delete
     elif config['skip_deletion'] == True:
@@ -1393,7 +1391,7 @@ def main():
     # Set or choose ban mode, check if valid based on deletion mode
     if (confirmDelete == "DELETE" or confirmDelete == "REPORT" or confirmDelete == "HOLD") and deletionEnabled == True and current.errorOccurred == False:  
       banChoice = False
-      if config and config['enable_ban'] != "ask":
+      if config['enable_ban'] != "ask":
         if config['enable_ban'] == False:
           pass
         elif config['enable_ban'] == True:
@@ -1415,9 +1413,9 @@ def main():
       ### ---------------- Reporting / Deletion Begins  ----------------
       operations.delete_found_comments(list(current.matchedCommentsDict), banChoice, deletionMode)
       if deletionMode != "reportSpam":
-        if not config or config and config['check_deletion_success'] == True:
+        if config['check_deletion_success'] == True:
           operations.check_deleted_comments(current.matchedCommentsDict)
-        elif config and config['check_deletion_success'] == False:
+        elif config['check_deletion_success'] == False:
           print("\nSkipped checking if deletion was successful.\n")
 
       if loggingEnabled == True:
