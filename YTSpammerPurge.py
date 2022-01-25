@@ -36,7 +36,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.14.0-Beta1"
+version = "2.14.0-Beta2"
 configVersion = 24
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -214,7 +214,7 @@ def main():
       updateAvailable = files.check_for_update(version, updateReleaseChannel, silentCheck=True, )
     except Exception as e:
       print(f"{F.LIGHTRED_EX}Error Code U-3 occurred while checking for updates. (Checking can be disabled using the config file setting) Continuing...{S.R}\n")      
-      updateAvailable = False
+      updateAvailable = None
     
     # Check if today or tomorrow's date is later than the last update date (add day to account for time zones)
     if datetime.today()+timedelta(days=1) >= datetime.strptime(spamListDict['Meta']['VersionInfo']['LatestLocalVersion'], '%Y.%m.%d'):
@@ -348,26 +348,40 @@ def main():
     userNotChannelOwner = False
 
     os.system(clear_command)
+
+    # ----------------------------------------------------------------------------------------
+    if updateAvailable != False:
+      if updateAvailable == True:
+        if updateReleaseChannel == "stable":
+          updateString = f"{F.LIGHTGREEN_EX}Yes{S.R}"
+          #print(f"{F.LIGHTGREEN_EX}Notice: A new version is available! Choose 'Check For Updates' option for details.{S.R}\n")
+        else:
+          #print(f"{F.LIGHTGREEN_EX}Notice: A new {F.CYAN}beta{F.LIGHTGREEN_EX} version is available! Choose 'Check For Updates' option for details.{S.R}\n")
+          updateString = f"{F.CYAN}Beta{S.R}"
+      elif updateAvailable == None:
+        updateString = f"{F.LIGHTRED_EX}Error{S.R}"
+        print("> Note: Error during check for updates. Select 'Check For Updates' for details.")  
+    else:
+      updateString = ""
+
+    
+    #print("> At any prompt, enter 'X' to return here")
     # User selects scanning mode,  while Loop to get scanning mode, so if invalid input, it will keep asking until valid input
-    print(f"  [At any prompt, enter 'X' to return to this menu. Enter 'Q' now to quit.]")
-    print(f"\n----------------------- {F.YELLOW}Scanning Options{S.R} -----------------------")
+    print("\n{:<60}{:<18}{:>5}".format("> At any prompt, enter 'X' to return here","Update Available: ",updateString))
+    print("> Enter 'Q' now to quit")
+    print(f"\n\n-------------------------------- {F.YELLOW}Scanning Options{S.R} --------------------------------")
     print(f"      1. Scan {F.LIGHTCYAN_EX}specific videos{S.R}")
     print(f"      2. Scan {F.LIGHTCYAN_EX}recent videos{S.R} for a channel")
     print(f"      3. Scan recent comments across your {F.LIGHTBLUE_EX}Entire Channel{S.R}")
     print(f"      4. Scan a specific {F.LIGHTMAGENTA_EX}community post{S.R} (Experimental)")
     print(f"      5. Scan {F.LIGHTMAGENTA_EX}recent community posts{S.R} for a channel (Experimental)")
-    print(f"------------------------ {F.YELLOW}Other Options{S.R} -------------------------")
-    print(f"      6. Create your own {F.LIGHTGREEN_EX}config file(s){S.R} to quickly run the program with pre-set settings")
+    print(f"\n--------------------------------- {F.YELLOW}Other Options{S.R} ----------------------------------")
+    print(f"      6. Create your own {F.LIGHTGREEN_EX}config file(s){S.R} to run the program with pre-set settings")
     print(f"      7. Remove comments using a {F.LIGHTRED_EX}pre-existing list{S.R} or log file")
     print(f"      8. Recover deleted comments using log file")
-    print(f"      9. Check For Updates\n")
+    print(f"      9. Check & Download Updates\n")
     
-    # Check for updates silently
-    if updateAvailable == True:
-      if updateReleaseChannel == "stable":
-        print(f"{F.LIGHTGREEN_EX}Notice: A new version is available! Choose 'Check For Updates' option for details.{S.R}\n")
-      else:
-        print(f"{F.LIGHTGREEN_EX}Notice: A new {F.CYAN}beta{F.LIGHTGREEN_EX} version is available! Choose 'Check For Updates' option for details.{S.R}\n")
+
 
     # Make sure input is valid, if not ask again
     validMode:bool = False

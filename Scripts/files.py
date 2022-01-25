@@ -65,6 +65,13 @@ def check_lists_update(spamListDict, silentCheck = False):
         else:
           return spamListDict
     latestRelease = response.json()["tag_name"]
+  except OSError as ox:
+    if silentCheck == True:
+      return spamListDict
+    else:
+      if "WinError 10013" in str(ox):
+        print(f"{B.RED}{F.WHITE}WinError 10013:{S.R} The OS blocked the connection to GitHub. Check your firewall settings.\n")
+        return False
   except:
     if silentCheck == True:
       return spamListDict
@@ -137,17 +144,17 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
         if silentCheck == False:
           print(f"\n{B.RED}{F.WHITE}Error [U-4]:{S.R} Got an 403 (ratelimit_reached) when attempting to check for update.")
           print(f"This means you have been {F.YELLOW}rate limited by github.com{S.R}. Please try again in a while.\n")
-          return False
+          return None
         else:
-          return False
+          return None
       else:
         if silentCheck == False:
           print(f"{B.RED}{F.WHITE}Error [U-3]:{S.R} Got non 200 status code (got: {response.status_code}) when attempting to check for update.\n")
           print(f"If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
           if silentCheck == False:
-            return False
+            return None
         else:
-          return False
+          return None
     else:
       # assume 200 response
       if updateReleaseChannel == "stable":
@@ -156,15 +163,21 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
       elif updateReleaseChannel == "all":
         latestVersion = response.json()[0]["name"]
         isBeta = response.json()[0]["prerelease"]
-      
+  except OSError as ox:
+    if silentCheck == True:
+      return None
+    else:
+      if "WinError 10013" in str(ox):
+        print(f"{B.RED}{F.WHITE}WinError 10013:{S.R} The OS blocked the connection to GitHub. Check your firewall settings.\n")
+        return None
   except Exception as e:
     if silentCheck == False:
       print(e + "\n")
       print(f"{B.RED}{F.WHITE}Error [Code U-1]:{S.R} Problem while checking for updates. See above error for more details.\n")
       print("If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
-      return False
+      return None
     elif silentCheck == True:
-      return False
+      return None
 
   if parse_version(latestVersion) > parse_version(currentVersion):
     isUpdateAvailable = True
