@@ -289,7 +289,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
       print(f" > {F.LIGHTRED_EX}NOTE:{S.R} In sensitive mode, {F.LIGHTRED_EX}expect more false positives{S.R}. Recommended to run this AFTER regular Auto Smart Mode.\n")
     input("Press Enter to Begin Scanning...")
     print ("\033[A                                     \033[A") # Erases previous line
-    print("  Loading Filters  [                              ]", end="\r")
+  print("  Loading Filters  [                              ]", end="\r")
 
   # Create Variables
   blackAdWords, redAdWords, yellowAdWords, exactRedAdWords, = [], [], [], []
