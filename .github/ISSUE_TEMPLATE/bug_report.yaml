@@ -71,4 +71,3 @@ body:
     attributes:
       label: Screenshots
       description: (Screenshots can be uploaded by simply dragging an image file into this box)
-      render: shell
