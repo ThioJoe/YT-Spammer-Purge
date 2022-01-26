@@ -347,13 +347,13 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
               try:
                 os.remove(file_name)
               except IsADirectoryError:
-                  os.rmdir(file_name)
+                  rmtree(file_name)
             for file_name in os.listdir(extraFolderPath):
               if os.path.exists(file_name):
                 try:
                   os.remove(file_name)
                 except IsADirectoryError:
-                  os.rmdir(file_name)
+                  rmtree(file_name)
               move(f"{extraFolderPath}/{file_name}", f"{cwd}/{file_name}")
 
           rmtree(stagingFolder)
