@@ -26,7 +26,7 @@ def prepare_filter_mode_chars(scanMode, filterMode, config):
   elif filterMode == "NameAndText":
     whatToScanMsg = "Usernames and Comment Text"
 
-  if config and config['characters_to_filter'] != "ask":
+  if config['characters_to_filter'] != "ask":
     print("Characters to filter obtained from config file.")
     pass
   else:
@@ -76,7 +76,7 @@ def prepare_filter_mode_strings(scanMode, filterMode, config):
   elif filterMode == "NameAndText":
     whatToScanMsg = "Usernames and Comment Text"
 
-  if config and config['strings_to_filter'] != "ask":
+  if config['strings_to_filter'] != "ask":
     print("Strings to filter obtained from config file.")
     pass
   else:
@@ -104,7 +104,7 @@ def prepare_filter_mode_strings(scanMode, filterMode, config):
       validConfigSetting = False
 
     if validEntry == True:
-      if config and config['strings_to_filter'] != "ask":
+      if config['strings_to_filter'] != "ask":
         pass
       else:
         print(f"     {whatToScanMsg} will be scanned for {F.MAGENTA}ANY{S.R} of the following strings:")
@@ -128,7 +128,7 @@ def prepare_filter_mode_regex(scanMode, filterMode, config):
   elif filterMode == "NameAndText":
     whatToScanMsg = "Usernames and Comment Text"
 
-  if config and config['regex_to_filter'] != "ask":
+  if config['regex_to_filter'] != "ask":
     print("Regex expression obtained from config file.")
     validConfigSetting = True
   else:
@@ -197,7 +197,7 @@ def prepare_filter_mode_ID(scanMode, config):
     print(f"{B.RED}{F.WHITE} WARNING: {S.R} - You entered your own channel ID!")
     print(f"For safety purposes, this program always {F.YELLOW}ignores{S.R} your own comments.")
 
-    if config and config['channel_ids_to_filter'] != "ask":
+    if config['channel_ids_to_filter'] != "ask":
       pass
     else:
       input("\nPress Enter to continue...")
@@ -275,7 +275,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   spamThreadsList = miscData.spamLists['spamThreadsList'] # List of filters associated with spam threads from crowd sourced list
   spamAccountsList = miscData.spamLists['spamAccountsList'] # List of mentioned instagram/telegram scam accounts from crowd sourced list
   utf_16 = "utf-8"
-  if config and config['filter_mode'] == "autosmart":
+  if config['filter_mode'] == "autosmart":
     pass
   else:
     print("\n----------------------------------------------- Auto-Smart Mode -----------------------------------------------")
