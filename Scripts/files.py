@@ -65,6 +65,13 @@ def check_lists_update(spamListDict, silentCheck = False):
         else:
           return spamListDict
     latestRelease = response.json()["tag_name"]
+  except OSError as ox:
+    if silentCheck == True:
+      return spamListDict
+    else:
+      if "WinError 10013" in str(ox):
+        print(f"{B.RED}{F.WHITE}WinError 10013:{S.R} The OS blocked the connection to GitHub. Check your firewall settings.\n")
+        return False
   except:
     if silentCheck == True:
       return spamListDict
@@ -137,34 +144,40 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
         if silentCheck == False:
           print(f"\n{B.RED}{F.WHITE}Error [U-4]:{S.R} Got an 403 (ratelimit_reached) when attempting to check for update.")
           print(f"This means you have been {F.YELLOW}rate limited by github.com{S.R}. Please try again in a while.\n")
-          return False
         else:
-          return False
+          print(f"\n{B.RED}{F.WHITE}Error [U-4]:{S.R} Got an 403 (ratelimit_reached) when attempting to check for update.")
+        return None
+
       else:
         if silentCheck == False:
           print(f"{B.RED}{F.WHITE}Error [U-3]:{S.R} Got non 200 status code (got: {response.status_code}) when attempting to check for update.\n")
           print(f"If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
-          if silentCheck == False:
-            return False
         else:
-          return False
+          print(f"{B.RED}{F.WHITE}Error [U-3]:{S.R} Got non 200 status code (got: {response.status_code}) when attempting to check for update.\n")
+        return None
+
     else:
-      # assume 200 response
+      # assume 200 response (good)
       if updateReleaseChannel == "stable":
         latestVersion = response.json()["name"]
         isBeta = False
       elif updateReleaseChannel == "all":
         latestVersion = response.json()[0]["name"]
         isBeta = response.json()[0]["prerelease"]
-      
+  except OSError as ox:
+    if "WinError 10013" in str(ox):
+      print(f"{B.RED}{F.WHITE}WinError 10013:{S.R} The OS blocked the connection to GitHub. Check your firewall settings.\n")
+    else:
+      print(f"{B.RED}{F.WHITE}Unknown OSError{S.R} Error occurred while checking for updates\n")
+    return None
   except Exception as e:
     if silentCheck == False:
       print(e + "\n")
       print(f"{B.RED}{F.WHITE}Error [Code U-1]:{S.R} Problem while checking for updates. See above error for more details.\n")
       print("If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
-      return False
     elif silentCheck == True:
-      return False
+      print(f"{B.RED}{F.WHITE}Error [Code U-1]:{S.R} Unknown problem while checking for updates. See above error for more details.\n")
+    return None
 
   if parse_version(latestVersion) > parse_version(currentVersion):
     isUpdateAvailable = True
@@ -286,7 +299,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
 
         else:
           # We do this because we pull the .exe for windows, but maybe we could use os.system('git pull')? Because this is a GIT repo, unlike the windows version
-          print(f"> {F.RED} Error:{S.R} You are using an unsupported os for the autoupdater (macos/linux). \n This updater only supports Windows (right now) Feel free to get the files from github: https://github.com/ThioJoe/YT-Spammer-Purge")
+          print(f"> {F.RED} Error:{S.R} You are using an unsupported OS for the autoupdater (macos/linux). \n This updater only supports Windows (right now). Feel free to get the files from github: https://github.com/ThioJoe/YT-Spammer-Purge")
           return False
       elif userChoice == "False" or userChoice == None:
         return False
@@ -297,13 +310,11 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
   elif parse_version(latestVersion) == parse_version(currentVersion):
     if silentCheck == False:
       print(f"\nYou have the {F.LIGHTGREEN_EX}latest{S.R} version: {F.LIGHTGREEN_EX}" + currentVersion)
-      return False
+    return False
   else:
     if silentCheck == False:
       print("\nNo newer release available - Your Version: " + currentVersion + "  --  Latest Version: " + latestVersion)
-      return False
-    elif silentCheck == True:
-      return isUpdateAvailable
+    return False
 
 
 ######################### Try To Get Remote File ##########################
@@ -520,8 +531,15 @@ def list_config_files(relativePath=None):
       # Only exact matches, no backups
       if file.lower() == "spampurgeconfig" + match + ".ini":
         fileList.append(file)
-    except:
-      pass
+    except AttributeError as ax:
+      if "NoneType" in str(ax):
+        pass
+      else:
+        traceback.print_exc()
+        print("--------------------------------------------------------------------------------")
+        print("Something went wrong when getting list of config files. Check your regex.")
+        input("\nPress Enter to exit...")
+        sys.exit()
     
   return fileList
 

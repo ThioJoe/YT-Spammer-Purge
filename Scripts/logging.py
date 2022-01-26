@@ -127,7 +127,7 @@ def print_prepared_comments(current, scanVideoID, comments, j, loggingEnabled, s
       add_sample(current, author_id_local, author, text, matchReason)
 
     # Build comment direct link
-    if scanMode == "communityPost":
+    if scanMode == "communityPost" or scanMode == "recentCommunityPosts":
       directLink = "https://www.youtube.com/post/" + videoID + "?lc=" + comment_id_local
     else:
       directLink = "https://www.youtube.com/watch?v=" + videoID + "&lc=" + comment_id_local
@@ -586,7 +586,7 @@ def prepare_logFile_settings(current, config, miscData, jsonSettingsDict, filter
 
   # Set where to put log files
   defaultLogPath = "logs"
-  if config and config['log_path']:
+  if config['log_path']:
     if config['log_path'] == "default": # For backwards compatibility, can remove later on
       logPath = defaultLogPath
     else:

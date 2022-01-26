@@ -36,8 +36,8 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.13.1"
-configVersion = 23
+version = "2.14.0"
+configVersion = 24
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 # Import other module files
@@ -50,8 +50,8 @@ import Scripts.logging as logging
 import Scripts.operations as operations
 import Scripts.prepare_modes as modes
 from Scripts.community_downloader import main as get_community_comments #Args = post's ID, comment limit
+import Scripts.community_downloader as community_downloader
 from Scripts.utils import choice
-
 
 # Standard Libraries
 import time
@@ -108,8 +108,6 @@ def main():
   # Authenticate with the Google API - If token expired and invalid, deletes and re-authenticates
  
   YOUTUBE = auth.first_authentication()
-
-
 
            #### Prepare Resources ####
   resourceFolder = RESOURCES_FOLDER_NAME
@@ -194,7 +192,7 @@ def main():
 
   # Check for program and list updates if auto updates enabled in config
   try:
-    if not config or config['release_channel'] == "all":
+    if config['release_channel'] == "all":
       updateReleaseChannel = "all"
     elif config['release_channel'] == "stable":
       updateReleaseChannel = "stable"
@@ -209,12 +207,12 @@ def main():
     input("\nPress Enter to continue...")
     updateReleaseChannel = "all"
 
-  if not config or config['auto_check_update'] == True:
+  if config['auto_check_update'] == True:
     try:
       updateAvailable = files.check_for_update(version, updateReleaseChannel, silentCheck=True, )
     except Exception as e:
       print(f"{F.LIGHTRED_EX}Error Code U-3 occurred while checking for updates. (Checking can be disabled using the config file setting) Continuing...{S.R}\n")      
-      updateAvailable = False
+      updateAvailable = None
     
     # Check if today or tomorrow's date is later than the last update date (add day to account for time zones)
     if datetime.today()+timedelta(days=1) >= datetime.strptime(spamListDict['Meta']['VersionInfo']['LatestLocalVersion'], '%Y.%m.%d'):
@@ -344,30 +342,49 @@ def main():
     maxScanNumber = 999999999
     scanVideoID = None
     videosToScan = []
-    nextPageToken = "start"
     loggingEnabled = False
     userNotChannelOwner = False
 
     os.system(clear_command)
-    # User selects scanning mode,  while Loop to get scanning mode, so if invalid input, it will keep asking until valid input
-    print(f"  [At any prompt, enter 'X' to return to this menu. Enter 'Q' now to quit.]")
-    print(f"\n----------------------- {F.YELLOW}Scanning Options{S.R} -----------------------")
-    print(f"      1. Scan {F.LIGHTBLUE_EX}specific videos{S.R}")
-    print(f"      2. Scan {F.LIGHTCYAN_EX}recent videos{S.R} for a channel")
-    print(f"      3. Scan recent comments across your {F.LIGHTMAGENTA_EX}Entire Channel{S.R}")
-    print(f"      4. Scan a {F.LIGHTMAGENTA_EX}community post{S.R} (Experimental)")
-    print(f"------------------------ {F.YELLOW}Other Options{S.R} -------------------------")
-    print(f"      5. Create your own {F.LIGHTGREEN_EX}config file(s){S.R} to quickly run the program with pre-set settings")
-    print(f"      6. Remove comments using a {F.LIGHTRED_EX}pre-existing list{S.R} or log file")
-    print(f"      7. Recover deleted comments using log file")
-    print(f"      8. Check For Updates\n")
-    
-    # Check for updates silently
-    if updateAvailable == True:
-      if updateReleaseChannel == "stable":
-        print(f"{F.LIGHTGREEN_EX}Notice: A new version is available! Choose 'Check For Updates' option for details.{S.R}\n")
+
+    # -----------------------------------------------------------------------------------------------------------------------------
+    if updateAvailable != False:
+      updateStringLabel = "Update Available: "
+      if updateAvailable == True:
+        if updateReleaseChannel == "stable":
+          updateString = f"{F.LIGHTGREEN_EX}Yes{S.R}"
+          #print(f"{F.LIGHTGREEN_EX}Notice: A new version is available! Choose 'Check For Updates' option for details.{S.R}\n")
+        else:
+          #print(f"{F.LIGHTGREEN_EX}Notice: A new {F.CYAN}beta{F.LIGHTGREEN_EX} version is available! Choose 'Check For Updates' option for details.{S.R}\n")
+          updateString = f"{F.CYAN}Beta{S.R}"
+      elif updateAvailable == None:
+        updateString = f"{F.LIGHTRED_EX}Error{S.R}"
+        print("> Note: Error during check for updates. Select 'Check For Updates' for details.")  
+    else:
+      if config['auto_check_update'] == False:
+        updateStringLabel = "Update Checking: "
+        updateString = "Off"
       else:
-        print(f"{F.LIGHTGREEN_EX}Notice: A new {F.CYAN}beta{F.LIGHTGREEN_EX} version is available! Choose 'Check For Updates' option for details.{S.R}\n")
+        updateStringLabel = ""
+        updateString = ""
+
+    # User selects scanning mode,  while Loop to get scanning mode, so if invalid input, it will keep asking until valid input
+    print("\n{:<59}{:<18}{:>5}".format("> At any prompt, enter 'X' to return here", updateStringLabel, updateString))
+    print("> Enter 'Q' now to quit")
+
+    print(f"\n\n-------------------------------- {F.YELLOW}Scanning Options{S.R} --------------------------------")
+    print(f"      1. Scan {F.LIGHTCYAN_EX}specific videos{S.R}")
+    print(f"      2. Scan {F.LIGHTCYAN_EX}recent videos{S.R} for a channel")
+    print(f"      3. Scan recent comments across your {F.LIGHTBLUE_EX}Entire Channel{S.R}")
+    print(f"      4. Scan a specific {F.LIGHTMAGENTA_EX}community post{S.R} (Experimental)")
+    print(f"      5. Scan {F.LIGHTMAGENTA_EX}recent community posts{S.R} for a channel (Experimental)")
+    print(f"\n--------------------------------- {F.YELLOW}Other Options{S.R} ----------------------------------")
+    print(f"      6. Create your own {F.LIGHTGREEN_EX}config file(s){S.R} to run the program with pre-set settings")
+    print(f"      7. Remove comments using a {F.LIGHTRED_EX}pre-existing list{S.R} or log file")
+    print(f"      8. Recover deleted comments using log file")
+    print(f"      9. Check & Download {F.LIGHTCYAN_EX}Updates{S.R}\n")
+    
+
 
     # Make sure input is valid, if not ask again
     validMode:bool = False
@@ -376,12 +393,12 @@ def main():
       if validConfigSetting == True and config and config['scan_mode'] != 'ask':
         scanMode = config['scan_mode']
       else:
-        scanMode = input("Choice (1-8): ")
+        scanMode = input("Choice (1-9): ")
       if scanMode.lower() == "q":
         sys.exit()
 
       # Set scanMode Variable Names
-      validModeValues = ['1', '2', '3', '4', '5', '6', '7', '8', 'chosenvideos', 'recentvideos', 'entirechannel', 'communitypost', 'commentlist']
+      validModeValues = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'chosenvideos', 'recentvideos', 'entirechannel', 'communitypost', 'commentlist', 'recentcommunityposts']
       if scanMode in validModeValues:
         validMode = True
         if scanMode == "1" or scanMode == "chosenvideos":
@@ -392,16 +409,18 @@ def main():
           scanMode = "entireChannel"
         elif scanMode == "4" or scanMode == "communitypost":
           scanMode = "communityPost"
-        elif scanMode == "5":
+        elif scanMode == "5" or scanMode == "recentcommunityposts":
+          scanMode = "recentCommunityPosts"
+        elif scanMode == "6":
           scanMode = "makeConfig"
-        elif scanMode == "6" or scanMode == "commentlist":
+        elif scanMode == "7" or scanMode == "commentlist":
           scanMode = "commentList"          
-        elif scanMode == "7":
-          scanMode = "recoverMode"
         elif scanMode == "8":
+          scanMode = "recoverMode"
+        elif scanMode == "9":
           scanMode = "checkUpdates"
       else:
-        print(f"\nInvalid choice: {scanMode} - Enter either 1, 2, 3, 4, 5, 6, 7, or 8. ")
+        print(f"\nInvalid choice: {scanMode} - Enter a number from 1 to 9")
         validConfigSetting = False
 
     # If chooses to scan single video - Validate Video ID, get title, and confirm with user
@@ -508,7 +527,7 @@ def main():
           miscData.channelOwnerName = videosToScan[0]['channelOwnerName']
           
           # Ask if correct videos, or skip if config
-          if config and config['skip_confirm_video'] == True:
+          if config['skip_confirm_video'] == True:
             confirm = True
           else:
             if userNotChannelOwner == True and moderator_mode == False:
@@ -533,7 +552,7 @@ def main():
       
       while validChannel == False:
         # Get and verify config setting for channel ID
-        if config and config['channel_to_scan'] != 'ask':
+        if config['channel_to_scan'] != 'ask':
           if config['channel_to_scan'] == 'mine':
             channelID = CURRENTUSER.id
             channelTitle = CURRENTUSER.name
@@ -567,7 +586,7 @@ def main():
       while validEntry == False or confirm == False:
         videosToScan=[]
         validConfigSetting = True
-        if config and config['recent_videos_amount'] != 'ask' and validConfigSetting == True:
+        if config['recent_videos_amount'] != 'ask' and validConfigSetting == True:
           numVideos = config['recent_videos_amount']
           try:
             numVideos = int(numVideos)
@@ -626,7 +645,7 @@ def main():
                 return True # Return to main menu         
             print(f"  {i+1}. {videosToScan[i]['videoTitle']}")
 
-          if config and (config['skip_confirm_video'] == True and validConfigSetting == True):
+          if config['skip_confirm_video'] == True and validConfigSetting == True:
             confirm = True
           else:
             if userNotChannelOwner == True and moderator_mode == False:
@@ -687,10 +706,10 @@ def main():
       miscData.channelOwnerID = CURRENTUSER.id
       miscData.channelOwnerName = CURRENTUSER.name
 
+
     elif scanMode == 'communityPost':
       print(f"\nNOTES: This mode is {F.YELLOW}experimental{S.R}, and not as polished as other features. Expect some janky-ness.")
       print("   > It is also much slower to retrieve comments, because it does not use the API")
-      print(f"   > You should only scan {F.YELLOW}your own{S.R} community posts, or things might not work right")
       confirm = False
       while confirm == False:
         communityPostInput = input("\nEnter the ID or link of the community post: ")
@@ -702,7 +721,7 @@ def main():
           print("\nCommunity Post By: " + postOwnerUsername)
           if postOwnerID != CURRENTUSER.id:
             userNotChannelOwner = True
-            print("\nWarning: You are scanning someone elses post. 'Not Your Channel Mode' Enabled.")
+            print(f"\n{F.YELLOW}Warning:{S.R} You are scanning someone elses post. '{F.LIGHTRED_EX}Not Your Channel Mode{S.R}' Enabled.")
           confirm = choice("Continue?")
           if confirm == None:
             return True # Return to main menu
@@ -712,7 +731,7 @@ def main():
       miscData.channelOwnerName = postOwnerUsername 
 
       # Checking config for max comments in config
-      if config and config['max_comments'] != 'ask':
+      if config['max_comments'] != 'ask':
         validInteger = False 
         try:
           maxScanNumber = int(config['max_comments'])
@@ -737,7 +756,79 @@ def main():
               print("\nInvalid Input! Number must a whole number be greater than zero.")
           except:
             print("\nInvalid Input! - Must be a whole number greater than zero.")
+
+    # Recent Community Posts
+    elif scanMode == 'recentCommunityPosts':
+      print(f"\nNOTES: This mode is {F.YELLOW}experimental{S.R}, and not as polished as other features. Expect some janky-ness.")
+      print("   > It is also much slower to retrieve comments, because it does not use the API")
         
+      confirm = False
+      validEntry = False
+      validChannel = False
+      
+      while validChannel == False:
+        # Get and verify config setting for channel ID
+        if config['channel_to_scan'] != 'ask':
+          if config['channel_to_scan'] == 'mine':
+            channelID = CURRENTUSER.id
+            channelTitle = CURRENTUSER.name
+            validChannel = True
+            break
+          else:
+            validChannel, channelID, channelTitle = validation.validate_channel_id(config['channel_to_scan'])
+            if validChannel == True:
+              break
+            else:
+              print("Invalid Channel ID or Link in config file!")
+
+        print(f"\nEnter a {F.YELLOW}channel ID or Link{S.R} to scan {F.LIGHTCYAN_EX}recent community posts{S.R} from")
+        print(f"   > If scanning {F.YELLOW}your own channel{S.R}, just hit {F.LIGHTGREEN_EX}Enter{S.R}")
+        inputtedChannel = input("\nEnter Here: ")
+        if inputtedChannel == "":
+          channelID = CURRENTUSER.id
+          channelTitle = CURRENTUSER.name
+          validChannel = True
+        elif str(inputtedChannel).lower() == "x":
+          return True # Return to main menu
+        else:
+          validChannel, channelID, channelTitle = validation.validate_channel_id(inputtedChannel)
+
+      if CURRENTUSER.id != channelID:
+        userNotChannelOwner = True
+
+      # Get and print community posts
+      recentPostsListofDicts = community_downloader.fetch_recent_community_posts(channelID)
+      
+      print("\n------------------------------------------------------------")
+      print(f"Retrieved {F.YELLOW}{len(recentPostsListofDicts)} recent posts{S.R} from {F.LIGHTCYAN_EX}{channelTitle}{S.R}")
+      print(f"\n  Post Content Samples:")
+      for i in range(len(recentPostsListofDicts)):
+        print(f"    {i+1}.".ljust(9, " ") + f"{list(recentPostsListofDicts[i].values())[0][0:50]}")
+
+      if userNotChannelOwner == True:
+              print(f"\n > {F.LIGHTRED_EX}Warning:{S.R} You are scanning someone elses post. {F.LIGHTRED_EX}'Not Your Channel Mode'{S.R} Enabled.")
+
+      print(f"\n{F.YELLOW}How many{S.R} of the most recent posts do you want to scan?")
+      while True:
+        inputStr = input("\nNumber of Recent Posts: ")
+        if str(inputStr).lower() == "x":
+          return True
+        else:
+          try:
+            numRecentPosts = int(inputStr)
+            if numRecentPosts > len(recentPostsListofDicts):
+              print("Number entered is more than posts available. Will just scan all posts available.")
+              numRecentPosts = len(recentPostsListofDicts)
+            elif numRecentPosts <= 0:
+              print("Please enter a whole number greater than zero.")
+            break
+          except ValueError:
+            print("Invalid Input! - Must be a whole number.")
+
+      miscData.channelOwnerID = channelID
+      miscData.channelOwnerName = channelTitle 
+
+
     # Create config file
     elif scanMode == "makeConfig":
       result = files.create_config_file()
@@ -821,7 +912,7 @@ def main():
 
     ## Get filter sub-mode to decide if searching characters or string
     validConfigSetting = None
-    if config and config['filter_submode'] != 'ask':
+    if config['filter_submode'] != 'ask':
       filterSubMode = config['filter_submode']
       validConfigSetting = True
     else:
@@ -917,9 +1008,15 @@ def main():
       'CustomRegexPattern': regexPattern
       }
 
-    if scanMode == "communityPost":
-      def scan_community_post(communityPostID, limit):
-        allCommunityCommentsDict = get_community_comments(communityPostID=communityPostID, limit=limit)
+    if scanMode == "communityPost" or scanMode == "recentCommunityPosts":
+      def scan_community_post(config, communityPostID, limit, postScanProgressDict=None, postText=None):
+        authorKeyAllCommentsDict = {}
+        allCommunityCommentsDict = get_community_comments(communityPostID=communityPostID, limit=limit, postScanProgressDict=postScanProgressDict, postText=postText)
+        retrievedCount = len(allCommunityCommentsDict)
+        print(f"\nRetrieved {retrievedCount} comments from post.\n")
+        scannedCount = 0
+
+        # Analyze and store comments
         for key, value in allCommunityCommentsDict.items():
           currentCommentDict = {
             'authorChannelID':value['authorChannelID'], 
@@ -928,8 +1025,41 @@ def main():
             'commentText':value['commentText'],
             'commentID':key,
             }
+          try:
+            authorKeyAllCommentsDict[value['authorChannelID']].append(currentCommentDict)
+          except KeyError:
+            authorKeyAllCommentsDict[value['authorChannelID']] = [currentCommentDict]
+          except TypeError:
+            pass
           operations.check_against_filter(current, filtersDict, miscData, config, currentCommentDict, videoID=communityPostID)
-      scan_community_post(communityPostID, maxScanNumber)
+          scannedCount += 1
+
+          # Print Progress
+          percent = ((scannedCount / retrievedCount) * 100)
+          progressStats = f"[ {str(scannedCount)} / {str(retrievedCount)} ]".ljust(15, " ") + f" ({percent:.2f}%)"
+          print(f'  {progressStats}  -  Analyzing Comments For Spam ', end='\r')
+        print("                                                                                        ")
+        
+        dupeCheckModes = utils.string_to_list(config['duplicate_check_modes'])
+        if filtersDict['filterMode'].lower() in dupeCheckModes:
+          operations.check_duplicates(current, config, miscData, authorKeyAllCommentsDict, communityPostID)
+          print("                                                                                                                       ")
+          
+      if scanMode == "communityPost":
+        scan_community_post(config, communityPostID, maxScanNumber)
+
+      elif scanMode == "recentCommunityPosts":
+        postScanProgressDict = {'scanned':0, 'total':numRecentPosts}
+
+        for post in recentPostsListofDicts:
+          postScanProgressDict['scanned'] += 1
+          id = list(post.keys())[0] # Each dict only has one key/value pair
+          postText = list(post.values())[0]
+          current.vidTitleDict[id] = f"[Community Post]: {postText}"
+
+          scan_community_post(config, id, maxScanNumber, postScanProgressDict=postScanProgressDict, postText=postText)
+          if postScanProgressDict['scanned'] == numRecentPosts:
+            break
 
     else:
       # Goes to get comments for first page
@@ -1058,8 +1188,6 @@ def main():
     if userNotChannelOwner == True and filterMode not in filterModesAllowedforNonOwners:
       confirmDelete = False
       deletionEnabled = False
-    elif not config:
-      deletionEnabled = "Allowed" # If no config, no need to use all the below, skip right to prompt how to process
 
     # Test skip_deletion preference - If passes both, will either delete or ask user to delete
     elif config['skip_deletion'] == True:
@@ -1222,7 +1350,11 @@ def main():
             returnToMenu = True
             break    
           else:
-            input(f"\n{F.YELLOW}Removal / Reporting declined{S.R} (Because no matching option entered). Press Enter to return to main menu...")
+            if userNotChannelOwner:
+              input(f"\n{F.YELLOW}Removal / Reporting declined{S.R} (Because no matching option entered). Press Enter to return to main menu...")
+            else:
+              print(f"\n\n{F.YELLOW}Removal / Reporting declined{S.R} (No valid option entered) - Note: The log file {F.YELLOW}can still be used{S.R} to delete the comments later.")
+              input(f"\nPress Enter to return to main menu...")
             returnToMenu = True
             break
 
@@ -1259,7 +1391,7 @@ def main():
     # Set or choose ban mode, check if valid based on deletion mode
     if (confirmDelete == "DELETE" or confirmDelete == "REPORT" or confirmDelete == "HOLD") and deletionEnabled == True and current.errorOccurred == False:  
       banChoice = False
-      if config and config['enable_ban'] != "ask":
+      if config['enable_ban'] != "ask":
         if config['enable_ban'] == False:
           pass
         elif config['enable_ban'] == True:
@@ -1281,9 +1413,9 @@ def main():
       ### ---------------- Reporting / Deletion Begins  ----------------
       operations.delete_found_comments(list(current.matchedCommentsDict), banChoice, deletionMode)
       if deletionMode != "reportSpam":
-        if not config or config and config['check_deletion_success'] == True:
+        if config['check_deletion_success'] == True:
           operations.check_deleted_comments(current.matchedCommentsDict)
-        elif config and config['check_deletion_success'] == False:
+        elif config['check_deletion_success'] == False:
           print("\nSkipped checking if deletion was successful.\n")
 
       if loggingEnabled == True:

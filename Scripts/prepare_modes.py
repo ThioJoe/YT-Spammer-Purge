@@ -26,7 +26,7 @@ def prepare_filter_mode_chars(scanMode, filterMode, config):
   elif filterMode == "NameAndText":
     whatToScanMsg = "Usernames and Comment Text"
 
-  if config and config['characters_to_filter'] != "ask":
+  if config['characters_to_filter'] != "ask":
     print("Characters to filter obtained from config file.")
     pass
   else:
@@ -76,7 +76,7 @@ def prepare_filter_mode_strings(scanMode, filterMode, config):
   elif filterMode == "NameAndText":
     whatToScanMsg = "Usernames and Comment Text"
 
-  if config and config['strings_to_filter'] != "ask":
+  if config['strings_to_filter'] != "ask":
     print("Strings to filter obtained from config file.")
     pass
   else:
@@ -104,7 +104,7 @@ def prepare_filter_mode_strings(scanMode, filterMode, config):
       validConfigSetting = False
 
     if validEntry == True:
-      if config and config['strings_to_filter'] != "ask":
+      if config['strings_to_filter'] != "ask":
         pass
       else:
         print(f"     {whatToScanMsg} will be scanned for {F.MAGENTA}ANY{S.R} of the following strings:")
@@ -128,7 +128,7 @@ def prepare_filter_mode_regex(scanMode, filterMode, config):
   elif filterMode == "NameAndText":
     whatToScanMsg = "Usernames and Comment Text"
 
-  if config and config['regex_to_filter'] != "ask":
+  if config['regex_to_filter'] != "ask":
     print("Regex expression obtained from config file.")
     validConfigSetting = True
   else:
@@ -197,7 +197,7 @@ def prepare_filter_mode_ID(scanMode, config):
     print(f"{B.RED}{F.WHITE} WARNING: {S.R} - You entered your own channel ID!")
     print(f"For safety purposes, this program always {F.YELLOW}ignores{S.R} your own comments.")
 
-    if config and config['channel_ids_to_filter'] != "ask":
+    if config['channel_ids_to_filter'] != "ask":
       pass
     else:
       input("\nPress Enter to continue...")
@@ -207,7 +207,7 @@ def prepare_filter_mode_ID(scanMode, config):
 # For Filter mode auto-ascii, user inputs nothing, program scans for non-ascii
 def prepare_filter_mode_non_ascii(scanMode, config):
 
-  print("\n--------------------------------------------------------------------------------------------------------------")
+  print("\n-------------------------------------------------- ASCII Mode--------------------------------------------------")
   print("~~~ This mode automatically searches for usernames that contain special characters (aka not letters/numbers) ~~~\n")
   print("Choose the sensitivity level of the filter. You will be shown examples after you choose.")
   print(f"   1. Allow {F.LIGHTMAGENTA_EX}Standard + Extended ASCII{S.R}:    Filter rare unicode & Emojis only")
@@ -275,10 +275,10 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   spamThreadsList = miscData.spamLists['spamThreadsList'] # List of filters associated with spam threads from crowd sourced list
   spamAccountsList = miscData.spamLists['spamAccountsList'] # List of mentioned instagram/telegram scam accounts from crowd sourced list
   utf_16 = "utf-8"
-  if config and config['filter_mode'] == "autosmart":
+  if config['filter_mode'] == "autosmart":
     pass
   else:
-    print("\n--------------------------------------------------------------------------------------------------------------")
+    print("\n----------------------------------------------- Auto-Smart Mode -----------------------------------------------")
     print(f"~~~ This mode is a {F.LIGHTCYAN_EX}spammer's worst nightmare{S.R}. It automatically scans for multiple spammer techniques ~~~\n")
     print(" > Extremely low (near 0%) false positives")
     print(" > Detects whatsapp scammers and '18+ spam' bots")
@@ -289,13 +289,14 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
       print(f" > {F.LIGHTRED_EX}NOTE:{S.R} In sensitive mode, {F.LIGHTRED_EX}expect more false positives{S.R}. Recommended to run this AFTER regular Auto Smart Mode.\n")
     input("Press Enter to Begin Scanning...")
     print ("\033[A                                     \033[A") # Erases previous line
-    print(" Loading Filters...              ", end="\r")
+  print("  Loading Filters  [                              ]", end="\r")
 
   # Create Variables
-  blackAdWords, redAdWords, yellowAdWords, exactRedAdWords, usernameBlackWords = [], [], [], [], []
-  usernameBlackWords, usernameObfuBlackWords, textExactBlackWords = [], [], []
+  blackAdWords, redAdWords, yellowAdWords, exactRedAdWords, = [], [], [], []
+  usernameBlackWords, usernameNovidBlackWords, usernameObfuBlackWords, textExactBlackWords, textUpLowBlackWords = [], [], [], [], []
   compiledRegexDict = {
     'usernameBlackWords': [],
+    'usernameNovidBlackWords': [],
     'blackAdWords': [],
     'redAdWords': [],
     'yellowAdWords': [],
@@ -304,26 +305,33 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
     'textObfuBlackWords': [],
     'usernameObfuBlackWords': [],
     'textExactBlackWords': [],
+    'textUpLowBlackWords': [],
   }
 
   # General Spammer Criteria
   #usernameBlackChars = ""
   spamGenEmoji_Raw = b'@Sl-~@Sl-};+UQApOJ|0pOJ~;q_yw3kMN(AyyC2e@3@cRnVj&SlB@'
-  usernameBlackWords_Raw = [b'aA|ICWn^M`', b'aA|ICWn>^?c>', b'Z*CxTWo%_<a$#)', b'c4=WCbY*O1XL4a}', b'Z*CxIZgX^DXL4a}', b'Z*CxIX8', b'V`yb#YanfTAY*7@', b'b7f^9ZFwMLXkh', b'c4>2IbRcbcAY*7@', b'cWHEJATS_yX=D', b'cWHEJAZ~9Uc4=e', b'cWHEJZ*_DaVQzUKc4=e', b'X>N0LVP|q-Z8`', b'Z*CxIZgX^D', b'Z*CxIZgX^DAZK!6Z2', b'c4=WCX>N0LVP|q-Z2']
+  usernameBlackWords_Raw = [b'aA|ICWn^M`', b'aA|ICWn>^?c>', b'Z*CxTWo%_<a$#)', b'c4=WCbY*O1XL4a}', b'Z*CxIZgX^DXL4a}', b'Z*CxIX8', b'V`yb#YanfTAY*7@', b'b7f^9ZFwMLXkh', b'c4>2IbRcbcAY*7@', b'cWHEJATS_yX=D', b'cWHEJAZ~9Uc4=e', b'cWHEJZ*_DaVQzUKc4=e', b'X>N0LVP|q-Z8`', b'Z*CxIZgX^D', b'Z*CxIZgX^DAZK!6Z2', b'c4=WCX>N0LVP|q-Z2', b'b9G`gb9G_', b'b9G`MG$3<zVg']
+  usernameNovidBlackWords_Raw = [b'cWHEJATS_yX=D', b'cWHEJAZ~9Uc4=e', b'cWHEJZ*_DaVQzUKc4=e']
   usernameObfuBlackWords_Raw = [b'c4Bp7YjX', b'b|7MPV{3B']
   usernameRedWords = ["whatsapp", "telegram"]
   textObfuBlackWords = ['telegram']
   textExactBlackWords_Raw = [b'Z*6BRAZ2)AV{~kJAa`hCbRcOUZe?X;Wn=', b'Z*6BRAZ2)AV{~kJAa`hCbRc<ebs%nKWn^V!', b'Z*6BRAZ2)AV{~kJAa`hCbRckLZ*Xj7AZ}%4WMyO', b'ZDnU+ZaN?$Xm50MWpW|']
+  textUpLowBlackWords_Raw = [b'O<5pAPfk=tPE;UCQv', b'Ngz!@OGO}8L0KR|MO0KpQXoT5PE<usQ~', b'O<5pTNkm0YQy@W7MF']
   
   # General Settings
   unicodeCategoriesStrip = ["Mn", "Cc", "Cf", "Cs", "Co", "Cn"] # Categories of unicode characters to strip during normalization
+  lowAl = b'VPa!sWoBn+X=-b1ZEkOHadLBXb#`}nd3p'
 
   # Create General Lists
   spamGenEmojiSet = make_char_set(b64decode(spamGenEmoji_Raw).decode(utf_16))
+  lowAlSet = make_char_set(b64decode(lowAl).decode(utf_16))
     #usernameBlackCharsSet = make_char_set(usernameBlackChars)
   for x in usernameBlackWords_Raw: usernameBlackWords.append(b64decode(x).decode(utf_16))
+  for x in usernameNovidBlackWords_Raw: usernameNovidBlackWords.append(b64decode(x).decode(utf_16))
   for x in usernameObfuBlackWords_Raw: usernameObfuBlackWords.append(b64decode(x).decode(utf_16))
   for x in textExactBlackWords_Raw: textExactBlackWords.append(b64decode(x).decode(utf_16))
+  for x in textUpLowBlackWords_Raw: textUpLowBlackWords.append(b64decode(x).decode(utf_16))
 
   # Type 1 Spammer Criteria
   minNumbersMatchCount = 6 # Choice of minimum number of matches from spamNums before considered spam
@@ -355,7 +363,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   for x in redAdWords_Raw: redAdWords.append(b64decode(x).decode(utf_16))
   for x in yellowAdWords_Raw: yellowAdWords.append(b64decode(x).decode(utf_16))
   for x in exactRedAdWords_Raw: exactRedAdWords.append(b64decode(x).decode(utf_16))
-  
+  print("  Loading Filters  [===                           ]", end="\r")
 
   # Prepare Filters for Type 2 Spammers
   redAdEmojiSet = make_char_set(redAdEmoji)
@@ -365,9 +373,10 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   # Prepare Regex to detect nothing but video link in comment
   onlyVideoLinkRegex = re.compile(r"^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$")
   compiledRegexDict['onlyVideoLinkRegex'] = onlyVideoLinkRegex
+  
 
   # Compile regex with upper case, otherwise many false positive character matches
-  bufferChars = r"*_~|`[]()'-.•"
+  bufferChars = r"*_~|`[]()'-.•,"
   compiledRegexDict['bufferChars'] = bufferChars
   bufferMatch, addBuffers = "\\*_~|`\\-\\.", re.escape(bufferChars) # Add 'buffer' chars
   usernameConfuseRegex = re.compile(confusable_regex(miscData.channelOwnerName))
@@ -376,6 +385,9 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   for word in usernameBlackWords:
     value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
     compiledRegexDict['usernameBlackWords'].append([word, value])
+  for word in usernameNovidBlackWords:
+    value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
+    compiledRegexDict['usernameNovidBlackWords'].append([word, value])
   for word in blackAdWords:
     value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
     compiledRegexDict['blackAdWords'].append([word, value])
@@ -388,6 +400,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   for word in exactRedAdWords:
     value = re.compile(confusable_regex(word.upper(), include_character_padding=False))
     compiledRegexDict['exactRedAdWords'].append([word, value])
+  print("  Loading Filters  [=====                         ]", end="\r") 
   for word in usernameRedWords:
     value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
     compiledRegexDict['usernameRedWords'].append([word, value])
@@ -397,9 +410,13 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   for word in usernameObfuBlackWords:
     value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
     compiledRegexDict['usernameObfuBlackWords'].append([word, value])
+  
+
   for word in textExactBlackWords:
-    value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
-    compiledRegexDict['textExactBlackWords'].append([word, value])
+    compiledRegexDict['textExactBlackWords'].append(word)
+  for word in textUpLowBlackWords:
+      compiledRegexDict['textUpLowBlackWords'].append(word)
+  print("  Loading Filters  [==============                ]", end="\r")   
 
   # Prepare All-domain Regex Expression
   prepString = "\.("
@@ -414,16 +431,19 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   prepString = prepString + ")\/"
   rootDomainRegex = re.compile(prepString)
   sensitiveRootDomainRegex = re.compile(sensitivePrepString)
+  print("  Loading Filters  [===================           ]", end="\r")   
 
   spamListExpressionsList = []
   # Prepare spam domain regex
   for domain in spamDomainsList:
-    spamListExpressionsList.append(confusable_regex(domain.upper(), include_character_padding=False).replace(m, a).replace("\.|", "\.|•|"))
+    spamListExpressionsList.append(confusable_regex(domain.upper().replace(".", "⚫"), include_character_padding=False).replace("(?:⚫)", "(?:[^a-zA-Z0-9 ]{1,2})"))
   for account in spamAccountsList:
     spamListExpressionsList.append(confusable_regex(account.upper(), include_character_padding=True).replace(m, a))
   for thread in spamThreadsList:
     spamListExpressionsList.append(confusable_regex(thread.upper(), include_character_padding=True).replace(m, a))
+  print("  Loading Filters  [======================        ]", end="\r")
   spamListCombinedRegex = re.compile('|'.join(spamListExpressionsList))
+  print("  Loading Filters  [============================  ]", end="\r")  
 
   # Prepare Multi Language Detection
   turkish = 'ÇçŞşĞğİ'
@@ -433,6 +453,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   languages = [['turkish', turkish, []], ['germanic', germanic, []], ['cyrillic', cyrillic, []], ['japanese', japanese, []]]
   for item in languages:
     item[2] = make_char_set(item[1])
+  print("  Loading Filters  [==============================]", end="\r")
 
   filterSettings = {
     'spammerNumbersSet': spammerNumbersSet, 
@@ -443,6 +464,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
     'redAdEmojiSet': redAdEmojiSet,
     'yellowAdEmojiSet': yellowAdEmojiSet,
     'hrtSet': hrtSet,
+    'lowAlSet': lowAlSet,
     'rootDomainRegex': rootDomainRegex,
     'compiledRegexDict': compiledRegexDict,
     'usernameConfuseRegex': usernameConfuseRegex,
@@ -452,7 +474,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
     'unicodeCategoriesStrip': unicodeCategoriesStrip,
     'spamListCombinedRegex': spamListCombinedRegex,
     }
-  print("                                ") # Erases line that says "loading filters"  
+  print("                                                                 ") # Erases line that says "loading filters"  
   return filterSettings, None
 
 
@@ -465,9 +487,9 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
 ################################ RECOVERY MODE ###########################################
 def recover_deleted_comments(config):
   print(f"\n\n-------------------- {F.LIGHTGREEN_EX}Comment Recovery Mode{S.R} --------------------\n")
-  print("Believe it or not, the YouTube API actually allows you to re-instate \"deleted\" comments.")
-  print(f"This is {F.YELLOW}only possible if you have stored the comment IDs{S.R} of the deleted comments, such as {F.YELLOW}having kept the log file{S.R} of that session.")
-  print("If you don't have the comment IDs you can't recover the comments, and there is no way to find them. \n")
+  print("> Believe it or not, the YouTube API actually allows you to re-instate \"deleted\" comments.")
+  print(f"> This is {F.YELLOW}only possible if you have stored the comment IDs{S.R} of the deleted comments, \n   such as {F.YELLOW}having kept the log file{S.R} of that session.")
+  print("> If you don't have the comment IDs you can't recover the comments, and there is no way to find them. \n")
 
   recoveryList = files.parse_comment_list(config, recovery=True)
   if recoveryList == "MainMenu":
