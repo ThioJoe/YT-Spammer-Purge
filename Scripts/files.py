@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
+from copy import copy
 import platform
 import tarfile
 from Scripts.shared_imports import *
@@ -305,7 +306,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
           tarFileName = "yt-spammer.tar.gz"
           # Name of this file
           # Temp folder for update
-          stagingFolder = "linuxYoutubeSpammerStaging"
+          stagingFolder = "temp"
 
           # Fetch the latest update
           print(f"\n> Downloading version: {F.GREEN}{latestVersion}{S.R}")
@@ -341,18 +342,20 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
             sys.exit()
           else:
             extraFolderPath = f"{cwd}/{stagingFolder}/{extraFolderPath[0]}"
-          # Move updated version to old versions place
-          # We are moving all .py files over for the future where that is needed
-          src_files = os.listdir(extraFolderPath)
-
-          for file_name in src_files:
-            full_file_name = os.path.join(extraFolderPath, file_name)
-            if os.path.isfile(full_file_name) and full_file_name.endswith(".py"):
+            move("./config", extraFolderPath)
+            for file_name in os.listdir(cwd):
               try:
                 os.remove(file_name)
-              except FileNotFoundError:
-                pass
+              except IsADirectoryError:
+                  os.rmdir(file_name)
+            for file_name in os.listdir(extraFolderPath):
+              if os.path.exists(file_name):
+                try:
+                  os.remove(file_name)
+                except IsADirectoryError:
+                  os.rmdir(file_name)
               move(f"{extraFolderPath}/{file_name}", f"{cwd}/{file_name}")
+
           rmtree(stagingFolder)
           print(f"\n> Update completed: {currentVersion} ==> {F.GREEN}{latestVersion}{S.R}")
           print("> Restart the script to apply the update.")
