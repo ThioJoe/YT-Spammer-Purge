@@ -27,7 +27,7 @@ def get_comments(current, filtersDict, miscData, config, currentVideoDict, scanV
   parentAuthorChannelID = None
   allCommentsDict = currentVideoDict
 
-  fieldsToFetch = "nextPageToken,items/snippet/topLevelComment/id,items/replies/comments,items/snippet/totalReplyCount,items/snippet/topLevelComment/snippet/videoId,items/snippet/topLevelComment/snippet/authorChannelId/value,items/snippet/topLevelComment/snippet/authorDisplayName,items/snippet/topLevelComment/snippet/textDisplay"
+  fieldsToFetch = "nextPageToken,items/snippet/topLevelComment/id,items/replies/comments,items/snippet/totalReplyCount,items/snippet/topLevelComment/snippet/videoId,items/snippet/topLevelComment/snippet/authorChannelId/value,items/snippet/topLevelComment/snippet/authorDisplayName,items/snippet/topLevelComment/snippet/textDisplay,items/snippet/topLevelComment/snippet/publishedAt"
 
   try:
     # Gets all comment threads for a specific video
@@ -72,6 +72,7 @@ def get_comments(current, filtersDict, miscData, config, currentVideoDict, scanV
     videoID = comment["snippet"]["videoId"] # Only enable if NOT checking specific video
     parent_id = item["snippet"]["topLevelComment"]["id"]
     numReplies = item["snippet"]["totalReplyCount"]
+    timestamp = item["snippet"]["topLevelComment"]["snippet"]["publishedAt"]
 
     # On rare occasions a comment will be there but the channel name will be empty, so this allows placeholders
     try:
@@ -101,6 +102,7 @@ def get_comments(current, filtersDict, miscData, config, currentVideoDict, scanV
       'authorChannelName':authorChannelName, 
       'commentText':commentText,
       'commentID':parent_id,
+      'timestamp':timestamp
       }
     check_against_filter(current, filtersDict, miscData, config, currentCommentDict, videoID)
     current.scannedCommentsCount += 1
@@ -144,9 +146,9 @@ def get_replies(current, filtersDict, miscData, config, parent_id, videoID, pare
   # Initialize some variables
   authorChannelName = None
   commentText = None
-  
+
   if repliesList == None:
-    fieldsToFetch = "nextPageToken,items/snippet/authorChannelId/value,items/id,items/snippet/authorDisplayName,items/snippet/textDisplay"
+    fieldsToFetch = "nextPageToken,items/snippet/authorChannelId/value,items/id,items/snippet/authorDisplayName,items/snippet/textDisplay,items/snippet/publishedAt"
     replies = []
     replyPageToken = None
 
@@ -190,6 +192,7 @@ def get_replies(current, filtersDict, miscData, config, parent_id, videoID, pare
   # Need individual tries because not all are fetched for each mode
   for reply in replies:  
     replyID = reply["id"]
+    timestamp = reply["snippet"]["publishedAt"]
     try:
       authorChannelID = reply["snippet"]["authorChannelId"]["value"]
     except KeyError:
@@ -216,6 +219,7 @@ def get_replies(current, filtersDict, miscData, config, parent_id, videoID, pare
       'authorChannelName':authorChannelName, 
       'commentText':commentText,
       'commentID':replyID,
+      'timestamp':timestamp
       }
     check_against_filter(current, filtersDict, miscData, config, currentCommentDict, videoID, allThreadAuthorNames=allThreadAuthorNames)
 
@@ -288,6 +292,7 @@ def check_duplicates(current, config, miscData, allCommentsDict, videoID):
   authorCount = len(allCommentsDict)
   scannedCount = 0
 
+  flatCommentsDict = []
   # Run the actual duplicate checking
   for authorID, authorCommentsList in allCommentsDict.items():
     # Don't scan channel owner, current user, or any user in whitelist. Also don't bother if author is already in matchedCommentsDict
@@ -300,6 +305,7 @@ def check_duplicates(current, config, miscData, allCommentsDict, videoID):
       matchedIndexes = []
       for commentDict in authorCommentsList:
         commentTextList.append(commentDict['commentText'])
+        flatCommentsDict.append(commentDict)
 
       # Count number of comments that are similar to at least one other comment
       if len(commentTextList) > 1:
@@ -321,6 +327,50 @@ def check_duplicates(current, config, miscData, allCommentsDict, videoID):
           add_spam(current, config, miscData, commentDict, videoID, matchReason="Duplicates")
       scannedCount +=1
       print(f" Analyzing For Duplicates: [ {scannedCount/authorCount*100:.2f}% ]   (Can be disabled & customized in config)".ljust(75, " "), end="\r")
+
+  # Look for multi-author duplicates
+  dupeCommentsDict = []
+
+  for commentDict in flatCommentsDict:
+
+    # Store if we don't have anything to iterate
+    if (len(dupeCommentsDict) == 0):
+      dupeCommentsDict.append({commentDict['commentText']: [commentDict]})
+    else:
+      matched = False
+      for i,x in enumerate(dupeCommentsDict):
+        key = next(iter(x))          
+        if ratio(key, commentDict['commentText']) > levenshtein:
+
+          # Don't store comments by the same author (delegates responsibility to main dupe checker... we're looking for multiple authors)
+          do_exist = False
+          for storedDict in x[key]:
+            if storedDict['authorChannelID'] == commentDict['authorChannelID']:
+              do_exist = True
+          
+          x[key].append(commentDict)
+          matched = True
+      if matched is False:
+          dupeCommentsDict.append({commentDict['commentText']: [commentDict]})
+
+  # Store comments that are multi-author duplicates
+  for x in dupeCommentsDict:
+    key = next(iter(x))
+    if len(x[key]) > 1 and len(key) > 25:
+
+      # Remove first comment
+      firstComment = None
+      for commentDict in x[key]:
+        if commentDict['timestamp'] > "" if firstComment is None else firstComment['timestamp']:
+          firstComment = commentDict
+      x[key].remove(firstComment)
+
+      # allows for samples... I hate this its a dumb hack
+      for commentDict in x[key]:
+        commentDict['authorChannelID'] = firstComment['authorChannelID']
+
+      for commentDict in x[key]:
+        add_spam(current, config, miscData, commentDict, videoID, matchReason="TextDuplicates")
 
 
 ##########################################################################################

@@ -9,6 +9,7 @@ import rtfunicode
 import os
 import requests
 import json
+from Levenshtein import ratio
 
 
 ##########################################################################################
@@ -36,8 +37,11 @@ def print_comments(current, config, scanVideoID, comments, loggingEnabled, scanM
   valuesPreparedToPrint = ""
   duplicateValuesToWrite = ""
   duplicateValuesToPrint = ""
+  duplicateTextValuesToWrite = ""
+  duplicateTextValuesToPrint = ""
   duplicateSamplesContent = ""
   hasDuplicates = False
+  hasTextDuplicates = False
 
   def print_and_write(value, writeValues, printValues):
     if loggingEnabled == True and logMode == "rtf":
@@ -49,12 +53,16 @@ def print_comments(current, config, scanVideoID, comments, loggingEnabled, scanM
 
   print(f"{F.LIGHTMAGENTA_EX}============================ Match Samples: One comment per matched-comment author ============================{S.R}")
   for value in current.matchSamplesDict.values():
-    if value['matchReason'] != "Duplicates":
+    if value['matchReason'] != "Duplicates" and value['matchReason'] != "TextDuplicates":
       valuesPreparedToWrite, valuesPreparedToPrint = print_and_write(value, valuesPreparedToWrite, valuesPreparedToPrint)
-    else:
+    elif value['matchReason'] == "Duplicates":
       hasDuplicates = True
       similarity = str(round(float(config['levenshtein_distance'])*100))+"%"
       minDupes = str(config['minimum_duplicates'])
+    else:
+      similarity = str(round(float(config['levenshtein_distance'])*100))+"%"
+      hasTextDuplicates = True
+      minLength = str(25)
   print(valuesPreparedToPrint)
 
   # Print Duplicates Match Samples
@@ -65,6 +73,15 @@ def print_comments(current, config, scanVideoID, comments, loggingEnabled, scanM
     if value['matchReason'] == "Duplicates":
       duplicateValuesToWrite, duplicateValuesToPrint = print_and_write(value, duplicateValuesToWrite, duplicateValuesToPrint)
   print(duplicateValuesToPrint)
+
+  # Print Multi-Author Duplicate Match Samples
+  if hasTextDuplicates == True:
+    print(f"{F.LIGHTMAGENTA_EX}------------------------- {F.LIGHTCYAN_EX}Non-Matched Commenters, but who wrote a comment similar to a previous comment{F.LIGHTMAGENTA_EX} -------------------------{S.R}")
+    print(f"{F.MAGENTA}-------------------------- ( {F.LIGHTBLUE_EX}Similarity Threshold: {similarity}  |  Minimum Length: {minLength}{F.MAGENTA} ) ----------------------------{S.R}")
+  for value in current.matchSamplesDict.values():
+    if value['matchReason'] == "TextDuplicates":
+      duplicateTextValuesToWrite, duplicateTextValuesToPrint = print_and_write(value, duplicateTextValuesToWrite, duplicateTextValuesToPrint)
+  print(duplicateTextValuesToPrint)
 
   # --------------------------------------------------
 
@@ -77,6 +94,10 @@ def print_comments(current, config, scanVideoID, comments, loggingEnabled, scanM
         duplicateSamplesContent = " \n \\line\\line -------------------- Non-Matched Commenters, but who wrote many similar comments -------------------- \\line \n" 
         duplicateSamplesContent += f"---------------------- ( Similarity Threshold: {similarity}  |  Minimum Duplicates: {minDupes} ) ---------------------- \\line\\line \n" + duplicateValuesToWrite
         write_rtf(current.logFileName, duplicateSamplesContent)
+      if hasTextDuplicates == True:
+        duplicateTextSamplesContent = " \n \\line\\line -------------------- Non-Matched Commenters, but who wrote a comment similar to a previous comment -------------------- \\line \n" 
+        duplicateTextSamplesContent += f"---------------------- ( Similarity Threshold: {similarity}  |  Minimum Length: {minLength} ) ---------------------- \\line\\line \n" + duplicateTextValuesToWrite
+        write_rtf(current.logFileName, duplicateTextSamplesContent)
     elif logMode == "plaintext":
       matchSamplesContent = "==================== Match Samples: One comment per matched-comment author ====================\n" + valuesPreparedToWrite
       write_plaintext_log(current.logFileName, matchSamplesContent)
@@ -84,9 +105,13 @@ def print_comments(current, config, scanVideoID, comments, loggingEnabled, scanM
         duplicateSamplesContent = "\n-------------------- Non-Matched Commenters, but who wrote many similar comments --------------------\n"
         duplicateSamplesContent += f"---------------------- ( Similarity Threshold: {similarity}  |  Minimum Duplicates: {minDupes} ) ----------------------\n" + duplicateValuesToWrite
         write_plaintext_log(current.logFileName, duplicateSamplesContent)
+      if hasTextDuplicates == True:
+        duplicateTextSamplesContent = "\n-------------------- Non-Matched Commenters, but who wrote a comment similar to a previous comment --------------------\n"
+        duplicateTextSamplesContent += f"---------------------- ( Similarity Threshold: {similarity}  |  Minimum Length: {minLength} ) ----------------------\n" + duplicateTextValuesToWrite
+        write_plaintext_log(current.logFileName, duplicateTextSamplesContent)
 
     # Entire Contents of Log File
-    logFileContents = commentsContents + matchSamplesContent + duplicateSamplesContent
+    logFileContents = commentsContents + matchSamplesContent + duplicateSamplesContent + duplicateTextSamplesContent
   else:
     logFileContents = None
     logMode = None
