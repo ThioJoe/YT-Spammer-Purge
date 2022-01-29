@@ -330,28 +330,25 @@ def check_duplicates(current, config, miscData, allCommentsDict, videoID):
 
   # Look for multi-author duplicates
   dupeCommentsDict = []
-
   for commentDict in flatCommentsDict:
 
     # Store if we don't have anything to iterate
-    if (len(dupeCommentsDict) == 0):
-      dupeCommentsDict.append({commentDict['commentText']: [commentDict]})
-    else:
-      matched = False
-      for i,x in enumerate(dupeCommentsDict):
-        key = next(iter(x))          
-        if ratio(key, commentDict['commentText']) > levenshtein:
+    matched = False
+    for i,x in enumerate(dupeCommentsDict):
+      key = next(iter(x))
 
-          # Don't store comments by the same author (delegates responsibility to main dupe checker... we're looking for multiple authors)
-          do_exist = False
-          for storedDict in x[key]:
-            if storedDict['authorChannelID'] == commentDict['authorChannelID']:
-              do_exist = True
-          
-          x[key].append(commentDict)
-          matched = True
-      if matched is False:
-          dupeCommentsDict.append({commentDict['commentText']: [commentDict]})
+      # Compare current comment against every other old comment          
+      if ratio(key, commentDict['commentText']) > levenshtein:
+        
+        # Don't store comments by the same author (delegates responsibility to main dupe checker... we're looking for multiple authors)
+        do_exist = False
+        for storedDict in x[key]:
+          if storedDict['authorChannelID'] == commentDict['authorChannelID']:
+            do_exist = True
+        x[key].append(commentDict)
+        matched = True
+    if matched is False:
+        dupeCommentsDict.append({commentDict['commentText']: [commentDict]})
 
   # Store comments that are multi-author duplicates
   for x in dupeCommentsDict:
@@ -365,6 +362,7 @@ def check_duplicates(current, config, miscData, allCommentsDict, videoID):
           firstComment = commentDict
       x[key].remove(firstComment)
 
+      # Set every comment's author as the OG comment
       # allows for samples... I hate this its a dumb hack
       for commentDict in x[key]:
         commentDict['authorChannelID'] = firstComment['authorChannelID']

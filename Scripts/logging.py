@@ -40,6 +40,7 @@ def print_comments(current, config, scanVideoID, comments, loggingEnabled, scanM
   duplicateTextValuesToWrite = ""
   duplicateTextValuesToPrint = ""
   duplicateSamplesContent = ""
+  duplicateTextSamplesContent = ""
   hasDuplicates = False
   hasTextDuplicates = False
 
