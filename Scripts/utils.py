@@ -156,11 +156,11 @@ def choice(message="", bypass=False):
   valid = False
   while valid == False:
     response = input("\n" + message + f" ({F.LIGHTCYAN_EX}y{S.R}/{F.LIGHTRED_EX}n{S.R}): ").strip()
-    if response == "Y" or response == "y":
+    if response.lower() == "y":
       return True
-    elif response == "N" or response == "n":
+    elif response.lower() == "n":
       return False
-    elif response == "X" or response == "x":
+    elif response.lower() == "x":
       return None
     else:
       print("\nInvalid Input. Enter Y or N  --  Or enter X to return to main menu.")  
