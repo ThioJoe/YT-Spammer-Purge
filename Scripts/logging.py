@@ -17,19 +17,16 @@ import json
 
 # First prepared comments into segments of 50 to be submitted to API simultaneously
 # Then uses print_prepared_comments() to print / log the comments
-def print_comments(current, config, scanVideoID, comments, loggingEnabled, scanMode, logMode=None):
+def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMode=None, doPrint=True):
   j = 0 # Counting index when going through comments all comment segments
-  groupSize = 999999 # Number of comments to process per iteration
-
-  # if len(comments) > groupSize:
-  #   remainder = len(comments) % groupSize
-  #   numDivisions = int((len(comments)-remainder)/groupSize)
-  #   for i in range(numDivisions):
-  #     j = print_prepared_comments(current, scanVideoID,comments[i*groupSize:i*groupSize+groupSize], j, loggingEnabled, scanMode, logMode)
-  #   if remainder > 0:
-  #     j = print_prepared_comments(current, scanVideoID,comments[numDivisions*groupSize:len(comments)],j, loggingEnabled, scanMode, logMode)
-  # else:
-  j, commentsContents = print_prepared_comments(current, scanVideoID,comments, j, loggingEnabled, scanMode, logMode)
+  
+  # Print filter matched comments
+  j, commentsContents = print_prepared_comments(current, scanVideoID, list(current.matchedCommentsDict.keys()), j, loggingEnabled, scanMode, logMode, doPrint, matchReason="Filter Match")
+  # Print comments of other match types
+  if current.otherCommentsByMatchedAuthorsDict:
+    j, commentsContents = print_prepared_comments(current, scanVideoID, list(current.otherCommentsByMatchedAuthorsDict.keys()), j, loggingEnabled, scanMode, logMode, doPrint, matchReason="Also By Matched Author")
+  if current.duplicateCommentsDict:
+    j, commentsContents = print_prepared_comments(current, scanVideoID, list(current.duplicateCommentsDict.keys()), j, loggingEnabled, scanMode, logMode, doPrint, matchReason="Duplicate")
 
   # Print Sample Match List
   valuesPreparedToWrite = ""
@@ -44,32 +41,38 @@ def print_comments(current, config, scanVideoID, comments, loggingEnabled, scanM
       writeValues = writeValues + value['iString'] + value['cString'] + f"{str(value['authorID'])} | {make_rtf_compatible(str(value['nameAndText']))} \\line \n"
     elif loggingEnabled == True and logMode == "plaintext":
       writeValues = writeValues + value['iString'] + value['cString'] + f"{str(value['authorID'])} | {str(value['nameAndText'])}\n"
-    printValues = printValues + value['iString'] + value['cString'] + f"{str(value['nameAndText'])}\n"
+    if doPrint:
+      printValues = printValues + value['iString'] + value['cString'] + f"{str(value['nameAndText'])}\n"
     return writeValues, printValues
 
-  print(f"{F.LIGHTMAGENTA_EX}============================ Match Samples: One comment per matched-comment author ============================{S.R}")
+  if doPrint:
+    print(f"{F.LIGHTMAGENTA_EX}============================ Match Samples: One comment per matched-comment author ============================{S.R}")
   for value in current.matchSamplesDict.values():
-    if value['matchReason'] != "Duplicates":
+    if value['matchReason'] != "Duplicate":
       valuesPreparedToWrite, valuesPreparedToPrint = print_and_write(value, valuesPreparedToWrite, valuesPreparedToPrint)
     else:
       hasDuplicates = True
       similarity = str(round(float(config['levenshtein_distance'])*100))+"%"
       minDupes = str(config['minimum_duplicates'])
-  print(valuesPreparedToPrint)
+  if doPrint:
+    print(valuesPreparedToPrint)
 
   # Print Duplicates Match Samples
   if hasDuplicates == True:
-    print(f"{F.LIGHTMAGENTA_EX}------------------------- {F.LIGHTCYAN_EX}Non-Matched Commenters, but who wrote many similar comments{F.LIGHTMAGENTA_EX} -------------------------{S.R}")
-    print(f"{F.MAGENTA}-------------------------- ( {F.LIGHTBLUE_EX}Similarity Threshold: {similarity}  |  Minimum Duplicates: {minDupes}{F.MAGENTA} ) ----------------------------{S.R}")
+    if doPrint:
+      print(f"{F.LIGHTMAGENTA_EX}------------------------- {F.LIGHTCYAN_EX}Non-Matched Commenters, but who wrote many similar comments{F.LIGHTMAGENTA_EX} -------------------------{S.R}")
+      print(f"{F.MAGENTA}-------------------------- ( {F.LIGHTBLUE_EX}Similarity Threshold: {similarity}  |  Minimum Duplicates: {minDupes}{F.MAGENTA} ) ----------------------------{S.R}")
   for value in current.matchSamplesDict.values():
-    if value['matchReason'] == "Duplicates":
+    if value['matchReason'] == "Duplicate":
       duplicateValuesToWrite, duplicateValuesToPrint = print_and_write(value, duplicateValuesToWrite, duplicateValuesToPrint)
-  print(duplicateValuesToPrint)
+  if doPrint:
+    print(duplicateValuesToPrint)
 
   # --------------------------------------------------
 
   # Write Match Samples to log
   if loggingEnabled == True:
+
     if logMode == "rtf":
       matchSamplesContent = "==================== Match Samples: One comment per matched-comment author ==================== \\line\\line \n" + valuesPreparedToWrite
       write_rtf(current.logFileName, matchSamplesContent)
@@ -77,6 +80,7 @@ def print_comments(current, config, scanVideoID, comments, loggingEnabled, scanM
         duplicateSamplesContent = " \n \\line\\line -------------------- Non-Matched Commenters, but who wrote many similar comments -------------------- \\line \n" 
         duplicateSamplesContent += f"---------------------- ( Similarity Threshold: {similarity}  |  Minimum Duplicates: {minDupes} ) ---------------------- \\line\\line \n" + duplicateValuesToWrite
         write_rtf(current.logFileName, duplicateSamplesContent)
+
     elif logMode == "plaintext":
       matchSamplesContent = "==================== Match Samples: One comment per matched-comment author ====================\n" + valuesPreparedToWrite
       write_plaintext_log(current.logFileName, matchSamplesContent)
@@ -90,23 +94,58 @@ def print_comments(current, config, scanVideoID, comments, loggingEnabled, scanM
   else:
     logFileContents = None
     logMode = None
-  print(f"{F.LIGHTMAGENTA_EX}==================== (See log file for channel IDs of matched authors above) ===================={S.R}")
-
-
+  if doPrint:
+    print(f"{F.LIGHTMAGENTA_EX}==================== (See log file for channel IDs of matched authors above) ===================={S.R}")
 
   return logFileContents, logMode
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 # Uses comments.list YouTube API Request to get text and author of specific set of comments, based on comment ID
-def print_prepared_comments(current, scanVideoID, comments, j, loggingEnabled, scanMode, logMode):
+def print_prepared_comments(current, scanVideoID, comments, j, loggingEnabled, scanMode, logMode, doPrint, matchReason):
 
   # Prints author and comment text for each comment
-  i = 0 # Index when going through comments
   dataPreparedToWrite = ""
 
+  if matchReason != "Filter Match":
+    dividerString = "============================================================================================="
+    if matchReason == "Also By Matched Author":
+      reasonString = "======================== All Non-matched Comments by Authors Above ========================"
+    elif matchReason == "Duplicate":
+      reasonString = "=========================== Non-Matched, But Duplicate Comments ==========================="
+    
+    # Print top divider
+    if doPrint:
+      print(f"\n\n{dividerString}")
+    if logMode == "rtf":
+      dataPreparedToWrite = dataPreparedToWrite + f"\\line\\line \n\n{dividerString}"
+    elif logMode == "plaintext":
+      dataPreparedToWrite = dataPreparedToWrite + f"\n\n{dividerString}"
+
+    # Print header text
+    if doPrint:
+      print(f"{reasonString}")
+    if logMode == "rtf":
+      dataPreparedToWrite = dataPreparedToWrite + f"\\line \n{reasonString}"
+    elif logMode == "plaintext":
+       dataPreparedToWrite = dataPreparedToWrite + f"\n{reasonString}"
+    
+    # Print bottom divider
+    if doPrint:
+      print(f"{dividerString}\n")
+    if logMode == "rtf":
+      dataPreparedToWrite = dataPreparedToWrite + f"\\line \n{dividerString} \\line\\line \n\n"
+    elif logMode == "plaintext":
+      dataPreparedToWrite = dataPreparedToWrite + f"\n{dividerString}\n\n"
+
+
   for comment in comments:
-    metadata = current.matchedCommentsDict[comment]
+    if matchReason == "Filter Match":
+      metadata = current.matchedCommentsDict[comment]
+    elif matchReason == "Duplicate":
+      metadata = current.duplicateCommentsDict[comment]
+    elif matchReason == "Also By Matched Author":
+      metadata = current.otherCommentsByMatchedAuthorsDict[comment]
 
     # For printing and regular logging
     text = metadata['text']
@@ -123,7 +162,7 @@ def print_prepared_comments(current, scanVideoID, comments, j, loggingEnabled, s
       text = text.replace("\n", " ")
 
     # Add one sample from each matching author to current.matchSamplesDict, containing author ID, name, and text
-    if author_id_local not in current.matchSamplesDict.keys():
+    if matchReason != "Also By Matched Author" and author_id_local not in current.matchSamplesDict.keys():
       add_sample(current, author_id_local, author, text, matchReason)
 
     # Build comment direct link
@@ -133,14 +172,18 @@ def print_prepared_comments(current, scanVideoID, comments, j, loggingEnabled, s
       directLink = "https://www.youtube.com/watch?v=" + videoID + "&lc=" + comment_id_local
 
     # Prints comment info to console
-    print(str(j+1) + f". {F.LIGHTCYAN_EX}" + author + f"{S.R}:  {F.YELLOW}" + text + f"{S.R}")
-    print("—————————————————————————————————————————————————————————————————————————————————————————————")
+    if doPrint:
+      print(str(j+1) + f". {F.LIGHTCYAN_EX}" + author + f"{S.R}:  {F.YELLOW}" + text + f"{S.R}")
+      print("—————————————————————————————————————————————————————————————————————————————————————————————")
+      print("     > Reason: " + matchReason)
     if scanVideoID is None:  # Only print video title if searching entire channel
       title = utils.get_video_title(current, videoID) # Get Video Title
-      print("     > Video: " + title)
-    print("     > Direct Link: " + directLink)
-    print(f"     > Author Channel ID: {F.LIGHTBLUE_EX}" + author_id_local + f"{S.R}")
-    print("=============================================================================================\n")
+      if doPrint:
+        print("     > Video: " + title)
+    if doPrint:
+      print("     > Direct Link: " + directLink)
+      print(f"     > Author Channel ID: {F.LIGHTBLUE_EX}" + author_id_local + f"{S.R}")
+      print("=============================================================================================\n")
 
     # If logging enabled, also prints to log file 
     if loggingEnabled == True:
@@ -163,6 +206,7 @@ def print_prepared_comments(current, scanVideoID, comments, j, loggingEnabled, s
           + r"\cf1 \line " + "\n"
           + "---------------------------------------------------------------------------------------------\\line " + "\n"
           # Rest of Comment Info
+          + "     > Reason: " + matchReason + "\\line "+ "\n"
           + titleInfoLine
           + "     > Direct Link: " + directLink + "\\line "+ "\n"
           + "     > Author Channel ID: \cf6" + author_id_local + r"\cf1 \line "+ "\n"
@@ -178,6 +222,7 @@ def print_prepared_comments(current, scanVideoID, comments, j, loggingEnabled, s
           + "\n"
           + "---------------------------------------------------------------------------------------------\n"
           # Rest of Comment Info
+          + "     > Reason: " + matchReason + "\n"
           + titleInfoLine
           + "     > Direct Link: " + directLink + "\n"
           + "     > Author Channel ID: " + author_id_local + "\n"
@@ -187,7 +232,6 @@ def print_prepared_comments(current, scanVideoID, comments, j, loggingEnabled, s
 
     # Appends comment ID to new list of comments so it's in the correct order going forward, as provided by API and presented to user
     # Must use append here, not extend, or else it would add each character separately
-    i += 1
     j += 1
 
   if loggingEnabled == True:
@@ -196,7 +240,7 @@ def print_prepared_comments(current, scanVideoID, comments, j, loggingEnabled, s
       write_rtf(current.logFileName, dataPreparedToWrite)
     elif logMode == "plaintext":
       write_plaintext_log(current.logFileName, dataPreparedToWrite)
-    print("                                    ")
+    print("                                             ")
 
   return j, dataPreparedToWrite
 
@@ -613,7 +657,10 @@ def prepare_logFile_settings(current, config, miscData, jsonSettingsDict, filter
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-def write_log_heading(current, logMode, filtersDict, afterExclude=False):
+def write_log_heading(current, logMode, filtersDict, afterExclude=False, commentsDict=None):
+  if commentsDict == None:
+    commentsDict = current.matchedCommentsDict
+
   filterMode = filtersDict['filterMode']
   inputtedSpammerChannelID = filtersDict['CustomChannelIdFilter']
   inputtedUsernameFilter = filtersDict['CustomUsernameFilter']
@@ -650,35 +697,36 @@ def write_log_heading(current, logMode, filtersDict, afterExclude=False):
     write_func(current.logFileName, "Automatic Search Mode: Smart Mode ", logMode, 2)
   elif filterMode == "SensitiveSmart":
     write_func(current.logFileName, "Automatic Search Mode: Sensitive Smart ", logMode, 2)
-  write_func(current.logFileName, "Number of Matched Comments Found: " + str(len(current.matchedCommentsDict)), logMode, 2)
+  write_func(current.logFileName, "Number of Matched Comments Found: " + str(len(commentsDict)), logMode, 2)
   if afterExclude == False:
-    write_func(current.logFileName, f"IDs of Matched Comments: \n[ {', '.join(current.matchedCommentsDict)} ] ", logMode, 3)
+    write_func(current.logFileName, f"IDs of Matched Comments: \n[ {', '.join(commentsDict)} ] ", logMode, 3)
   else:
-    write_func(current.logFileName, f"IDs of Matched Comments (Excluded Comments Removed): \n[ {', '.join(current.matchedCommentsDict)} ] ", logMode, 3)
+    write_func(current.logFileName, f"IDs of Matched Comments (Excluded Comments Removed): \n[ {', '.join(commentsDict)} ] ", logMode, 3)
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-def write_log_completion_summary(current, exclude, logMode, banChoice, deletionModeFriendlyName, rtfExclude=None, plaintextExclude=None):
+def write_log_completion_summary(current, exclude, logMode, banChoice, deletionModeFriendlyName, removeOtherAuthorComments):
   if logMode == "rtf":
-    write_rtf(current.logFileName, "\n\n \\line\\line Spammers Banned: " + str(banChoice)) # Write whether or not spammer is banned to log file
+    write_rtf(current.logFileName, "\n\n \\line\\line Spammers Banned: " + str(banChoice))
     write_rtf(current.logFileName, "\n\n \\line\\line Action Taken on Comments: " + str(deletionModeFriendlyName) + " \\line\\line \n\n")
-    #if exclude == True: #Printing Exclude moved to exclude function
-    #  write_rtf(current.logFileName, str(rtfExclude))
-  elif logMode == "plaintext":
-    write_plaintext_log(current.logFileName, "\n\n Spammers Banned: " + str(banChoice) + "\n\n") # Write whether or not spammer is banned to log file
-    write_plaintext_log(current.logFileName, "Action Taken on Comments: " + str(deletionModeFriendlyName) + "\n\n")
-    #if exclude == True: #Printing Exclude moved to exclude function
-    #  write_plaintext_log(current.logFileName, str(plaintextExclude))
+    write_rtf(current.logFileName, "\n\n \\line\\line Also Removed All Other Comments by Matched Authors: " + str(removeOtherAuthorComments) + " \\line\\line \n\n")
 
+  elif logMode == "plaintext":
+    write_plaintext_log(current.logFileName, "\n\n Spammers Banned: " + str(banChoice) + "\n\n")
+    write_plaintext_log(current.logFileName, "Action Taken on Comments: " + str(deletionModeFriendlyName) + "\n\n")
+    write_plaintext_log(current.logFileName, "Also Removed All Other Comments by Matched Authors: " + str(removeOtherAuthorComments) + "\n\n")
 
 # Re-Writes Log Files if authors excluded
-def rewrite_log_file(current, logInfo):
+def rewrite_log_file(current, logInfo, commentsDict=None):
   logMode = logInfo['logMode']
   logFileContents = logInfo['logFileContents']
   #jsonSettingsDict = logInfo['jsonSettingsDict']
   filtersDict = logInfo['filtersDict']
 
-  write_log_heading(current, logMode, filtersDict, afterExclude=True)
+  # Rewrites the heading, which includes list of matched Comment IDs
+  write_log_heading(current, logMode, filtersDict, afterExclude=True, commentsDict=commentsDict)
+
+  # Rewrites the rest of the log file contents after the heading
   if logMode == "rtf":
     write_rtf(current.logFileName, logFileContents)
   elif logMode == "plaintext":

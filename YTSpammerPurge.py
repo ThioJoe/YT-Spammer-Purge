@@ -303,16 +303,19 @@ def main():
   @dataclass
   class ScanInstance:
     matchedCommentsDict: dict
+    duplicateCommentsDict: dict
+    otherCommentsByMatchedAuthorsDict: dict
+    allScannedCommentsDict: dict
     vidIdDict: dict
     vidTitleDict: dict
     matchSamplesDict: dict
     authorMatchCountDict: dict
-    allScannedCommentsDict: dict
     scannedRepliesCount: int
     scannedCommentsCount: int
     logTime: str
     logFileName: str
     errorOccurred:bool
+    # matchTypeCount:dict
 
 
   ##############################################
@@ -325,17 +328,24 @@ def main():
 
     # Instantiate class for primary instance
     current = ScanInstance(
-      matchedCommentsDict={}, 
+      matchedCommentsDict={},
+      duplicateCommentsDict={},
+      otherCommentsByMatchedAuthorsDict={},
+      allScannedCommentsDict={},
       vidIdDict={}, 
       vidTitleDict={}, 
       matchSamplesDict={}, 
       authorMatchCountDict={},
-      allScannedCommentsDict={},
       scannedRepliesCount=0, 
       scannedCommentsCount=0,
       logTime = timestamp, 
       logFileName = None,
       errorOccurred = False,
+      # matchTypeCount = {
+      #   'FilterMatch': 0,
+      #   'Duplicate': 0,
+      #   'OtherByMatchedAuthor': 0
+      #   }
       )
 
     # Declare Default Variables
@@ -1167,7 +1177,17 @@ def main():
     print("\n\nAll Matched Comments: \n")
 
     # Print comments  and write to log files
-    logFileContents, logMode = logging.print_comments(current, config, scanVideoID, list(current.matchedCommentsDict.keys()), loggingEnabled, scanMode, logMode)
+    logFileContents, logMode = logging.print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMode)
+
+    if loggingEnabled:
+      logInfo = {
+        'logMode': logMode,
+        'logFileContents': logFileContents,
+        'jsonSettingsDict': jsonSettingsDict,
+        'filtersDict': filtersDict,
+      }
+    else:
+      logInfo = None
 
     print(f"\n{F.WHITE}{B.RED} NOTE: {S.R} Check that all comments listed above are indeed spam.")
     print(f" > If you see missed spam or false positives, you can submit a filter suggestion here: {F.YELLOW}TJoe.io/filter-feedback{S.R}")
@@ -1175,6 +1195,8 @@ def main():
     print()
 
     ### ---------------- Decide whether to skip deletion ----------------
+    returnToMenu = False
+
     # Defaults
     deletionEnabled = False
     deletionMode = None # Should be changed later, but if missed it will default to heldForReview
@@ -1191,7 +1213,7 @@ def main():
 
     # Test skip_deletion preference - If passes both, will either delete or ask user to delete
     elif config['skip_deletion'] == True:
-      return True
+      returnToMenu = True
     elif config['skip_deletion'] != False:
       print("Error Code C-3: Invalid value for 'skip_deletion' in config file. Must be 'True' or 'False':  " + str(config['skip_deletion']))
       input("\nPress Enter to exit...")
@@ -1249,9 +1271,9 @@ def main():
       input("\nPress Enter to exit...")
       sys.exit()
 
-    
+    deletionEnabled = "Allowed" #DEBUG
     # Check if deletion is enabled, otherwise block and quit
-    if deletionEnabled != "Allowed" and deletionEnabled != True:
+    if deletionEnabled != "Allowed" and deletionEnabled != True and returnToMenu != True:
         print("\nThe deletion functionality was not enabled. Cannot delete or report comments.")
         print("Possible Cause: You're scanning someone elses video with a non-supported filter mode.\n")
         print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
@@ -1266,10 +1288,10 @@ def main():
     ### ---------------- Set Up How To Handle Comments  ----------------
     rtfExclude = None
     plaintextExclude = None
-    returnToMenu = False
+    exclude = False
+
     # If not skipped by config, ask user what to do
-    if confirmDelete == None:
-      exclude = False
+    if confirmDelete == None and returnToMenu != True:
       # Menu for deletion mode
       while confirmDelete != "DELETE" and confirmDelete != "REPORT" and confirmDelete != "HOLD":
         # Title
@@ -1324,16 +1346,7 @@ def main():
           elif "only" in confirmDelete.lower():
             onlyBool = True
 
-          if loggingEnabled:
-            logInfo = {
-              'logMode': logMode,
-              'logFileContents': logFileContents,
-              'jsonSettingsDict': jsonSettingsDict,
-              'filtersDict': filtersDict,
-            }
-          else:
-            logInfo = None
-          current, excludedDict, rtfExclude, plaintextExclude = operations.exclude_authors(current, config, miscData, inputtedString=confirmDelete, logInfo=logInfo, only=onlyBool)
+          current, excludedDict, rtfFormattedExcludes, plaintextFormattedExcludes = operations.exclude_authors(current, config, miscData, inputtedString=confirmDelete, logInfo=logInfo, only=onlyBool)
           miscData.resources['Whitelist']['WhitelistContents'] = files.ingest_list_file(whitelistPathWithName, keepCase=True)
           exclude = True
 
@@ -1358,93 +1371,140 @@ def main():
             returnToMenu = True
             break
 
-    if loggingEnabled:
+    # Combine commentIDs from different match type dicts
+    processCommentDict = dict(current.matchedCommentsDict)
+    processCommentDict.update(current.duplicateCommentsDict)
+    includeOtherAuthorComments = True #DEBUG, CHANGE TO FALSE
+
+    banChoice = False
+    if returnToMenu != True:
+      # Set deletion mode friendly name
+      if deletionMode == "rejected":
+        deletionModeFriendlyName = "Removed"
+      elif deletionMode == "heldForReview":
+        deletionModeFriendlyName = "Moved to 'Held for Review' Section"
+      elif deletionMode == "reportSpam":
+        deletionModeFriendlyName = "Reported for spam"
+
+      # Set or choose ban mode, check if valid based on deletion mode
+      if (confirmDelete == "DELETE" or confirmDelete == "REPORT" or confirmDelete == "HOLD") and deletionEnabled == True and current.errorOccurred == False:
+        proceedWithDeletion = True
+        if config['enable_ban'] != "ask":
+          if config['enable_ban'] == False:
+            pass
+          elif config['enable_ban'] == True:
+            print("Error Code C-8: 'enable_ban' is set to 'True' in config file. Only possible config options are 'ask' or 'False' when using config.\n")
+            input("Press Enter to continue...")
+          else:
+            print("Error Code C-9: 'enable_ban' is set to an invalid value in config file. Only possible config options are 'ask' or 'False' when using config.\n")
+            input("Press Enter to continue...")
+        elif deletionMode == "rejected":
+          print("\nAlso ban the spammer(s)?  Will also remove all their other comments that were found during scan but not matched.")
+          banChoice = choice(f"{F.YELLOW}Ban{S.R} the spammer(s) ?")
+          if banChoice == None:
+            banChoice = False
+            returnToMenu = True
+            includeOtherAuthorComments = False
+
+        elif deletionMode == "heldForReview":
+          pass
+        elif deletionMode == "reportSpam":
+          pass
+        
+        if returnToMenu != True:
+          if banChoice == True:
+            includeOtherAuthorComments = True
+          #elif deletionMode == "rejected" or deletionMode == "heldForReview":
+          elif deletionMode == "rejected" or deletionMode == "heldForReview" or deletionMode == "reportSpam": #DEBUG, CHANGE BACK
+            if config['remove_all_author_comments'] != 'ask':
+              includeOtherAuthorComments = config['remove_all_author_comments']
+            else:
+              print("\nAlso remove all other comments from the authors that were found during scan but not matched?")
+              includeOtherAuthorComments = choice("Choose:")
+          else:
+            includeOtherAuthorComments = False
+      else:
+        proceedWithDeletion = False
+        deletionModeFriendlyName="Nothing (Log Only)"
+    else:
+      proceedWithDeletion = False
+      deletionModeFriendlyName="Nothing (Log Only)"
+
+    # Print Final Logs
+    if includeOtherAuthorComments == True:
+      operations.get_all_author_comments(current, config, miscData, current.allScannedCommentsDict)
+      processCommentDict.update(current.otherCommentsByMatchedAuthorsDict)
+
+    if loggingEnabled == True:
+      # Rewrites the contents of entire file, but now without the excluded comments in the list of comment IDs
+      if exclude == True or current.otherCommentsByMatchedAuthorsDict:
+        logFileContents, logMode = logging.print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMode, doPrint=False)
+      print("Updating log file, please wait...", end="\r")
+      
+      #logging.rewrite_log_file(current, logInfo, processCommentDict)
+
+      # Appends the excluded comment info to the log file that was just re-written
+      if exclude == True:
+        if logInfo['logMode'] == "rtf":
+          logging.write_rtf(current.logFileName, str(rtfFormattedExcludes))
+        elif logInfo['logMode'] == "plaintext":
+          logging.write_plaintext_log(current.logFileName, str(plaintextFormattedExcludes))
+      print("                                          ")
+
       print(" Finishing Log File...", end="\r")
-      logging.write_log_completion_summary(current, exclude, logMode, banChoice=False, deletionModeFriendlyName="Nothing (Log Only)", rtfExclude=rtfExclude, plaintextExclude=plaintextExclude)
+      logging.write_log_completion_summary(current, exclude, logMode, banChoice, deletionModeFriendlyName, includeOtherAuthorComments)
       print("                               ")
 
-    # Write Json Log File
-    if config['json_log'] == True and loggingEnabled and current.matchedCommentsDict:
-      print("\nWriting JSON log file...")
-      if config['json_extra_data'] == True:
-        if current.errorOccurred == False:
-          jsonDataDict = logging.get_extra_json_data(list(current.matchSamplesDict.keys()), jsonSettingsDict)
-          logging.write_json_log(jsonSettingsDict, current.matchedCommentsDict, jsonDataDict)
+      # Write Json Log File
+      if config['json_log'] == True and loggingEnabled and current.matchedCommentsDict:
+        print("\nWriting JSON log file...")
+        if config['json_extra_data'] == True:
+          if current.errorOccurred == False:
+            jsonDataDict = logging.get_extra_json_data(list(processCommentDict.keys()), jsonSettingsDict)
+            logging.write_json_log(jsonSettingsDict, processCommentDict.keys(), jsonDataDict)
+          else:
+            print(f"\n{F.LIGHTRED_EX}NOTE:{S.R} Extra JSON data collection disabled due to error during scanning")
         else:
-          print(f"\n{F.LIGHTRED_EX}NOTE:{S.R} Extra JSON data collection disabled due to error during scanning")
-      else:
-        logging.write_json_log(jsonSettingsDict, current.matchedCommentsDict)
-      if returnToMenu == True:
-        input("\nJSON Operation Finished. Press Enter to return to main menu...")
+          logging.write_json_log(jsonSettingsDict, processCommentDict)
+        if returnToMenu == True:
+          input("\nJSON Operation Finished. Press Enter to return to main menu...")
 
-    if returnToMenu == True:
-      return True
+    ### ---------------- Reporting / Deletion Begin  ----------------
+    if returnToMenu != True:
+      if proceedWithDeletion == True:
+        operations.delete_found_comments(list(processCommentDict.keys()), banChoice, deletionMode)
+        if deletionMode != "reportSpam":
+          if config['check_deletion_success'] == True:
+            operations.check_deleted_comments(list(processCommentDict.keys()))
+          elif config['check_deletion_success'] == False:
+            print("\nSkipped checking if deletion was successful.\n")
 
-    # Set deletion mode friendly name
-    if deletionMode == "rejected":
-      deletionModeFriendlyName = "Removed"
-    elif deletionMode == "heldForReview":
-      deletionModeFriendlyName = "Moved to 'Held for Review' Section"
-    elif deletionMode == "reportSpam":
-      deletionModeFriendlyName = "Reported for spam"
-
-    # Set or choose ban mode, check if valid based on deletion mode
-    if (confirmDelete == "DELETE" or confirmDelete == "REPORT" or confirmDelete == "HOLD") and deletionEnabled == True and current.errorOccurred == False:  
-      banChoice = False
-      if config['enable_ban'] != "ask":
-        if config['enable_ban'] == False:
-          pass
-        elif config['enable_ban'] == True:
-          print("Error Code C-8: 'enable_ban' is set to 'True' in config file. Only possible config options are 'ask' or 'False' when using config.\n")
-          input("Press Enter to continue...")
+        if config['auto_close'] == True:
+          print("\nProgram Complete.")
+          print("Auto-close enabled in config. Exiting in 5 seconds...")
+          time.sleep(5)
+          sys.exit()
         else:
-          print("Error Code C-9: 'enable_ban' is set to an invalid value in config file. Only possible config options are 'ask' or 'False' when using config.\n")
-          input("Press Enter to continue...")
-      elif deletionMode == "rejected":
-        banChoice = choice(f"Also {F.YELLOW}ban{S.R} the spammer(s) ?")
-        if banChoice == None:
-          return True # Return to main menu
-
-      elif deletionMode == "heldForReview":
-        pass
-      elif deletionMode == "reportSpam":
-        pass
-
-      ### ---------------- Reporting / Deletion Begins  ----------------
-      operations.delete_found_comments(list(current.matchedCommentsDict), banChoice, deletionMode)
-      if deletionMode != "reportSpam":
-        if config['check_deletion_success'] == True:
-          operations.check_deleted_comments(current.matchedCommentsDict)
-        elif config['check_deletion_success'] == False:
-          print("\nSkipped checking if deletion was successful.\n")
-
-      if loggingEnabled == True:
-        logging.write_log_completion_summary(current, exclude, logMode, banChoice, deletionModeFriendlyName, rtfExclude, plaintextExclude)
-
-      if config['auto_close'] == True:
-        print("\nProgram Complete.")
-        print("Auto-close enabled in config. Exiting in 5 seconds...")
-        time.sleep(5)
-        sys.exit()
-      else:
-        input(f"\nProgram {F.LIGHTGREEN_EX}Complete{S.R}. Press Enter to to return to main menu...")
+          input(f"\nProgram {F.LIGHTGREEN_EX}Complete{S.R}. Press Enter to to return to main menu...")
+          return True
+      elif current.errorOccurred == True:
+        input(f"\nDeletion disabled due to error during scanning. Press Enter to return to main menu...")
         return True
-    elif current.errorOccurred == True:
-      input(f"\nDeletion disabled due to error during scanning. Press Enter to return to main menu...")
-      return True
 
-    elif config['deletion_enabled'] == False:
-      if config['auto_close'] == True:
-        print("\nDeletion disabled in config file.")
-        print("Auto-close enabled in config. Exiting in 5 seconds...")
-        time.sleep(5)
-        sys.exit()
+      elif config['skip_deletion'] == True:
+        if config['auto_close'] == True:
+          print("\nDeletion disabled in config file.")
+          print("Auto-close enabled in config. Exiting in 5 seconds...")
+          time.sleep(5)
+          sys.exit()
+        else:
+          input(f"\nDeletion is disabled in config file. Press Enter to to return to main menu...")
+          return True
       else:
-        input(f"\nDeletion is disabled in config file. Press Enter to to return to main menu...")
+        input(f"\nDeletion {F.LIGHTRED_EX}Cancelled{S.R}. Press Enter to to return to main menu...")
         return True
-    else:
-      input(f"\nDeletion {F.LIGHTRED_EX}Cancelled{S.R}. Press Enter to to return to main menu...")
-      return True
+    
+
   # -------------------------------------------------------------------------------------------------------------------------------------------------
   # ------------------------------------------------END PRIMARY INSTANCE-----------------------------------------------------------------------------
   # -------------------------------------------------------------------------------------------------------------------------------------------------
