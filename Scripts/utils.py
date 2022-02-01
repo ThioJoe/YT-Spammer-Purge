@@ -56,13 +56,13 @@ def make_char_set(stringInput, stripLettersNumbers=False, stripKeyboardSpecialCh
     # Optional lists of characters to strip from string
     translateDict = {}
     charsToStrip = " "
-    if stripLettersNumbers == True:
+    if stripLettersNumbers:
       numbersLettersChars = ("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
       charsToStrip += numbersLettersChars
-    if stripKeyboardSpecialChars == True:
+    if stripKeyboardSpecialChars:
       keyboardSpecialChars = ("!@#$%^&*()_+-=[]\{\}|;':,./<>?`~")
       charsToStrip += keyboardSpecialChars
-    if stripPunctuation == True:
+    if stripPunctuation:
       punctuationChars = ("!?\".,;:'-/()")
       charsToStrip += punctuationChars
     
@@ -75,33 +75,27 @@ def make_char_set(stringInput, stripLettersNumbers=False, stripKeyboardSpecialCh
     stringInput = stringInput.translate(translateDict)
     listedInput = list(stringInput)
     
-    return set(filter(None, listedInput))
+    return set(x for x in listedInput if x is not None)
 
 ######################### Check List Against String #########################    
 # Checks if any items in a list are a substring of a string
 def check_list_against_string(listInput, stringInput, caseSensitive=False):
-  if caseSensitive == False:
+  if not caseSensitive:
     stringInput = stringInput.lower()
     listInput = [item.lower() for item in listInput]
-  if any(x in stringInput for x in listInput):
-    return True
-  else:
-    return False
-
+  return any(x in stringInput for x in listInput)
 
 ################### Process Comma-Separated String to List ####################
 # Take in string, split by commas, remove whitespace and empty items, and return list
 def string_to_list(rawString, lower=False):
-  if lower == True:
+  if lower:
     rawString = rawString.lower()
   
   # Remove whitespace
-  newList = rawString.split(",")
-  for i in range(len(newList)):
-    newList[i] =  newList[i].strip()
+  newList = [x.strip() for x in rawString.split(",")]
 
   # Remove empty strings from list
-  newList = list(filter(None, newList)) 
+  newList = [x for x in newList if x is not None]
   return newList
 
 
@@ -111,18 +105,15 @@ def string_to_list(rawString, lower=False):
 def process_spammer_ids(rawString):
   inputList = [] # For list of unvalidated inputted items
   IDList = [] # For list of validated channel IDs, converted from inputList of spammer IDs - Separate to allow printing original invalid input if necessary
-  inputList = rawString.split(",") # Split spammer IDs / Links by commas
+  inputList = [x.strip() for x in rawString.split(",")]  # Split spammer IDs / Links by commas
 
-  # Remove whitespace from each list item
-  for i in range(len(inputList)):
-     inputList[i] =  inputList[i].strip()
   inputList = list(filter(None, inputList)) # Remove empty strings from list
   IDList = list(inputList)  # Need to use list() instead of just setting equal so each list is separately affected, otherwise same pointer
 
   # Validate each ID in list
   for i in range(len(inputList)):
     valid, IDList[i], channelTitle = validation.validate_channel_id(inputList[i])
-    if valid == False:
+    if not valid:
       print(f"{B.RED}{F.BLACK}Invalid{S.R} Channel ID or Link: " + str(inputList[i]) + "\n")
       return False, None
   
@@ -143,24 +134,23 @@ def expand_ranges(stringInput):
     )
 
 
-
 ############################### User Choice #################################
 # User inputs Y/N for choice, returns True or False
 # Takes in message to display
 
 def choice(message="", bypass=False):
-  if bypass == True:
+  if bypass:
     return True
 
   # While loop until valid input
   valid = False
-  while valid == False:
+  while not valid:
     response = input("\n" + message + f" ({F.LIGHTCYAN_EX}y{S.R}/{F.LIGHTRED_EX}n{S.R}): ").strip()
-    if response == "Y" or response == "y":
+    if response in ["Y", "y"]:
       return True
-    elif response == "N" or response == "n":
+    elif response in ["N", "n"]:
       return False
-    elif response == "X" or response == "x":
+    elif response in ["X", "x"]:
       return None
     else:
       print("\nInvalid Input. Enter Y or N  --  Or enter X to return to main menu.")  
