@@ -24,7 +24,6 @@ wheels/
 .installed.cfg
 *.egg
 MANIFEST
-client_secrets.json
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
