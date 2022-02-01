@@ -1272,9 +1272,9 @@ def main():
     rtfExclude = None
     plaintextExclude = None
     returnToMenu = False
+    exclude = False
     # If not skipped by config, ask user what to do
     if confirmDelete == None:
-      exclude = False
       # Menu for deletion mode
       while confirmDelete != "DELETE" and confirmDelete != "REPORT" and confirmDelete != "HOLD":
         # Title
@@ -1372,7 +1372,7 @@ def main():
 
     if loggingEnabled:
       print(" Finishing Log File...", end="\r")
-      logging.write_log_completion_summary(current, exclude, logMode, banChoice=False, deletionModeFriendlyName="Nothing (Log Only)", rtfExclude=rtfExclude, plaintextExclude=plaintextExclude)
+      logging.write_log_completion_summary(current, logMode, banChoice=False, deletionModeFriendlyName="Nothing (Log Only)")
       print("                               ")
 
     # Write Json Log File
