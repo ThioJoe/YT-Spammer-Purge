@@ -1,0 +1,14 @@
+version: '3.7'
+
+services:
+  app:
+    image: yt-spammer-purge
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./SpamPurgeConfig.ini:/usr/src/app/SpamPurgeConfig.ini
+      - ./client_secrets.json:/usr/src/app/client_secrets.json
+      - ./token.pickle:/usr/src/app/token.pickle
+      - ./SpamPurge_Resources:/usr/src/app/SpamPurge_Resources
+
