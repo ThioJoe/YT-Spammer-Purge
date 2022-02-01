@@ -2,6 +2,7 @@ version: '3.7'
 
 services:
   app:
+    image: yt-spammer-purge
     build:
       context: .
       dockerfile: Dockerfile

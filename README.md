@@ -101,11 +101,16 @@ Either way, you DO need to acquire your own API credentials file to access the Y
 
 **Docker Instructions:**
 
-Before running `docker-compose` you must run the script at least once with your `user_secrets.json` file to confirm OAuth credentials and generate the config files.
+Before running `docker-compose` you must run the `YTSpammerPurge.py` script at least once with your `user_secrets.json` file to confirm OAuth credentials and generate the config/token files.
 
 The generated config files, token, and Spam Purge Resources will all be bound to the docker container via volumes.
 
-Once you generated the token and config files, you can run `docker-compose up` to start the container.
+Once you generated the token and config files, build the Docker image:
+
+`docker build -t yt-spammer-purge .`
+
+
+Now you can run `docker-compose up` to start the container, or use the image to run on a Kubernetes cluster for example.
 
 
 ## Instructions - Obtaining YouTube API Key
