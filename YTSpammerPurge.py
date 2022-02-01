@@ -1438,7 +1438,7 @@ def main():
           print("\nSkipped checking if deletion was successful.\n")
 
       if loggingEnabled == True:
-        logging.write_log_completion_summary(current, exclude, logMode, banChoice, deletionModeFriendlyName, rtfExclude, plaintextExclude)
+        logging.write_log_completion_summary(current, logMode, banChoice, deletionModeFriendlyName)
 
       if config['auto_close'] == True:
         print("\nProgram Complete.")
