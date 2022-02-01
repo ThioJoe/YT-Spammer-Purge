@@ -1,0 +1,18 @@
+[tool]
+[tool.poetry]
+name = "YT-Spammer-Purge"
+version = "2.14.0"
+description = "Allows you easily scan for and delete scam comments using several methods."
+authors = ["ThioJoe <Joe@ThioJoe.com>"]
+
+[tool.poetry.dependencies]
+python = ">=3.6,<4.0"
+certifi = ">=2021.10.8"
+colorama = "==0.4.4"
+confusables = "==1.2.0"
+google-api-python-client = "==2.33.0"
+google-auth-oauthlib = "==0.4.6"
+protobuf = "==3.19.1"
+python-levenshtein = ">=0.12.2"
+rtfunicode = "==2.0"
+six = ">=1.16.0"
