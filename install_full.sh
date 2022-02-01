@@ -29,10 +29,10 @@ fi
 if [[ -e /etc/debian_version ]]; then
 	sudo apt install python3-tk jq python3-pip
 elif [[ -e /etc/fedora-release ]]; then
-	sudo dnf --assumeyes --quiet install python3-tkinter jq python3-pip gcc python3-devel
+	sudo dnf --assumeyes --quiet install python3-tkinter jq python3-pip python3-devel gcc
 elif [[ -e /etc/centos-release ]]; then
 	rpm -q epel-release &> /dev/null || EPEL=0 
-	sudo yum install -y python3-tkinter epel-release python3-pip
+	sudo yum install -y python3-tkinter epel-release python3-pip python3-devel gcc
 	sudo yum install -y jq
 	[[ $EPEL -eq 0 ]] && sudo yum remove -y epel-release
 elif [[ -e /etc/arch-release ]]; then
