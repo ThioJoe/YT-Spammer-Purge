@@ -36,7 +36,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.14.0"
+version = "2.14.1"
 configVersion = 24
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -624,8 +624,13 @@ def main():
             return True # Return to main menu
           if len(videosToScan) == 0:
             print(f"\n{F.LIGHTRED_EX}Error:{S.R} No scannable videos found in selected range!  They all may have no comments and/or are live streams.")
-            input("\nPress Enter to return to main menu...")
-            return True
+            if config['auto_close'] == True:
+              print("Auto-close enabled in config. Exiting in 5 seconds...")
+              time.sleep(5)
+              sys.exit()
+            else:
+              input("\nPress Enter to return to main menu...")
+              return True
 
           # Get total comment count
           miscData.totalCommentCount = 0
@@ -1180,7 +1185,7 @@ def main():
     deletionMode = None # Should be changed later, but if missed it will default to heldForReview
     confirmDelete = None # If None, will later cause user to be asked to delete
     if moderator_mode == False:
-      filterModesAllowedforNonOwners = ["AutoSmart"]
+      filterModesAllowedforNonOwners = ["AutoSmart", "SensitiveSmart"]
     elif moderator_mode == True:
       filterModesAllowedforNonOwners = ["AutoSmart", "SensitiveSmart", 'ID']
     
@@ -1346,15 +1351,22 @@ def main():
 
         else:
           if jsonSettingsDict['jsonLogging'] == True and loggingEnabled==True:
-            input(f"\nRemoval / Reporting declined. Press {F.LIGHTCYAN_EX}Enter to write JSON log{S.R}...")
-            returnToMenu = True
-            break    
-          else:
-            if userNotChannelOwner:
-              input(f"\n{F.YELLOW}Removal / Reporting declined{S.R} (Because no matching option entered). Press Enter to return to main menu...")
+            if config['auto_close'] == True:
+              print("\nRemoval / Reporting declined. Continuing to write JSON logs next.")
             else:
-              print(f"\n\n{F.YELLOW}Removal / Reporting declined{S.R} (No valid option entered) - Note: The log file {F.YELLOW}can still be used{S.R} to delete the comments later.")
-              input(f"\nPress Enter to return to main menu...")
+              input(f"\nRemoval / Reporting declined. Press {F.LIGHTCYAN_EX}Enter to write JSON log{S.R}...")
+            returnToMenu = True
+            break
+
+          else:
+            if config['auto_close'] == True:
+              print(f"\n{F.YELLOW}Removal / Reporting declined{S.R} (Because no matching option entered)")
+            else:
+              if userNotChannelOwner:
+                input(f"\n{F.YELLOW}Removal / Reporting declined{S.R} (Because no matching option entered). Press Enter to return to main menu...")
+              else:
+                print(f"\n\n{F.YELLOW}Removal / Reporting declined{S.R} (No valid option entered) - Note: The log file {F.YELLOW}can still be used{S.R} to delete the comments later.")
+                input(f"\nPress Enter to return to main menu...")
             returnToMenu = True
             break
 
@@ -1375,10 +1387,17 @@ def main():
       else:
         logging.write_json_log(jsonSettingsDict, current.matchedCommentsDict)
       if returnToMenu == True:
-        input("\nJSON Operation Finished. Press Enter to return to main menu...")
+        print("\nJSON Operation Finished.")
+        if config['auto_close'] == False:
+          input("\nPress Enter to return to main menu...")
 
     if returnToMenu == True:
-      return True
+      if config['auto_close'] == True:
+        print("\nAuto-close enabled in config. Exiting in 5 seconds...")
+        time.sleep(5)
+        sys.exit()
+      else:
+        return True
 
     # Set deletion mode friendly name
     if deletionMode == "rejected":
@@ -1430,8 +1449,13 @@ def main():
         input(f"\nProgram {F.LIGHTGREEN_EX}Complete{S.R}. Press Enter to to return to main menu...")
         return True
     elif current.errorOccurred == True:
-      input(f"\nDeletion disabled due to error during scanning. Press Enter to return to main menu...")
-      return True
+      if config['auto_close'] == True:
+        print("Deletion disabled due to error during scanning. Auto-close enabled in config. Exiting in 5 seconds...")
+        time.sleep(5)
+        sys.exit()
+      else:
+        input(f"\nDeletion disabled due to error during scanning. Press Enter to return to main menu...")
+        return True
 
     elif config['deletion_enabled'] == False:
       if config['auto_close'] == True:
@@ -1443,8 +1467,13 @@ def main():
         input(f"\nDeletion is disabled in config file. Press Enter to to return to main menu...")
         return True
     else:
-      input(f"\nDeletion {F.LIGHTRED_EX}Cancelled{S.R}. Press Enter to to return to main menu...")
-      return True
+      if config['auto_close'] == True:
+        print("Deletion Cancelled. Auto-close enabled in config. Exiting in 5 seconds...")
+        time.sleep(5)
+        sys.exit()
+      else:
+        input(f"\nDeletion {F.LIGHTRED_EX}Cancelled{S.R}. Press Enter to to return to main menu...")
+        return True
   # -------------------------------------------------------------------------------------------------------------------------------------------------
   # ------------------------------------------------END PRIMARY INSTANCE-----------------------------------------------------------------------------
   # -------------------------------------------------------------------------------------------------------------------------------------------------
