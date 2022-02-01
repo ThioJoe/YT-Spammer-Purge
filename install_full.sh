@@ -14,7 +14,7 @@ if ! command -v python3 &> /dev/null; then
 	if [[ -e /etc/debian_version ]]; then
 		sudo apt install python3
 	elif [[ -e /etc/fedora-release ]]; then
-		sudo dnf install python3
+		sudo dnf --assumeyes --quiet install python3
 	elif [[ -e /etc/centos-release ]]; then
 		sudo yum install -y python3
 	elif [[ -e /etc/arch-release ]]; then
@@ -28,7 +28,7 @@ fi
 if [[ -e /etc/debian_version ]]; then
 	sudo apt install python3-tk jq python3-pip
 elif [[ -e /etc/fedora-release ]]; then
-	sudo dnf install python3-tkinter jq python3-pip
+	sudo dnf --assumeyes --quiet install python3-tkinter jq python3-pip
 elif [[ -e /etc/centos-release ]]; then
 	rpm -q epel-release &> /dev/null || EPEL=0 
 	sudo yum install -y python3-tkinter epel-release python3-pip
