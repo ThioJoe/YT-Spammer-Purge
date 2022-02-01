@@ -25,6 +25,7 @@ else
 fi
 #install tkinter, a dependency
 #install jq, needed to get version number
+#install GCC and Python3 headers on Fedora, since python-Levenshtein needs to be compiled there.
 if [[ -e /etc/debian_version ]]; then
 	sudo apt install python3-tk jq python3-pip
 elif [[ -e /etc/fedora-release ]]; then
