@@ -2,7 +2,6 @@ version: '3.7'
 
 services:
   app:
-    image: avatsaev/yt-spammer-purge
     build:
       context: .
       dockerfile: Dockerfile
