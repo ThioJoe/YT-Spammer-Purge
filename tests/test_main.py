@@ -9,7 +9,6 @@ import pytest
 @pytest.mark.parametrize(
     "mod, func, func_args, err, exp_retval",
     (
-        ("files", "check_lists_update", (MagicMock(),), TypeError, None),
         ("files", "check_for_update", (MagicMock(),), TypeError, None),
         ("files", "load_config_file", None, OSError, None),
         (
