@@ -179,9 +179,12 @@ def get_current_user(config):
         if IDCheck[0] == False:
             raise ChannelIDError
         try:
-            channelTitle = results["items"][0]["snippet"][
-                "title"
-            ]  # If channel ID was found, but not channel title/name
+            # fmt: off
+            # disable Black code formatting for this line:
+
+            channelTitle = results["items"][0]["snippet"]["title"]
+            # If channel ID was found, but not channel title/name
+            # fmt: on
         except KeyError:
             print(
                 "Error Getting Current User: Channel ID was found, but channel title was not retrieved. If this occurs again, try deleting 'token.pickle' file and re-running. If that doesn't work, consider filing a bug report on the GitHub project 'issues' page."
