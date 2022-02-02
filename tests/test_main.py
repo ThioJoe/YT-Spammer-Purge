@@ -64,6 +64,67 @@ import pytest
         ),
         ("community_downloader", "main", None, ValueError, None),
         ("community_downloader", "regex_search", ("a", "(.)"), None, "a"),
+        (
+            "logging",
+            "print_comments",
+            (
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+            ),
+            None,
+            None,
+        ),
+        (
+            "logging",
+            "print_prepared_comments",
+            (
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+            ),
+            None,
+            None,
+        ),
+        ("logging", "make_rtf_compatible", (MagicMock(),), None, None),
+        ("logging", "write_rtf", (MagicMock(),), TypeError, None),
+        ("logging", "write_plaintext_log", (MagicMock(),), TypeError, None),
+        ("logging", "write_json_log", (MagicMock(), MagicMock()), TypeError, None),
+        (
+            "logging",
+            "get_extra_json_data",
+            (MagicMock(), MagicMock()),
+            AttributeError,
+            None,
+        ),
+        (
+            "logging",
+            "download_profile_pictures",
+            (MagicMock(), MagicMock()),
+            None,
+            None,
+        ),
+        (
+            "logging",
+            "prepare_logFile_settings",
+            (
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+            ),
+            FileNotFoundError,
+            None,
+        ),
     ),
 )
 def test_files_func(mod, func, func_args, err, exp_retval):
@@ -84,3 +145,43 @@ def test_files_func(mod, func, func_args, err, exp_retval):
         assert mod_func()
     else:
         assert mod_func() == exp_retval
+
+
+@pytest.mark.parametrize(
+    "mod, func, func_args",
+    (
+        (
+            "logging",
+            "add_sample",
+            (MagicMock(), MagicMock(), MagicMock(), MagicMock(), MagicMock()),
+        ),
+        (
+            "logging",
+            "write_log_heading",
+            (
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+            ),
+        ),
+        (
+            "logging",
+            "write_log_completion_summary",
+            (
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+                MagicMock(),
+            ),
+        ),
+        ("logging", "rewrite_log_file", (MagicMock(), MagicMock())),
+    ),
+)
+def test_func_return_none(mod, func, func_args):
+    import Scripts
+
+    mod_func = getattr(getattr(Scripts, mod), func)
+    if func_args:
+        assert mod_func(*func_args) is None
+    else:
+        assert mod_func() is None
