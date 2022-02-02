@@ -68,6 +68,7 @@ def get_authenticated_service():
         #replaces the path for the file to wherever the currrent path is, also renames the file
         os.replace(file_path, f"{os.getcwd()}/client_secrets.json")
         root.destroy()
+        print(f"The file has been moved from {file_path} to {os.getcwd()}/client_secrets.json")
       except:
         pass
       print(f"\n > The program will exit now, please re-run the program")
