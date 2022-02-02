@@ -58,7 +58,7 @@ def get_authenticated_service():
     print(f"\n > If a file already exists, please input 'Y' or 'Yes'")
     print(f"\n > Otherwise press Enter to exit")
     
-    inp = input("\nInput: ")
+    inp = input("\n > Input: ")
     if inp.upper() in ("Y","YES"):
       root = tk.Tk()
       root.withdraw()
@@ -68,10 +68,10 @@ def get_authenticated_service():
         #replaces the path of the file to wherever the currrent path is, also renames the file
         os.replace(file_path, f"{os.getcwd()}/client_secrets.json")
         root.destroy()
-        print(f"\nThe file has been moved from {file_path} to {os.getcwd()}/client_secrets.json")
+        print(f"\n > The file has been moved from {file_path} to {os.getcwd()}/client_secrets.json")
         print(f"\n > The program will exit now, please re-run the program")
       except:
-        print(f"\nfile picker closed")
+        print(f"\n > File picker closed")
         pass
 
     sys.exit()
