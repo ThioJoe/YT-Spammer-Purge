@@ -202,6 +202,10 @@ import pytest
         ("utils", "choice", None, OSError, None),
         ("utils", "print_break_finished", [MagicMock()], OSError, None),
         ("utils", "print_error_title_fetch", None, OSError, None),
+        ("validation", "validate_video_id", [MagicMock()], TypeError, None),
+        ("validation", "validate_post_id", [MagicMock()], None, None),
+        ("validation", "validate_channel_id", [MagicMock()], TypeError, None),
+        ("validation", "validate_regex", [MagicMock()], TypeError, None),
     ),
 )
 def test_files_func(mod, func, func_args, err, exp_retval):
