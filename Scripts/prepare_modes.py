@@ -447,7 +447,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
 
   # Prepare Multi Language Detection
   turkish = 'ÇçŞşĞğİ'
-  germanic = 'ẞßÄä'
+  germanic = 'ẞßÄäÖöÜü'
   cyrillic = "гджзклмнпрстфхцчшщыэюяъь"
   japanese = 'ァアィイゥウェエォオカガキギクグケゲコゴサザシジスズセゼソゾタダチヂテデトドナニヌネノハバパヒビピフブプヘベペホボポマミムメモャヤュユョヨラリルレロヮワヰヱヲンヴヵヶヷヸヹヺーヽヾヿぁあぃいぅうぇえぉおかがきぎぐけげこごさざしじすずせぜそぞただちぢっつづてでとどなにぬねのはばぱひびぴふぶぷへべぺほぼぽまみむめもゃやゅゆょよらりるれろゎわゐゑをんゔゕゖゝゞゟ'
   languages = [['turkish', turkish, []], ['germanic', germanic, []], ['cyrillic', cyrillic, []], ['japanese', japanese, []]]
