@@ -1,0 +1,29 @@
+# Taken from https://github.com/cclauss/autoblack
+#-- Removed the functionality to automatically fix (can be re-added)
+#
+#
+# See https://github.com/cclauss/autoblack/blob/master/.github/workflows/autoblack_push.yml
+
+name: autoblack-push
+on:
+  push:
+    branches: [ main ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:  # https://github.com/stefanzweifel/git-auto-commit-action#checkout-the-correct-branch
+            ref: ${{ github.head_ref }}
+      - uses: actions/setup-python@v1
+      - run: pip install black
+      - run: black --check .
+#      - name: If needed, commit black changes to a new pull request
+#        if: failure()
+#        run: |
+#          black .
+#          git config --global user.name github-actions
+#          git config --global user.email '${GITHUB_ACTOR}@users.noreply.github.com'
+#          # git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$GITHUB_REPOSITORY
+#          git commit -am "fixup! Format Python code with psf/black push"
+#          git push  # --force origin HEAD:$GITHUB_REF
