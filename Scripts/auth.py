@@ -58,7 +58,7 @@ def get_authenticated_service():
     print(f"\n > If a file has already been created then please input 1 to choose the file")
     print(f"\n > Otherwise press Enter to exit")
     inp = input("\nInput: ")
-    if inp == 1:
+    if inp == "1":
       root = tk.Tk()
       root.withdraw()
       file_path = filedialog.askopenfilename()
