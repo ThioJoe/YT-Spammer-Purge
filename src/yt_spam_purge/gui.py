@@ -5,7 +5,7 @@
 #import YouTubeSpammerPurge as myFunctions
 
 from pathlib import Path
-from Scripts.utils import make_char_set
+from .utils import make_char_set
 import os
 import sys
 

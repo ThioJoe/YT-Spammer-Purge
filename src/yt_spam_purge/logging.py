@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-from Scripts.shared_imports import *
-import Scripts.utils as utils
-import Scripts.auth as auth
-from Scripts.utils import choice
+from .shared_imports import *
+from . import utils
+from . import auth
+from .utils import choice
 
 import rtfunicode
 import os

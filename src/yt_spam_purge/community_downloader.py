@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # Modified from original at: https://github.com/egbertbouman/youtube-comment-downloader
 from __future__ import print_function
-from Scripts.shared_imports import *
+from .shared_imports import *
 
 import argparse
 import io

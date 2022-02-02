@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-from Scripts.shared_imports import *
-import Scripts.validation as validation
+from .shared_imports import *
+from . import  validation
 
 # Google Authentication Modules
 from googleapiclient.errors import HttpError

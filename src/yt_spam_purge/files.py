@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-from Scripts.shared_imports import *
-from Scripts.utils import choice
+from .shared_imports import *
+from .utils import choice
 
 from datetime import datetime, date, timedelta
 from configparser import ConfigParser

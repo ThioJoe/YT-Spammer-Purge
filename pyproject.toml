@@ -1,0 +1,83 @@
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "yt-spam-purge"
+version = "0.1.0"
+description = "Easily scan for and delete scam comments on your YouTube channel."
+authors = ["ThioJoe <joe@thiojoe.com>"]
+license = "GNU General Public License v3.0"
+readme = "README.md"
+repository = "https://github.com/dekoza/yt-spam-purge"
+homepage = "https://github.com/dekoza/yt-spam-purge"
+keywords = []
+packages = [ { include = "yt_spam_purge", from = "src" } ]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+google-api-python-client = "^2.36.0"
+google-auth-oauthlib = "^0.4.6"
+python-Levenshtein = "^0.12.2"
+confusables = "^1.2.0"
+typer = "^0.4.0"
+trio = "^0.19.0"
+anyio = "^3.5.0"
+rich = "^11.1.0"
+rtfunicode = "^2.0"
+tld = "^0.12.6"
+
+
+[tool.poetry.group.dev.dependencies]
+# formatting, quality, tests
+autoflake = ">=1.4"
+black = ">=21.12b0"
+isort = ">=5.7.0"
+mypy = ">=0.812"
+pytest = ">=6.2.2"
+pytest-cov = ">=2.11.1"
+pytest-randomly = ">=3.5.0"
+pytest-sugar = ">=0.9.4"
+pytest-xdist = ">=2.2.0"
+types-toml = ">=0.10.1"
+
+# tasks
+duty = ">=0.6.0"
+git-changelog = ">=0.5.0"
+httpx = ">=0.16.1"
+jinja2-cli = ">=0.7.0"
+toml = ">=0.10.2"
+
+# flake8 plugins
+darglint = ">=1.5.8"
+flake8 = ">=3.7.0"
+flake8-bandit = ">=2.1.2"
+flake8-black = ">=0.2.1"
+flake8-bugbear = ">=20.11.1"
+flake8-builtins = ">=1.5.3"
+flake8-comprehensions = ">=3.3.1"
+flake8-docstrings = ">=1.5.0"
+flake8-pytest-style = ">=1.3.0"
+flake8-string-format = ">=0.3.0"
+flake8-tidy-imports = ">=4.2.1"
+flake8-variables-names = ">=0.0.4"
+pep8-naming = ">=0.11.1"
+pydocstyle = ">=6.1.1"
+wps-light = ">=0.15.2"
+
+# docs
+mkdocs = ">=1.2.2"
+mkdocs-coverage = ">=0.2.1"
+mkdocs-macros-plugin = ">=0.5.0"
+mkdocs-material = ">=6.2.7"
+mkdocstrings = ">=0.16.2"
+
+[tool.poetry.scripts]
+ytsp = "yt_spam_purge.cli:main"
+
+[tool.black]
+line-length = 100
+exclude = "tests/fixtures"
+
+[tool.isort]
+profile = "black"

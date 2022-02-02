@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-from Scripts.shared_imports import *
-import Scripts.auth as auth
+from .shared_imports import *
+from . import auth
 
 from urllib.parse import urlparse
-from Scripts.community_downloader import get_post_channel_url
+from .community_downloader import get_post_channel_url
 
 ##################################### VALIDATE VIDEO ID #####################################
 # Regex matches putting video id into a match group. Then queries youtube API to verify it exists - If so returns true and isolated video ID

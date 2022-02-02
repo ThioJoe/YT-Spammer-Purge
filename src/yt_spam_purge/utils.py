@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-from Scripts.shared_imports import *
-import Scripts.validation as validation
-import Scripts.auth as auth
+from .shared_imports import *
+from . import validation
+from . import  auth
 from googleapiclient.errors import HttpError
 
 ##########################################################################################

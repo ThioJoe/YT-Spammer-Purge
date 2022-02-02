@@ -1,0 +1,100 @@
+name: ci
+
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    branches:
+    - master
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  LANG: en_US.utf-8
+  LC_ALL: en_US.utf-8
+  PYTHONIOENCODING: UTF-8
+
+  # To fix an error when running Poetry on Windows
+  # (https://github.com/python-poetry/poetry/issues/2629),
+  # we set Poetry's cache directory to .poetry_cache in the current directory.
+  # It makes it easier to later remove the virtualenv when it's broken.
+  # Absolute path is necessary to avoid this issue:
+  # https://github.com/python-poetry/poetry/issues/3049
+  POETRY_CACHE_DIR: ${{ github.workspace }}/.poetry_cache
+
+jobs:
+
+  quality:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+
+    - name: Set up Poetry
+      run: pip install poetry
+
+    - name: Set up the cache
+      uses: actions/cache@v1
+      with:
+        path: .poetry_cache
+        key: quality-poetry-cache
+
+    - name: Set up the project
+      run: poetry install -vv
+
+    - name: Check if the documentation builds correctly
+      run: poetry run duty check-docs
+
+    - name: Check the code quality
+      run: poetry run duty check-code-quality
+
+    - name: Check if the code is correctly typed
+      run: poetry run duty check-types
+
+    - name: Check for vulnerabilities in dependencies
+      run: |
+        pip install safety
+        poetry run duty check-dependencies
+
+  tests:
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: [3.6, 3.7, 3.8, 3.9, 3.10.0]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Set up Poetry
+      run: pip install poetry
+
+    - name: Set up the cache
+      uses: actions/cache@v1
+      with:
+        path: .poetry_cache
+        key: tests-poetry-cache-${{ matrix.os }}-py${{ matrix.python-version }}
+
+    - name: Set up the project
+      run: poetry install -vv || { rm -rf .poetry_cache/virtualenvs/*; poetry install -vv; }
+
+    - name: Run the test suite
+      run: poetry run duty test
