@@ -799,11 +799,6 @@ def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToEx
   plaintextFormattedExcludes = ""
   rtfFormattedExcludes = ""
 
-  if displayString:
-    notFirstExclude = False
-  else:
-    notFirstExclude = True
-
   valid = False
   while valid == False:
     if "exclude" in inputtedString.lower() or "only" in inputtedString.lower():
@@ -893,10 +888,6 @@ def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToEx
 
   if config['whitelist_excluded'] == 'ask':
     print(f"\nAdd these {F.LIGHTGREEN_EX}excluded{S.R} users to the {F.LIGHTGREEN_EX}whitelist{S.R} for future scans?")
-    if notFirstExclude == True:
-      print(f"{F.YELLOW}NOTE:{S.R} This will only whitelist the authors from your {F.YELLOW}most recent{S.R} 'exclude' command, not all of the authors above.")
-      print("  > If you didn't whitelist the other authors before, they won't be whitelisted this time either.")
-      print("  > If you did whitelist the previous 'exclude' selection, they are still whitelisted.")
     addWhitelist = choice("Whitelist Users?")
   elif config['whitelist_excluded'] == "True":
     addWhitelist = True
