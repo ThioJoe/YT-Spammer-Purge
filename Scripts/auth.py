@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+
+#Tkinter
+import tkinter as tk
+from tkinter import filedialog
 # -*- coding: UTF-8 -*-
 from Scripts.shared_imports import *
 import Scripts.validation as validation
@@ -50,10 +54,22 @@ def get_authenticated_service():
     print(f" ----- Did you create a {F.YELLOW}Google Cloud Platform Project{S.R} to access the API? ----- ")
     print(f"  > For instructions on how to get an API key, visit: {F.YELLOW}TJoe.io/api-setup{S.R}")
     print(f"\n  > (Non-shortened Link: https://github.com/ThioJoe/YT-Spammer-Purge/wiki/Instructions:-Obtaining-an-API-Key)")
-    input("\nPress Enter to Exit...")
+    print(f"\n ")
+    print(f"\n > If a file has already been created then please input 1 to choose the file")
+    print(f"\n > Otherwise press Enter to exit")
+    inp = input("\nInput: ")
+    if inp == 1:
+      root = tk.Tk()
+      root.withdraw()
+      file_path = filedialog.askopenfilename()
+      os.replace(file_path, f"{os.getcwd()}/client_secrets.json")
+      root.destroy()
+      print(f"\n > The program will exit now, please re-run the program")
+  
     sys.exit()
-
+    
   creds = None
+    
   # The file token.pickle stores the user's access and refresh tokens, and is
   # created automatically when the authorization flow completes for the first time.
   if os.path.exists(TOKEN_FILE_NAME):
