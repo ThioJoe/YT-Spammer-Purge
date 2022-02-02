@@ -124,6 +124,52 @@ import pytest
             FileNotFoundError,
             None,
         ),
+        (
+            "operations",
+            "get_comments",
+            [MagicMock()] * 5,
+            None,
+            None,
+        ),
+        (
+            "operations",
+            "get_replies",
+            [MagicMock()] * 9,
+            None,
+            None,
+        ),
+        (
+            "operations",
+            "get_comments",
+            [MagicMock()] * 5,
+            None,
+            None,
+        ),
+        (
+            "operations",
+            "check_duplicates",
+            [MagicMock()] * 5,
+            OSError,
+            None,
+        ),
+        (
+            "operations",
+            "check_against_filter",
+            [MagicMock()] * 6,
+            AttributeError,
+            None,
+        ),
+        (
+            "operations",
+            "delete_found_comments",
+            [MagicMock()] * 3,
+            OSError,
+            None,
+        ),
+        ("operations", "check_recovered_comments", [MagicMock()] * 1, OSError, None),
+        ("operations", "exclude_authors", [MagicMock()] * 4, TypeError, None),
+        ("operations", "get_recent_videos", [MagicMock()] * 2, TypeError, None),
+        ("operations", "print_count_stats", [MagicMock()] * 4, TypeError, None),
     ),
 )
 def test_files_func(mod, func, func_args, err, exp_retval):
@@ -175,6 +221,12 @@ def test_files_func(mod, func, func_args, err, exp_retval):
         ),
         ("logging", "rewrite_log_file", (MagicMock(), MagicMock())),
         ("auth", "initialize", None),
+        ("operations", "add_spam", [MagicMock()] * 5),
+        (
+            "operations",
+            "check_deleted_comments",
+            [MagicMock()] * 1,
+        ),
     ),
 )
 def test_func_return_none(mod, func, func_args):
