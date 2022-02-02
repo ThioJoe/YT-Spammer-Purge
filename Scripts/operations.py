@@ -127,7 +127,7 @@ def get_comments(current, filtersDict, miscData, config, currentVideoDict, scanV
       print_count_stats(current, miscData, videosToScan, final=False)  # Updates displayed stats if no replies
 
   # Runs after all comments scanned
-  if RetrievedNextPageToken == "End" and allCommentsDict != None:
+  if RetrievedNextPageToken == "End" and allCommentsDict:
     dupeCheckModes = utils.string_to_list(config['duplicate_check_modes'])
     if filtersDict['filterMode'].lower() in dupeCheckModes:
       print(" Analyzing For Duplicates                                                                                        ", end="\r")
@@ -1081,7 +1081,7 @@ def get_recent_videos(channel_id, numVideosTotal):
 # Prints Scanning Statistics, can be version that overwrites itself or one that finalizes and moves to next line
 def print_count_stats(current, miscData, videosToScan, final):
   # Use videosToScan (list of dictionaries) to retrieve total number of comments
-  if videosToScan:
+  if videosToScan and miscData.totalCommentCount > 0:
     totalComments = miscData.totalCommentCount
     totalScanned = current.scannedRepliesCount + current.scannedCommentsCount
     percent = ((totalScanned / totalComments) * 100)

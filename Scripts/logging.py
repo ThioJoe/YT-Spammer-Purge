@@ -711,18 +711,14 @@ def write_log_heading(current, logMode, filtersDict, afterExclude=False):
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-def write_log_completion_summary(current, exclude, logMode, banChoice, deletionModeFriendlyName, rtfExclude=None, plaintextExclude=None):
+def write_log_completion_summary(current, logMode, banChoice, deletionModeFriendlyName):
   if logMode == "rtf":
     write_rtf(current.logFileName, "\n\n \\line\\line Spammers Banned: " + str(banChoice)) # Write whether or not spammer is banned to log file
     write_rtf(current.logFileName, "\n\n \\line\\line Action Taken on Comments: " + str(deletionModeFriendlyName) + " \\line\\line \n\n")
-    #if exclude == True: #Printing Exclude moved to exclude function
-    #  write_rtf(current.logFileName, str(rtfExclude))
+
   elif logMode == "plaintext":
     write_plaintext_log(current.logFileName, "\n\n Spammers Banned: " + str(banChoice) + "\n\n") # Write whether or not spammer is banned to log file
     write_plaintext_log(current.logFileName, "Action Taken on Comments: " + str(deletionModeFriendlyName) + "\n\n")
-    #if exclude == True: #Printing Exclude moved to exclude function
-    #  write_plaintext_log(current.logFileName, str(plaintextExclude))
-
 
 # Re-Writes Log Files if authors excluded
 def rewrite_log_file(current, logInfo):
