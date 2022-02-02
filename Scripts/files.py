@@ -180,7 +180,11 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
     return None
 
   if parse_version(latestVersion) > parse_version(currentVersion):
-    isUpdateAvailable = True
+    if isBeta == True:
+      isUpdateAvailable = "beta"
+    else:
+      isUpdateAvailable = True
+
     if silentCheck == False:
       print("------------------------------------------------------------------------------------------")
       if isBeta == True:
@@ -304,7 +308,6 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
       elif userChoice == "False" or userChoice == None:
         return False
     elif silentCheck == True:
-      isUpdateAvailable = True
       return isUpdateAvailable
 
   elif parse_version(latestVersion) == parse_version(currentVersion):

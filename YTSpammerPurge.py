@@ -36,7 +36,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.14.1"
+version = "2.14.2"
 configVersion = 24
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -350,16 +350,19 @@ def main():
     # -----------------------------------------------------------------------------------------------------------------------------
     if updateAvailable != False:
       updateStringLabel = "Update Available: "
-      if updateAvailable == True:
+      if updateAvailable == True: # Stable update available
+        updateString = f"{F.LIGHTGREEN_EX}Yes{S.R}"
+
+      elif updateAvailable == "beta": # Beta Update Available
         if updateReleaseChannel == "stable":
-          updateString = f"{F.LIGHTGREEN_EX}Yes{S.R}"
-          #print(f"{F.LIGHTGREEN_EX}Notice: A new version is available! Choose 'Check For Updates' option for details.{S.R}\n")
+          updateStringLabel = ""
+          updateString = ""
         else:
-          #print(f"{F.LIGHTGREEN_EX}Notice: A new {F.CYAN}beta{F.LIGHTGREEN_EX} version is available! Choose 'Check For Updates' option for details.{S.R}\n")
           updateString = f"{F.CYAN}Beta{S.R}"
       elif updateAvailable == None:
         updateString = f"{F.LIGHTRED_EX}Error{S.R}"
         print("> Note: Error during check for updates. Select 'Check For Updates' for details.")  
+
     else:
       if config['auto_check_update'] == False:
         updateStringLabel = "Update Checking: "
@@ -1180,6 +1183,7 @@ def main():
     print()
 
     ### ---------------- Decide whether to skip deletion ----------------
+    returnToMenu = False
     # Defaults
     deletionEnabled = False
     deletionMode = None # Should be changed later, but if missed it will default to heldForReview
@@ -1195,10 +1199,12 @@ def main():
       deletionEnabled = False
 
     # Test skip_deletion preference - If passes both, will either delete or ask user to delete
-    elif config['skip_deletion'] == True:
-      return True
+    if config['skip_deletion'] == True:
+      print("\nConfig setting skip_deletion enabled.")
+      returnToMenu = True
+
     elif config['skip_deletion'] != False:
-      print("Error Code C-3: Invalid value for 'skip_deletion' in config file. Must be 'True' or 'False':  " + str(config['skip_deletion']))
+      print("Error Code C-3: Invalid value for 'skip_deletion' in config file. Must be 'True' or 'False'. Current Value:  " + str(config['skip_deletion']))
       input("\nPress Enter to exit...")
       sys.exit()
     ### ----------------------------------------------------------------  
@@ -1256,7 +1262,7 @@ def main():
 
     
     # Check if deletion is enabled, otherwise block and quit
-    if deletionEnabled != "Allowed" and deletionEnabled != True:
+    if returnToMenu == False and deletionEnabled != "Allowed" and deletionEnabled != True:
         print("\nThe deletion functionality was not enabled. Cannot delete or report comments.")
         print("Possible Cause: You're scanning someone elses video with a non-supported filter mode.\n")
         print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
@@ -1271,10 +1277,9 @@ def main():
     ### ---------------- Set Up How To Handle Comments  ----------------
     rtfExclude = None
     plaintextExclude = None
-    returnToMenu = False
     exclude = False
     # If not skipped by config, ask user what to do
-    if confirmDelete == None:
+    if confirmDelete == None and returnToMenu != True:
       # Menu for deletion mode
       while confirmDelete != "DELETE" and confirmDelete != "REPORT" and confirmDelete != "HOLD":
         # Title
@@ -1372,6 +1377,7 @@ def main():
 
     if loggingEnabled:
       print(" Finishing Log File...", end="\r")
+      # Write this just as default, then if actually do deleting, will be overwritten anyway
       logging.write_log_completion_summary(current, logMode, banChoice=False, deletionModeFriendlyName="Nothing (Log Only)")
       print("                               ")
 
@@ -1457,7 +1463,7 @@ def main():
         input(f"\nDeletion disabled due to error during scanning. Press Enter to return to main menu...")
         return True
 
-    elif config['deletion_enabled'] == False:
+    elif config['skip_deletion'] == True:
       if config['auto_close'] == True:
         print("\nDeletion disabled in config file.")
         print("Auto-close enabled in config. Exiting in 5 seconds...")
