@@ -36,8 +36,8 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.14.0"
-configVersion = 24
+version = "2.14.2"
+configVersion = 25
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 # Import other module files
@@ -307,6 +307,7 @@ def main():
     vidTitleDict: dict
     matchSamplesDict: dict
     authorMatchCountDict: dict
+    repostMatchCountDict: dict
     allScannedCommentsDict: dict
     scannedRepliesCount: int
     scannedCommentsCount: int
@@ -330,6 +331,7 @@ def main():
       vidTitleDict={}, 
       matchSamplesDict={}, 
       authorMatchCountDict={},
+      repostMatchCountDict={},
       allScannedCommentsDict={},
       scannedRepliesCount=0, 
       scannedCommentsCount=0,
@@ -350,16 +352,19 @@ def main():
     # -----------------------------------------------------------------------------------------------------------------------------
     if updateAvailable != False:
       updateStringLabel = "Update Available: "
-      if updateAvailable == True:
+      if updateAvailable == True: # Stable update available
+        updateString = f"{F.LIGHTGREEN_EX}Yes{S.R}"
+
+      elif updateAvailable == "beta": # Beta Update Available
         if updateReleaseChannel == "stable":
-          updateString = f"{F.LIGHTGREEN_EX}Yes{S.R}"
-          #print(f"{F.LIGHTGREEN_EX}Notice: A new version is available! Choose 'Check For Updates' option for details.{S.R}\n")
+          updateStringLabel = ""
+          updateString = ""
         else:
-          #print(f"{F.LIGHTGREEN_EX}Notice: A new {F.CYAN}beta{F.LIGHTGREEN_EX} version is available! Choose 'Check For Updates' option for details.{S.R}\n")
           updateString = f"{F.CYAN}Beta{S.R}"
       elif updateAvailable == None:
         updateString = f"{F.LIGHTRED_EX}Error{S.R}"
         print("> Note: Error during check for updates. Select 'Check For Updates' for details.")  
+
     else:
       if config['auto_check_update'] == False:
         updateStringLabel = "Update Checking: "
@@ -624,8 +629,13 @@ def main():
             return True # Return to main menu
           if len(videosToScan) == 0:
             print(f"\n{F.LIGHTRED_EX}Error:{S.R} No scannable videos found in selected range!  They all may have no comments and/or are live streams.")
-            input("\nPress Enter to return to main menu...")
-            return True
+            if config['auto_close'] == True:
+              print("Auto-close enabled in config. Exiting in 5 seconds...")
+              time.sleep(5)
+              sys.exit()
+            else:
+              input("\nPress Enter to return to main menu...")
+              return True
 
           # Get total comment count
           miscData.totalCommentCount = 0
@@ -1043,6 +1053,9 @@ def main():
         dupeCheckModes = utils.string_to_list(config['duplicate_check_modes'])
         if filtersDict['filterMode'].lower() in dupeCheckModes:
           operations.check_duplicates(current, config, miscData, authorKeyAllCommentsDict, communityPostID)
+        repostCheckModes = utils.string_to_list(config['repost_comment_check_modes'])
+        if filtersDict['filterMode'].lower() in repostCheckModes:
+          operations.check_reposts(current, config, miscData, allCommunityCommentsDict, communityPostID)
           print("                                                                                                                       ")
           
       if scanMode == "communityPost":
@@ -1175,12 +1188,13 @@ def main():
     print()
 
     ### ---------------- Decide whether to skip deletion ----------------
+    returnToMenu = False
     # Defaults
     deletionEnabled = False
     deletionMode = None # Should be changed later, but if missed it will default to heldForReview
     confirmDelete = None # If None, will later cause user to be asked to delete
     if moderator_mode == False:
-      filterModesAllowedforNonOwners = ["AutoSmart"]
+      filterModesAllowedforNonOwners = ["AutoSmart", "SensitiveSmart"]
     elif moderator_mode == True:
       filterModesAllowedforNonOwners = ["AutoSmart", "SensitiveSmart", 'ID']
     
@@ -1190,10 +1204,12 @@ def main():
       deletionEnabled = False
 
     # Test skip_deletion preference - If passes both, will either delete or ask user to delete
-    elif config['skip_deletion'] == True:
-      return True
+    if config['skip_deletion'] == True:
+      print("\nConfig setting skip_deletion enabled.")
+      returnToMenu = True
+
     elif config['skip_deletion'] != False:
-      print("Error Code C-3: Invalid value for 'skip_deletion' in config file. Must be 'True' or 'False':  " + str(config['skip_deletion']))
+      print("Error Code C-3: Invalid value for 'skip_deletion' in config file. Must be 'True' or 'False'. Current Value:  " + str(config['skip_deletion']))
       input("\nPress Enter to exit...")
       sys.exit()
     ### ----------------------------------------------------------------  
@@ -1251,7 +1267,7 @@ def main():
 
     
     # Check if deletion is enabled, otherwise block and quit
-    if deletionEnabled != "Allowed" and deletionEnabled != True:
+    if returnToMenu == False and deletionEnabled != "Allowed" and deletionEnabled != True:
         print("\nThe deletion functionality was not enabled. Cannot delete or report comments.")
         print("Possible Cause: You're scanning someone elses video with a non-supported filter mode.\n")
         print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
@@ -1266,10 +1282,9 @@ def main():
     ### ---------------- Set Up How To Handle Comments  ----------------
     rtfExclude = None
     plaintextExclude = None
-    returnToMenu = False
+    exclude = False
     # If not skipped by config, ask user what to do
-    if confirmDelete == None:
-      exclude = False
+    if confirmDelete == None and returnToMenu != True:
       # Menu for deletion mode
       while confirmDelete != "DELETE" and confirmDelete != "REPORT" and confirmDelete != "HOLD":
         # Title
@@ -1346,21 +1361,29 @@ def main():
 
         else:
           if jsonSettingsDict['jsonLogging'] == True and loggingEnabled==True:
-            input(f"\nRemoval / Reporting declined. Press {F.LIGHTCYAN_EX}Enter to write JSON log{S.R}...")
-            returnToMenu = True
-            break    
-          else:
-            if userNotChannelOwner:
-              input(f"\n{F.YELLOW}Removal / Reporting declined{S.R} (Because no matching option entered). Press Enter to return to main menu...")
+            if config['auto_close'] == True:
+              print("\nRemoval / Reporting declined. Continuing to write JSON logs next.")
             else:
-              print(f"\n\n{F.YELLOW}Removal / Reporting declined{S.R} (No valid option entered) - Note: The log file {F.YELLOW}can still be used{S.R} to delete the comments later.")
-              input(f"\nPress Enter to return to main menu...")
+              input(f"\nRemoval / Reporting declined. Press {F.LIGHTCYAN_EX}Enter to write JSON log{S.R}...")
+            returnToMenu = True
+            break
+
+          else:
+            if config['auto_close'] == True:
+              print(f"\n{F.YELLOW}Removal / Reporting declined{S.R} (Because no matching option entered)")
+            else:
+              if userNotChannelOwner:
+                input(f"\n{F.YELLOW}Removal / Reporting declined{S.R} (Because no matching option entered). Press Enter to return to main menu...")
+              else:
+                print(f"\n\n{F.YELLOW}Removal / Reporting declined{S.R} (No valid option entered) - Note: The log file {F.YELLOW}can still be used{S.R} to delete the comments later.")
+                input(f"\nPress Enter to return to main menu...")
             returnToMenu = True
             break
 
     if loggingEnabled:
       print(" Finishing Log File...", end="\r")
-      logging.write_log_completion_summary(current, exclude, logMode, banChoice=False, deletionModeFriendlyName="Nothing (Log Only)", rtfExclude=rtfExclude, plaintextExclude=plaintextExclude)
+      # Write this just as default, then if actually do deleting, will be overwritten anyway
+      logging.write_log_completion_summary(current, logMode, banChoice=False, deletionModeFriendlyName="Nothing (Log Only)")
       print("                               ")
 
     # Write Json Log File
@@ -1375,10 +1398,17 @@ def main():
       else:
         logging.write_json_log(jsonSettingsDict, current.matchedCommentsDict)
       if returnToMenu == True:
-        input("\nJSON Operation Finished. Press Enter to return to main menu...")
+        print("\nJSON Operation Finished.")
+        if config['auto_close'] == False:
+          input("\nPress Enter to return to main menu...")
 
     if returnToMenu == True:
-      return True
+      if config['auto_close'] == True:
+        print("\nAuto-close enabled in config. Exiting in 5 seconds...")
+        time.sleep(5)
+        sys.exit()
+      else:
+        return True
 
     # Set deletion mode friendly name
     if deletionMode == "rejected":
@@ -1419,7 +1449,7 @@ def main():
           print("\nSkipped checking if deletion was successful.\n")
 
       if loggingEnabled == True:
-        logging.write_log_completion_summary(current, exclude, logMode, banChoice, deletionModeFriendlyName, rtfExclude, plaintextExclude)
+        logging.write_log_completion_summary(current, logMode, banChoice, deletionModeFriendlyName)
 
       if config['auto_close'] == True:
         print("\nProgram Complete.")
@@ -1430,10 +1460,15 @@ def main():
         input(f"\nProgram {F.LIGHTGREEN_EX}Complete{S.R}. Press Enter to to return to main menu...")
         return True
     elif current.errorOccurred == True:
-      input(f"\nDeletion disabled due to error during scanning. Press Enter to return to main menu...")
-      return True
+      if config['auto_close'] == True:
+        print("Deletion disabled due to error during scanning. Auto-close enabled in config. Exiting in 5 seconds...")
+        time.sleep(5)
+        sys.exit()
+      else:
+        input(f"\nDeletion disabled due to error during scanning. Press Enter to return to main menu...")
+        return True
 
-    elif config['deletion_enabled'] == False:
+    elif config['skip_deletion'] == True:
       if config['auto_close'] == True:
         print("\nDeletion disabled in config file.")
         print("Auto-close enabled in config. Exiting in 5 seconds...")
@@ -1443,8 +1478,13 @@ def main():
         input(f"\nDeletion is disabled in config file. Press Enter to to return to main menu...")
         return True
     else:
-      input(f"\nDeletion {F.LIGHTRED_EX}Cancelled{S.R}. Press Enter to to return to main menu...")
-      return True
+      if config['auto_close'] == True:
+        print("Deletion Cancelled. Auto-close enabled in config. Exiting in 5 seconds...")
+        time.sleep(5)
+        sys.exit()
+      else:
+        input(f"\nDeletion {F.LIGHTRED_EX}Cancelled{S.R}. Press Enter to to return to main menu...")
+        return True
   # -------------------------------------------------------------------------------------------------------------------------------------------------
   # ------------------------------------------------END PRIMARY INSTANCE-----------------------------------------------------------------------------
   # -------------------------------------------------------------------------------------------------------------------------------------------------

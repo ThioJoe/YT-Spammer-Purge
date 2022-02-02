@@ -37,12 +37,12 @@ def print_comments(current, config, scanVideoID, comments, loggingEnabled, scanM
   valuesPreparedToPrint = ""
   duplicateValuesToWrite = ""
   duplicateValuesToPrint = ""
-  duplicateTextValuesToWrite = ""
-  duplicateTextValuesToPrint = ""
+  repostValuesToWrite = ""
+  repostValuesToPrint = ""
   duplicateSamplesContent = ""
-  duplicateTextSamplesContent = ""
+  repostSamplesContent = ""
   hasDuplicates = False
-  hasTextDuplicates = False
+  hasReposts = False
 
   def print_and_write(value, writeValues, printValues):
     if loggingEnabled == True and logMode == "rtf":
@@ -54,19 +54,19 @@ def print_comments(current, config, scanVideoID, comments, loggingEnabled, scanM
 
   print(f"{F.LIGHTMAGENTA_EX}============================ Match Samples: One comment per matched-comment author ============================{S.R}")
   for value in current.matchSamplesDict.values():
-    if value['matchReason'] != "Duplicates" and value['matchReason'] != "TextDuplicates":
-      valuesPreparedToWrite, valuesPreparedToPrint = print_and_write(value, valuesPreparedToWrite, valuesPreparedToPrint)
-    elif value['matchReason'] == "Duplicates":
+    if value['matchReason'] == "Duplicates":
       hasDuplicates = True
       similarity = str(round(float(config['levenshtein_distance'])*100))+"%"
       minDupes = str(config['minimum_duplicates'])
-    else:
+    if value['matchReason'] == "Repost":
+      hasReposts = True
       similarity = str(round(float(config['levenshtein_distance'])*100))+"%"
-      hasTextDuplicates = True
-      minLength = str(25)
+      minLength = str(config['repost_minimum_text_length'])
+    else:
+      valuesPreparedToWrite, valuesPreparedToPrint = print_and_write(value, valuesPreparedToWrite, valuesPreparedToPrint)
   print(valuesPreparedToPrint)
 
-  # Print Duplicates Match Samples
+  # Print Duplicate Match Samples
   if hasDuplicates == True:
     print(f"{F.LIGHTMAGENTA_EX}------------------------- {F.LIGHTCYAN_EX}Non-Matched Commenters, but who wrote many similar comments{F.LIGHTMAGENTA_EX} -------------------------{S.R}")
     print(f"{F.MAGENTA}-------------------------- ( {F.LIGHTBLUE_EX}Similarity Threshold: {similarity}  |  Minimum Duplicates: {minDupes}{F.MAGENTA} ) ----------------------------{S.R}")
@@ -75,14 +75,14 @@ def print_comments(current, config, scanVideoID, comments, loggingEnabled, scanM
       duplicateValuesToWrite, duplicateValuesToPrint = print_and_write(value, duplicateValuesToWrite, duplicateValuesToPrint)
   print(duplicateValuesToPrint)
 
-  # Print Multi-Author Duplicate Match Samples
-  if hasTextDuplicates == True:
-    print(f"{F.LIGHTMAGENTA_EX}------------------------- {F.LIGHTCYAN_EX}Non-Matched Commenters, but who wrote a comment similar to a previous comment{F.LIGHTMAGENTA_EX} -------------------------{S.R}")
+  # Print Repost Match Samples
+  if hasReposts == True:
+    print(f"{F.LIGHTMAGENTA_EX}------------------------- {F.LIGHTCYAN_EX}Non-Matched Commenters, but who reposted a previous comment{F.LIGHTMAGENTA_EX} -------------------------{S.R}")
     print(f"{F.MAGENTA}-------------------------- ( {F.LIGHTBLUE_EX}Similarity Threshold: {similarity}  |  Minimum Length: {minLength}{F.MAGENTA} ) ----------------------------{S.R}")
   for value in current.matchSamplesDict.values():
-    if value['matchReason'] == "TextDuplicates":
-      duplicateTextValuesToWrite, duplicateTextValuesToPrint = print_and_write(value, duplicateTextValuesToWrite, duplicateTextValuesToPrint)
-  print(duplicateTextValuesToPrint)
+    if value['matchReason'] == "Repost":
+      repostValuesToWrite, repostValuesToPrint = print_and_write(value, repostValuesToWrite, repostValuesToPrint)
+  print(repostValuesToPrint)
 
   # --------------------------------------------------
 
@@ -95,10 +95,10 @@ def print_comments(current, config, scanVideoID, comments, loggingEnabled, scanM
         duplicateSamplesContent = " \n \\line\\line -------------------- Non-Matched Commenters, but who wrote many similar comments -------------------- \\line \n" 
         duplicateSamplesContent += f"---------------------- ( Similarity Threshold: {similarity}  |  Minimum Duplicates: {minDupes} ) ---------------------- \\line\\line \n" + duplicateValuesToWrite
         write_rtf(current.logFileName, duplicateSamplesContent)
-      if hasTextDuplicates == True:
-        duplicateTextSamplesContent = " \n \\line\\line -------------------- Non-Matched Commenters, but who wrote a comment similar to a previous comment -------------------- \\line \n" 
-        duplicateTextSamplesContent += f"---------------------- ( Similarity Threshold: {similarity}  |  Minimum Length: {minLength} ) ---------------------- \\line\\line \n" + duplicateTextValuesToWrite
-        write_rtf(current.logFileName, duplicateTextSamplesContent)
+      if hasReposts == True:
+        repostSamplesContent = " \n \\line\\line -------------------- Non-Matched Commenters, but who reposted a previous comment -------------------- \\line \n" 
+        repostSamplesContent += f"---------------------- ( Similarity Threshold: {similarity}  |  Minimum Length: {minLength} ) ---------------------- \\line\\line \n" + duplicateValuesToWrite
+        write_rtf(current.logFileName, repostSamplesContent)
     elif logMode == "plaintext":
       matchSamplesContent = "==================== Match Samples: One comment per matched-comment author ====================\n" + valuesPreparedToWrite
       write_plaintext_log(current.logFileName, matchSamplesContent)
@@ -106,13 +106,13 @@ def print_comments(current, config, scanVideoID, comments, loggingEnabled, scanM
         duplicateSamplesContent = "\n-------------------- Non-Matched Commenters, but who wrote many similar comments --------------------\n"
         duplicateSamplesContent += f"---------------------- ( Similarity Threshold: {similarity}  |  Minimum Duplicates: {minDupes} ) ----------------------\n" + duplicateValuesToWrite
         write_plaintext_log(current.logFileName, duplicateSamplesContent)
-      if hasTextDuplicates == True:
-        duplicateTextSamplesContent = "\n-------------------- Non-Matched Commenters, but who wrote a comment similar to a previous comment --------------------\n"
-        duplicateTextSamplesContent += f"---------------------- ( Similarity Threshold: {similarity}  |  Minimum Length: {minLength} ) ----------------------\n" + duplicateTextValuesToWrite
-        write_plaintext_log(current.logFileName, duplicateTextSamplesContent)
+      if hasDuplicates == True:
+        repostSamplesContent = "\n-------------------- Non-Matched Commenters, but who reposted a previous comment --------------------\n"
+        repostSamplesContent += f"---------------------- ( Similarity Threshold: {similarity}  |  Minimum Length: {minLength} ) ----------------------\n" + duplicateValuesToWrite
+        write_plaintext_log(current.logFileName, repostSamplesContent)
 
     # Entire Contents of Log File
-    logFileContents = commentsContents + matchSamplesContent + duplicateSamplesContent + duplicateTextSamplesContent
+    logFileContents = commentsContents + matchSamplesContent + duplicateSamplesContent + repostSamplesContent
   else:
     logFileContents = None
     logMode = None
@@ -150,7 +150,10 @@ def print_prepared_comments(current, scanVideoID, comments, j, loggingEnabled, s
 
     # Add one sample from each matching author to current.matchSamplesDict, containing author ID, name, and text
     if author_id_local not in current.matchSamplesDict.keys():
-      add_sample(current, author_id_local, author, text, matchReason)
+      originalCommentID = ""
+      if matchReason == "Repost":
+        originalCommentID = metadata['originalCommentID']
+      add_sample(current, author_id_local, author, text, matchReason, originalCommentID)
 
     # Build comment direct link
     if scanMode == "communityPost" or scanMode == "recentCommunityPosts":
@@ -215,6 +218,26 @@ def print_prepared_comments(current, scanVideoID, comments, j, loggingEnabled, s
     # Must use append here, not extend, or else it would add each character separately
     i += 1
     j += 1
+
+  # Re-order indexes
+  index = 1
+  for author, item in current.matchSamplesDict.items():
+    if item['matchReason'] != "Duplicates" and item['matchReason'] != "Repost":
+      item['index'] = index
+      item['iString'] = f"{str(index)}. ".ljust(4)
+      index += 1
+
+  for author, item in current.matchSamplesDict.items():
+    if item['matchReason'] == "Duplicates":
+      item['index'] = index
+      item['iString'] = f"{str(index)}. ".ljust(4)
+      index += 1
+
+  for author, item in current.matchSamplesDict.items():
+    if item['matchReason'] == "Repost":
+      item['index'] = index
+      item['iString'] = f"{str(index)}. ".ljust(4)
+      index += 1  
 
   if loggingEnabled == True:
     print(" Writing to log file, please wait...", end="\r")
@@ -528,13 +551,17 @@ def download_profile_pictures(pictureUrlsDict, jsonSettingsDict):
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 # Adds a sample to current.matchSamplesDict and preps formatting
-def add_sample(current, authorID, authorNameRaw, commentText, matchReason):
+def add_sample(current, authorID, authorNameRaw, commentText, matchReason, originalCommentID = ""):
 
-  # Make index number and string formatted version
-  index = len(current.matchSamplesDict) + 1
-  iString = f"{str(index)}. ".ljust(4)
-  authorNumComments = current.authorMatchCountDict[authorID]
-  cString = f"[x{str(authorNumComments)}] ".ljust(7)
+  # Make string formatted version of author - index generated later
+  index = 0
+  iString = ""
+  if matchReason != "Repost":
+    numComments = current.authorMatchCountDict[authorID]
+    cString = f"[x{str(numComments)}] ".ljust(7)
+  else:
+    numComments = current.repostMatchCountDict[originalCommentID]
+    cString = f"[x{str(numComments)}] ".ljust(7)
 
   # Left Justify Author Name and Comment Text
   if len(authorNameRaw) > 20:
@@ -548,7 +575,7 @@ def add_sample(current, authorID, authorNameRaw, commentText, matchReason):
   commentText = commentText[0:82].ljust(82)
 
   # Add comment sample, author ID, name, and counter
-  current.matchSamplesDict[authorID] = {'index':index, 'cString':cString, 'iString':iString, 'count':authorNumComments, 'authorID':authorID, 'authorName':authorNameRaw, 'nameAndText':authorName + commentText, 'matchReason':matchReason}
+  current.matchSamplesDict[authorID] = {'index':index, 'cString':cString, 'iString':iString, 'count':numComments, 'authorID':authorID, 'authorName':authorNameRaw, 'nameAndText':authorName + commentText, 'matchReason':matchReason}
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
