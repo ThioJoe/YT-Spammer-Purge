@@ -193,6 +193,15 @@ import pytest
         ),
         ("prepare_modes", "recover_deleted_comments", [MagicMock()], OSError, None),
         ("prepare_modes", "delete_comment_list", [MagicMock()], OSError, None),
+        ("utils", "get_video_title", [MagicMock()] * 2, None, None),
+        ("utils", "make_char_set", [MagicMock()], None, set()),
+        ("utils", "check_list_against_string", [MagicMock()] * 2, None, False),
+        ("utils", "string_to_list", [MagicMock()], None, []),
+        ("utils", "process_spammer_ids", [MagicMock()], None, None),
+        ("utils", "expand_ranges", [MagicMock()], TypeError, None),
+        ("utils", "choice", None, OSError, None),
+        ("utils", "print_break_finished", [MagicMock()], OSError, None),
+        ("utils", "print_error_title_fetch", None, OSError, None),
     ),
 )
 def test_files_func(mod, func, func_args, err, exp_retval):
@@ -241,6 +250,9 @@ def test_files_func(mod, func, func_args, err, exp_retval):
             "check_deleted_comments",
             [MagicMock()] * 1,
         ),
+        ("utils", "print_exception_reason", [MagicMock()]),
+        ("utils", "print_http_error_during_scan", [MagicMock()]),
+        ("utils", "print_exception_during_scan", [MagicMock()]),
     ),
 )
 def test_func_return_none(mod, func, func_args):
