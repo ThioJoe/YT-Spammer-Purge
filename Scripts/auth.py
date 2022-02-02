@@ -65,13 +65,13 @@ def get_authenticated_service():
       #try and except is used because a lot of errors occur if the file picker is closed without picking a file.
       try:
         file_path = filedialog.askopenfilename()
-        #replaces the path for the file to wherever the currrent path is, also renames the file
+        #replaces the path of the file to wherever the currrent path is, also renames the file
         os.replace(file_path, f"{os.getcwd()}/client_secrets.json")
         root.destroy()
-        print(f"The file has been moved from {file_path} to {os.getcwd()}/client_secrets.json")
+        print(f"\nThe file has been moved from {file_path} to {os.getcwd()}/client_secrets.json")
+        print(f"\n > The program will exit now, please re-run the program")
       except:
         pass
-      print(f"\n > The program will exit now, please re-run the program")
 
     sys.exit()
     
