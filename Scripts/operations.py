@@ -272,7 +272,7 @@ def check_duplicates(current, config, miscData, allCommentsDict, videoID):
     input("\nPress Enter to continue...")
     levenshtein = 0.9
 
-  # Get dupliate count setting
+  # Get duplicate count setting
   try:
     minimum_duplicates = int(config['minimum_duplicates'])
     if minimum_duplicates < 2:
