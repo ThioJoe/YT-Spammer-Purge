@@ -275,7 +275,7 @@ def add_spam(current, config, miscData, currentCommentDict, videoID, matchReason
 
 def get_all_author_comments(current, config, miscData, allCommentsDict):
   # Make set of all matched author IDs
-  print("Finding all other comments by authors...", end="\r")
+  print(" Finding all other comments by authors...", end="\r")
   totalCommentsAmount = len(allCommentsDict)
   scannedCount = 0
   matchedAuthorIDSet = set()
@@ -951,7 +951,7 @@ def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToEx
   
   input("\nPress Enter to decide what to do with the rest...")
   
-  return current, excludedCommentsDict, authorsToExcludeSet, commentIDExcludeSet # May use excludedCommentsDict later for printing them to log file
+  return current, excludedCommentsDict, authorsToExcludeSet, commentIDExcludeSet, rtfFormattedExcludes, plaintextFormattedExcludes # May use excludedCommentsDict later for printing them to log file
 
 
 ################################# Get Most Recent Videos #####################################
