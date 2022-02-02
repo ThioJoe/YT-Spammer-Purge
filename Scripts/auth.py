@@ -54,11 +54,12 @@ def get_authenticated_service():
     print(f" ----- Did you create a {F.YELLOW}Google Cloud Platform Project{S.R} to access the API? ----- ")
     print(f"  > For instructions on how to get an API key, visit: {F.YELLOW}TJoe.io/api-setup{S.R}")
     print(f"\n  > (Non-shortened Link: https://github.com/ThioJoe/YT-Spammer-Purge/wiki/Instructions:-Obtaining-an-API-Key)")
-    print(f"\n ")
-    print(f"\n > If a file has already been created then please input 1 to choose the file")
+    print(f"\n")
+    print(f"\n > If a file already exists, please input 'Y' or 'Yes'")
     print(f"\n > Otherwise press Enter to exit")
+    
     inp = input("\nInput: ")
-    if inp == "1":
+    if inp.upper() in ("Y","YES"):
       root = tk.Tk()
       root.withdraw()
       #try and except is used because a lot of errors occur if the file picker is closed without picking a file.
