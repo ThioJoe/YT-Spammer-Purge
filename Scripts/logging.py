@@ -59,8 +59,8 @@ def print_comments(current, config, scanVideoID, comments, loggingEnabled, scanM
 
   # Print Duplicates Match Samples
   if hasDuplicates == True:
-    print(f"{F.LIGHTMAGENTA_EX}------------------------- {F.LIGHTCYAN_EX}Non-Matched Commenters, but who wrote many similar comments{F.LIGHTMAGENTA_EX} -------------------------{S.R}")
-    print(f"{F.MAGENTA}-------------------------- ( {F.LIGHTBLUE_EX}Similarity Threshold: {similarity}  |  Minimum Duplicates: {minDupes}{F.MAGENTA} ) ----------------------------{S.R}")
+    print(f"{F.LIGHTMAGENTA_EX}------------------------- {S.BRIGHT}{F.WHITE}{B.BLUE} Non-Matched {S.R}{F.LIGHTCYAN_EX} Commenters, But Who Wrote Many Similar Comments{F.LIGHTMAGENTA_EX} -------------------------{S.R}")
+    print(f"{F.MAGENTA}---------------------------- ( {F.LIGHTBLUE_EX}Similarity Threshold: {similarity}  |  Minimum Duplicates: {minDupes}{F.MAGENTA} ) ----------------------------{S.R}")
   for value in current.matchSamplesDict.values():
     if value['matchReason'] == "Duplicates":
       duplicateValuesToWrite, duplicateValuesToPrint = print_and_write(value, duplicateValuesToWrite, duplicateValuesToPrint)
@@ -658,18 +658,14 @@ def write_log_heading(current, logMode, filtersDict, afterExclude=False):
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-def write_log_completion_summary(current, exclude, logMode, banChoice, deletionModeFriendlyName, rtfExclude=None, plaintextExclude=None):
+def write_log_completion_summary(current, logMode, banChoice, deletionModeFriendlyName):
   if logMode == "rtf":
-    write_rtf(current.logFileName, "\n\n \\line\\line Spammers Banned: " + str(banChoice)) # Write whether or not spammer is banned to log file
-    write_rtf(current.logFileName, "\n\n \\line\\line Action Taken on Comments: " + str(deletionModeFriendlyName) + " \\line\\line \n\n")
-    #if exclude == True: #Printing Exclude moved to exclude function
-    #  write_rtf(current.logFileName, str(rtfExclude))
-  elif logMode == "plaintext":
-    write_plaintext_log(current.logFileName, "\n\n Spammers Banned: " + str(banChoice) + "\n\n") # Write whether or not spammer is banned to log file
-    write_plaintext_log(current.logFileName, "Action Taken on Comments: " + str(deletionModeFriendlyName) + "\n\n")
-    #if exclude == True: #Printing Exclude moved to exclude function
-    #  write_plaintext_log(current.logFileName, str(plaintextExclude))
+    write_rtf(current.logFileName, "\n\n\\line\\line Spammers Banned: " + str(banChoice)) # Write whether or not spammer is banned to log file
+    write_rtf(current.logFileName, "\n\n\\line\\line Action Taken on Comments: " + str(deletionModeFriendlyName) + " \\line\\line \n\n")
 
+  elif logMode == "plaintext":
+    write_plaintext_log(current.logFileName, "\n\nSpammers Banned: " + str(banChoice) + "\n\n") # Write whether or not spammer is banned to log file
+    write_plaintext_log(current.logFileName, "Action Taken on Comments: " + str(deletionModeFriendlyName) + "\n\n")
 
 # Re-Writes Log Files if authors excluded
 def rewrite_log_file(current, logInfo):
