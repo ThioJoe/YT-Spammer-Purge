@@ -3,6 +3,16 @@ name = "YT-Spammer-Purge"
 version = "2.14.2"
 description = "Allows you easily scan for and delete scam comments using several methods."
 authors = ["ThioJoe <Joe@ThioJoe.com>"]
+packages = [
+  {include="Scripts"},
+  {include="YTSpammerPurge.py"},
+]
+include = [
+  "assets/*.ini",
+  "assets/*.json",
+  "assets/*.png",
+  "assets/*.txt",
+]
 
 [tool.poetry.dependencies]
 python = ">=3.6,<4.0"
