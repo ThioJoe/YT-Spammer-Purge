@@ -1,7 +1,7 @@
 [tool]
 [tool.poetry]
 name = "YT-Spammer-Purge"
-version = "2.14.0"
+version = "2.14.2"
 description = "Allows you easily scan for and delete scam comments using several methods."
 authors = ["ThioJoe <Joe@ThioJoe.com>"]
 
