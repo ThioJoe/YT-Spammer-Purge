@@ -19,7 +19,7 @@
 ###
 ### NOTES:    1. To use this script, you will need to obtain your own API credentials file by making
 ###				       a project via the Google Developers Console (aka 'Google Cloud Platform').
-###              The credential file should be re-named 'client_secrets.json' and be placed in the
+###              The credential file should be re-named 'client_secret.json' and be placed in the
 ###              same directory as this script.
 ###				            >>> See the Readme for instructions on this.
 ###
@@ -36,7 +36,8 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-from . import __version__
+version = "2.14.3"
+configVersion = 24
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 # Import other module files
@@ -65,8 +66,6 @@ from pkg_resources import parse_version
 # Other Libraries
 from googleapiclient.errors import HttpError
 
-version = __version__
-configVersion = 24
 
 ##########################################################################################
 ##########################################################################################
@@ -1360,9 +1359,11 @@ def main():
                 return True
 
         ### ---------------- Set Up How To Handle Comments  ----------------
-        rtfExclude = None
-        plaintextExclude = None
+        authorsToExcludeSet = set()
+        commentIDExcludeSet = set()
         exclude = False
+        excludedCommentsDict = {}
+        excludeDisplayString = ""
         # If not skipped by config, ask user what to do
         if confirmDelete == None and returnToMenu != True:
             # Menu for deletion mode
@@ -1386,8 +1387,9 @@ def main():
                         f" > To {F.LIGHTGREEN_EX}exclude certain authors{S.R}: Type \'{F.LIGHTGREEN_EX}exclude{S.R}\' followed by a list of the numbers (or ranges of #'s) {F.LIGHTMAGENTA_EX}from the sample list{S.R}")
                     print("      > Example:  exclude 1, 3-5, 7, 12-15")
                     print(
-                        f" > To {F.LIGHTGREEN_EX}only process certain authors{S.R}: Type \'{F.LIGHTGREEN_EX}only{S.R}\' followed by a list of the numbers (or ranges of #'s) {F.LIGHTMAGENTA_EX}from the sample list{S.R}")
-                    print("      > Example:  only 1, 3-5, 7, 12-15")
+                        f" > To {F.LIGHTGREEN_EX}only process certain authors{S.R}: Type \'{F.LIGHTGREEN_EX}only{S.R}\' followed by a list of the numbers (or ranges of #s) {F.LIGHTMAGENTA_EX}from the sample list{S.R}")
+                    print(
+                        "      > Example:  only 1, 3-5, 7, 12-15  --  (Will effectively exclude the 'inverse' of the 'only' selected authors)")
 
                 # Delete Instructions
                 if exclude == False:
@@ -1437,11 +1439,10 @@ def main():
                         }
                     else:
                         logInfo = None
-                    current, excludedDict, rtfExclude, plaintextExclude = operations.exclude_authors(current, config,
-                                                                                                     miscData,
-                                                                                                     inputtedString=confirmDelete,
-                                                                                                     logInfo=logInfo,
-                                                                                                     only=onlyBool)
+                    # This is very messy for now, will later consolidate the parameters
+                    current, excludedCommentsDict, authorsToExcludeSet, commentIDExcludeSet, = operations.exclude_authors(
+                        current, config, miscData, excludedCommentsDict, authorsToExcludeSet, commentIDExcludeSet,
+                        excludeDisplayString, inputtedString=confirmDelete, logInfo=logInfo, only=onlyBool)
                     miscData.resources['Whitelist']['WhitelistContents'] = files.ingest_list_file(whitelistPathWithName,
                                                                                                   keepCase=True)
                     exclude = True

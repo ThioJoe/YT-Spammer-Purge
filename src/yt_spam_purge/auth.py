@@ -11,6 +11,7 @@ from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
+from json import JSONDecodeError
 
 TOKEN_FILE_NAME = 'token.pickle'
 
@@ -48,12 +49,16 @@ def get_authenticated_service():
 
   # Check if client_secrets.json file exists, if not give error
   if not os.path.exists(CLIENT_SECRETS_FILE):
-    print(f"\n         ----- {F.WHITE}{B.RED}[!] Error:{S.R} client_secrets.json file not found -----")
-    print(f" ----- Did you create a {F.YELLOW}Google Cloud Platform Project{S.R} to access the API? ----- ")
-    print(f"  > For instructions on how to get an API key, visit: {F.YELLOW}TJoe.io/api-setup{S.R}")
-    print(f"\n  > (Non-shortened Link: https://github.com/ThioJoe/YT-Spammer-Purge/wiki/Instructions:-Obtaining-an-API-Key)")
-    input("\nPress Enter to Exit...")
-    sys.exit()
+    # In case people don't have file extension viewing enabled, they may add a redundant json extension
+    if os.path.exists(f"{CLIENT_SECRETS_FILE}.json"):
+      CLIENT_SECRETS_FILE = CLIENT_SECRETS_FILE + ".json"
+    else:
+      print(f"\n         ----- {F.WHITE}{B.RED}[!] Error:{S.R} client_secrets.json file not found -----")
+      print(f" ----- Did you create a {F.YELLOW}Google Cloud Platform Project{S.R} to access the API? ----- ")
+      print(f"  > For instructions on how to get an API key, visit: {F.YELLOW}TJoe.io/api-setup{S.R}")
+      print(f"\n  > (Non-shortened Link: https://github.com/ThioJoe/YT-Spammer-Purge/wiki/Instructions:-Obtaining-an-API-Key)")
+      input("\nPress Enter to Exit...")
+      sys.exit()
 
   creds = None
   # The file token.pickle stores the user's access and refresh tokens, and is
@@ -81,6 +86,13 @@ def first_authentication():
   global YOUTUBE
   try:
     YOUTUBE = get_authenticated_service() # Create authentication object
+  except JSONDecodeError as jx:
+    print(f"{F.WHITE}{B.RED} [!!!] Error: {S.R}" + str(jx))
+    print(f"\nDid you make the client_secrets.json file yourself by {F.LIGHTRED_EX}copying and pasting into it{S.R}, instead of {F.LIGHTGREEN_EX}downloading it{S.R}?")
+    print(f"You need to {F.YELLOW}download the json file directly from the google cloud dashboard{S.R} as shown in the instructions.")
+    print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
+    input("Press Enter to Exit...")
+    sys.exit()
   except Exception as e:
     if "invalid_grant" in str(e):
       print(f"{F.YELLOW}[!] Invalid token{S.R} - Requires Re-Authentication")
