@@ -174,6 +174,7 @@ def test_files_func(mod, func, func_args, err, exp_retval):
             ),
         ),
         ("logging", "rewrite_log_file", (MagicMock(), MagicMock())),
+        ("auth", "initialize", None),
     ),
 )
 def test_func_return_none(mod, func, func_args):
