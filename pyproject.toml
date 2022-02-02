@@ -25,3 +25,6 @@ protobuf = "==3.19.1"
 python-levenshtein = ">=0.12.2"
 rtfunicode = "==2.0"
 six = ">=1.16.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2.5"
