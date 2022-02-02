@@ -19,7 +19,7 @@
 ###
 ### NOTES:    1. To use this script, you will need to obtain your own API credentials file by making
 ###				       a project via the Google Developers Console (aka 'Google Cloud Platform').
-###              The credential file should be re-named 'client_secret.json' and be placed in the
+###              The credential file should be re-named 'client_secrets.json' and be placed in the
 ###              same directory as this script.
 ###				            >>> See the Readme for instructions on this.
 ###

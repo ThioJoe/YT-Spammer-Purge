@@ -71,6 +71,7 @@ mkdocs-coverage = ">=0.2.1"
 mkdocs-macros-plugin = ">=0.5.0"
 mkdocs-material = ">=6.2.7"
 mkdocstrings = ">=0.16.2"
+ipdb = "^0.13.9"
 
 [tool.poetry.scripts]
 ytsp = "yt_spam_purge.cli:main"

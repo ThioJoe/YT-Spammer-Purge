@@ -610,6 +610,7 @@ def ingest_asset_file(fileName):
   return dataList
 
 def copy_asset_file(fileName, destination):
+  breakpoint()
   def assetFilesPath(relative_path):
     if hasattr(sys, '_MEIPASS'): # If running as a pyinstaller bundle
       return os.path.join(sys._MEIPASS, relative_path)
