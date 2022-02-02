@@ -60,8 +60,8 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
   # Print Duplicates Match Samples
   if hasDuplicates == True:
     if doPrint:
-      print(f"{F.LIGHTMAGENTA_EX}------------------------- {F.LIGHTCYAN_EX}Non-Matched Commenters, but who wrote many similar comments{F.LIGHTMAGENTA_EX} -------------------------{S.R}")
-      print(f"{F.MAGENTA}-------------------------- ( {F.LIGHTBLUE_EX}Similarity Threshold: {similarity}  |  Minimum Duplicates: {minDupes}{F.MAGENTA} ) ----------------------------{S.R}")
+      print(f"{F.LIGHTMAGENTA_EX}------------------------- {S.BRIGHT}{F.WHITE}{B.BLUE} Non-Matched {S.R}{F.LIGHTCYAN_EX} Commenters, But Who Wrote Many Similar Comments{F.LIGHTMAGENTA_EX} -------------------------{S.R}")
+      print(f"{F.MAGENTA}---------------------------- ( {F.LIGHTBLUE_EX}Similarity Threshold: {similarity}  |  Minimum Duplicates: {minDupes}{F.MAGENTA} ) ----------------------------{S.R}")
   for value in current.matchSamplesDict.values():
     if value['matchReason'] == "Duplicate":
       duplicateValuesToWrite, duplicateValuesToPrint = print_and_write(value, duplicateValuesToWrite, duplicateValuesToPrint)
@@ -707,12 +707,12 @@ def write_log_heading(current, logMode, filtersDict, afterExclude=False, comment
 
 def write_log_completion_summary(current, exclude, logMode, banChoice, deletionModeFriendlyName, removeOtherAuthorComments):
   if logMode == "rtf":
-    write_rtf(current.logFileName, "\n\n \\line\\line Spammers Banned: " + str(banChoice))
-    write_rtf(current.logFileName, "\n\n \\line\\line Action Taken on Comments: " + str(deletionModeFriendlyName) + " \\line\\line \n\n")
-    write_rtf(current.logFileName, "\n\n \\line\\line Also Removed All Other Comments by Matched Authors: " + str(removeOtherAuthorComments) + " \\line\\line \n\n")
+    write_rtf(current.logFileName, "\n\n\\line\\line Spammers Banned: " + str(banChoice))
+    write_rtf(current.logFileName, "\n\n\\line\\line Action Taken on Comments: " + str(deletionModeFriendlyName) + " \\line\\line \n\n")
+    write_rtf(current.logFileName, "\n\n\\line\\line Also Removed All Other Comments by Matched Authors: " + str(removeOtherAuthorComments) + " \\line\\line \n\n")
 
   elif logMode == "plaintext":
-    write_plaintext_log(current.logFileName, "\n\n Spammers Banned: " + str(banChoice) + "\n\n")
+    write_plaintext_log(current.logFileName, "\n\nSpammers Banned: " + str(banChoice) + "\n\n")
     write_plaintext_log(current.logFileName, "Action Taken on Comments: " + str(deletionModeFriendlyName) + "\n\n")
     write_plaintext_log(current.logFileName, "Also Removed All Other Comments by Matched Authors: " + str(removeOtherAuthorComments) + "\n\n")
 

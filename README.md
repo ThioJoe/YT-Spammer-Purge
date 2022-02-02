@@ -97,8 +97,23 @@ Either way, you DO need to acquire your own API credentials file to access the Y
 * [Linux Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/Linux-Installation-Instructions)
 * [MacOS Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/MacOS-Instructions)
 
+
+
+**Docker Instructions:**
+
+Before running `docker-compose` you must run the `YTSpammerPurge.py` script at least once with your `user_secrets.json` file to confirm OAuth credentials and generate the config/token files.
+
+The generated config files, token, and Spam Purge Resources will all be bound to the docker container via volumes.
+
+Once you generated the token and config files, build the Docker image:
+
+`docker build -t yt-spammer-purge .`
+
+
+Now you can run `docker-compose up` to start the container, or use the image to run on a Kubernetes cluster for example.
+
+
 ## Instructions - Obtaining YouTube API Key
 To use this script, you will need an "Oauth2" credential to access the scanning and deletion functions via YouTube's Data API. Otherwise this script won't work at all. 
 * #### Instructions can be found on this page: [Instructions: Obtaining an API Key](https://github.com/ThioJoe/YT-Spammer-Purge/wiki/Instructions:-Obtaining-an-API-Key)
 * #### **Or, follow a video WalkThrough Here: <https://www.youtube.com/watch?v=c6ebWvay8dE>**  
-
