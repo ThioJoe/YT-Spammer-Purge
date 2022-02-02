@@ -1,11 +1,8 @@
 version: '3.7'
 
 services:
-  app:
-    image: yt-spammer-purge
-    build:
-      context: .
-      dockerfile: Dockerfile
+  yt-spammer-purge:
+    image: ghcr.io/thiojoe/yt-spammer-purge:latest
     volumes:
       - ./SpamPurgeConfig.ini:/usr/src/app/SpamPurgeConfig.ini
       - ./client_secrets.json:/usr/src/app/client_secrets.json
