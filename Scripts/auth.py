@@ -71,6 +71,7 @@ def get_authenticated_service():
         print(f"\nThe file has been moved from {file_path} to {os.getcwd()}/client_secrets.json")
         print(f"\n > The program will exit now, please re-run the program")
       except:
+        print(f"\nfile picker closed")
         pass
 
     sys.exit()
