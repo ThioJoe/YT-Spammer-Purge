@@ -3,7 +3,6 @@
 import pytest
 
 
-@pytest.mark.require_input
 def test_main():
     import YTSpammerPurge as ytspp
     with pytest.raises(OSError):
