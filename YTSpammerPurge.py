@@ -36,7 +36,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.14.1"
+version = "2.14.2"
 configVersion = 24
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -350,16 +350,19 @@ def main():
     # -----------------------------------------------------------------------------------------------------------------------------
     if updateAvailable != False:
       updateStringLabel = "Update Available: "
-      if updateAvailable == True:
+      if updateAvailable == True: # Stable update available
+        updateString = f"{F.LIGHTGREEN_EX}Yes{S.R}"
+
+      elif updateAvailable == "beta": # Beta Update Available
         if updateReleaseChannel == "stable":
-          updateString = f"{F.LIGHTGREEN_EX}Yes{S.R}"
-          #print(f"{F.LIGHTGREEN_EX}Notice: A new version is available! Choose 'Check For Updates' option for details.{S.R}\n")
+          updateStringLabel = ""
+          updateString = ""
         else:
-          #print(f"{F.LIGHTGREEN_EX}Notice: A new {F.CYAN}beta{F.LIGHTGREEN_EX} version is available! Choose 'Check For Updates' option for details.{S.R}\n")
           updateString = f"{F.CYAN}Beta{S.R}"
       elif updateAvailable == None:
         updateString = f"{F.LIGHTRED_EX}Error{S.R}"
         print("> Note: Error during check for updates. Select 'Check For Updates' for details.")  
+
     else:
       if config['auto_check_update'] == False:
         updateStringLabel = "Update Checking: "
