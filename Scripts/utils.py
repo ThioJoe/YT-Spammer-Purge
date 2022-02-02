@@ -4,6 +4,7 @@ from Scripts.shared_imports import *
 import Scripts.validation as validation
 import Scripts.auth as auth
 from googleapiclient.errors import HttpError
+from googletrans import Translator
 
 ##########################################################################################
 ############################## UTILITY FUNCTIONS #########################################
@@ -213,3 +214,13 @@ def print_error_title_fetch():
   print(f"  > You won't be able to delete/hide any comments like usual, but you can {F.LIGHTMAGENTA_EX}exclude users before saving the log file{S.R}")
   print(f"  > Then, you can {F.LIGHTGREEN_EX}delete the comments later{S.R} using the {F.YELLOW}mode that removes comments using a pre-existing log file{S.R}")
   input("\n Press Enter to continue...")
+
+def translate_text(text):
+  """ Function to translate text to English
+
+  Args:
+      text (str): Text to translate
+  """
+  translator = Translator()
+  result = translator.translate(text)
+  return result.text, result.src

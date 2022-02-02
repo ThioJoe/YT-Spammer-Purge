@@ -1,5 +1,6 @@
 google_api_python_client==2.33.0
 google_auth_oauthlib==0.4.6
+googletrans==4.0.0rc1
 protobuf==3.19.1
 colorama==0.4.4
 rtfunicode==2.0

@@ -6,7 +6,7 @@ import Scripts.utils as utils
 import Scripts.auth as auth
 import Scripts.validation as validation
 import Scripts.logging as logging
-from Scripts.utils import choice
+from Scripts.utils import choice, translate_text
 
 import unicodedata
 import time
@@ -336,6 +336,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
   parentAuthorChannelID = currentCommentDict['parentAuthorChannelID']
   commentTextRaw = str(currentCommentDict['commentText']) # Use str() to ensure not pointing to same place in memory
   commentText = str(currentCommentDict['commentText']).replace("\r", "")
+  translatedText, sourceLanguage = translate_text(commentText)
 
   ##Debugging
   # print("Comment ID: " + commentID)
@@ -347,22 +348,22 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
   
   # Do not even check comment if: Author is Current User, Author is Channel Owner, or Author is in whitelist
   if auth.CURRENTUSER.id != authorChannelID and miscData.channelOwnerID != authorChannelID and authorChannelID not in miscData.resources['Whitelist']['WhitelistContents']:
-    if "@" in commentText:
+    if "@" in translatedText:
       # Logic to avoid false positives from replies to spammers
       if allThreadAuthorNames and (filtersDict['filterMode'] == "AutoSmart" or filtersDict['filterMode'] == "NameAndText"):
         for name in allThreadAuthorNames:
-          if "@"+str(name) in commentText:
-            commentText = commentText.replace("@"+str(name), "")
+          if "@"+str(name) in translatedText:
+            translatedText = translatedText.replace("@"+str(name), "")
       # Extra logic to detect false positive if spammer's comment already deleted, but someone replied
       if current.matchedCommentsDict and filtersDict['filterMode'] == "AutoSmart":
         for key, value in current.matchedCommentsDict.items():
-          if "@"+str(value['authorName']) in commentText:
+          if "@"+str(value['authorName']) in translatedText:
             remove = True
             for key2,value2 in current.matchedCommentsDict.items():
               if value2['authorID'] == authorChannelID:
                 remove = False
             if remove == True:
-              commentText = commentText.replace("@"+str(value['authorName']), "")
+              translatedText = translatedText.replace("@"+str(value['authorName']), "")
 
 
 
@@ -387,34 +388,34 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
     # Check Modes: Comment Text
     elif filtersDict['filterMode'] == "Text":
       if filtersDict['filterSubMode'] == "chars":
-        commentText = utils.make_char_set(str(commentText))
-        if any(x in filtersDict['CustomCommentTextFilter'] for x in commentText):
+        translatedText = utils.make_char_set(str(translatedText))
+        if any(x in filtersDict['CustomCommentTextFilter'] for x in translatedText):
           add_spam(current, config, miscData, currentCommentDict, videoID)
       elif filtersDict['filterSubMode'] == "string":
-        if utils.check_list_against_string(listInput=filtersDict['CustomCommentTextFilter'], stringInput=commentText, caseSensitive=False):
+        if utils.check_list_against_string(listInput=filtersDict['CustomCommentTextFilter'], stringInput=translatedText, caseSensitive=False):
           add_spam(current, config, miscData, currentCommentDict, videoID)
       elif filtersDict['filterSubMode'] == "regex":
-        if re.search(str(filtersDict['CustomRegexPattern']), commentText):
+        if re.search(str(filtersDict['CustomRegexPattern']), translatedText):
           add_spam(current, config, miscData, currentCommentDict, videoID)
 
     # Check Modes: Name and Text
     elif filtersDict['filterMode'] == "NameAndText":
       if filtersDict['filterSubMode'] == "chars":
         authorChannelName = utils.make_char_set(str(authorChannelName))
-        commentText = utils.make_char_set(str(commentText))
+        translatedText = utils.make_char_set(str(translatedText))
         if any(x in filtersDict['CustomUsernameFilter'] for x in authorChannelName):
           add_spam(current, config, miscData, currentCommentDict, videoID)
-        elif any(x in filtersDict['CustomCommentTextFilter'] for x in commentText):
+        elif any(x in filtersDict['CustomCommentTextFilter'] for x in translatedText):
           add_spam(current, config, miscData, currentCommentDict, videoID)
       elif filtersDict['filterSubMode'] == "string":
         if utils.check_list_against_string(listInput=filtersDict['CustomUsernameFilter'], stringInput=authorChannelName, caseSensitive=False):
           add_spam(current, config, miscData, currentCommentDict, videoID)
-        elif utils.check_list_against_string(listInput=filtersDict['CustomCommentTextFilter'], stringInput=commentText, caseSensitive=False):
+        elif utils.check_list_against_string(listInput=filtersDict['CustomCommentTextFilter'], stringInput=translatedText, caseSensitive=False):
           add_spam(current, config, miscData, currentCommentDict, videoID)
       elif filtersDict['filterSubMode'] == "regex":
         if re.search(str(filtersDict['CustomRegexPattern']), authorChannelName):
           add_spam(current, config, miscData, currentCommentDict, videoID)
-        elif re.search(str(filtersDict['CustomRegexPattern']), commentText):
+        elif re.search(str(filtersDict['CustomRegexPattern']), translatedText):
           add_spam(current, config, miscData, currentCommentDict, videoID)
 
     # Check Modes: Auto ASCII (in username)
@@ -483,18 +484,18 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
       # ------------------------------------------------------------------------
 
       # Normalize usernames and text, remove multiple whitespace and invisible chars
-      commentText = re.sub(' +', ' ', commentText)
+      translatedText = re.sub(' +', ' ', translatedText)
       # https://stackoverflow.com/a/49695605/17312053
-      commentText = "".join(k if k in bufferChars else "".join(v) for k,v in itertools.groupby(commentText, lambda c: c))
-      commentText = remove_unicode_categories(commentText)
+      translatedText = "".join(k if k in bufferChars else "".join(v) for k,v in itertools.groupby(translatedText, lambda c: c))
+      translatedText = remove_unicode_categories(translatedText)
 
       authorChannelName = re.sub(' +', ' ', authorChannelName)
       authorChannelName = remove_unicode_categories(authorChannelName)
 
       # Processed Variables
-      combinedString = authorChannelName + commentText
+      combinedString = authorChannelName + translatedText
       combinedSet = utils.make_char_set(combinedString, stripLettersNumbers=True, stripPunctuation=True)
-      textSet = set(commentText)
+      textSet = set(translatedText)
       #usernameSet = utils.make_char_set(authorChannelName)
 
       # Run Checks
@@ -513,17 +514,17 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
         add_spam(current, config, miscData, currentCommentDict, videoID)
       elif any(findOnlyObfuscated(expression[1], expression[0], combinedString) for expression in compiledRegexDict['blackAdWords']):
         add_spam(current, config, miscData, currentCommentDict, videoID)
-      elif any(findOnlyObfuscated(expression[1], expression[0], commentText) for expression in compiledRegexDict['textObfuBlackWords']):
+      elif any(findOnlyObfuscated(expression[1], expression[0], translatedText) for expression in compiledRegexDict['textObfuBlackWords']):
         add_spam(current, config, miscData, currentCommentDict, videoID)
-      elif any(word in commentText.lower() for word in compiledRegexDict['textExactBlackWords']):
+      elif any(word in translatedText.lower() for word in compiledRegexDict['textExactBlackWords']):
         add_spam(current, config, miscData, currentCommentDict, videoID)
-      elif any((word in commentText and not textSet.intersection(lowAlSet)) for word in compiledRegexDict['textUpLowBlackWords']):
+      elif any((word in translatedText and not textSet.intersection(lowAlSet)) for word in compiledRegexDict['textUpLowBlackWords']):
         add_spam(current, config, miscData, currentCommentDict, videoID)
       elif any(findOnlyObfuscated(expression[1], expression[0], authorChannelName) for expression in compiledRegexDict['usernameObfuBlackWords']):
         add_spam(current, config, miscData, currentCommentDict, videoID)
       elif re.search(spamListCombinedRegex, combinedString):
         add_spam(current, config, miscData, currentCommentDict, videoID)
-      elif config['detect_link_spam'] and check_if_only_link(commentText.strip()):
+      elif config['detect_link_spam'] and check_if_only_link(translatedText.strip()):
         add_spam(current, config, miscData, currentCommentDict, videoID)
       elif sensitive and re.search(smartFilter['usernameConfuseRegex'], authorChannelName):
         add_spam(current, config, miscData, currentCommentDict, videoID)
