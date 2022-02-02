@@ -48,7 +48,7 @@ def get_authenticated_service():
   API_VERSION = 'v3'
   DISCOVERY_SERVICE_URL = "https://youtube.googleapis.com/$discovery/rest?version=v3" # If don't specify discovery URL for build, works in python but fails when running as EXE
 
-  # Check if client_secrets.json file exists, if not give error
+  # Check if client_secrets.json file exists, if not give error and the option to add the file via a filepicker
   if not os.path.exists(CLIENT_SECRETS_FILE):
     print(f"\n         ----- {F.WHITE}{B.RED}[!] Error:{S.R} client_secrets.json file not found -----")
     print(f" ----- Did you create a {F.YELLOW}Google Cloud Platform Project{S.R} to access the API? ----- ")
@@ -62,10 +62,12 @@ def get_authenticated_service():
       root = tk.Tk()
       root.withdraw()
       file_path = filedialog.askopenfilename()
+      #replaces the path for the file to wherever the currrent path is, also renames the file
       os.replace(file_path, f"{os.getcwd()}/client_secrets.json")
       root.destroy()
+      #closes the program after the file has been moved so that this check can be performed again
       print(f"\n > The program will exit now, please re-run the program")
-  
+
     sys.exit()
     
   creds = None
