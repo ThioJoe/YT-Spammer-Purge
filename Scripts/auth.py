@@ -61,11 +61,14 @@ def get_authenticated_service():
     if inp == "1":
       root = tk.Tk()
       root.withdraw()
-      file_path = filedialog.askopenfilename()
-      #replaces the path for the file to wherever the currrent path is, also renames the file
-      os.replace(file_path, f"{os.getcwd()}/client_secrets.json")
-      root.destroy()
-      #closes the program after the file has been moved so that this check can be performed again
+      #try and except is used because a lot of errors occur if the file picker is closed without picking a file.
+      try:
+        file_path = filedialog.askopenfilename()
+        #replaces the path for the file to wherever the currrent path is, also renames the file
+        os.replace(file_path, f"{os.getcwd()}/client_secrets.json")
+        root.destroy()
+      except:
+        pass
       print(f"\n > The program will exit now, please re-run the program")
 
     sys.exit()
