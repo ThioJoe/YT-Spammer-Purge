@@ -532,17 +532,18 @@ def get_extra_json_data(channelIDs, jsonSettingsDict):
             )
             if response["items"]:
                 for j in range(len(channelIdGroup)):
-                    # fmt: off
-                    # Disable Black formatting for this section -- All these dictionaries don't play well with it
                     tempDict = {}
                     channelID = response["items"][j]["id"]
-                    tempDict["PublishedAt"] = response["items"][j]["snippet"]["publishedAt"]
+                    tempDict["PublishedAt"] = response["items"][j]["snippet"][
+                        "publishedAt"
+                    ]
                     tempDict["Statistics"] = response["items"][j]["statistics"]
                     if getPicsBool == True:
-                        picURL = response["items"][j]["snippet"]["thumbnails"][resolution]["url"]
+                        picURL = response["items"][j]["snippet"]["thumbnails"][
+                            resolution
+                        ]["url"]
                         pictureUrlsDict[channelID] = picURL
                     jsonExtraDataDict["CommentAuthorInfo"][channelID] = tempDict
-                    # fmt: on
         except:
             traceback.print_exc()
             print("Error occurred when fetching extra json data.")
@@ -567,17 +568,16 @@ def get_extra_json_data(channelIDs, jsonSettingsDict):
         .execute()
     )
     if response["items"]:
-        # fmt: off
-        # Disable Black formatting -- All these dictionaries don't play well with it
         tempDict = {}
         tempDict["PublishedAt"] = response["items"][0]["snippet"]["publishedAt"]
         tempDict["Statistics"] = response["items"][0]["statistics"]
         tempDict["ChannelID"] = channelOwnerID
         tempDict["ChannelName"] = channelOwnerName
         if getPicsBool == True:
-            pictureUrlsDict[channelOwnerID] = response["items"][0]["snippet"]["thumbnails"][resolution]["url"]
+            pictureUrlsDict[channelOwnerID] = response["items"][0]["snippet"][
+                "thumbnails"
+            ][resolution]["url"]
         jsonExtraDataDict["UploaderInfo"] = tempDict
-        # fmt: on
 
     if getPicsBool == True:
         download_profile_pictures(pictureUrlsDict, jsonSettingsDict)

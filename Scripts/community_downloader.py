@@ -194,16 +194,9 @@ def download_comments(youtube_id, sort_by=SORT_BY_RECENT, language=None, sleep=0
         try:
             commentsHeader = list(search_dict(response, "commentsHeaderRenderer"))
             if commentsHeader:
-                # fmt: off
-                # disable black formatting, pre-formatted
-                postCommentsText = (
-                        commentsHeader[0]
-                        ["countText"]
-                        ["runs"][0]
-                        ["text"]
-                        .replace(",", "")
-                )
-                # fmt: on
+                postCommentsText = commentsHeader[0]["countText"]["runs"][0][
+                    "text"
+                ].replace(",", "")
                 if "k" in postCommentsText.lower():
                     totalPostComments = int(postCommentsText.replace("k", "")) * 1000
                 else:

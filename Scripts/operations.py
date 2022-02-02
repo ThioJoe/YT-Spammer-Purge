@@ -87,15 +87,17 @@ def get_comments(
     # Also goes through each thread and executes get_replies() to get reply content and matches
     for item in results["items"]:
         comment = item["snippet"]["topLevelComment"]
-        videoID = comment["snippet"]["videoId"]
-        # Only enable if NOT checking specific video
+        videoID = comment["snippet"][
+            "videoId"
+        ]  # Only enable if NOT checking specific video
         parent_id = item["snippet"]["topLevelComment"]["id"]
         numReplies = item["snippet"]["totalReplyCount"]
 
         # On rare occasions a comment will be there but the channel name will be empty, so this allows placeholders
         try:
-            limitedRepliesList = item["replies"]["comments"]
-            # API will return a limited number of replies (~5), but to get all, need to make separate call
+            limitedRepliesList = item["replies"][
+                "comments"
+            ]  # API will return a limited number of replies (~5), but to get all, need to make separate call
         except KeyError:
             limitedRepliesList = []
             pass
@@ -110,8 +112,7 @@ def get_comments(
         except KeyError:
             authorChannelName = "[Deleted Channel]"
         try:
-            commentText = comment["snippet"]["textDisplay"]
-            # Remove Return carriages
+            commentText = comment["snippet"]["textDisplay"]  # Remove Return carriages
         except KeyError:
             commentText = "[Deleted/Missing Comment]"
 
@@ -350,14 +351,15 @@ def add_spam(
     else:
         current.authorMatchCountDict[authorChannelID] = 1
     if config["json_log"] == True and config["json_extra_data"] == True:
-        # fmt: off
-        # Disable black formatting for this section -- Long names don't play well with it
-        current.matchedCommentsDict[commentID]["uploaderChannelID"] = miscData.channelOwnerID
-        current.matchedCommentsDict[commentID]["uploaderChannelName"] = miscData.channelOwnerName
+        current.matchedCommentsDict[commentID][
+            "uploaderChannelID"
+        ] = miscData.channelOwnerID
+        current.matchedCommentsDict[commentID][
+            "uploaderChannelName"
+        ] = miscData.channelOwnerName
         current.matchedCommentsDict[commentID]["videoTitle"] = utils.get_video_title(
             current, videoID
         )
-        # fmt: on
 
     # if debugSingleComment == True:
     #   input("--- Yes, Matched -----")
@@ -478,8 +480,9 @@ def check_against_filter(
     authorChannelName = currentCommentDict["authorChannelName"]
     authorChannelID = currentCommentDict["authorChannelID"]
     parentAuthorChannelID = currentCommentDict["parentAuthorChannelID"]
-    commentTextRaw = str(currentCommentDict["commentText"])
-    # Use str() to ensure not pointing to same place in memory
+    commentTextRaw = str(
+        currentCommentDict["commentText"]
+    )  # Use str() to ensure not pointing to same place in memory
     commentText = str(currentCommentDict["commentText"]).replace("\r", "")
 
     ##Debugging
