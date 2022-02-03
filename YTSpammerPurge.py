@@ -51,8 +51,7 @@ import Scripts.operations as operations
 import Scripts.prepare_modes as modes
 from Scripts.community_downloader import main as get_community_comments #Args = post's ID, comment limit
 import Scripts.community_downloader as community_downloader
-from Scripts.utils import choice
-import inquirer
+from Scripts.utils import choice, validateInput
 
 # Standard Libraries
 import time
@@ -965,13 +964,6 @@ def main():
       ),
     ]
 
-    spamQuestion = [
-      inquirer.List('spam',
-        message='Choose how to identify spammers',
-        choices=spamOpts,
-      ),
-    ]
-
 
     if userNotChannelOwner == True and moderator_mode == False:
       print(f" {F.LIGHTRED_EX}Note: With 'Not Your Channel Mode' enabled, you can only report matched comments while using 'Auto-Smart Mode'.{S.R}") # Based on filterModesAllowedforNonOwners
@@ -1631,47 +1623,6 @@ def main():
   continueRunning = True
   while continueRunning == True:
     continueRunning = primaryInstance(miscData)
-
-'''
-  Check if the `value` is a valid option of `settings`
-  it checks:
-    - strict comparsion (prompt) eg. 'chosenVideos' == 'chosenVideos'
-    - setting index     (config file) eg. '1' == 'chosenVideos'
-    - lowercase         (config file) eg. 'chosenvideos' == 'chosenVideos'
-'''
-def getSetting( settings, value ):
-  for ind, sett in enumerate( settings ):
-    if ( value == sett[1] or value == str( ind ) or value == sett[1].lower() ):
-      return sett[1]
-
-  return False
-
-
-'''
-  Validates a setting value or prompts the use to choose a valid option
-'''
-def validateInput( scanOpts, optName, message, config, validConfigSetting ):
-
-  question = [
-    inquirer.List( 'question',
-      message=message,
-      choices=scanOpts,
-    ),
-  ]
-
-  if validConfigSetting == True and config and config[optName] != 'ask':
-    scanMode = getSetting( scanOpts, config[optName] )
-
-    if scanMode == False:
-      print(f"\nInvalid config `{config[optName]}` for `{optName}`\n")
-      answer = inquirer.prompt( question)
-    else:
-      return scanMode
-
-  else:
-    answer = inquirer.prompt( question)
-
-  return answer['question']
 
 # Runs the program
 if __name__ == "__main__":

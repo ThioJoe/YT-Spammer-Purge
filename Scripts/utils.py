@@ -229,3 +229,45 @@ def print_error_title_fetch():
   print(f"  > You won't be able to delete/hide any comments like usual, but you can {F.LIGHTMAGENTA_EX}exclude users before saving the log file{S.R}")
   print(f"  > Then, you can {F.LIGHTGREEN_EX}delete the comments later{S.R} using the {F.YELLOW}mode that removes comments using a pre-existing log file{S.R}")
   input("\n Press Enter to continue...")
+
+
+'''
+  Check if the `value` is a valid option of `settings`
+  it checks:
+    - strict comparsion (prompt) eg. 'chosenVideos' == 'chosenVideos'
+    - setting index     (config file) eg. '1' == 'chosenVideos'
+    - lowercase         (config file) eg. 'chosenvideos' == 'chosenVideos'
+'''
+def getSetting( settings, value ):
+  for ind, sett in enumerate( settings ):
+    if ( value == sett[1] or value == str( ind ) or value == sett[1].lower() ):
+      return sett[1]
+
+  return False
+
+
+'''
+  Validates a setting value or prompts the use to choose a valid option
+'''
+def validateInput( scanOpts, optName, message, config, validConfigSetting ):
+
+  question = [
+    inquirer.List( 'question',
+      message=message,
+      choices=scanOpts,
+    ),
+  ]
+
+  if validConfigSetting == True and config and config[optName] != 'ask':
+    scanMode = getSetting( scanOpts, config[optName] )
+
+    if scanMode == False:
+      print(f"\nInvalid config `{config[optName]}` for `{optName}`\n")
+      answer = inquirer.prompt( question)
+    else:
+      return scanMode
+
+  else:
+    answer = inquirer.prompt( question)
+
+  return answer['question']
