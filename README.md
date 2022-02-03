@@ -101,7 +101,7 @@ Either way, you DO need to acquire your own API credentials file to access the Y
 
 **Docker Instructions:**
 
-Before running `docker-compose` you must run the `YTSpammerPurge.py` script at least once with your `user_secrets.json` file to confirm OAuth credentials and generate the config/token files.
+Before running `docker-compose` you must run the `YTSpammerPurge.py` script at least once with your `client_secrets.json` file to confirm OAuth credentials and generate the config/token files.
 
 The generated config files, token, and Spam Purge Resources will all be bound to the docker container via volumes.
 
