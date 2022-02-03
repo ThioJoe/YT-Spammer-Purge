@@ -528,21 +528,23 @@ def list_config_files(relativePath=None):
   else:
     path = os.path.abspath(relativePath)
 
+  # Only get non-primary log files
   for file in os.listdir(path):
-    try:
-      match = re.search(configNumExpression, file.lower()).group(0)
-      # Only exact matches, no backups
-      if file.lower() == "spampurgeconfig" + match + ".ini":
-        fileList.append(file)
-    except AttributeError as ax:
-      if "NoneType" in str(ax):
-        pass
-      else:
-        traceback.print_exc()
-        print("--------------------------------------------------------------------------------")
-        print("Something went wrong when getting list of config files. Check your regex.")
-        input("\nPress Enter to exit...")
-        sys.exit()
+    if "spampurgeconfig" in file.lower() and file.lower() != "spampurgeconfig.ini":
+      try:
+        match = re.search(configNumExpression, file.lower()).group(0)
+        # Only exact matches, no backups
+        if file.lower() == "spampurgeconfig" + match + ".ini":
+          fileList.append(file)
+      except AttributeError as ax:
+        if "NoneType" in str(ax):
+          pass
+        else:
+          traceback.print_exc()
+          print("--------------------------------------------------------------------------------")
+          print("Something went wrong when getting list of config files. Check your regex.")
+          input("\nPress Enter to exit...")
+          sys.exit()
     
   return fileList
 

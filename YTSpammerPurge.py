@@ -1260,7 +1260,7 @@ def main():
             confirmDelete = "REPORT"
           elif config['removal_type'] == "heldforreview":
             deletionMode = "heldForReview"
-            confirmDelete = "DELETE"
+            confirmDelete = "hold"
         else:
           # If non-permitted filter mode with delete_without_reviewing, will allow deletion, but now warns and requires usual confirmation prompt
           print("Error Code C-5: 'delete_without_reviewing' is set to 'True' in config file. So only filter mode 'AutoSmart' allowed..\n")
@@ -1304,9 +1304,10 @@ def main():
     excludedCommentsDict = {}
     excludeDisplayString = ""
     # If not skipped by config, ask user what to do
-    if confirmDelete == None and returnToMenu != True:
+    if confirmDelete == None and returnToMenu == False:
       # Menu for deletion mode
-      while confirmDelete != "DELETE" and confirmDelete != "REPORT" and confirmDelete != "HOLD":
+      validResponses = ['delete', 'report', 'hold', 'none']
+      while confirmDelete == None or confirmDelete.lower() not in validResponses:
         # Title
         if current.errorOccurred == True:
           print(f"\n--- {F.WHITE}{B.RED} NOTE: {S.R} Options limited due to error during scanning ---")
@@ -1326,36 +1327,49 @@ def main():
           print(f" > To {F.LIGHTGREEN_EX}only process certain authors{S.R}: Type \'{F.LIGHTGREEN_EX}only{S.R}\' followed by a list of the numbers (or ranges of #s) {F.LIGHTMAGENTA_EX}from the sample list{S.R}")
           print("      > Example:  only 1, 3-5, 7, 12-15  --  (Will effectively exclude the 'inverse' of the 'only' selected authors)")
 
-        # Delete Instructions
+        # Delete & Hold
         if exclude == False:
           if userNotChannelOwner == False and current.errorOccurred == False:
-            print(f" > To {F.LIGHTRED_EX}delete ALL of the above comments{S.R}: Type ' {F.LIGHTRED_EX}DELETE{S.R} ' exactly (in all caps), then hit Enter.")
+            print(f" > To {F.LIGHTRED_EX}delete ALL of the above comments{S.R}: Type '{F.LIGHTRED_EX}DELETE{S.R}', then hit Enter.")
           if (userNotChannelOwner == False or moderator_mode == True) and current.errorOccurred == False:
-            print(f" > To {F.LIGHTRED_EX}move ALL comments above to 'Held For Review' in YT Studio{S.R}: Type ' {F.LIGHTRED_EX}HOLD{S.R} ' exactly (in all caps), then hit Enter.")
+            print(f" > To {F.LIGHTRED_EX}move ALL comments above to 'Held For Review' in YT Studio{S.R}: Type '{F.LIGHTRED_EX}HOLD{S.R}', then hit Enter.")
         elif exclude == True:
           if userNotChannelOwner == False and current.errorOccurred == False:
-            print(f" > To {F.LIGHTRED_EX}delete the rest of the comments{S.R}: Type ' {F.LIGHTRED_EX}DELETE{S.R} ' exactly (in all caps), then hit Enter.")
+            print(f" > To {F.LIGHTRED_EX}delete the rest of the comments{S.R}: Type '{F.LIGHTRED_EX}DELETE{S.R}', then hit Enter.")
           if (userNotChannelOwner == False or moderator_mode == True) and current.errorOccurred == False:
-            print(f" > To {F.LIGHTRED_EX}move rest of comments above to 'Held For Review' in YT Studio{S.R}: Type ' {F.LIGHTRED_EX}HOLD{S.R} ' exactly (in all caps), then hit Enter.")
+            print(f" > To {F.LIGHTRED_EX}move rest of comments above to 'Held For Review' in YT Studio{S.R}: Type '{F.LIGHTRED_EX}HOLD{S.R}', then hit Enter.")
+
+        # Report & None    
         if current.errorOccurred == False:
-          print(f" > To {F.LIGHTCYAN_EX}just report the comments for spam{S.R}, type ' {F.LIGHTCYAN_EX}REPORT{S.R} '. (Can be done even if you're not the channel owner)")
-        print(f" > To do nothing, simply hit Enter")
+          print(f" > To {F.LIGHTCYAN_EX}report the comments for spam{S.R}, type '{F.LIGHTCYAN_EX}REPORT{S.R}'.")
+        if loggingEnabled:
+          print(f" > To do nothing and {F.YELLOW}only log{S.R}, type '{F.YELLOW}NONE{S.R}'")
+        else:
+          print(f" > To do {F.YELLOW}nothing{S.R}, type '{F.YELLOW}NONE{S.R}'")
 
         if config['json_log'] == True and config['json_extra_data'] == True and loggingEnabled:
           print(f"\n{F.WHITE}{B.BLUE} JSON NOTE: {S.R} You must proceed to write the JSON log file, even if you choose nothing")
-        confirmDelete = input("\nInput: ")
-        if confirmDelete == "DELETE" and userNotChannelOwner == False:
+
+        # Take Entry
+        confirmDelete = input("\n (Not Case Sensitive) Input: ")
+
+        # Process Entry
+        if confirmDelete.lower() == "delete" and userNotChannelOwner == False:
           deletionEnabled = True
           deletionMode = "rejected"
-        elif confirmDelete == "HOLD" and (userNotChannelOwner == False or moderator_mode == True):
+
+        elif confirmDelete.lower() == "hold" and (userNotChannelOwner == False or moderator_mode == True):
           deletionEnabled = True
           deletionMode = "heldForReview"
-        elif confirmDelete == "REPORT":
+
+        elif confirmDelete.lower() == "report":
           deletionEnabled = True
           deletionMode = "reportSpam" 
+
         elif "exclude" in confirmDelete.lower() or "only" in confirmDelete.lower():
           if "exclude" in confirmDelete.lower():
             onlyBool = False
+
           elif "only" in confirmDelete.lower():
             onlyBool = True
 
@@ -1364,10 +1378,11 @@ def main():
               'logMode': logMode,
               'logFileContents': logFileContents,
               'jsonSettingsDict': jsonSettingsDict,
-              'filtersDict': filtersDict,
-            }
+              'filtersDict': filtersDict 
+              }
           else:
             logInfo = None
+
           # This is very messy for now, will later consolidate the parameters
           current, excludedCommentsDict, authorsToExcludeSet, commentIDExcludeSet, rtfFormattedExcludes, plaintextFormattedExcludes = operations.exclude_authors(current, config, miscData, excludedCommentsDict, authorsToExcludeSet, commentIDExcludeSet, excludeDisplayString, inputtedString=confirmDelete, logInfo=logInfo, only=onlyBool)
           miscData.resources['Whitelist']['WhitelistContents'] = files.ingest_list_file(whitelistPathWithName, keepCase=True)
@@ -1376,30 +1391,17 @@ def main():
           # Check that remaining comments list to remove is not empty
           if not current.matchedCommentsDict:
             print(f"\n{F.YELLOW}All authors excluded, no comments left to remove!{S.R}")
-            input("\nPress Enter to return to main menu...")
+            input("\nPress Enter to log and/or return to main menu...")
             returnToMenu = True
             break
+
+        elif confirmDelete.lower() == "none":
+          returnToMenu = True
 
         else:
-          if jsonSettingsDict['jsonLogging'] == True and loggingEnabled==True:
-            if config['auto_close'] == True:
-              print("\nRemoval / Reporting declined. Continuing to write JSON logs next.")
-            else:
-              input(f"\nRemoval / Reporting declined. Press {F.LIGHTCYAN_EX}Enter to write JSON log{S.R}...")
-            returnToMenu = True
-            break
-
-          else:
-            if config['auto_close'] == True:
-              print(f"\n{F.YELLOW}Removal / Reporting declined{S.R} (Because no matching option entered)")
-            else:
-              if userNotChannelOwner:
-                input(f"\n{F.YELLOW}Removal / Reporting declined{S.R} (Because no matching option entered). Press Enter to return to main menu...")
-              else:
-                print(f"\n\n{F.YELLOW}Removal / Reporting declined{S.R} (No valid option entered) - Note: The log file {F.YELLOW}can still be used{S.R} to delete the comments later.")
-                input(f"\nPress Enter to return to main menu...")
-            returnToMenu = True
-            break
+          print(f"\n{F.LIGHTRED_EX}ERROR:{S.R} This entry was invalid or not allowed with current settings: {confirmDelete}")
+          input("\nPress Enter to try again...")
+          print("\n")
 
     # Combine commentIDs from different match type dicts
     combinedCommentDict = dict(current.matchedCommentsDict)
@@ -1407,7 +1409,7 @@ def main():
     includeOtherAuthorComments = False
 
     banChoice = False
-    if returnToMenu != True:
+    if returnToMenu == False:
       # Set deletion mode friendly name
       if deletionMode == "rejected":
         deletionModeFriendlyName = "Removed"
@@ -1417,7 +1419,7 @@ def main():
         deletionModeFriendlyName = "Reported for spam"
 
       # Set or choose ban mode, check if valid based on deletion mode
-      if (confirmDelete == "DELETE" or confirmDelete == "REPORT" or confirmDelete == "HOLD") and deletionEnabled == True and current.errorOccurred == False:
+      if (deletionMode == "rejected" or deletionMode == "reportSpam" or deletionMode == "heldForReview") and deletionEnabled == True and current.errorOccurred == False:
         proceedWithDeletion = True
         if config['enable_ban'] != "ask":
           if config['enable_ban'] == False:
@@ -1494,10 +1496,8 @@ def main():
           logging.write_json_log(jsonSettingsDict, combinedCommentDict)
         if returnToMenu == True:
           print("\nJSON Operation Finished.")
-      if config['auto_close'] == False:
-        input("\nPress Enter to return to main menu...")
     ### ---------------- Reporting / Deletion Begin  ----------------
-    if returnToMenu != True:
+    if returnToMenu == False:
       if proceedWithDeletion == True:
         operations.delete_found_comments(list(combinedCommentDict.keys()), banChoice, deletionMode)
         if deletionMode != "reportSpam":
