@@ -52,6 +52,7 @@ import Scripts.prepare_modes as modes
 from Scripts.community_downloader import main as get_community_comments #Args = post's ID, comment limit
 import Scripts.community_downloader as community_downloader
 from Scripts.utils import choice
+import inquirer
 
 # Standard Libraries
 import time
@@ -372,6 +373,7 @@ def main():
         updateString = ""
 
     # User selects scanning mode,  while Loop to get scanning mode, so if invalid input, it will keep asking until valid input
+    '''
     print("\n{:<59}{:<18}{:>5}".format("> At any prompt, enter 'X' to return here", updateStringLabel, updateString))
     print("> Enter 'Q' now to quit")
 
@@ -386,13 +388,69 @@ def main():
     print(f"      7. Remove comments using a {F.LIGHTRED_EX}pre-existing list{S.R} or log file")
     print(f"      8. Recover deleted comments using log file")
     print(f"      9. Check & Download {F.LIGHTCYAN_EX}Updates{S.R}\n")
-    
+    '''
 
+    questions = [
+      inquirer.List('scan',
+        message="Choose what to do now",
+        choices=[
+          (
+            f"Scan {F.LIGHTCYAN_EX}specific videos{S.R}",
+            'chosenVideos'
+          ),
+          (
+            f"Scan {F.LIGHTCYAN_EX}recent videos{S.R} for a channel",
+            'recentVideos'
+          ),
+          (
+            f"Scan recent comments across your {F.LIGHTBLUE_EX}Entire Channel{S.R}",
+            'entireChannel'
+          ),
+          (
+            f"Scan a specific {F.LIGHTMAGENTA_EX}community post{S.R} (Experimental)",
+            'communityPost'
+          ),
+          (
+            f"Scan {F.LIGHTMAGENTA_EX}recent community posts{S.R} for a channel (Experimental)",
+            'recentCommunityPosts'
+          ),
+          (
+            f"Create your own {F.LIGHTGREEN_EX}config file(s){S.R} to run the program with pre-set settings",
+            'makeConfig'
+          ),
+          (
+            f"Remove comments using a {F.LIGHTRED_EX}pre-existing list{S.R} or log file",
+            'commentList'
+          ),
+          (
+            f"Recover deleted comments using log file",
+            'recoverMode'
+          ),
+          (
+            f"Check & Download {F.LIGHTCYAN_EX}Updates{S.R}",
+            'checkUpdates'
+          ),
+          (
+            'Quit',
+            'q'
+          ),
+        ],
+      ),
+    ]
 
     # Make sure input is valid, if not ask again
     validMode:bool = False
     validConfigSetting:bool = True
     while validMode == False:
+
+      answers = inquirer.prompt(questions)
+      scanMode = answers['scan']
+      validMode = True
+
+      if scanMode == 'q':
+        sys.exit()
+
+      '''
       if validConfigSetting == True and config and config['scan_mode'] != 'ask':
         scanMode = config['scan_mode']
       else:
@@ -425,6 +483,7 @@ def main():
       else:
         print(f"\nInvalid choice: {scanMode} - Enter a number from 1 to 9")
         validConfigSetting = False
+      '''
 
     # If chooses to scan single video - Validate Video ID, get title, and confirm with user
     if scanMode == "chosenVideos":  
