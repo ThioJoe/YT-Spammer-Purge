@@ -188,12 +188,13 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
     if silentCheck == False:
       print("------------------------------------------------------------------------------------------")
       if isBeta == True:
-        print(f" {F.YELLOW}A new {F.LIGHTGREEN_EX}beta{F.YELLOW} version{S.R} is available!")
+        print(f" {F.YELLOW}A new {F.LIGHTGREEN_EX}beta{F.YELLOW} version{S.R} is available! Visit {F.YELLOW}TJoe.io/latest{S.R} to see what's new.")
       else:
-        print(f" A {F.LIGHTGREEN_EX}new version{S.R} is available!")
-      print(f" > Current Version: {currentVersion}")
-      print(f" > Latest Version: {F.LIGHTGREEN_EX}{latestVersion}{S.R}")
-      print("(To stop receiving beta releases, change the 'release_channel' setting in the config file)")
+        print(f" A {F.LIGHTGREEN_EX}new version{S.R} is available! Visit {F.YELLOW}TJoe.io/latest{S.R} to see what's new.")
+      print(f"   > Current Version: {currentVersion}")
+      print(f"   > Latest Version: {F.LIGHTGREEN_EX}{latestVersion}{S.R}")
+      if isBeta == True:
+        print("(To stop receiving beta releases, change the 'release_channel' setting in the config file)")
       print("------------------------------------------------------------------------------------------")
       userChoice = choice("Update Now?")
       if userChoice == True:
