@@ -76,11 +76,6 @@ from googleapiclient.errors import HttpError
 
 
 def main():
-  # Fix issue with unassigned variables
-  global S
-  global B
-  global F
-
   # Run check on python version, must be 3.6 or higher because of f strings
   if sys.version_info[0] < 3 or sys.version_info[1] < 6:
     print("Error Code U-2: This program requires running python 3.6 or higher! You are running" + str(sys.version_info[0]) + "." + str(sys.version_info[1]))
@@ -111,8 +106,11 @@ def main():
 
   print("\nLoading YT Spammer Purge @ " + str(version) + "...")
 
+  # Authenticate with the Google API - If token expired and invalid, deletes and re-authenticates
 
-           #### Prepare Resources ####
+  YOUTUBE = auth.first_authentication()
+
+  #### Prepare Resources ####
   resourceFolder = RESOURCES_FOLDER_NAME
   whitelistPathWithName = os.path.join(resourceFolder, "whitelist.txt")
   spamListFolder = os.path.join(resourceFolder, "Spam_Lists")
@@ -285,9 +283,6 @@ def main():
 
   os.system(clear_command)
 
-  # Authenticate with the Google API - If token expired and invalid, deletes and re-authenticates
-
-  YOUTUBE = auth.first_authentication()
 
   #----------------------------------- Begin Showing Program ---------------------------------
   print(f"{F.LIGHTYELLOW_EX}\n===================== YOUTUBE SPAMMER PURGE v" + version + f" ====================={S.R}")
