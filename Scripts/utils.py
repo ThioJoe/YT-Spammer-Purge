@@ -4,6 +4,7 @@ from Scripts.shared_imports import *
 import Scripts.validation as validation
 import Scripts.auth as auth
 from googleapiclient.errors import HttpError
+import inquirer
 
 ##########################################################################################
 ############################## UTILITY FUNCTIONS #########################################
@@ -152,7 +153,21 @@ def choice(message="", bypass=False):
   if bypass == True:
     return True
 
+  questions = [
+    inquirer.List('choice',
+      message=message,
+      choices=[
+        'yes', 'no'
+      ],
+    ),
+  ]
+
+  answer = inquirer.prompt(questions)['choice']
+
+  return answer == 'yes'
+
   # While loop until valid input
+  '''
   valid = False
   while valid == False:
     response = input("\n" + message + f" ({F.LIGHTCYAN_EX}y{S.R}/{F.LIGHTRED_EX}n{S.R}): ").strip()
@@ -164,6 +179,7 @@ def choice(message="", bypass=False):
       return None
     else:
       print("\nInvalid Input. Enter Y or N  --  Or enter X to return to main menu.")  
+  '''
 
 
 ############################### ERROR HANDLING MESSAGES #################################
