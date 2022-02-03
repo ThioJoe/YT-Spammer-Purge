@@ -593,42 +593,39 @@ def prepare_logFile_settings(current, config, miscData, jsonSettingsDict, filter
   fileNameBase = "Spam_Log_" + current.logTime
   fileName = fileNameBase + logFileType
 
-  if config:
-    try:
-      # Get json logging settings
-      if config['json_log'] == True:
-        jsonLogging = True
-        jsonLogFileName = fileNameBase + ".json"
-        jsonSettingsDict['channelOwnerID'] = miscData.channelOwnerID
-        jsonSettingsDict['channelOwnerName'] = miscData.channelOwnerName
+  try:
+    # Get json logging settings
+    if config['json_log'] == True:
+      jsonLogging = True
+      jsonLogFileName = fileNameBase + ".json"
+      jsonSettingsDict['channelOwnerID'] = miscData.channelOwnerID
+      jsonSettingsDict['channelOwnerName'] = miscData.channelOwnerName
 
-        #Encoding
-        allowedEncodingModes = ['utf-8', 'utf-16', 'utf-32', 'rtfunicode']
-        if config['json_encoding'] in allowedEncodingModes:
-          jsonSettingsDict['encoding'] = config['json_encoding']
+      #Encoding
+      allowedEncodingModes = ['utf-8', 'utf-16', 'utf-32', 'rtfunicode']
+      if config['json_encoding'] in allowedEncodingModes:
+        jsonSettingsDict['encoding'] = config['json_encoding']
 
-      elif config['json_log'] == False:
-        jsonLogging = False
-      else:
-        print("Invalid value for 'json_log' in config file:  " + config['json_log'])
-        print("Defaulting to False (no json log file will be created)")
-        jsonLogging = False
+    elif config['json_log'] == False:
+      jsonLogging = False
+    else:
+      print("Invalid value for 'json_log' in config file:  " + config['json_log'])
+      print("Defaulting to False (no json log file will be created)")
+      jsonLogging = False
 
-      if config['json_extra_data'] == True:
-        jsonSettingsDict['json_extra_data'] = True
-      elif config['json_extra_data'] == False:
-        jsonSettingsDict['json_extra_data'] = False
-      
-      if config['json_profile_picture'] != False:
-        jsonSettingsDict['json_profile_picture'] = config['json_profile_picture']
-        jsonSettingsDict['logTime'] = current.logTime
-      elif config['json_profile_picture'] == False:
-        jsonSettingsDict['json_profile_picture'] = False
+    if config['json_extra_data'] == True:
+      jsonSettingsDict['json_extra_data'] = True
+    elif config['json_extra_data'] == False:
+      jsonSettingsDict['json_extra_data'] = False
+    
+    if config['json_profile_picture'] != False:
+      jsonSettingsDict['json_profile_picture'] = config['json_profile_picture']
+      jsonSettingsDict['logTime'] = current.logTime
+    elif config['json_profile_picture'] == False:
+      jsonSettingsDict['json_profile_picture'] = False
 
-    except KeyError:
-      print("Problem getting json settings, is your config file correct?")
-  else:
-    jsonLogging = False
+  except KeyError:
+    print("Problem getting json settings, is your config file correct?")
 
   # Set where to put log files
   defaultLogPath = "logs"
@@ -659,9 +656,10 @@ def prepare_logFile_settings(current, config, miscData, jsonSettingsDict, filter
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-def write_log_heading(current, logMode, filtersDict, afterExclude=False, commentsDict=None):
-  if commentsDict == None:
-    commentsDict = current.matchedCommentsDict
+def write_log_heading(current, logMode, filtersDict, afterExclude=False, combinedCommentsDict=None):
+  if combinedCommentsDict == None:
+    combinedCommentsDict = dict(current.matchedCommentsDict)
+    combinedCommentsDict.update(current.duplicateCommentsDict)
 
   filterMode = filtersDict['filterMode']
   inputtedSpammerChannelID = filtersDict['CustomChannelIdFilter']
@@ -671,7 +669,7 @@ def write_log_heading(current, logMode, filtersDict, afterExclude=False, comment
 
   def write_func(logFileName, string, logMode, numLines):
     rtfLineEnd = ("\\line"*numLines) + " "
-    newLines = "\n"*numLines
+    newLines = "\n"*numLines # Just the amount of new lines to put for this line
     if logMode == "rtf":
       write_rtf(logFileName, make_rtf_compatible(string) + rtfLineEnd)
     elif logMode == "plaintext":
@@ -699,13 +697,23 @@ def write_log_heading(current, logMode, filtersDict, afterExclude=False, comment
     write_func(current.logFileName, "Automatic Search Mode: Smart Mode ", logMode, 2)
   elif filterMode == "SensitiveSmart":
     write_func(current.logFileName, "Automatic Search Mode: Sensitive Smart ", logMode, 2)
-  write_func(current.logFileName, "Number of Matched Comments Found: " + str(len(commentsDict)), logMode, 2)
   
-  if afterExclude == False:
-    write_func(current.logFileName, f"IDs of Matched Comments: \n[ {', '.join(commentsDict)} ] ", logMode, 3)
+  # Write number of comments for each type
+  write_func(current.logFileName, "Number of Matched Comments Found: " + str(len(current.matchedCommentsDict)), logMode, 2)
+  write_func(current.logFileName, "Number of Non-Matched, but Duplicate Comments Found: " + str(len(current.duplicateCommentsDict)), logMode, 2)
+  
+  # How to label the comment ID list
+  if current.duplicateCommentsDict:
+    commentListLabel = "IDs of Matched & Duplicate Comments"
   else:
-    write_func(current.logFileName, f"IDs of Matched Comments (Excluded Comments Removed): \n[ {', '.join(commentsDict)} ] ", logMode, 3)
+    commentListLabel = "IDs of Matched Comments"
 
+  if afterExclude == True:
+    excludeString = " (Excluded Comments Removed)"
+  else:
+    excludeString = ""
+    
+  write_func(current.logFileName, f"{commentListLabel}{excludeString}: \n[ {', '.join(combinedCommentsDict)} ] ", logMode, 3)
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 def write_log_completion_summary(current, exclude, logMode, banChoice, deletionModeFriendlyName, removeOtherAuthorComments):

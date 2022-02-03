@@ -1147,7 +1147,7 @@ def main():
 
     # Counts number of found spam comments and prints list
     spam_count = len(current.matchedCommentsDict)
-    if spam_count == 0: # If no spam comments found, exits
+    if spam_count == 0 and not current.duplicateCommentsDict: # If no spam comments found, exits
       print(f"{B.RED}{F.BLACK} No matched comments or users found! {F.R}{B.R}{S.R}\n")
       print(f"If you see missed spam or false positives, you can submit a filter suggestion here: {F.YELLOW}TJoe.io/filter-feedback{S.R}")
       if config['auto_close'] == False:
@@ -1164,7 +1164,7 @@ def main():
     # If spam comments were found, continue
     if bypass == False:
       # Asks user if they want to save list of spam comments to a file
-      print(f"\nSpam comments ready to display. Also {F.LIGHTGREEN_EX}save a log file?{S.R} {B.GREEN}{F.BLACK} Highly Recommended! {F.R}{B.R}{S.R}")
+      print(f"\nComments ready to display. Also {F.LIGHTGREEN_EX}save a log file?{S.R} {B.GREEN}{F.BLACK} Highly Recommended! {F.R}{B.R}{S.R}")
       print(f"        (It even allows you to {F.LIGHTGREEN_EX}restore{S.R} deleted comments later)")
       loggingEnabled = choice(f"Save Log File (Recommended)?")
       if loggingEnabled == None:
@@ -1214,11 +1214,15 @@ def main():
       filterModesAllowedforNonOwners = ["AutoSmart", "SensitiveSmart"]
     elif moderator_mode == True:
       filterModesAllowedforNonOwners = ["AutoSmart", "SensitiveSmart", 'ID']
-    
+
     # If user isn't channel owner and not using allowed filter mode, skip deletion
     if userNotChannelOwner == True and filterMode not in filterModesAllowedforNonOwners:
       confirmDelete = False
       deletionEnabled = False
+      print(f"{F.LIGHTRED_EX}Error:{S.R}To prevent abuse, even in moderator mode, you can only use filter modes: Auto Smart, Sensitive Smart, and ID")
+      response = input("Press Enter to continue, or type 'x' to return to Main Menu...")
+      if response.lower() == 'x':
+        return True
 
     # Test skip_deletion preference - If passes both, will either delete or ask user to delete
     if config['skip_deletion'] == True:
@@ -1249,7 +1253,7 @@ def main():
     # User wants to automatically delete with no user intervention
     elif config['delete_without_reviewing'] == True:
       if userNotChannelOwner == True:
-          confirmDelete = "REPORT"
+          confirmDelete = "report"
           deletionMode = "reportSpam"
           deletionEnabled = True
       elif config['removal_type'] == "reportspam" or config['removal_type'] == "heldforreview":
@@ -1257,7 +1261,7 @@ def main():
           deletionEnabled = True
           if config['removal_type'] == "reportspam":
             deletionMode = "reportSpam"
-            confirmDelete = "REPORT"
+            confirmDelete = "report"
           elif config['removal_type'] == "heldforreview":
             deletionMode = "heldForReview"
             confirmDelete = "hold"

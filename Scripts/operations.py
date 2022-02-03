@@ -739,9 +739,9 @@ def check_deleted_comments(commentInput):
       commentList = list(commentInput.keys())
       
     # Wait 2 seconds so YouTube API has time to update comment status
-    print("Preparing...", end="\r")
+    print(" Preparing to check deletion status...", end="\r")
     time.sleep(1)
-    print("                               ")
+    print("                                                      ")
     print("    (Note: You can disable deletion success checking in the config file, to save time and API quota)\n")
     for commentID in commentList:
       try:
