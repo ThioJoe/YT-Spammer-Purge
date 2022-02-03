@@ -105,12 +105,11 @@ Before running `docker-compose` you must run the `YTSpammerPurge.py` script at l
 
 The generated config files, token, and Spam Purge Resources will all be bound to the docker container via volumes.
 
-Once you generated the token and config files, build the Docker image:
-
-`docker build -t yt-spammer-purge .`
+Once you generated the token and config files you are ready to run the docker image.
 
 
 Now you can run `docker-compose up` to start the container, or use the image to run on a Kubernetes cluster for example.
+To build your own version you can run this command: `docker-compose -f docker-compose.yml -f docker-compose.override.yml up --build`
 
 
 ## Instructions - Obtaining YouTube API Key
