@@ -553,7 +553,7 @@ def choose_config_file(configDict, newestConfigVersion):
   configFileList = list_config_files()
   # If only one config file exists, prompt to use
   if len(configFileList) == 0:
-    if choice(f"\nFound {F.YELLOW}config file{S.R}, use those settings?") == False:
+    if choice(f"Found {F.YELLOW}config file{S.R}, use those settings?") == False:
       return load_config_file(forceDefault=True)
     else:
       return configDict

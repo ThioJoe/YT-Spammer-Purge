@@ -390,51 +390,46 @@ def main():
     print(f"      9. Check & Download {F.LIGHTCYAN_EX}Updates{S.R}\n")
     '''
 
-    questions = [
-      inquirer.List('scan',
-        message="Choose what to do now",
-        choices=[
-          (
-            f"Scan {F.LIGHTCYAN_EX}specific videos{S.R}",
-            'chosenVideos'
-          ),
-          (
-            f"Scan {F.LIGHTCYAN_EX}recent videos{S.R} for a channel",
-            'recentVideos'
-          ),
-          (
-            f"Scan recent comments across your {F.LIGHTBLUE_EX}Entire Channel{S.R}",
-            'entireChannel'
-          ),
-          (
-            f"Scan a specific {F.LIGHTMAGENTA_EX}community post{S.R} (Experimental)",
-            'communityPost'
-          ),
-          (
-            f"Scan {F.LIGHTMAGENTA_EX}recent community posts{S.R} for a channel (Experimental)",
-            'recentCommunityPosts'
-          ),
-          (
-            f"Create your own {F.LIGHTGREEN_EX}config file(s){S.R} to run the program with pre-set settings",
-            'makeConfig'
-          ),
-          (
-            f"Remove comments using a {F.LIGHTRED_EX}pre-existing list{S.R} or log file",
-            'commentList'
-          ),
-          (
-            f"Recover deleted comments using log file",
-            'recoverMode'
-          ),
-          (
-            f"Check & Download {F.LIGHTCYAN_EX}Updates{S.R}",
-            'checkUpdates'
-          ),
-          (
-            'Quit',
-            'q'
-          ),
-        ],
+    scanOpts = [
+      (
+        f"Scan {F.LIGHTCYAN_EX}specific videos{S.R}",
+        'chosenVideos'
+      ),
+      (
+        f"Scan {F.LIGHTCYAN_EX}recent videos{S.R} for a channel",
+        'recentVideos'
+      ),
+      (
+        f"Scan recent comments across your {F.LIGHTBLUE_EX}Entire Channel{S.R}",
+        'entireChannel'
+      ),
+      (
+        f"Scan a specific {F.LIGHTMAGENTA_EX}community post{S.R} (Experimental)",
+        'communityPost'
+      ),
+      (
+        f"Scan {F.LIGHTMAGENTA_EX}recent community posts{S.R} for a channel (Experimental)",
+        'recentCommunityPosts'
+      ),
+      (
+        f"Create your own {F.LIGHTGREEN_EX}config file(s){S.R} to run the program with pre-set settings",
+        'makeConfig'
+      ),
+      (
+        f"Remove comments using a {F.LIGHTRED_EX}pre-existing list{S.R} or log file",
+        'commentList'
+      ),
+      (
+        f"Recover deleted comments using log file",
+        'recoverMode'
+      ),
+      (
+        f"Check & Download {F.LIGHTCYAN_EX}Updates{S.R}",
+        'checkUpdates'
+      ),
+      (
+        'Quit',
+        'q'
       ),
     ]
 
@@ -443,12 +438,12 @@ def main():
     validConfigSetting:bool = True
     while validMode == False:
 
-      answers = inquirer.prompt(questions)
-      scanMode = answers['scan']
-      validMode = True
+      scanMode = validateInput( scanOpts, 'scan_mode', 'Choose what to do now', config, validConfigSetting )
 
       if scanMode == 'q':
         sys.exit()
+
+      validMode = True
 
       '''
       if validConfigSetting == True and config and config['scan_mode'] != 'ask':
@@ -935,43 +930,45 @@ def main():
     print(f" 7. ASCII Mode: Scan usernames for {F.LIGHTMAGENTA_EX}ANY non-ASCII special characters{S.R} (May cause collateral damage!)")
     '''
 
+    spamOpts = [
+      (
+        f"{F.BLACK}{B.LIGHTGREEN_EX}(RECOMMENDED):{S.R} {F.YELLOW}Auto-Smart Mode{S.R}: Automatically detects multiple spammer techniques",
+        'AutoSmart'
+      ),
+      (
+        f"{F.YELLOW}Sensitive-Smart Mode{S.R}: Much more likely to catch all spammers, but with significantly more false positives",
+        'SensitiveSmart'
+      ),
+      (
+        f"Enter Spammer's {F.LIGHTRED_EX}channel ID(s) or link(s){S.R}",
+        'ID'
+      ),
+      (
+        f"Scan {F.LIGHTBLUE_EX}usernames{S.R} for criteria you choose",
+        'Username'
+      ),
+      (
+        f"Scan {F.CYAN}comment text{S.R} for criteria you choose",
+        'Text'
+      ),
+      (
+        f"Scan both {F.LIGHTBLUE_EX}usernames{S.R} and {F.CYAN}comment text{S.R} for criteria you choose",
+        'NameAndText'
+      ),
+      (
+        f"ASCII Mode: Scan usernames for {F.LIGHTMAGENTA_EX}ANY non-ASCII special characters{S.R} (May cause collateral damage!)"
+        'AutoASCII'
+      ),
+      (
+        'Cancel',
+        'x'
+      ),
+    ]
+
     spamQuestion = [
       inquirer.List('spam',
         message='Choose how to identify spammers',
-        choices=[
-          (
-            f"{F.BLACK}{B.LIGHTGREEN_EX}(RECOMMENDED):{S.R} {F.YELLOW}Auto-Smart Mode{S.R}: Automatically detects multiple spammer techniques",
-            'autosmart'
-          ),
-          (
-            f"{F.YELLOW}Sensitive-Smart Mode{S.R}: Much more likely to catch all spammers, but with significantly more false positives",
-            'sensitivesmart'
-          ),
-          (
-            f"Enter Spammer's {F.LIGHTRED_EX}channel ID(s) or link(s){S.R}",
-            'id'
-          ),
-          (
-            f"Scan {F.LIGHTBLUE_EX}usernames{S.R} for criteria you choose",
-            'username'
-          ),
-          (
-            f"Scan {F.CYAN}comment text{S.R} for criteria you choose",
-            'text'
-          ),
-          (
-            f"Scan both {F.LIGHTBLUE_EX}usernames{S.R} and {F.CYAN}comment text{S.R} for criteria you choose",
-            'nameandtext'
-          ),
-          (
-            f"ASCII Mode: Scan usernames for {F.LIGHTMAGENTA_EX}ANY non-ASCII special characters{S.R} (May cause collateral damage!)"
-            'autoascii'
-          ),
-          (
-            'Cancel',
-            'x'
-          ),
-        ],
+        choices=spamOpts,
       ),
     ]
 
@@ -981,15 +978,15 @@ def main():
     elif userNotChannelOwner == True and moderator_mode == True:
       print(f" {F.LIGHTRED_EX}Note: With 'Moderator Mode', you can hold for review using: 'Auto-Smart', 'Sensitive-Smart', and Channel ID modes.{S.R}")
     # Make sure input is valid, if not ask again
-    validFilterMode = False
+    # validFilterMode = False
     validFilterSubMode = False
     filterSubMode = None
     validConfigSetting = True
 
     validConfigSetting = True
+    '''
     while validFilterMode == False:
 
-      '''
       if validConfigSetting == True and config and config['filter_mode'] != 'ask':
         filterChoice = config['filter_mode']
       else:
@@ -1022,12 +1019,10 @@ def main():
         validConfigSetting = False
       '''
 
-      filterChoice = inquirer.prompt(spamQuestion)['spam']
+    filterMode = validateInput( spamOpts, 'filter_mode', 'Choose how to identify spammers', config, validConfigSetting )
 
-      if filterChoice == 'x':
-        return True # Return to main menu
-
-      validFilterMode = True
+    if filterMode == 'x':
+      return True # Return to main menu
 
     ## Get filter sub-mode to decide if searching characters or string
     validConfigSetting = None
@@ -1603,6 +1598,46 @@ def main():
   while continueRunning == True:
     continueRunning = primaryInstance(miscData)
 
+'''
+  Check if the `value` is a valid option of `settings`
+  it checks:
+    - strict comparsion (prompt) eg. 'chosenVideos' == 'chosenVideos'
+    - setting index     (config file) eg. '1' == 'chosenVideos'
+    - lowercase         (config file) eg. 'chosenvideos' == 'chosenVideos'
+'''
+def getSetting( settings, value ):
+  for ind, sett in enumerate( settings ):
+    if ( value == sett[1] or value == str( ind ) or value == sett[1].lower() ):
+      return sett[1]
+
+  return False
+
+
+'''
+  Validates a setting value or prompts the use to choose a valid option
+'''
+def validateInput( scanOpts, optName, message, config, validConfigSetting ):
+
+  question = [
+    inquirer.List( 'question',
+      message=message,
+      choices=scanOpts,
+    ),
+  ]
+
+  if validConfigSetting == True and config and config[optName] != 'ask':
+    scanMode = getSetting( scanOpts, config[optName] )
+
+    if scanMode == False:
+      print(f"\nInvalid config `{config[optName]}` for `{optName}`\n")
+      answer = inquirer.prompt( question)
+    else:
+      return scanMode
+
+  else:
+    answer = inquirer.prompt( question)
+
+  return answer['question']
 
 # Runs the program
 if __name__ == "__main__":
