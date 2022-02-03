@@ -97,6 +97,8 @@ Either way, you DO need to acquire your own API credentials file to access the Y
 * [Linux Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/Linux-Installation-Instructions)
 * [MacOS Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/MacOS-Instructions)
 
+Please note: If you download old versions of this project, please note that Windows Security, antivirus softwares will give you a popup saying "This exe file is not downloaded from a identified source", it was giving this error because I did not have a Certificate, My certificate arrived in early Jan so the popup won't be there in later releases.
+
 
 
 **Docker Instructions:**
