@@ -28,6 +28,3 @@ six = ">=1.16.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"
-
-[tool.poetry.scripts]
-YTSpammerPurge = 'YTSpammerPurge'
