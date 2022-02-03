@@ -1157,7 +1157,9 @@ def main():
         print("\nAuto-close enabled in config. Exiting in 5 seconds...")
         time.sleep(5)
         sys.exit()
-    print(f"Number of Matched Comments Found: {B.RED}{F.WHITE} {str(len(current.matchedCommentsDict))} {F.R}{B.R}{S.R}")
+    print(f"Number of {S.BRIGHT}{F.LIGHTRED_EX}Matched{S.R} Comments Found: {B.RED}{F.WHITE} {str(len(current.matchedCommentsDict))} {F.R}{B.R}{S.R}")
+    if current.duplicateCommentsDict:
+      print(f"Number of {S.BRIGHT}{F.LIGHTBLUE_EX}Non-Matched But Duplicate{S.R} Comments Found: {S.BRIGHT}{F.WHITE}{B.BLUE} {str(len(current.duplicateCommentsDict))} {F.R}{B.R}{S.R}")
 
     # If spam comments were found, continue
     if bypass == False:
@@ -1173,16 +1175,15 @@ def main():
     jsonSettingsDict = {}
     if loggingEnabled == True:    
       current, logMode, jsonSettingsDict = logging.prepare_logFile_settings(current, config, miscData, jsonSettingsDict, filtersDict, bypass)
+      print("\n-----------------------------------------------------------------------------------------------------------------\n")
     else:
       print("Continuing without logging... \n")
       logMode = None
       jsonSettingsDict['jsonLogging'] = False
 
-
     # Prints list of spam comments
     if scanMode == "communityPost":
       scanVideoID = communityPostID
-    print("\n\nAll Matched Comments: \n")
 
     # Print comments  and write to log files
     logFileContents, logMode = logging.print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMode)
@@ -1281,7 +1282,6 @@ def main():
       input("\nPress Enter to exit...")
       sys.exit()
 
-    deletionEnabled = "Allowed" #DEBUG
     # Check if deletion is enabled, otherwise block and quit
     if returnToMenu == False and deletionEnabled != "Allowed" and deletionEnabled != True:
         print("\nThe deletion functionality was not enabled. Cannot delete or report comments.")
@@ -1404,7 +1404,7 @@ def main():
     # Combine commentIDs from different match type dicts
     combinedCommentDict = dict(current.matchedCommentsDict)
     combinedCommentDict.update(current.duplicateCommentsDict)
-    includeOtherAuthorComments = True #DEBUG, CHANGE TO FALSE
+    includeOtherAuthorComments = False
 
     banChoice = False
     if returnToMenu != True:
@@ -1429,30 +1429,22 @@ def main():
             print("Error Code C-9: 'enable_ban' is set to an invalid value in config file. Only possible config options are 'ask' or 'False' when using config.\n")
             input("Press Enter to continue...")
         elif deletionMode == "rejected":
-          print("\nAlso ban the spammer(s)?  Will also remove all their other comments that were found during scan but not matched.")
+          print("\nAlso ban the spammer(s)?")
           banChoice = choice(f"{F.YELLOW}Ban{S.R} the spammer(s) ?")
           if banChoice == None:
             banChoice = False
             returnToMenu = True
             includeOtherAuthorComments = False
 
-        elif deletionMode == "heldForReview":
-          pass
-        elif deletionMode == "reportSpam":
-          pass
-        
-        if returnToMenu != True:
-          if banChoice == True:
-            includeOtherAuthorComments = True
-          #elif deletionMode == "rejected" or deletionMode == "heldForReview":
-          elif deletionMode == "rejected" or deletionMode == "heldForReview" or deletionMode == "reportSpam": #DEBUG, CHANGE BACK TO NOT INCLUDE?
-            if config['remove_all_author_comments'] != 'ask':
-              includeOtherAuthorComments = config['remove_all_author_comments']
-            else:
-              print("\nAlso remove all other comments from the authors that were found during scan but not matched?")
-              includeOtherAuthorComments = choice("Choose:")
+        if deletionMode == "rejected" or deletionMode == "heldForReview":
+          if config['remove_all_author_comments'] != 'ask':
+            includeOtherAuthorComments = config['remove_all_author_comments']
           else:
-            includeOtherAuthorComments = False
+            print(f"\nAlso remove {F.YELLOW}all other comments{S.R} from the selected authors, even if their other comments weren't matched?")
+            includeOtherAuthorComments = choice("Choose:")
+        else:
+          includeOtherAuthorComments = False
+
       else:
         proceedWithDeletion = False
         deletionModeFriendlyName="Nothing (Log Only)"
@@ -1462,17 +1454,21 @@ def main():
 
     # Print Final Logs
     if includeOtherAuthorComments == True:
-      operations.get_all_author_comments(current, config, miscData, current.allScannedCommentsDict)
+      current = operations.get_all_author_comments(current, config, miscData, current.allScannedCommentsDict)
       combinedCommentDict.update(current.otherCommentsByMatchedAuthorsDict)
 
     if loggingEnabled == True:
       # Rewrites the contents of entire file, but now without the excluded comments in the list of comment IDs
+      # Also if other non-matched comments by matched authors were added
       if exclude == True or current.otherCommentsByMatchedAuthorsDict:
-        logFileContents, logMode = logging.print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMode, doPrint=False)
+        # This is just to redo the logFileContents to write later, not to actually write to log file
+        logFileContents, logMode = logging.print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMode, doWritePrint=False)
+
+        # Update logFile Contents after updating them
+        logInfo['logFileContents'] = logFileContents
+        logging.rewrite_log_file(current, logInfo, combinedCommentDict)
       print("Updating log file, please wait...", end="\r")
       
-      #logging.rewrite_log_file(current, logInfo, combinedCommentDict)
-
       # Appends the excluded comment info to the log file that was just re-written
       if exclude == True:
         if logInfo['logMode'] == "rtf":
@@ -1509,22 +1505,6 @@ def main():
             operations.check_deleted_comments(list(combinedCommentDict.keys()))
           elif config['check_deletion_success'] == False:
             print("\nSkipped checking if deletion was successful.\n")
-
-      elif deletionMode == "heldForReview":
-        pass
-      elif deletionMode == "reportSpam":
-        pass
-
-      ### ---------------- Reporting / Deletion Begins  ----------------
-      operations.delete_found_comments(list(current.matchedCommentsDict), banChoice, deletionMode)
-      if deletionMode != "reportSpam":
-        if config['check_deletion_success'] == True:
-          operations.check_deleted_comments(current.matchedCommentsDict)
-        elif config['check_deletion_success'] == False:
-          print("\nSkipped checking if deletion was successful.\n")
-
-      if loggingEnabled == True:
-        logging.write_log_completion_summary(current, logMode, banChoice, deletionModeFriendlyName)
 
       if config['auto_close'] == True:
         print("\nProgram Complete.")

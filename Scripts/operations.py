@@ -292,6 +292,8 @@ def get_all_author_comments(current, config, miscData, allCommentsDict):
           add_spam(current, config, miscData, commentDict, commentDict['videoID'], matchReason="Also By Matched Author")
   print("".ljust(55, " "))
 
+  return current
+
 
 ############################## Check Duplicates ######################################
 def check_duplicates(current, config, miscData, allVideoCommentsDict, videoID):
