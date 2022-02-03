@@ -66,6 +66,9 @@ from pkg_resources import parse_version
 # Other Libraries
 from googleapiclient.errors import HttpError
 
+S.R = S.RESET_ALL
+F.R = F.RESET
+B.R = B.RESET
 
 
 ##########################################################################################
@@ -103,11 +106,6 @@ def main():
   clear_command = "cls" if platform.system() == "Windows" else "clear"
   os.system(clear_command)
 
-  # Initiates colorama and creates shorthand variables for resetting colors
-  init(autoreset=True)
-  S.R = S.RESET_ALL
-  F.R = F.RESET
-  B.R = B.RESET
 
   print("\nLoading YT Spammer Purge @ " + str(version) + "...")
 
@@ -196,11 +194,17 @@ def main():
   # Disable colors before they are used anywhere
   try:
     if config['colors_enabled'] == False:
-      S = BlankStyle
-      F = BlankFore
-      B = BlankBack
+      # Initiates colorama and creates shorthand variables for resetting colors
+      init(autoreset=True, strip=True, convert=False)
+      # Disables colors entirely
+    else:
+      # Initiates colorama and creates shorthand variables for resetting colors
+      init(autoreset=True)
+
   except Exception as e:
     print('`colors_enabled` is not set properly (?) -- ignoring')
+    # Initiates colorama and creates shorthand variables for resetting colors
+    init(autoreset=True)
 
   # Check for program and list updates if auto updates enabled in config
   try:
