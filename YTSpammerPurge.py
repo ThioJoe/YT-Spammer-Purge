@@ -66,9 +66,6 @@ from pkg_resources import parse_version
 # Other Libraries
 from googleapiclient.errors import HttpError
 
-S.R = S.RESET_ALL
-F.R = F.RESET
-B.R = B.RESET
 
 
 ##########################################################################################
