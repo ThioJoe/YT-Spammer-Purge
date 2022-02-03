@@ -1026,24 +1026,57 @@ def main():
 
     ## Get filter sub-mode to decide if searching characters or string
     validConfigSetting = None
+    '''
     if config['filter_submode'] != 'ask':
       filterSubMode = config['filter_submode']
       validConfigSetting = True
     else:
       validConfigSetting = False
+    '''
 
     if filterMode == "Username" or filterMode == "Text" or filterMode == "NameAndText":
       print("\n--------------------------------------------------------------")
+
+      question = ''
+
       if filterMode == "Username":
-        print("~~~ What do you want to scan usernames for specifically? ~~~")
+        question = "~~~ What do you want to scan usernames for specifically? ~~~"
       elif filterMode == "Text":
-        print("~~~ What do you want to scan comment text for specifically? ~~~")
+        question = "~~~ What do you want to scan comment text for specifically? ~~~"
       elif filterMode == "NameAndText":
-        print("~~~ What do you want to scan names and comments for specifically? ~~~")
+        question = "~~~ What do you want to scan names and comments for specifically? ~~~"
+
+      '''
       print(f" 1. A {F.CYAN}certain special character{S.R}, or set of multiple characters")
       print(f" 2. An {F.LIGHTMAGENTA_EX}entire string{S.R}, or multiple strings")
       print(f" 3. Advanced: A custom {F.YELLOW}Regex pattern{S.R} you'll enter")
+      '''
 
+      filterOpts = [
+        (
+          f"A {F.CYAN}certain special character{S.R}, or set of multiple characters"
+          'chars'
+        ),
+        (
+          f"An {F.LIGHTMAGENTA_EX}entire string{S.R}, or multiple strings"
+          'string'
+        ),
+        (
+          f"Advanced: A custom {F.YELLOW}Regex pattern{S.R} you'll enter"
+          'regex'
+        ),
+        (
+          'Cancel',
+          'x'
+        ),
+      ]
+
+      filterSubMode = validateInput( filterOpts, 'filter_submode', question, config, validConfigSetting )
+
+      if filterSubMode == 'x':
+        return True
+
+      '''
       while validFilterSubMode == False:
         if validConfigSetting == True:
           pass
@@ -1065,6 +1098,7 @@ def main():
         else:
           print(f"\nInvalid choice: {filterSubMode} - Enter 1, 2 or 3")
           validConfigSetting = False
+      '''
 
 
     ### Prepare Filtering Modes ###
