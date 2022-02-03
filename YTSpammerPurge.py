@@ -923,6 +923,7 @@ def main():
 
     # User inputs filtering mode
     print("\n-------------------------------------------------------")
+    '''
     print(f"~~~~~~~~~~~ Choose how to identify spammers ~~~~~~~~~~~")
     print("-------------------------------------------------------")
     print(f" 1. {F.BLACK}{B.LIGHTGREEN_EX}(RECOMMENDED):{S.R} {F.YELLOW}Auto-Smart Mode{S.R}: Automatically detects multiple spammer techniques")
@@ -932,6 +933,47 @@ def main():
     print(f" 5. Scan {F.CYAN}comment text{S.R} for criteria you choose")
     print(f" 6. Scan both {F.LIGHTBLUE_EX}usernames{S.R} and {F.CYAN}comment text{S.R} for criteria you choose")
     print(f" 7. ASCII Mode: Scan usernames for {F.LIGHTMAGENTA_EX}ANY non-ASCII special characters{S.R} (May cause collateral damage!)")
+    '''
+
+    spamQuestion = [
+      inquirer.List('spam',
+        message='Choose how to identify spammers',
+        choices=[
+          (
+            f"{F.BLACK}{B.LIGHTGREEN_EX}(RECOMMENDED):{S.R} {F.YELLOW}Auto-Smart Mode{S.R}: Automatically detects multiple spammer techniques",
+            'autosmart'
+          ),
+          (
+            f"{F.YELLOW}Sensitive-Smart Mode{S.R}: Much more likely to catch all spammers, but with significantly more false positives",
+            'sensitivesmart'
+          ),
+          (
+            f"Enter Spammer's {F.LIGHTRED_EX}channel ID(s) or link(s){S.R}",
+            'id'
+          ),
+          (
+            f"Scan {F.LIGHTBLUE_EX}usernames{S.R} for criteria you choose",
+            'username'
+          ),
+          (
+            f"Scan {F.CYAN}comment text{S.R} for criteria you choose",
+            'text'
+          ),
+          (
+            f"Scan both {F.LIGHTBLUE_EX}usernames{S.R} and {F.CYAN}comment text{S.R} for criteria you choose",
+            'nameandtext'
+          ),
+          (
+            f"ASCII Mode: Scan usernames for {F.LIGHTMAGENTA_EX}ANY non-ASCII special characters{S.R} (May cause collateral damage!)"
+            'autoascii'
+          ),
+          (
+            'Cancel',
+            'x'
+          ),
+        ],
+      ),
+    ]
 
 
     if userNotChannelOwner == True and moderator_mode == False:
@@ -946,6 +988,8 @@ def main():
 
     validConfigSetting = True
     while validFilterMode == False:
+
+      '''
       if validConfigSetting == True and config and config['filter_mode'] != 'ask':
         filterChoice = config['filter_mode']
       else:
@@ -976,6 +1020,14 @@ def main():
       else:
         print(f"\nInvalid Filter Mode: {filterChoice} - Enter either 1, 2, 3, 4, 5, 6, or 7")
         validConfigSetting = False
+      '''
+
+      filterChoice = inquirer.prompt(spamQuestion)['spam']
+
+      if filterChoice == 'x':
+        return True # Return to main menu
+
+      validFilterMode = True
 
     ## Get filter sub-mode to decide if searching characters or string
     validConfigSetting = None
