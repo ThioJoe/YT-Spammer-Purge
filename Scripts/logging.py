@@ -596,6 +596,7 @@ def add_sample(current, authorID, authorNameRaw, commentText, matchReason):
   else: 
     authorName = authorNameRaw[0:20].ljust(20)+": "
 
+  commentText = str(commentText).replace("\n", " ").replace("\r", " ")
   if len(commentText) > 82:
     commentText = commentText[0:79] + "..."
   commentText = commentText[0:82].ljust(82)
@@ -763,14 +764,14 @@ def write_log_completion_summary(current, exclude, logMode, banChoice, deletionM
     write_plaintext_log(current.logFileName, "Also Retrieved All Other Comments by Matched Authors: " + str(removeOtherAuthorComments) + "\n\n")
 
 # Re-Writes Log Files if authors excluded
-def rewrite_log_file(current, logInfo, commentsDict=None):
+def rewrite_log_file(current, logInfo, combinedCommentsDict=None):
   logMode = logInfo['logMode']
   logFileContents = logInfo['logFileContents']
   #jsonSettingsDict = logInfo['jsonSettingsDict']
   filtersDict = logInfo['filtersDict']
 
   # Rewrites the heading, which includes list of matched Comment IDs
-  write_log_heading(current, logMode, filtersDict, afterExclude=True, commentsDict=commentsDict)
+  write_log_heading(current, logMode, filtersDict, afterExclude=True, combinedCommentsDict=combinedCommentsDict)
 
   # Rewrites the rest of the log file contents after the heading
   if logMode == "rtf":

@@ -1133,9 +1133,11 @@ def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToEx
   plaintextFormattedExcludes += f"\nComments Excluded From Deletion:\n"
   plaintextFormattedExcludes += f"(Values = Comment ID | Author ID | Author Name | Comment Text)\n"
   for commentID, meta in excludedCommentsDict.items():
-    rtfFormattedExcludes += f"{str(commentID)}  |  {str(excludedCommentsDict[commentID]['authorID'])}  |  {str(excludedCommentsDict[commentID]['authorName'])}  |   {str(excludedCommentsDict[commentID]['text'])} \\line \n"
+    sanitizedText = str(excludedCommentsDict[commentID]['text']).replace("\n", " ").replace("\r", " ")
+    rtfFormattedExcludes += f"{str(commentID)}  |  {str(excludedCommentsDict[commentID]['authorID'])}  |  {str(excludedCommentsDict[commentID]['authorName'])}  |   {sanitizedText} \\line \n"
   for commentID, meta in excludedCommentsDict.items():
-    plaintextFormattedExcludes += f"{str(commentID)}  |  {str(excludedCommentsDict[commentID]['authorID'])}  |  {str(excludedCommentsDict[commentID]['authorName'])}  |   {str(excludedCommentsDict[commentID]['text'])}\n"
+    sanitizedText = str(excludedCommentsDict[commentID]['text']).replace("\n", " ").replace("\r", " ")
+    plaintextFormattedExcludes += f"{str(commentID)}  |  {str(excludedCommentsDict[commentID]['authorID'])}  |  {str(excludedCommentsDict[commentID]['authorName'])}  |   {sanitizedText} \n"
 
   # Verify removal
   for comment in current.matchedCommentsDict.keys():

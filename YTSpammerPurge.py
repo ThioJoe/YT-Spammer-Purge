@@ -1423,6 +1423,7 @@ def main():
     # Combine commentIDs from different match type dicts
     combinedCommentDict = dict(current.matchedCommentsDict)
     combinedCommentDict.update(current.duplicateCommentsDict)
+    combinedCommentDict.update(current.spamThreadsDict)
     includeOtherAuthorComments = False
 
     banChoice = False
