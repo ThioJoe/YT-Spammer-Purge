@@ -87,7 +87,7 @@ def get_authenticated_service(config):
           test_socket = socket(AF_INET, SOCK_DGRAM)
           test_socket.connect(("8.8.8.8", 80))
           host = test_socket.getsockname()[0]
-          print(f"Using host: {F.LIGHTGREEN_EX}{host}")
+          print(f"Using host: {F.LIGHTGREEN_EX}{host}{F.R}")
           test_socket.close()
         except Exception:
           traceback.print_exc() # Prints traceback
