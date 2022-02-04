@@ -145,8 +145,8 @@ def expand_ranges(stringInput):
 
 
 ############################### User Choice #################################
-# User inputs Y/N for choice, returns True or False
-# Takes in message to display
+# User inputs Y/N/X for choice, returns True, False or None
+# Takes in message to display and displayed action of responsing with X
 
 def choice(message="", bypass=False, x_action="return to main menu"):
   if bypass == True:
