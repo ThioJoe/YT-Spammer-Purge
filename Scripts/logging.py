@@ -251,7 +251,7 @@ def print_prepared_comments(current, commentsContents, scanVideoID, comments, j,
           # Rest of Comment Info
           + "     > Reason: " + matchReason + "\\line "+ "\n"
           + titleInfoLine
-          + "     > Direct Link: " + directLink + "\\line "+ "\n"
+          + "     > Direct Link: " + directLink + " \\line "+ "\n"
           + "     > Author Channel ID: \cf6" + author_id_local + r"\cf1 \line "+ "\n"
           + "=============================================================================================\\line\\line\\line" + "\n\n\n"
         )
