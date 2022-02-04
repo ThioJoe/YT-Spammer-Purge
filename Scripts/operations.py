@@ -1111,6 +1111,9 @@ def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToEx
   for comment, metadata in current.otherCommentsByMatchedAuthorsDict.items():
     if metadata['authorID'] in authorsToExcludeSet:
       commentIDExcludeSet.add(comment)
+  for comment, metadata in current.spamThreadsDict.items():
+    if metadata['authorID'] in authorsToExcludeSet:
+      commentIDExcludeSet.add(comment)    
 
   # Remove all comments by selected authors from dictionary of comments
   for comment in commentIDExcludeSet:
@@ -1120,6 +1123,8 @@ def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToEx
       excludedCommentsDict[comment] = current.duplicateCommentsDict.pop(comment)
     if comment in current.otherCommentsByMatchedAuthorsDict.keys():
       excludedCommentsDict[comment] = current.otherCommentsByMatchedAuthorsDict.pop(comment)
+    if comment in current.spamThreadsDict.keys():
+      excludedCommentsDict[comment] = current.spamThreadsDict.pop(comment)
 
   # Create strings that can be used in log files
   
