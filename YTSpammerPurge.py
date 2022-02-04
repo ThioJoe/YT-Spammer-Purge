@@ -655,13 +655,14 @@ def main():
             print(f"\n{F.YELLOW} WARNING:{S.R} Only {len(videosToScan)} videos found. Videos may be skipped if there are no comments.")
           print("\nRecent Videos To Be Scanned:")
           for i in range(len(videosToScan)):
-            if i == 10 and len(videosToScan) > 11:
-              remainingCount = str(len(videosToScan) - 10)
-              userChoice = choice(f"There are {remainingCount} more recent videos, do you want to see the rest?")
-              if userChoice == False:
-                break 
-              elif userChoice == None:
-                return True # Return to main menu         
+            if config['skip_confirm_video'] == False:
+              if i == 10 and len(videosToScan) > 11:
+                remainingCount = str(len(videosToScan) - 10)
+                userChoice = choice(f"There are {remainingCount} more recent videos, do you want to see the rest?")
+                if userChoice == False:
+                  break 
+                elif userChoice == None:
+                  return True # Return to main menu         
             print(f"  {i+1}. {videosToScan[i]['videoTitle']}")
 
           if config['skip_confirm_video'] == True and validConfigSetting == True:
