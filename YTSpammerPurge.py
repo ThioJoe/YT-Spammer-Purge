@@ -1097,7 +1097,7 @@ def main():
       print("                          --- Scanning --- \n")
    
       # ----------------------------------------------------------------------------------------------------------------------
-      def scan_video(miscData, config, filtersDict, scanVideoID, videosToScan=None, currentVideoDict=None, videoTitle=None, showTitle=False, i=1):
+      def scan_video(miscData, config, filtersDict, scanVideoID, videosToScan=None, currentVideoDict={}, videoTitle=None, showTitle=False, i=1):
         nextPageToken, currentVideoDict = operations.get_comments(current, filtersDict, miscData, config, currentVideoDict, scanVideoID, videosToScan=videosToScan)
         if nextPageToken == "Error":
             return "Error"
