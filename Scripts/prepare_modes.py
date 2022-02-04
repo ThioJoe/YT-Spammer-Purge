@@ -201,7 +201,7 @@ def prepare_filter_mode_ID(scanMode, config):
       pass
     else:
       input("\nPress Enter to continue...")
-  
+
   return inputtedSpammerChannelID, None
 
 # For Filter mode auto-ascii, user inputs nothing, program scans for non-ascii
@@ -215,7 +215,7 @@ def prepare_filter_mode_non_ascii(scanMode, config):
   print(f"   3. {F.LIGHTRED_EX}NUKE Mode (┘°□°)┘≈ ┴──┴ :    Allow ONLY numbers, letters, and spaces{S.R}")
   print("")
 
-  # Get user input for mode selection, 
+  # Get user input for mode selection,
   confirmation = False
   validConfigSetting = True
   while confirmation == False:
@@ -254,7 +254,7 @@ def prepare_filter_mode_non_ascii(scanMode, config):
     else:
       print(f"Invalid input: {selection} - Must be 1, 2, or 3.")
       validConfigSetting = False
-    
+
   if selection == "1":
     autoModeName = "Allow Standard + Extended ASCII"
   elif selection == "2":
@@ -278,7 +278,10 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   if config['filter_mode'] == "autosmart":
     pass
   else:
-    print("\n----------------------------------------------- Auto-Smart Mode -----------------------------------------------")
+    if sensitive:
+      print("\n----------------------------------------------- Sensitive-Smart Mode -----------------------------------------------")
+    else: # if not sensitive
+      print("\n----------------------------------------------- Auto-Smart Mode -----------------------------------------------")
     print(f"~~~ This mode is a {F.LIGHTCYAN_EX}spammer's worst nightmare{S.R}. It automatically scans for multiple spammer techniques ~~~\n")
     print(" > Extremely low (near 0%) false positives")
     print(" > Detects whatsapp scammers and '18+ spam' bots")
@@ -318,7 +321,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   textObfuBlackWords = ['telegram']
   textExactBlackWords_Raw = [b'Z*6BRAZ2)AV{~kJAa`hCbRcOUZe?X;Wn=', b'Z*6BRAZ2)AV{~kJAa`hCbRc<ebs%nKWn^V!', b'Z*6BRAZ2)AV{~kJAa`hCbRckLZ*Xj7AZ}%4WMyO', b'ZDnU+ZaN?$Xm50MWpW|']
   textUpLowBlackWords_Raw = [b'O<5pAPfk=tPE;UCQv', b'Ngz!@OGO}8L0KR|MO0KpQXoT5PE<usQ~', b'O<5pTNkm0YQy@W7MF']
-  
+
   # General Settings
   unicodeCategoriesStrip = ["Mn", "Cc", "Cf", "Cs", "Co", "Cn"] # Categories of unicode characters to strip during normalization
   lowAl = b'VPa!sWoBn+X=-b1ZEkOHadLBXb#`}nd3p'
@@ -357,7 +360,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   redAdEmoji = b64decode(b'@Sl{P').decode(utf_16)
   yellowAdEmoji = b64decode(b'@Sl-|@Sm8N@Sm8C@Sl>4@Sl;H@Sly0').decode(utf_16)
   hrt = b64decode(b';+duJpOTpHpOTjFpOTmGpOTaCpOTsIpOTvJpOTyKpOT#LpQoYlpOT&MpO&QJouu%el9lkElAZ').decode(utf_16)
-  
+
   # Create Type 2 Lists
   for x in blackAdWords_Raw: blackAdWords.append(b64decode(x).decode(utf_16))
   for x in redAdWords_Raw: redAdWords.append(b64decode(x).decode(utf_16))
@@ -369,11 +372,11 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   redAdEmojiSet = make_char_set(redAdEmoji)
   yellowAdEmojiSet = make_char_set(yellowAdEmoji)
   hrtSet = make_char_set(hrt)
-  
+
   # Prepare Regex to detect nothing but video link in comment
   onlyVideoLinkRegex = re.compile(r"^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$")
   compiledRegexDict['onlyVideoLinkRegex'] = onlyVideoLinkRegex
-  
+
 
   # Compile regex with upper case, otherwise many false positive character matches
   bufferChars = r"*_~|`[]()'-.•,"
@@ -400,7 +403,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   for word in exactRedAdWords:
     value = re.compile(confusable_regex(word.upper(), include_character_padding=False))
     compiledRegexDict['exactRedAdWords'].append([word, value])
-  print("  Loading Filters  [=====                         ]", end="\r") 
+  print("  Loading Filters  [=====                         ]", end="\r")
   for word in usernameRedWords:
     value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
     compiledRegexDict['usernameRedWords'].append([word, value])
@@ -410,13 +413,13 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   for word in usernameObfuBlackWords:
     value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
     compiledRegexDict['usernameObfuBlackWords'].append([word, value])
-  
+
 
   for word in textExactBlackWords:
     compiledRegexDict['textExactBlackWords'].append(word)
   for word in textUpLowBlackWords:
       compiledRegexDict['textUpLowBlackWords'].append(word)
-  print("  Loading Filters  [==============                ]", end="\r")   
+  print("  Loading Filters  [==============                ]", end="\r")
 
   # Prepare All-domain Regex Expression
   prepString = "\.("
@@ -431,7 +434,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   prepString = prepString + ")\/"
   rootDomainRegex = re.compile(prepString)
   sensitiveRootDomainRegex = re.compile(sensitivePrepString)
-  print("  Loading Filters  [===================           ]", end="\r")   
+  print("  Loading Filters  [===================           ]", end="\r")
 
   spamListExpressionsList = []
   # Prepare spam domain regex
@@ -443,7 +446,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
     spamListExpressionsList.append(confusable_regex(thread.upper(), include_character_padding=True).replace(m, a))
   print("  Loading Filters  [======================        ]", end="\r")
   spamListCombinedRegex = re.compile('|'.join(spamListExpressionsList))
-  print("  Loading Filters  [============================  ]", end="\r")  
+  print("  Loading Filters  [============================  ]", end="\r")
 
   # Prepare Multi Language Detection
   turkish = 'ÇçŞşĞğİ'
@@ -456,10 +459,10 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   print("  Loading Filters  [==============================]", end="\r")
 
   filterSettings = {
-    'spammerNumbersSet': spammerNumbersSet, 
-    'compiledNumRegex': compiledNumRegex, 
-    'minNumbersMatchCount': minNumbersMatchCount, 
-    #'usernameBlackCharsSet': usernameBlackCharsSet, 
+    'spammerNumbersSet': spammerNumbersSet,
+    'compiledNumRegex': compiledNumRegex,
+    'minNumbersMatchCount': minNumbersMatchCount,
+    #'usernameBlackCharsSet': usernameBlackCharsSet,
     'spamGenEmojiSet': spamGenEmojiSet,
     'redAdEmojiSet': redAdEmojiSet,
     'yellowAdEmojiSet': yellowAdEmojiSet,
@@ -474,7 +477,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
     'unicodeCategoriesStrip': unicodeCategoriesStrip,
     'spamListCombinedRegex': spamListCombinedRegex,
     }
-  print("                                                                 ") # Erases line that says "loading filters"  
+  print("                                                                 ") # Erases line that says "loading filters"
   return filterSettings, None
 
 
@@ -546,7 +549,7 @@ def delete_comment_list(config):
             print(f"\n{F.RED}Invalid Selectionp{S.R}. Please try again.")
       progressFileName = saveChoice
       progressFileNameWithPath = os.path.join(progressFileFolder, progressFileName)
-      progressDict = files.read_dict_pickle_file(progressFileName, progressFileFolder)   
+      progressDict = files.read_dict_pickle_file(progressFileName, progressFileFolder)
       valid = True
       removalList = "Loaded"
 
@@ -554,7 +557,7 @@ def delete_comment_list(config):
       print(f"\n{F.RED}No previous saves found!{S.R}")
       input("\nPress Enter to return to Main Menu...")
       return "MainMenu"
-     
+
 
     while valid == False:
       input(F"\nNext, follow the process by loading {F.YELLOW}the same comment list/log you used before{S.R}. Press Enter to continue...")
@@ -605,7 +608,7 @@ def delete_comment_list(config):
         previousFailedComments = list()
       else:
         removalList = list(remainingCommentsSet)
-  
+
     print(f"\n Loaded {F.YELLOW}{len(removalList)} Remaining Comments{S.R}")
 
   # --- Begin removal process using list ------
@@ -635,7 +638,7 @@ def delete_comment_list(config):
     banChoice = choice(F"Also {F.RED}ban{S.R} the commenters?")
     if banChoice.lower() == "x":
       return "MainMenu"
-  
+
   # Set limit based on quota
   quotaLimit = int(config['quota_limit'])-100
 
@@ -661,14 +664,14 @@ def delete_comment_list(config):
     partial = False
   else:
     partial = True
-  
+
   if partial == True:
     selectedRemovalList = removalList[:countChoice]
     notRemovedList = removalList[countChoice:]
   else:
     selectedRemovalList = removalList
     notRemovedList = list()
-  
+
   input(f"\nPress {F.YELLOW}Enter{S.R} to Begin Removal...")
   failedCommentsList = operations.delete_found_comments(commentsList=selectedRemovalList, banChoice=banChoice, deletionMode=removalMode)
 
