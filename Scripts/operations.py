@@ -42,7 +42,7 @@ def get_comments(current, filtersDict, miscData, config, currentVideoDict, scanV
       ).execute()
     
     # Get all comment threads across the whole channel
-    elif scanVideoID is None:
+    else:
       results = auth.YOUTUBE.commentThreads().list(
         part="snippet, replies",
         allThreadsRelatedToChannelId=auth.CURRENTUSER.id,
