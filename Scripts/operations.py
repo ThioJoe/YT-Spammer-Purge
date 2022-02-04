@@ -826,6 +826,7 @@ def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToEx
         inputtedString = input("\nEnter the list of only authors to delete: ")
       
     else:
+      result = result.strip(',') # Remove leading/trailing comma
       result = utils.expand_ranges(result) # Expands ranges of numbers into a list of numbers
       chosenSampleIndexes = result.split(",")
       valid = True
