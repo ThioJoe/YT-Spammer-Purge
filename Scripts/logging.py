@@ -164,7 +164,7 @@ def print_prepared_comments(current, scanVideoID, comments, j, loggingEnabled, s
           + "---------------------------------------------------------------------------------------------\\line " + "\n"
           # Rest of Comment Info
           + titleInfoLine
-          + "     > Direct Link: " + directLink + "\\line "+ "\n"
+          + "     > Direct Link: " + directLink + " \\line "+ "\n"
           + "     > Author Channel ID: \cf6" + author_id_local + r"\cf1 \line "+ "\n"
           + "=============================================================================================\\line\\line\\line" + "\n\n\n"
         )
