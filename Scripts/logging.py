@@ -24,18 +24,33 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
   # Print filter matched comments
   j, commentsContents = print_prepared_comments(current, commentsContents, scanVideoID, list(current.matchedCommentsDict.keys()), j, loggingEnabled, scanMode, logMode, doWritePrint, matchReason="Filter Match")
   # Print comments of other match types
+  if current.spamThreadsDict:
+    j, commentsContents = print_prepared_comments(current, commentsContents, scanVideoID, list(current.spamThreadsDict.keys()), j, loggingEnabled, scanMode, logMode, doWritePrint, matchReason="Spam Bot Thread")
   if current.otherCommentsByMatchedAuthorsDict:
     j, commentsContents = print_prepared_comments(current, commentsContents, scanVideoID, list(current.otherCommentsByMatchedAuthorsDict.keys()), j, loggingEnabled, scanMode, logMode, doWritePrint, matchReason="Also By Matched Author")
   if current.duplicateCommentsDict:
     j, commentsContents = print_prepared_comments(current, commentsContents, scanVideoID, list(current.duplicateCommentsDict.keys()), j, loggingEnabled, scanMode, logMode, doWritePrint, matchReason="Duplicate")
 
+  # Writes everything to the log file
+  if loggingEnabled == True and doWritePrint:
+    print(" Writing to log file, please wait...", end="\r")
+    if logMode == "rtf":
+      write_rtf(current.logFileName, commentsContents)
+    elif logMode == "plaintext":
+      write_plaintext_log(current.logFileName, commentsContents)
+    print("                                             ")
+
   # Print Sample Match List
   valuesPreparedToWrite = ""
   valuesPreparedToPrint = ""
+  spamThreadValuesPreparedToWrite = ""
+  spamThreadValuesPreparedToPrint = ""
   duplicateValuesToWrite = ""
   duplicateValuesToPrint = ""
   duplicateSamplesContent = ""
   hasDuplicates = False
+  hasSpamThreads = False
+  
 
   def print_and_write(value, writeValues, printValues):
     if loggingEnabled == True and logMode == "rtf":
@@ -49,14 +64,27 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
   if doWritePrint:
     print(f"{F.LIGHTMAGENTA_EX}============================ Match Samples: One comment per matched-comment author ============================{S.R}")
   for value in current.matchSamplesDict.values():
-    if value['matchReason'] != "Duplicate":
+    if value['matchReason'] != "Duplicate" and value['matchReason'] != "Spam Bot Thread":
       valuesPreparedToWrite, valuesPreparedToPrint = print_and_write(value, valuesPreparedToWrite, valuesPreparedToPrint)
-    else:
+    # If there are duplicates, save those to print later, but get ready by calculating some duplicate info
+    elif value['matchReason'] == "Duplicate":
       hasDuplicates = True
       similarity = str(round(float(config['levenshtein_distance'])*100))+"%"
       minDupes = str(config['minimum_duplicates'])
+    elif value['matchReason'] == "Spam Bot Thread":
+      hasSpamThreads = True
   if doWritePrint:
     print(valuesPreparedToPrint)
+
+  # Print Spam Thread Match Samples
+  if hasSpamThreads == True:
+    if doWritePrint:
+      print(f"{S.BRIGHT}{F.MAGENTA}============================ Match Samples: Spam Bot Threads ============================{S.R}")
+  for value in current.matchSamplesDict.values():
+    if value['matchReason'] == "Spam Bot Thread":
+      spamThreadValuesPreparedToWrite, spamThreadValuesPreparedToPrint = print_and_write(value, spamThreadValuesPreparedToWrite, spamThreadValuesPreparedToPrint)
+  if doWritePrint:
+    print(spamThreadValuesPreparedToPrint)
 
   # Print Duplicates Match Samples
   if hasDuplicates == True:
@@ -78,6 +106,10 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
       matchSamplesContent = "==================== Match Samples: One comment per matched-comment author ==================== \\line\\line \n" + valuesPreparedToWrite
       if doWritePrint:
         write_rtf(current.logFileName, matchSamplesContent)
+      if current.spamThreadsDict:
+        spamThreadSamplesContent = " \n \\line\\line ============================ Match Samples: Spam Bot Threads ============================ \\line\\line \n" + spamThreadValuesPreparedToWrite
+        if doWritePrint:
+          write_rtf(current.logFileName, spamThreadSamplesContent)
       if hasDuplicates == True:
         duplicateSamplesContent = " \n \\line\\line -------------------- Non-Matched Commenters, but who wrote many similar comments -------------------- \\line \n" 
         duplicateSamplesContent += f"---------------------- ( Similarity Threshold: {similarity}  |  Minimum Duplicates: {minDupes} ) ---------------------- \\line\\line \n" + duplicateValuesToWrite
@@ -88,6 +120,10 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
       matchSamplesContent = "==================== Match Samples: One comment per matched-comment author ====================\n" + valuesPreparedToWrite
       if doWritePrint:
         write_plaintext_log(current.logFileName, matchSamplesContent)
+      if current.spamThreadsDict:
+        spamThreadSamplesContent = "\n============================ Match Samples: Spam Bot Threads ============================\n" + spamThreadValuesPreparedToWrite
+        if doWritePrint:
+          write_plaintext_log(current.logFileName, spamThreadSamplesContent)
       if hasDuplicates == True:
         duplicateSamplesContent = "\n-------------------- Non-Matched Commenters, but who wrote many similar comments --------------------\n"
         duplicateSamplesContent += f"---------------------- ( Similarity Threshold: {similarity}  |  Minimum Duplicates: {minDupes} ) ----------------------\n" + duplicateValuesToWrite
@@ -95,7 +131,7 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
           write_plaintext_log(current.logFileName, duplicateSamplesContent)
 
     # Entire Contents of Log File
-    logFileContents = commentsContents + matchSamplesContent + duplicateSamplesContent
+    logFileContents = commentsContents + matchSamplesContent + spamThreadSamplesContent + duplicateSamplesContent
   else:
     logFileContents = None
     logMode = None
@@ -110,12 +146,15 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
 def print_prepared_comments(current, commentsContents, scanVideoID, comments, j, loggingEnabled, scanMode, logMode, doWritePrint, matchReason):
 
   if matchReason != "Filter Match":
-    dividerString = "============================================================================================="
+    dividerString = "============================================================================================"
     if matchReason == "Also By Matched Author":
       reasonString = "======================== All Non-matched Comments by Authors Above ========================"
     elif matchReason == "Duplicate":
       reasonString = "=========================== Non-Matched, But Duplicate Comments ==========================="
+    elif matchReason == "Spam Bot Thread":
+      reasonString = "============================ Spam Bot Thread Top-Level Comments ==========================="
     
+    # -------------------- Print Section Header --------------------
     # Print top divider
     if doWritePrint:
       print(f"\n\n{dividerString}")
@@ -139,7 +178,7 @@ def print_prepared_comments(current, commentsContents, scanVideoID, comments, j,
       commentsContents = commentsContents + f"\\line \n{dividerString} \\line\\line \n\n"
     elif logMode == "plaintext":
       commentsContents = commentsContents + f"\n{dividerString}\n\n"
-
+    # -----------------------------------------------------------------
 
   for comment in comments:
     if matchReason == "Filter Match":
@@ -148,6 +187,8 @@ def print_prepared_comments(current, commentsContents, scanVideoID, comments, j,
       metadata = current.duplicateCommentsDict[comment]
     elif matchReason == "Also By Matched Author":
       metadata = current.otherCommentsByMatchedAuthorsDict[comment]
+    elif matchReason == "Spam Bot Thread":
+      metadata = current.spamThreadsDict[comment]
 
     # For printing and regular logging
     text = metadata['text']
@@ -235,14 +276,6 @@ def print_prepared_comments(current, commentsContents, scanVideoID, comments, j,
     # Appends comment ID to new list of comments so it's in the correct order going forward, as provided by API and presented to user
     # Must use append here, not extend, or else it would add each character separately
     j += 1
-
-  if loggingEnabled == True and doWritePrint:
-    print(" Writing to log file, please wait...", end="\r")
-    if logMode == "rtf":
-      write_rtf(current.logFileName, commentsContents)
-    elif logMode == "plaintext":
-      write_plaintext_log(current.logFileName, commentsContents)
-    print("                                             ")
 
   return j, commentsContents
 
@@ -659,6 +692,7 @@ def prepare_logFile_settings(current, config, miscData, jsonSettingsDict, filter
 def write_log_heading(current, logMode, filtersDict, afterExclude=False, combinedCommentsDict=None):
   if combinedCommentsDict == None:
     combinedCommentsDict = dict(current.matchedCommentsDict)
+    combinedCommentsDict.update(current.spamThreadsDict)
     combinedCommentsDict.update(current.duplicateCommentsDict)
 
   filterMode = filtersDict['filterMode']
@@ -700,6 +734,7 @@ def write_log_heading(current, logMode, filtersDict, afterExclude=False, combine
   
   # Write number of comments for each type
   write_func(current.logFileName, "Number of Matched Comments Found: " + str(len(current.matchedCommentsDict)), logMode, 2)
+  write_func(current.logFileName, "Number of Spam Bot Threads Found: " + str(len(current.spamThreadsDict)), logMode, 2)
   write_func(current.logFileName, "Number of Non-Matched, but Duplicate Comments Found: " + str(len(current.duplicateCommentsDict)), logMode, 2)
   
   # How to label the comment ID list

@@ -272,7 +272,7 @@ def prepare_filter_mode_non_ascii(scanMode, config):
 def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   rootDomainList = miscData.rootDomainsList
   spamDomainsList = miscData.spamLists['spamDomainsList'] # List of domains from crowd sourced list
-  spamThreadsList = miscData.spamLists['spamThreadsList'] # List of filters associated with spam threads from crowd sourced list
+  #spamThreadsList = miscData.spamLists['spamThreadsList'] # List of filters associated with spam threads from crowd sourced list
   spamAccountsList = miscData.spamLists['spamAccountsList'] # List of mentioned instagram/telegram scam accounts from crowd sourced list
   utf_16 = "utf-8"
   if config['filter_mode'] == "autosmart":
@@ -294,6 +294,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   # Create Variables
   blackAdWords, redAdWords, yellowAdWords, exactRedAdWords, = [], [], [], []
   usernameBlackWords, usernameNovidBlackWords, usernameObfuBlackWords, textExactBlackWords, textUpLowBlackWords = [], [], [], [], []
+  threadWords, threadPhrases, monetWords, monetStrings, salutations, nakedNamePre = [], [], [], [], [], []
   compiledRegexDict = {
     'usernameBlackWords': [],
     'usernameNovidBlackWords': [],
@@ -374,6 +375,30 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   onlyVideoLinkRegex = re.compile(r"^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$")
   compiledRegexDict['onlyVideoLinkRegex'] = onlyVideoLinkRegex
 
+  # Spam Thread Detection
+  threadWords_raw = [b'aB^>EX><', b'V{&<LbZ-', b'Vsv8', b'Vrg_^Z)t7', b'baG*2X>Ml', b'baG*2Wd', b'X>N99b94', b'b7^O8VQc', b'Wq5F9a&!', b'aB^>EWpi_BZ*F01', b'b98cHbY*9G', b'ZDn+5Z)5', b'W^Zz3cm', b'b9G~5Wpi@', b'Wnpq|', b'AZ>C', b'AZ>DU', b'Z*XvLa&&cWX>@r', b'X>Mb0ZDj', b'aBp&SW^Zh1Zv', b'aB^>EX><', b'ZEtR6c>', b'b7f<4Wpn', b'cV%I0bZ7', b'Wnpq|']
+  threadPhrases_raw = [b'cWHEJAZ2)PWpZ=', b'Wq5F9a&#bVas', b'Wq5F9a&#bVa&r', b'V{dMBVPkY4ZE^', b'V{dMBVPkY4ZE|w', b'V{dMBVPkY4XlZQ', b'V{dMBVPkY4Xk~H', b'cXDZTWguv2Z2', b'cXDZTWguu}as', b'bY*ySAZTfA', b'bY*ySAZTTB']
+  monetWords_raw = [b'aB^>EX><', b'Wnpq|', b'X&`N3WMu', b'ZDC|(AZ=v']
+  monetStrings_raw = [b'b#r6', b'Wp#3I', b'Bm', b'!lM', b';)1L', b'Vsv8']
+  salutations_raw = [b'ZE^', b'ZE|w', b'ZE{>L', b'ZE|y5E&', b'ZF2', b'ZF4R', b'Wq5F9a&!']
+  nakedNamePre_raw = [b'cWHEJ', b'VsdY5WpV']
+
+  # Make Spam Thread Lists
+  for x in threadWords_raw: threadWords.append(b64decode(x).decode(utf_16))
+  for x in threadPhrases_raw: threadPhrases.append(b64decode(x).decode(utf_16))
+  for x in monetWords_raw: monetWords.append(b64decode(x).decode(utf_16))
+  for x in monetStrings_raw: monetStrings.append(b64decode(x).decode(utf_16))
+  for x in salutations_raw: salutations.append(b64decode(x).decode(utf_16))
+  for x in nakedNamePre_raw: nakedNamePre.append(b64decode(x).decode(utf_16))
+
+  # Compile Thread Detection Regex
+  salutationString = '|'.join(salutations)
+  nakedNameString = '|'.join(nakedNamePre)
+  nameRegex = re.compile(f'\\b({salutationString})\s+([a-zA-Z]+\.?)\s+([a-zA-Z]+)')
+  nakedNameRegex = re.compile(f'\\b({nakedNameString})\s+([a-zA-Z]+\.?)\s+([a-zA-Z]+)')
+  cashRegex = re.compile(r"^(\$|£|€)?(\d+|\d{1,3}(,\d{3})*)(\.\d+)?(\$|£|€|k| ?usd| ?eur| ?btc)?$")
+
+  print("  Loading Filters  [======                        ]", end="\r")
 
   # Compile regex with upper case, otherwise many false positive character matches
   bufferChars = r"*_~|`[]()'-.•,"
@@ -400,7 +425,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   for word in exactRedAdWords:
     value = re.compile(confusable_regex(word.upper(), include_character_padding=False))
     compiledRegexDict['exactRedAdWords'].append([word, value])
-  print("  Loading Filters  [=====                         ]", end="\r") 
+  print("  Loading Filters  [========                      ]", end="\r") 
   for word in usernameRedWords:
     value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
     compiledRegexDict['usernameRedWords'].append([word, value])
@@ -439,11 +464,11 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
     spamListExpressionsList.append(confusable_regex(domain.upper().replace(".", "⚫"), include_character_padding=False).replace("(?:⚫)", "(?:[^a-zA-Z0-9 ]{1,2})"))
   for account in spamAccountsList:
     spamListExpressionsList.append(confusable_regex(account.upper(), include_character_padding=True).replace(m, a))
-  for thread in spamThreadsList:
-    spamListExpressionsList.append(confusable_regex(thread.upper(), include_character_padding=True).replace(m, a))
+  # for thread in spamThreadsList:
+  #   spamListExpressionsList.append(confusable_regex(thread.upper(), include_character_padding=True).replace(m, a))
   print("  Loading Filters  [======================        ]", end="\r")
   spamListCombinedRegex = re.compile('|'.join(spamListExpressionsList))
-  print("  Loading Filters  [============================  ]", end="\r")  
+    
 
   # Prepare Multi Language Detection
   turkish = 'ÇçŞşĞğİ'
@@ -453,7 +478,19 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   languages = [['turkish', turkish, []], ['germanic', germanic, []], ['cyrillic', cyrillic, []], ['japanese', japanese, []]]
   for item in languages:
     item[2] = make_char_set(item[1])
-  print("  Loading Filters  [==============================]", end="\r")
+  print("  Loading Filters  [============================  ]", end="\r")
+
+
+
+  threadFiltersDict = {
+    'threadWords':threadWords,
+    'threadPhrases':threadPhrases,
+    'monetWords':monetWords,
+    'monetStrings':monetStrings,
+    'nameRegex':nameRegex,
+    'nakedNameRegex':nakedNameRegex,
+    'cashRegex':cashRegex
+  }
 
   filterSettings = {
     'spammerNumbersSet': spammerNumbersSet, 
@@ -473,8 +510,10 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
     'sensitiveRootDomainRegex': sensitiveRootDomainRegex,
     'unicodeCategoriesStrip': unicodeCategoriesStrip,
     'spamListCombinedRegex': spamListCombinedRegex,
+    'threadFiltersDict': threadFiltersDict
     }
-  print("                                                                 ") # Erases line that says "loading filters"  
+  print("                                                                 ") # Erases line that says "loading filters"
+
   return filterSettings, None
 
 

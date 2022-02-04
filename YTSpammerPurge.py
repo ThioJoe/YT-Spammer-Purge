@@ -305,6 +305,7 @@ def main():
     matchedCommentsDict: dict
     duplicateCommentsDict: dict
     otherCommentsByMatchedAuthorsDict: dict
+    spamThreadsDict: dict
     allScannedCommentsDict: dict
     vidIdDict: dict
     vidTitleDict: dict
@@ -331,6 +332,7 @@ def main():
       matchedCommentsDict={},
       duplicateCommentsDict={},
       otherCommentsByMatchedAuthorsDict={},
+      spamThreadsDict = {},
       allScannedCommentsDict={},
       vidIdDict={}, 
       vidTitleDict={}, 
@@ -341,11 +343,6 @@ def main():
       logTime = timestamp, 
       logFileName = None,
       errorOccurred = False,
-      # matchTypeCount = {
-      #   'FilterMatch': 0,
-      #   'Duplicate': 0,
-      #   'OtherByMatchedAuthor': 0
-      #   }
       )
 
     # Declare Default Variables
@@ -435,6 +432,8 @@ def main():
       else:
         print(f"\nInvalid choice: {scanMode} - Enter a number from 1 to 9")
         validConfigSetting = False
+
+# ================================================================================= CHOSEN VIDEOS ======================================================================================================
 
     # If chooses to scan single video - Validate Video ID, get title, and confirm with user
     if scanMode == "chosenVideos":  
@@ -557,6 +556,8 @@ def main():
             confirm = choice("Is this video list correct?", bypass=validConfigSetting)
             if confirm == None:
               return True # Return to main menu
+
+# ============================================================================ RECENT VIDEOS ==========================================================================================================
 
     elif scanMode == "recentVideos":
       confirm = False
@@ -684,6 +685,8 @@ def main():
       miscData.channelOwnerID = channelID
       miscData.channelOwnerName = channelTitle
 
+# ============================================================================= ENTIRE CHANNEL ============================================================================================================
+
     # If chooses to scan entire channel - Validate Channel ID
     elif scanMode == "entireChannel":
       numVideos = 1 # Using this variable to indicate only one loop of scanning done later
@@ -724,6 +727,7 @@ def main():
       miscData.channelOwnerID = CURRENTUSER.id
       miscData.channelOwnerName = CURRENTUSER.name
 
+# ================================================================================ COMMUNITY POST =====================================================================================================
 
     elif scanMode == 'communityPost':
       print(f"\nNOTES: This mode is {F.YELLOW}experimental{S.R}, and not as polished as other features. Expect some janky-ness.")
@@ -774,6 +778,8 @@ def main():
               print("\nInvalid Input! Number must a whole number be greater than zero.")
           except:
             print("\nInvalid Input! - Must be a whole number greater than zero.")
+
+# ==================================================================== RECENT COMMUNITY POSTS =============================================================================================================
 
     # Recent Community Posts
     elif scanMode == 'recentCommunityPosts':
@@ -844,8 +850,9 @@ def main():
             print("Invalid Input! - Must be a whole number.")
 
       miscData.channelOwnerID = channelID
-      miscData.channelOwnerName = channelTitle 
+      miscData.channelOwnerName = channelTitle
 
+# =============================================================================== OTHER MENU OPTIONS =============================================================================================
 
     # Create config file
     elif scanMode == "makeConfig":
@@ -871,6 +878,9 @@ def main():
       result = modes.delete_comment_list(config)
       if str(result) == "MainMenu":
         return True
+
+# ====================================================================================================================================================================================================
+# ====================================================================================================================================================================================================
 
     # User inputs filtering mode
     print("\n-------------------------------------------------------")
@@ -912,7 +922,7 @@ def main():
         if filterChoice == "1" or filterChoice == "autosmart":
           filterMode = "AutoSmart"
         elif filterChoice == "2" or filterChoice == "sensitivesmart":
-          filterMode = "SensitiveSmart"      
+          filterMode = "SensitiveSmart"
         elif filterChoice == "3" or filterChoice == "id":
           filterMode = "ID"
         elif filterChoice == "4" or filterChoice == "username":
@@ -925,7 +935,7 @@ def main():
           filterMode = "AutoASCII"
 
       else:
-        print(f"\nInvalid Filter Mode: {filterChoice} - Enter either 1, 2, 3, 4, 5, 6, or 7")
+        print(f"\nInvalid Filter Mode: {filterChoice} - Enter a whole number from 1-7")
         validConfigSetting = False
 
     ## Get filter sub-mode to decide if searching characters or string
@@ -1158,8 +1168,10 @@ def main():
         time.sleep(5)
         sys.exit()
     print(f"Number of {S.BRIGHT}{F.LIGHTRED_EX}Matched{S.R} Comments Found: {B.RED}{F.WHITE} {str(len(current.matchedCommentsDict))} {F.R}{B.R}{S.R}")
+    if current.spamThreadsDict:
+      print(f"\nNumber of {S.BRIGHT}{F.RED}Spam Bot Threads{S.R} Found: {S.BRIGHT}{B.RED}{F.WHITE} {str(len(current.spamThreadsDict))} {F.R}{B.R}{S.R}")
     if current.duplicateCommentsDict:
-      print(f"Number of {S.BRIGHT}{F.LIGHTBLUE_EX}Non-Matched But Duplicate{S.R} Comments Found: {S.BRIGHT}{F.WHITE}{B.BLUE} {str(len(current.duplicateCommentsDict))} {F.R}{B.R}{S.R}")
+      print(f"\nNumber of {S.BRIGHT}{F.LIGHTBLUE_EX}Non-Matched But Duplicate{S.R} Comments Found: {S.BRIGHT}{F.WHITE}{B.BLUE} {str(len(current.duplicateCommentsDict))} {F.R}{B.R}{S.R}")
 
     # If spam comments were found, continue
     if bypass == False:
