@@ -400,28 +400,25 @@ def main():
       if scanMode.lower() == "q":
         sys.exit()
 
-      # Set scanMode Variable Names
-      validModeValues = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'chosenvideos', 'recentvideos', 'entirechannel', 'communitypost', 'commentlist', 'recentcommunityposts']
+      # Set scanMode Variable Names and assign to values
+      validModeDict = {
+        '1': 'chosenVideos',
+        '2': 'recentVideos',
+        '3': 'entireChannel',
+        '4': 'communityPost',
+        '5': 'recentCommunityPosts',
+        '6': 'makeConfig',
+        '7': 'commentList',
+        '8': 'recoverMode',
+        '9': 'checkUpdates'
+      }
+      # Flatten dict
+      validModeValues = list(validModeDict.keys()) + list(validModeDict.values())
       if scanMode in validModeValues:
         validMode = True
-        if scanMode == "1" or scanMode == "chosenvideos":
-          scanMode = "chosenVideos"
-        elif scanMode == "2" or scanMode == "recentvideos":
-          scanMode = "recentVideos"
-        elif scanMode == "3" or scanMode == "entirechannel":
-          scanMode = "entireChannel"
-        elif scanMode == "4" or scanMode == "communitypost":
-          scanMode = "communityPost"
-        elif scanMode == "5" or scanMode == "recentcommunityposts":
-          scanMode = "recentCommunityPosts"
-        elif scanMode == "6":
-          scanMode = "makeConfig"
-        elif scanMode == "7" or scanMode == "commentlist":
-          scanMode = "commentList"          
-        elif scanMode == "8":
-          scanMode = "recoverMode"
-        elif scanMode == "9":
-          scanMode = "checkUpdates"
+        # convert scanMode number to phrase
+        if scanMode in validModeDict.keys():
+          scanMode = validModeDict.get(scanMode)
       else:
         print(f"\nInvalid choice: {scanMode} - Enter a number from 1 to 9")
         validConfigSetting = False
