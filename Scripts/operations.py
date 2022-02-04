@@ -272,7 +272,7 @@ def check_duplicates(current, config, miscData, allCommentsDict, videoID):
     input("\nPress Enter to continue...")
     levenshtein = 0.9
 
-  # Get dupliate count setting
+  # Get duplicate count setting
   try:
     minimum_duplicates = int(config['minimum_duplicates'])
     if minimum_duplicates < 2:
@@ -795,16 +795,25 @@ def check_recovered_comments(commentsList):
   return True
 
 # Removes comments by user-selected authors from list of comments to delete
-def exclude_authors(current, config, miscData, inputtedString, logInfo=None, only=False):
+def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToExcludeSet, commentIDExcludeSet, displayString, inputtedString, logInfo=None, only=False):
+  plaintextFormattedExcludes = ""
+  rtfFormattedExcludes = ""
+
   valid = False
   while valid == False:
-    if "exclude" in inputtedString.lower(): # Account for if user is trying again
-      isolateExpression = r"(?<=exclude ).*" # Matches everything after 'exclude'
-      result = str(re.search(isolateExpression, inputtedString.lower()).group(0))
-    elif "only" in inputtedString.lower():
-      isolateExpression = r"(?<=only ).*" # Matches everything after 'exclude'
-      result = str(re.search(isolateExpression, inputtedString.lower()).group(0))
+    if "exclude" in inputtedString.lower() or "only" in inputtedString.lower():
+      try:
+        if "exclude" in inputtedString.lower(): # Account for if user is trying again
+          isolateExpression = r"(?<=exclude ).*" # Matches everything after 'exclude'
+          result = str(re.search(isolateExpression, inputtedString.lower()).group(0))
+        elif "only" in inputtedString.lower():
+          isolateExpression = r"(?<=only ).*" # Matches everything after 'exclude'
+          result = str(re.search(isolateExpression, inputtedString.lower()).group(0))
+      # User didn't enter any numbers or they're not right
+      except AttributeError:
+        result = "ThisStringCausesErrorNext"
     else:
+      #Take new input from further down
       result = inputtedString
 
     result = result.replace(" ", "")
@@ -817,6 +826,7 @@ def exclude_authors(current, config, miscData, inputtedString, logInfo=None, onl
         inputtedString = input("\nEnter the list of only authors to delete: ")
       
     else:
+      result = result.strip(',') # Remove leading/trailing comma
       result = utils.expand_ranges(result) # Expands ranges of numbers into a list of numbers
       chosenSampleIndexes = result.split(",")
       valid = True
@@ -831,32 +841,26 @@ def exclude_authors(current, config, miscData, inputtedString, logInfo=None, onl
         elif only == True:
           inputtedString = input("\nEnter the comma separated list of numbers and/or ranges to delete: ")
 
-  authorIDsToExclude = []
-  displayString = ""
-  excludedCommentsDict = {}
-  rtfFormattedExcludes = ""
-  plaintextFormattedExcludes = ""
-  commentIDExcludeList = []
-
   # Go through all the sample numbers, check if they are on the list given by user
   for authorID, info in current.matchSamplesDict.items():
     if only == False:
       if str(info['index']) in chosenSampleIndexes:
-        authorIDsToExclude += [authorID]
+        authorsToExcludeSet.add(authorID)
     elif only == True:
       if str(info['index']) not in chosenSampleIndexes:
-        authorIDsToExclude += [authorID]
+        authorsToExcludeSet.add(authorID)
 
   # Get comment IDs to be excluded
   for comment, metadata in current.matchedCommentsDict.items():
-    if metadata['authorID'] in authorIDsToExclude:
-      commentIDExcludeList.append(comment)
+    if metadata['authorID'] in authorsToExcludeSet:
+      commentIDExcludeSet.add(comment)
   # Remove all comments by selected authors from dictionary of comments
-  for comment in commentIDExcludeList:
+  for comment in commentIDExcludeSet:
     if comment in current.matchedCommentsDict.keys():
       excludedCommentsDict[comment] = current.matchedCommentsDict.pop(comment)
 
   # Create strings that can be used in log files
+  
   rtfFormattedExcludes += f"\\line \n Comments Excluded From Deletion: \\line \n"
   rtfFormattedExcludes += f"(Values = Comment ID | Author ID | Author Name | Comment Text) \\line \n"
   plaintextFormattedExcludes += f"\nComments Excluded From Deletion:\n"
@@ -868,7 +872,7 @@ def exclude_authors(current, config, miscData, inputtedString, logInfo=None, onl
 
   # Verify removal
   for comment in current.matchedCommentsDict.keys():
-    if comment in commentIDExcludeList:
+    if comment in commentIDExcludeSet:
       print(f"{F.LIGHTRED_EX}FATAL ERROR{S.R}: Something went wrong while trying to exclude comments. No comments have been deleted.")
       print(f"You should {F.YELLOW}DEFINITELY{S.R} report this bug here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
       print("Provide the error code: X-1")
@@ -876,16 +880,16 @@ def exclude_authors(current, config, miscData, inputtedString, logInfo=None, onl
       sys.exit()
 
   # Get author names and IDs from dictionary, and display them
-  for author in authorIDsToExclude:
+  for author in authorsToExcludeSet:
     displayString += f"    User ID: {author}   |   User Name: {current.matchSamplesDict[author]['authorName']}\n"
-    
 
-  print(f"\n{F.CYAN}All {len(excludedCommentsDict)} comments{S.R} from the {F.CYAN}following {len(authorIDsToExclude)} users{S.R} are now {F.LIGHTGREEN_EX}excluded{S.R} from deletion:")
+
+  print(f"\n{F.CYAN}All {len(excludedCommentsDict)} comments{S.R} from the {F.CYAN}following users{S.R} are now {F.LIGHTGREEN_EX}excluded{S.R} from deletion:")
   print(displayString)
 
   if config['whitelist_excluded'] == 'ask':
     print(f"\nAdd these {F.LIGHTGREEN_EX}excluded{S.R} users to the {F.LIGHTGREEN_EX}whitelist{S.R} for future scans?")
-    addWhitelist = choice("Choose")
+    addWhitelist = choice("Whitelist Users?")
   elif config['whitelist_excluded'] == "True":
     addWhitelist = True
   elif config['whitelist_excluded'] == "False":
@@ -893,7 +897,7 @@ def exclude_authors(current, config, miscData, inputtedString, logInfo=None, onl
 
   if addWhitelist == True:
     with open(miscData.resources['Whitelist']['PathWithName'], "a", encoding="utf-8") as f:
-      for author in authorIDsToExclude:
+      for author in authorsToExcludeSet:
         f.write(f"# [Excluded]  Channel Name: {current.matchSamplesDict[author]['authorName']}  |  Channel ID: " + "\n")
         f.write(f"{author}\n")
 
@@ -909,7 +913,7 @@ def exclude_authors(current, config, miscData, inputtedString, logInfo=None, onl
   
   input("\nPress Enter to decide what to do with the rest...")
   
-  return current, excludedCommentsDict, rtfFormattedExcludes, plaintextFormattedExcludes # May use excludedCommentsDict later for printing them to log file
+  return current, excludedCommentsDict, authorsToExcludeSet, commentIDExcludeSet # May use excludedCommentsDict later for printing them to log file
 
 
 ################################# Get Most Recent Videos #####################################
