@@ -795,8 +795,12 @@ def check_recovered_comments(commentsList):
   input("\nRecovery process finished. Press Enter to return to main menu...")
   return True
 
-def exclude_authors(current: T.Any, config:T.Dict[str, T.Any], miscData: T.Dict[str, T.Any], excludedCommentsDict: T.Dict[str, T.Any], authorsToExcludeSet: T.Set[T.Any], commentIDExcludeSet: T.Set[T.Any], displayString: str, inputtedString: str, logInfo: T.Optional[T.Dict[str, T.Any]]=None, only: bool=False):
-  """Removes comments by user-selected authors from list of comments to delete."""
+def exclude_authors(current: T.Any, config:T.Dict[str, T.Any], miscData: T.Any, excludedCommentsDict: T.Dict[str, T.Any], authorsToExcludeSet: T.Set[T.Any], commentIDExcludeSet: T.Set[T.Any], displayString: str, inputtedString: str, logInfo: T.Optional[T.Dict[str, T.Any]]=None, only: bool=False)->T.Tuple[T.Any, T.Dict[str, T.Any], T.Set[T.Any], T.Set[T.Any]]:
+  """Removes comments by user-selected authors from list of comments to delete.
+
+  Raises:
+    SystemExit: when something went wrong while trying to exclude comments. No comments will be deleted.
+  """
   plaintextFormattedExcludes = ""
   rtfFormattedExcludes = ""
   if not hasattr(S, 'R'):
