@@ -892,25 +892,23 @@ def main():
       if str(filterChoice).lower() == "x":
         return True # Return to main menu
 
-      validChoices = ['1', '2', '3', '4', '5', '6', '7', 'id', 'username', 'text', 'nameandtext', 'autoascii', 'autosmart', 'sensitivesmart']
+      validChoicesDict = {
+        "1": "AutoSmart",
+        "2": "SensitiveSmart",
+        "3": "ID",
+        "4": "Username",
+        "5": "Text",
+        "6": "NameAndText",
+        "7": "AutoASCII"
+      }
+
+      # Flatten dict
+      validChoices = list(validChoicesDict.keys()) + list(validChoicesDict.values())
+
       if filterChoice in validChoices:
         validFilterMode = True
-        # Set string variable names for filtering modes
-        if filterChoice == "1" or filterChoice == "autosmart":
-          filterMode = "AutoSmart"
-        elif filterChoice == "2" or filterChoice == "sensitivesmart":
-          filterMode = "SensitiveSmart"      
-        elif filterChoice == "3" or filterChoice == "id":
-          filterMode = "ID"
-        elif filterChoice == "4" or filterChoice == "username":
-          filterMode = "Username"
-        elif filterChoice == "5" or filterChoice == "text":
-          filterMode = "Text"
-        elif filterChoice == "6" or filterChoice == "nameandtext":
-          filterMode = "NameAndText"
-        elif filterChoice == "7" or filterChoice == "autoascii":
-          filterMode = "AutoASCII"
-
+        # convert number to phrase if required
+        filterMode = validChoicesDict.get(filterChoice) if filterChoice in validChoicesDict.keys() else filterChoice
       else:
         print(f"\nInvalid Filter Mode: {filterChoice} - Enter either 1, 2, 3, 4, 5, 6, or 7")
         validConfigSetting = False
