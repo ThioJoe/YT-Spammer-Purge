@@ -87,11 +87,11 @@ def get_authenticated_service(config):
           test_socket = socket(AF_INET, SOCK_DGRAM)
           test_socket.connect(("8.8.8.8", 80))
           host = test_socket.getsockname()[0]
-          print(f"Using host: {F.LIGHTGREEN_EX}{host}{F.R}")
+          print(f"Using host: {F.LIGHTGREEN_EX}{host}{S.R}")
           test_socket.close()
         except Exception:
           traceback.print_exc() # Prints traceback
-          print(f"{F.LIGHTRED_EX}Could not find local IP address. Defaulting to localhost.{F.R}")
+          print(f"{F.LIGHTRED_EX}Could not find local IP address. Defaulting to localhost.{S.R}")
           host = "localhost"
       if open_in_browser == False:
         print(f"\nPlease {F.YELLOW}open this URL in a browser{S.R} to login:")
@@ -103,7 +103,7 @@ def get_authenticated_service(config):
         prompt_message = "{url}\n\n"
       prompt_message += "Waiting for authorization. See message above."
       creds = flow.run_local_server(host=host, port=0, authorization_prompt_message=prompt_message, open_browser=open_in_browser)
-      print(f"{F.GREEN}[OK] Authorization Complete.{F.R}")
+      print(f"{F.GREEN}[OK] Authorization Complete.{S.R}")
       # Save the credentials for the next run
     with open(TOKEN_FILE_NAME, 'w') as token:
       token.write(creds.to_json())
