@@ -3,6 +3,8 @@
 from Scripts.shared_imports import *
 import Scripts.validation as validation
 from Scripts.utils import choice
+import time
+from socket import socket, AF_INET, SOCK_DGRAM
 
 # Google Authentication Modules
 from googleapiclient.errors import HttpError
@@ -11,9 +13,6 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from json import JSONDecodeError
-from socket import socket, AF_INET, SOCK_DGRAM
-
-import time
 
 TOKEN_FILE_NAME = 'token.pickle'
 
