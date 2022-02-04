@@ -402,15 +402,15 @@ def main():
 
       # Set scanMode Variable Names and assign to values
       validModeDict = {
-        '1': 'chosenVideos',
-        '2': 'recentVideos',
-        '3': 'entireChannel',
-        '4': 'communityPost',
-        '5': 'recentCommunityPosts',
-        '6': 'makeConfig',
-        '7': 'commentList',
-        '8': 'recoverMode',
-        '9': 'checkUpdates'
+        "1": "chosenVideos",
+        "2": "recentVideos",
+        "3": "entireChannel",
+        "4": "communityPost",
+        "5": "recentCommunityPosts",
+        "6": "makeConfig",
+        "7": "commentList",
+        "8": "recoverMode",
+        "9": "checkUpdates"
       }
       # Flatten dict
       validModeValues = list(validModeDict.keys()) + list(validModeDict.values())
@@ -420,7 +420,7 @@ def main():
         if scanMode in validModeDict.keys():
           scanMode = validModeDict.get(scanMode)
       else:
-        print(f"\nInvalid choice: {scanMode} - Enter a number from 1 to 9")
+        print(f"\nInvalid choice: {scanMode} - Enter a number from 1 to {len(validModeDict)}")
         validConfigSetting = False
 
     # If chooses to scan single video - Validate Video ID, get title, and confirm with user
