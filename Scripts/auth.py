@@ -81,7 +81,7 @@ def get_authenticated_service(config):
           sys.exit()
       host = config["server_host"]
       if host == "auto":
-        # See https://stackoverflow.com/a/166589 , this seems to be a safe option;
+        # See https://stackoverflow.com/a/166589 , this seems to be a safe option to get the IP address;
         # This program needs internet anyway
         try:
           test_socket = socket(AF_INET, SOCK_DGRAM)
