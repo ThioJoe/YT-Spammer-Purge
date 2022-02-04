@@ -831,6 +831,9 @@ def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToEx
       chosenSampleIndexes = result.split(",")
       valid = True
       for num in chosenSampleIndexes: # Check if any numbers outside max range
+        if num.size == 0:
+           print(f"\n{F.LIGHTRED_EX}Invalid input!{S.R} Number is outside the range of samples: {num} --  Please try again.")
+           break
         if int(num) > len(current.matchSamplesDict) or int(num)<1:
           print(f"\n{F.LIGHTRED_EX}Invalid input!{S.R} Number is outside the range of samples: {num} --  Please try again.")
           valid = False
