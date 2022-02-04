@@ -46,7 +46,7 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
   matchSamplesContent = ""
   spamThreadValuesPreparedToWrite = ""
   spamThreadValuesPreparedToPrint = ""
-  spamThreadSamplesContents = ""
+  spamThreadSamplesContent = ""
   duplicateValuesToWrite = ""
   duplicateValuesToPrint = ""
   duplicateSamplesContent = ""
