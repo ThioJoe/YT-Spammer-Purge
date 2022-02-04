@@ -105,9 +105,12 @@ def main():
 
   print("\nLoading YT Spammer Purge @ " + str(version) + "...")
 
+  # Check for primary config file, load into dictionary 'config'. If no config found, loads data from default config in assets folder
+  config = files.load_config_file(configVersion)
+
   # Authenticate with the Google API - If token expired and invalid, deletes and re-authenticates
  
-  YOUTUBE = auth.first_authentication()
+  YOUTUBE = auth.first_authentication(config)
 
            #### Prepare Resources ####
   resourceFolder = RESOURCES_FOLDER_NAME
@@ -185,9 +188,6 @@ def main():
   spamListDict['Meta']['VersionInfo']['LatestRelease'] = versionInfo['LatestRelease']
   spamListDict['Meta']['VersionInfo']['LastChecked'] = versionInfo['LastChecked']
 
-  # Check for primary config file, load into dictionary 'config'. If no config found, loads data from default config in assets folder
-  os.system(clear_command)
-  config = files.load_config_file(configVersion)
   os.system(clear_command)
 
   # Check for program and list updates if auto updates enabled in config
@@ -297,7 +297,7 @@ def main():
     else:
       auth.remove_token()
       os.system(clear_command)
-      YOUTUBE = auth.get_authenticated_service()
+      YOUTUBE = auth.get_authenticated_service(config)
 
   # Declare Classes
   @dataclass

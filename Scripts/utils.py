@@ -148,7 +148,7 @@ def expand_ranges(stringInput):
 # User inputs Y/N for choice, returns True or False
 # Takes in message to display
 
-def choice(message="", bypass=False):
+def choice(message="", bypass=False, x_action="return to main menu"):
   if bypass == True:
     return True
 
@@ -163,7 +163,7 @@ def choice(message="", bypass=False):
     elif response == "X" or response == "x":
       return None
     else:
-      print("\nInvalid Input. Enter Y or N  --  Or enter X to return to main menu.")  
+      print(f"\nInvalid Input. Enter Y or N  --  Or enter X to {x_action}.")
 
 
 ############################### ERROR HANDLING MESSAGES #################################

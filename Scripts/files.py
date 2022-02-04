@@ -384,7 +384,7 @@ def load_config_file(configVersion=None, forceDefault=False, skipConfigChoice=Fa
  
   # Convert raw config dictionary into easier to use dictionary
   settingsToKeepCase = ["your_channel_id", "videos_to_scan", "channel_ids_to_filter", "regex_to_filter", "channel_to_scan", "log_path", "this_config_description"]
-  validWordVars = ['ask', 'mine', 'default']
+  validWordVars = ['ask', 'mine', 'default', 'auto']
   for section in parser.sections():
     for setting in parser.items(section):
       # Setting[0] is name of the setting, Setting[1] is the value of the setting

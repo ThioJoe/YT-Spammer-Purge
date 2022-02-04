@@ -2,6 +2,7 @@
 # -*- coding: UTF-8 -*-
 from Scripts.shared_imports import *
 import Scripts.validation as validation
+from Scripts.utils import choice
 
 # Google Authentication Modules
 from googleapiclient.errors import HttpError
@@ -10,6 +11,9 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from json import JSONDecodeError
+from socket import socket, AF_INET, SOCK_DGRAM
+
+import time
 
 TOKEN_FILE_NAME = 'token.pickle'
 
@@ -37,7 +41,7 @@ def initialize():
 #   https://developers.google.com/api-client-library/python/guide/aaa_client_secrets
 
 # Authorize the request and store authorization credentials.
-def get_authenticated_service():
+def get_authenticated_service(config):
   global YOUTUBE
   CLIENT_SECRETS_FILE = 'client_secrets.json'
   YOUTUBE_READ_WRITE_SSL_SCOPE = ['https://www.googleapis.com/auth/youtube.force-ssl']
@@ -69,10 +73,38 @@ def get_authenticated_service():
     if creds and creds.expired and creds.refresh_token:
       creds.refresh(Request())
     else:
-      print(f"\nPlease {F.YELLOW}login using the browser window{S.R} that opened just now.\n")
+      open_in_browser = config["open_browser"]
+      if open_in_browser == "ask":
+        open_in_browser = choice("Would you like to login with a browser window?", x_action="exit the program")
+        if open_in_browser is None:
+          print("Authorization Cancelled. Exiting in 5 seconds...")
+          time.sleep(5)
+          sys.exit()
+      host = config["server_host"]
+      if host == "auto":
+        # See https://stackoverflow.com/a/166589 , this seems to be a safe option;
+        # This program needs internet anyway
+        try:
+          test_socket = socket(AF_INET, SOCK_DGRAM)
+          test_socket.connect(("8.8.8.8", 80))
+          host = test_socket.getsockname()[0]
+          print(f"Using host: {F.LIGHTGREEN_EX}{host}")
+          test_socket.close()
+        except Exception:
+          traceback.print_exc() # Prints traceback
+          print(f"{F.LIGHTRED_EX}Could not find local IP address. Defaulting to localhost.{F.R}")
+          host = "localhost"
+      if open_in_browser == False:
+        print(f"\nPlease {F.YELLOW}open this URL in a browser{S.R} to login:")
+      else:
+        print(f"\nPlease {F.YELLOW}login using the browser window{S.R} that opened just now.\n")
       flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRETS_FILE, scopes=YOUTUBE_READ_WRITE_SSL_SCOPE)
-      creds = flow.run_local_server(port=0, authorization_prompt_message="Waiting for authorization. See message above.")
-      print(f"{F.GREEN}[OK] Authorization Complete.{S.R}")
+      prompt_message = ""
+      if open_in_browser == False:
+        prompt_message = "{url}\n\n"
+      prompt_message += "Waiting for authorization. See message above."
+      creds = flow.run_local_server(host=host, port=0, authorization_prompt_message=prompt_message, open_browser=open_in_browser)
+      print(f"{F.GREEN}[OK] Authorization Complete.{F.R}")
       # Save the credentials for the next run
     with open(TOKEN_FILE_NAME, 'w') as token:
       token.write(creds.to_json())
@@ -80,10 +112,10 @@ def get_authenticated_service():
   return YOUTUBE
 
 
-def first_authentication():
+def first_authentication(config):
   global YOUTUBE
   try:
-    YOUTUBE = get_authenticated_service() # Create authentication object
+    YOUTUBE = get_authenticated_service(config) # Create authentication object
   except JSONDecodeError as jx:
     print(f"{F.WHITE}{B.RED} [!!!] Error: {S.R}" + str(jx))
     print(f"\nDid you make the client_secrets.json file yourself by {F.LIGHTRED_EX}copying and pasting into it{S.R}, instead of {F.LIGHTGREEN_EX}downloading it{S.R}?")
@@ -95,7 +127,7 @@ def first_authentication():
     if "invalid_grant" in str(e):
       print(f"{F.YELLOW}[!] Invalid token{S.R} - Requires Re-Authentication")
       os.remove(TOKEN_FILE_NAME)
-      YOUTUBE = get_authenticated_service()
+      YOUTUBE = get_authenticated_service(config)
     else:
       print('\n')
       traceback.print_exc() # Prints traceback
@@ -137,7 +169,7 @@ def get_current_user(config):
     os.remove(TOKEN_FILE_NAME)
 
     global YOUTUBE
-    YOUTUBE = get_authenticated_service()
+    YOUTUBE = get_authenticated_service(config)
     results = fetch_user() # Try again
 
   try:
