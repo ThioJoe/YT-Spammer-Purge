@@ -386,8 +386,21 @@ def main():
     print(f"      7. Remove comments using a {F.LIGHTRED_EX}pre-existing list{S.R} or log file")
     print(f"      8. Recover deleted comments using log file")
     print(f"      9. Check & Download {F.LIGHTCYAN_EX}Updates{S.R}\n")
-    
 
+    # Link menu options
+    validModeDict = {
+      "1": "chosenVideos",
+      "2": "recentVideos",
+      "3": "entireChannel",
+      "4": "communityPost",
+      "5": "recentCommunityPosts",
+      "6": "makeConfig",
+      "7": "commentList",
+      "8": "recoverMode",
+      "9": "checkUpdates"
+    }
+    # Flatten dict
+    validModeValues = list(validModeDict.keys()) + list(validModeDict.values())
 
     # Make sure input is valid, if not ask again
     validMode:bool = False
@@ -396,24 +409,10 @@ def main():
       if validConfigSetting == True and config and config['scan_mode'] != 'ask':
         scanMode = config['scan_mode']
       else:
-        scanMode = input("Choice (1-9): ")
+        scanMode = input(f"Choice (1-{len(validModeDict)}): ")
       if scanMode.lower() == "q":
         sys.exit()
 
-      # Set scanMode Variable Names and assign to values
-      validModeDict = {
-        "1": "chosenVideos",
-        "2": "recentVideos",
-        "3": "entireChannel",
-        "4": "communityPost",
-        "5": "recentCommunityPosts",
-        "6": "makeConfig",
-        "7": "commentList",
-        "8": "recoverMode",
-        "9": "checkUpdates"
-      }
-      # Flatten dict
-      validModeValues = list(validModeDict.keys()) + list(validModeDict.values())
       if scanMode in validModeValues:
         validMode = True
         # convert scanMode number to phrase
@@ -711,7 +710,6 @@ def main():
       miscData.channelOwnerID = CURRENTUSER.id
       miscData.channelOwnerName = CURRENTUSER.name
 
-
     elif scanMode == 'communityPost':
       print(f"\nNOTES: This mode is {F.YELLOW}experimental{S.R}, and not as polished as other features. Expect some janky-ness.")
       print("   > It is also much slower to retrieve comments, because it does not use the API")
@@ -871,6 +869,17 @@ def main():
     print(f" 6. Scan both {F.LIGHTBLUE_EX}usernames{S.R} and {F.CYAN}comment text{S.R} for criteria you choose")
     print(f" 7. ASCII Mode: Scan usernames for {F.LIGHTMAGENTA_EX}ANY non-ASCII special characters{S.R} (May cause collateral damage!)")
 
+    validChoicesDict = {
+      "1": "AutoSmart",
+      "2": "SensitiveSmart",
+      "3": "ID",
+      "4": "Username",
+      "5": "Text",
+      "6": "NameAndText",
+      "7": "AutoASCII"
+    }
+    # Flatten dict
+    validChoices = list(validChoicesDict.keys()) + list(validChoicesDict.values())
 
     if userNotChannelOwner == True and moderator_mode == False:
       print(f" {F.LIGHTRED_EX}Note: With 'Not Your Channel Mode' enabled, you can only report matched comments while using 'Auto-Smart Mode'.{S.R}") # Based on filterModesAllowedforNonOwners
@@ -887,23 +896,10 @@ def main():
       if validConfigSetting == True and config and config['filter_mode'] != 'ask':
         filterChoice = config['filter_mode']
       else:
-        filterChoice = input("\nChoice (1-7): ")
+        filterChoice = input(f"\nChoice (1-{len(validChoicesDict)}): ")
       
       if str(filterChoice).lower() == "x":
         return True # Return to main menu
-
-      validChoicesDict = {
-        "1": "AutoSmart",
-        "2": "SensitiveSmart",
-        "3": "ID",
-        "4": "Username",
-        "5": "Text",
-        "6": "NameAndText",
-        "7": "AutoASCII"
-      }
-
-      # Flatten dict
-      validChoices = list(validChoicesDict.keys()) + list(validChoicesDict.values())
 
       if filterChoice in validChoices:
         validFilterMode = True
@@ -923,34 +919,38 @@ def main():
 
     if filterMode == "Username" or filterMode == "Text" or filterMode == "NameAndText":
       print("\n--------------------------------------------------------------")
-      if filterMode == "Username":
-        print("~~~ What do you want to scan usernames for specifically? ~~~")
-      elif filterMode == "Text":
-        print("~~~ What do you want to scan comment text for specifically? ~~~")
-      elif filterMode == "NameAndText":
-        print("~~~ What do you want to scan names and comments for specifically? ~~~")
+      filterModeDict = {
+        "Username": "usernames",
+        "Text": "comment text",
+        "NameAndText": "names and comments"
+      }
+
+      print(f"~~~ What do you want to scan {filterModeDict.get(filterMode)} for specifically? ~~~")
       print(f" 1. A {F.CYAN}certain special character{S.R}, or set of multiple characters")
       print(f" 2. An {F.LIGHTMAGENTA_EX}entire string{S.R}, or multiple strings")
       print(f" 3. Advanced: A custom {F.YELLOW}Regex pattern{S.R} you'll enter")
+
+      FilterSubModesDict = {
+        "1": "chars",
+        "2": "string",
+        "3": "regex"
+      }
+      validFilterSubModes = list(FilterSubModesDict.keys()) + list(FilterSubModesDict.values())
 
       while validFilterSubMode == False:
         if validConfigSetting == True:
           pass
         else:
-          filterSubMode = input("\nChoice (1, 2, or 3): ")
+          filterSubMode = input(f"\nChoice (1 - {len(FilterSubModesDict)}): ")
         if str(filterSubMode).lower() == "x":
           return True # Return to main menu
 
-        validFilterSubModes = ["1", "2", "3", "characters", "strings", "regex"]
         if filterSubMode in validFilterSubModes:
           validFilterSubMode = True
           validConfigSetting = True
-          if filterSubMode == "1" or filterSubMode == "characters":
-            filterSubMode = "chars"
-          elif filterSubMode == "2" or filterSubMode == "strings":
-            filterSubMode = "string"
-          elif filterSubMode == "3" or filterSubMode == "regex":
-            filterSubMode = "regex"
+          # convert filterSubMode number to phrase
+          if filterSubMode in FilterSubModesDict.keys():
+            filterSubMode = FilterSubModesDict.get(filterSubMode)
         else:
           print(f"\nInvalid choice: {filterSubMode} - Enter 1, 2 or 3")
           validConfigSetting = False
