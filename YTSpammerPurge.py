@@ -834,21 +834,28 @@ def main():
               print(f"\n > {F.LIGHTRED_EX}Warning:{S.R} You are scanning someone elses post. {F.LIGHTRED_EX}'Not Your Channel Mode'{S.R} Enabled.")
 
       print(f"\n{F.YELLOW}How many{S.R} of the most recent posts do you want to scan?")
+
+      inputStr = ""
       while True:
-        inputStr = input("\nNumber of Recent Posts: ")
-        if str(inputStr).lower() == "x":
-          return True
+        if config['recent_videos_amount'] != 'ask' and inputStr == "":
+          inputStr = config['recent_videos_amount']
         else:
-          try:
-            numRecentPosts = int(inputStr)
-            if numRecentPosts > len(recentPostsListofDicts):
-              print("Number entered is more than posts available. Will just scan all posts available.")
-              numRecentPosts = len(recentPostsListofDicts)
-            elif numRecentPosts <= 0:
-              print("Please enter a whole number greater than zero.")
+          inputStr = input("\nNumber of Recent Posts: ")
+          if str(inputStr).lower() == "x":
+            return True
+
+        try:
+          numRecentPosts = int(inputStr)
+          if numRecentPosts > len(recentPostsListofDicts):
+            print("Number entered is more than posts available. Will just scan all posts available.")
+            numRecentPosts = len(recentPostsListofDicts)
             break
-          except ValueError:
-            print("Invalid Input! - Must be a whole number.")
+          elif numRecentPosts <= 0:
+            print("Please enter a whole number greater than zero.")
+          else:
+            break
+        except ValueError:
+          print("Invalid Input! - Must be a whole number.")
 
       miscData.channelOwnerID = channelID
       miscData.channelOwnerName = channelTitle
