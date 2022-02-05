@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
+from typing import Union
 from Scripts.shared_imports import *
 import Scripts.validation as validation
 import Scripts.auth as auth
@@ -146,25 +147,38 @@ def expand_ranges(stringInput):
 
 
 ############################### User Choice #################################
-# User inputs Y/N for choice, returns True or False
-# Takes in message to display
 
-def choice(message="", bypass=False):
+def choice( message: str='', bypass: bool=False, addCancel: bool=False ) -> Union[bool, None]:
+  '''User inputs 'yes,no' for choice.
+    If argument addCancel is True the 'cancel' option appear
+  '''
+
   if bypass == True:
     return True
 
-  questions = [
+  choices = [
+    ( 'yes', 'y' ),
+    ( 'no', 'n' ),
+  ]
+
+  if addCancel:
+    choices.append( ( 'cancel', 'x' ) )
+
+  question = [
     inquirer.List('choice',
       message=message,
-      choices=[
-        'yes', 'no'
-      ],
+      choices=choices,
     ),
   ]
 
-  answer = inquirer.prompt(questions)['choice']
+  answer = inquirer.prompt(question)['choice']
 
-  return answer == 'yes'
+  if answer == 'y':
+    return True
+  elif answer == 'n':
+    return False
+  elif answer == 'x':
+    return None
 
 
 ############################### ERROR HANDLING MESSAGES #################################
