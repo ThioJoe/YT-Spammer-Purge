@@ -305,7 +305,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
           # We do this because we pull the .exe for windows, but maybe we could use os.system('git pull')? Because this is a GIT repo, unlike the windows version
           print(f"> {F.RED} Error:{S.R} You are using an unsupported OS for the autoupdater (macos/linux). \n This updater only supports Windows (right now). Feel free to get the files from github: https://github.com/ThioJoe/YT-Spammer-Purge")
           return False
-      elif userChoice == "False" or userChoice == None:
+      elif userChoice == False or userChoice == None:
         return False
     elif silentCheck == True:
       return isUpdateAvailable
@@ -813,7 +813,7 @@ def parse_comment_list(config, recovery=False, removal=False, returnFileName=Fal
       else:
         print(f"\n{F.LIGHTRED_EX}Error: File not found.{S.R} Make sure it is in the same folder as the program.\n")
         print(f"Enter '{F.YELLOW}Y{S.R}' to try again, or '{F.YELLOW}N{S.R}' to manually paste in the comment IDs.")
-        userChoice = choice("Try entering file name again?")
+        userChoice = choice("Try entering file name again?", addCancel=True)
         if userChoice == True:
           pass
         elif userChoice == False:

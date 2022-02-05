@@ -500,7 +500,7 @@ def main():
               print("  The following videos do not match the channel owner of the first video in the list: ")
             if misMatchVidIndex == 11 and len(enteredVideosList) > 10:
               remainingCount = str(len(enteredVideosList) - 10)
-              userChoice = choice(f"There are {remainingCount} more mis-matched videos, do you want to see the rest?")
+              userChoice = choice(f"There are {remainingCount} more mis-matched videos, do you want to see the rest?", addCancel=True )
               if userChoice == False:
                 break
               elif userChoice == None:
@@ -518,7 +518,7 @@ def main():
             i += 1
             if i==6 and len(enteredVideosList) > 5:
               remainingCount = str(len(enteredVideosList) - 5)
-              userChoice = choice(f"You have entered many videos, do you need to see the rest (x{remainingCount})?")
+              userChoice = choice(f"You have entered many videos, do you need to see the rest (x{remainingCount})?", addCancel=True)
               if userChoice == False:
                 break
               elif userChoice == None:
@@ -547,7 +547,7 @@ def main():
               print(f"        > Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
               if userNotChannelOwner == True or moderator_mode == True:
                 print(f"{F.LIGHTCYAN_EX}> Note:{S.R} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")
-            confirm = choice("Is this video list correct?", bypass=validConfigSetting)
+            confirm = choice("Is this video list correct?", bypass=validConfigSetting, addCancel=True)
             if confirm == None:
               return True # Return to main menu
 
@@ -649,7 +649,7 @@ def main():
           for i in range(len(videosToScan)):
             if i == 10 and len(videosToScan) > 11:
               remainingCount = str(len(videosToScan) - 10)
-              userChoice = choice(f"There are {remainingCount} more recent videos, do you want to see the rest?")
+              userChoice = choice(f"There are {remainingCount} more recent videos, do you want to see the rest?", addCancel=True)
               if userChoice == False:
                 break 
               elif userChoice == None:
@@ -670,7 +670,7 @@ def main():
               print(f"        > Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
               if userNotChannelOwner == True or moderator_mode == True:
                 print(f"{F.LIGHTCYAN_EX}> Note:{S.R} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")
-            confirm = choice("Is everything correct?", bypass=config['skip_confirm_video'])
+            confirm = choice("Is everything correct?", bypass=config['skip_confirm_video'], addCancel=True)
             if confirm == None:
               return True # Return to main menu
 
@@ -699,7 +699,7 @@ def main():
               print(f"        > Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
               if userNotChannelOwner == True or moderator_mode == True:
                 print(f"{F.LIGHTCYAN_EX}> Note:{S.R} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")
-              userChoice = choice("Do you still want to continue?")
+              userChoice = choice("Do you still want to continue?", addCancel=True)
               if userChoice == False:
                 validInteger == False
               elif userChoice == None:
@@ -733,7 +733,7 @@ def main():
           if postOwnerID != CURRENTUSER.id:
             userNotChannelOwner = True
             print(f"\n{F.YELLOW}Warning:{S.R} You are scanning someone elses post. '{F.LIGHTRED_EX}Not Your Channel Mode{S.R}' Enabled.")
-          confirm = choice("Continue?")
+          confirm = choice("Continue?", addCancel=True)
           if confirm == None:
             return True # Return to main menu
         else:
@@ -1152,7 +1152,7 @@ def main():
       # Asks user if they want to save list of spam comments to a file
       print(f"\nSpam comments ready to display. Also {F.LIGHTGREEN_EX}save a log file?{S.R} {B.GREEN}{F.BLACK} Highly Recommended! {F.R}{B.R}{S.R}")
       print(f"        (It even allows you to {F.LIGHTGREEN_EX}restore{S.R} deleted comments later)")
-      loggingEnabled = choice(f"Save Log File (Recommended)?")
+      loggingEnabled = choice(f"Save Log File (Recommended)?", addCancel=True)
       if loggingEnabled == None:
         return True # Return to main menu
       print("")
@@ -1427,7 +1427,7 @@ def main():
           print("Error Code C-9: 'enable_ban' is set to an invalid value in config file. Only possible config options are 'ask' or 'False' when using config.\n")
           input("Press Enter to continue...")
       elif deletionMode == "rejected":
-        banChoice = choice(f"Also {F.YELLOW}ban{S.R} the spammer(s) ?")
+        banChoice = choice(f"Also {F.YELLOW}ban{S.R} the spammer(s) ?", addCancel=True)
         if banChoice == None:
           return True # Return to main menu
 

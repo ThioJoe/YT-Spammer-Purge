@@ -56,7 +56,7 @@ def prepare_filter_mode_chars(scanMode, filterMode, config):
         sys.exit()
 
     print(f"     {whatToScanMsg} will be scanned for {F.MAGENTA}ANY{S.R} of the characters you entered in the previous window.")
-    userChoice = choice("Begin Scanning? ", bypass)
+    userChoice = choice("Begin Scanning? ", bypass, addCancel=True)
     if userChoice == True:
       confirm = True
     elif userChoice == False:
@@ -109,7 +109,7 @@ def prepare_filter_mode_strings(scanMode, filterMode, config):
       else:
         print(f"     {whatToScanMsg} will be scanned for {F.MAGENTA}ANY{S.R} of the following strings:")
         print(filterStringList)
-      userChoice = choice("Begin scanning? ", bypass)
+      userChoice = choice("Begin scanning? ", bypass, addCancel=True)
       if userChoice == True:
         validEntry = True
       elif userChoice == False:
@@ -155,7 +155,7 @@ def prepare_filter_mode_regex(scanMode, filterMode, config):
       print(f"     The expression appears to be {F.GREEN}valid{S.R}!")
 
       if validExpression == True:
-        userChoice = choice("Begin scanning? ", bypass)
+        userChoice = choice("Begin scanning? ", bypass, addCancel=True)
         if userChoice == True:
           pass
         elif userChoice == False:
@@ -229,7 +229,7 @@ def prepare_filter_mode_non_ascii(scanMode, config):
         return "MainMenu", None
     if selection == "1":
       print(f"Searches for {F.YELLOW}usernames with emojis, unicode symbols, and rare foreign characters{S.R} such as: ✔️ ☝️ 🡆 ▲ π Ɲ Œ")
-      userChoice = choice("Choose this mode?", bypass)
+      userChoice = choice("Choose this mode?", bypass, addCancel=True)
       if userChoice == True:
         regexPattern = r"[^\x00-\xFF]"
         confirmation = True
@@ -237,7 +237,7 @@ def prepare_filter_mode_non_ascii(scanMode, config):
         return "MainMenu", None
     elif selection == "2":
       print(f"Searches for {F.YELLOW}usernames with anything EXCEPT{S.R} the following: {F.YELLOW}Letters, numbers, punctuation, and common special characters{S.R} you can type with your keyboard like: % * & () + ")
-      userChoice = choice("Choose this mode?", bypass)
+      userChoice = choice("Choose this mode?", bypass, addCancel=True)
       if userChoice == True:
         regexPattern = r"[^\x00-\x7F]"
         confirmation = True
@@ -245,7 +245,7 @@ def prepare_filter_mode_non_ascii(scanMode, config):
         return "MainMenu", None
     elif selection == "3":
       print(f"Searches for {F.YELLOW}usernames with anything EXCEPT letters, numbers, and spaces{S.R} - {B.RED}{F.WHITE} EXTREMELY LIKELY to cause collateral damage!{S.R} Recommended to just use to manually gather list of spammer IDs, then use a different mode to delete.")
-      userChoice = choice("Choose this mode?", bypass)
+      userChoice = choice("Choose this mode?", bypass, addCancel=True)
       if userChoice == True:
         regexPattern = r"[^a-zA-Z0-9 ]"
         confirmation = True
