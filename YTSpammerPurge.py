@@ -372,22 +372,7 @@ def main():
         updateString = ""
 
     # User selects scanning mode,  while Loop to get scanning mode, so if invalid input, it will keep asking until valid input
-    '''
-    print("\n{:<59}{:<18}{:>5}".format("> At any prompt, enter 'X' to return here", updateStringLabel, updateString))
-    print("> Enter 'Q' now to quit")
-
-    print(f"\n\n-------------------------------- {F.YELLOW}Scanning Options{S.R} --------------------------------")
-    print(f"      1. Scan {F.LIGHTCYAN_EX}specific videos{S.R}")
-    print(f"      2. Scan {F.LIGHTCYAN_EX}recent videos{S.R} for a channel")
-    print(f"      3. Scan recent comments across your {F.LIGHTBLUE_EX}Entire Channel{S.R}")
-    print(f"      4. Scan a specific {F.LIGHTMAGENTA_EX}community post{S.R} (Experimental)")
-    print(f"      5. Scan {F.LIGHTMAGENTA_EX}recent community posts{S.R} for a channel (Experimental)")
-    print(f"\n--------------------------------- {F.YELLOW}Other Options{S.R} ----------------------------------")
-    print(f"      6. Create your own {F.LIGHTGREEN_EX}config file(s){S.R} to run the program with pre-set settings")
-    print(f"      7. Remove comments using a {F.LIGHTRED_EX}pre-existing list{S.R} or log file")
-    print(f"      8. Recover deleted comments using log file")
-    print(f"      9. Check & Download {F.LIGHTCYAN_EX}Updates{S.R}\n")
-    '''
+    print("\n{:<18}{:>5}\n".format(updateStringLabel, updateString))
 
     scanOpts = [
       (
@@ -443,41 +428,6 @@ def main():
         sys.exit()
 
       validMode = True
-
-      '''
-      if validConfigSetting == True and config and config['scan_mode'] != 'ask':
-        scanMode = config['scan_mode']
-      else:
-        scanMode = input("Choice (1-9): ")
-      if scanMode.lower() == "q":
-        sys.exit()
-
-      # Set scanMode Variable Names
-      validModeValues = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'chosenvideos', 'recentvideos', 'entirechannel', 'communitypost', 'commentlist', 'recentcommunityposts']
-      if scanMode in validModeValues:
-        validMode = True
-        if scanMode == "1" or scanMode == "chosenvideos":
-          scanMode = "chosenVideos"
-        elif scanMode == "2" or scanMode == "recentvideos":
-          scanMode = "recentVideos"
-        elif scanMode == "3" or scanMode == "entirechannel":
-          scanMode = "entireChannel"
-        elif scanMode == "4" or scanMode == "communitypost":
-          scanMode = "communityPost"
-        elif scanMode == "5" or scanMode == "recentcommunityposts":
-          scanMode = "recentCommunityPosts"
-        elif scanMode == "6":
-          scanMode = "makeConfig"
-        elif scanMode == "7" or scanMode == "commentlist":
-          scanMode = "commentList"          
-        elif scanMode == "8":
-          scanMode = "recoverMode"
-        elif scanMode == "9":
-          scanMode = "checkUpdates"
-      else:
-        print(f"\nInvalid choice: {scanMode} - Enter a number from 1 to 9")
-        validConfigSetting = False
-      '''
 
     # If chooses to scan single video - Validate Video ID, get title, and confirm with user
     if scanMode == "chosenVideos":  
@@ -917,17 +867,6 @@ def main():
 
     # User inputs filtering mode
     print("\n-------------------------------------------------------")
-    '''
-    print(f"~~~~~~~~~~~ Choose how to identify spammers ~~~~~~~~~~~")
-    print("-------------------------------------------------------")
-    print(f" 1. {F.BLACK}{B.LIGHTGREEN_EX}(RECOMMENDED):{S.R} {F.YELLOW}Auto-Smart Mode{S.R}: Automatically detects multiple spammer techniques")
-    print(f" 2. {F.YELLOW}Sensitive-Smart Mode{S.R}: Much more likely to catch all spammers, but with significantly more false positives")  
-    print(f" 3. Enter Spammer's {F.LIGHTRED_EX}channel ID(s) or link(s){S.R}")
-    print(f" 4. Scan {F.LIGHTBLUE_EX}usernames{S.R} for criteria you choose")
-    print(f" 5. Scan {F.CYAN}comment text{S.R} for criteria you choose")
-    print(f" 6. Scan both {F.LIGHTBLUE_EX}usernames{S.R} and {F.CYAN}comment text{S.R} for criteria you choose")
-    print(f" 7. ASCII Mode: Scan usernames for {F.LIGHTMAGENTA_EX}ANY non-ASCII special characters{S.R} (May cause collateral damage!)")
-    '''
 
     spamOpts = [
       (
@@ -970,46 +909,11 @@ def main():
     elif userNotChannelOwner == True and moderator_mode == True:
       print(f" {F.LIGHTRED_EX}Note: With 'Moderator Mode', you can hold for review using: 'Auto-Smart', 'Sensitive-Smart', and Channel ID modes.{S.R}")
     # Make sure input is valid, if not ask again
-    # validFilterMode = False
     validFilterSubMode = False
     filterSubMode = None
     validConfigSetting = True
 
     validConfigSetting = True
-    '''
-    while validFilterMode == False:
-
-      if validConfigSetting == True and config and config['filter_mode'] != 'ask':
-        filterChoice = config['filter_mode']
-      else:
-        filterChoice = input("\nChoice (1-7): ")
-      
-      if str(filterChoice).lower() == "x":
-        return True # Return to main menu
-
-      validChoices = ['1', '2', '3', '4', '5', '6', '7', 'id', 'username', 'text', 'nameandtext', 'autoascii', 'autosmart', 'sensitivesmart']
-      if filterChoice in validChoices:
-        validFilterMode = True
-        # Set string variable names for filtering modes
-        if filterChoice == "1" or filterChoice == "autosmart":
-          filterMode = "AutoSmart"
-        elif filterChoice == "2" or filterChoice == "sensitivesmart":
-          filterMode = "SensitiveSmart"      
-        elif filterChoice == "3" or filterChoice == "id":
-          filterMode = "ID"
-        elif filterChoice == "4" or filterChoice == "username":
-          filterMode = "Username"
-        elif filterChoice == "5" or filterChoice == "text":
-          filterMode = "Text"
-        elif filterChoice == "6" or filterChoice == "nameandtext":
-          filterMode = "NameAndText"
-        elif filterChoice == "7" or filterChoice == "autoascii":
-          filterMode = "AutoASCII"
-
-      else:
-        print(f"\nInvalid Filter Mode: {filterChoice} - Enter either 1, 2, 3, 4, 5, 6, or 7")
-        validConfigSetting = False
-      '''
 
     filterMode = validateInput( spamOpts, 'filter_mode', 'Choose how to identify spammers', config, validConfigSetting )
 
@@ -1018,13 +922,6 @@ def main():
 
     ## Get filter sub-mode to decide if searching characters or string
     validConfigSetting = None
-    '''
-    if config['filter_submode'] != 'ask':
-      filterSubMode = config['filter_submode']
-      validConfigSetting = True
-    else:
-      validConfigSetting = False
-    '''
 
     if filterMode == "Username" or filterMode == "Text" or filterMode == "NameAndText":
       print("\n--------------------------------------------------------------")
@@ -1037,12 +934,6 @@ def main():
         question = "~~~ What do you want to scan comment text for specifically? ~~~"
       elif filterMode == "NameAndText":
         question = "~~~ What do you want to scan names and comments for specifically? ~~~"
-
-      '''
-      print(f" 1. A {F.CYAN}certain special character{S.R}, or set of multiple characters")
-      print(f" 2. An {F.LIGHTMAGENTA_EX}entire string{S.R}, or multiple strings")
-      print(f" 3. Advanced: A custom {F.YELLOW}Regex pattern{S.R} you'll enter")
-      '''
 
       filterOpts = [
         (
@@ -1067,31 +958,6 @@ def main():
 
       if filterSubMode == 'x':
         return True
-
-      '''
-      while validFilterSubMode == False:
-        if validConfigSetting == True:
-          pass
-        else:
-          filterSubMode = input("\nChoice (1, 2, or 3): ")
-        if str(filterSubMode).lower() == "x":
-          return True # Return to main menu
-
-        validFilterSubModes = ["1", "2", "3", "characters", "strings", "regex"]
-        if filterSubMode in validFilterSubModes:
-          validFilterSubMode = True
-          validConfigSetting = True
-          if filterSubMode == "1" or filterSubMode == "characters":
-            filterSubMode = "chars"
-          elif filterSubMode == "2" or filterSubMode == "strings":
-            filterSubMode = "string"
-          elif filterSubMode == "3" or filterSubMode == "regex":
-            filterSubMode = "regex"
-        else:
-          print(f"\nInvalid choice: {filterSubMode} - Enter 1, 2 or 3")
-          validConfigSetting = False
-      '''
-
 
     ### Prepare Filtering Modes ###
     # Default values for filter criteria

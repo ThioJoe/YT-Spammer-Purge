@@ -166,21 +166,6 @@ def choice(message="", bypass=False):
 
   return answer == 'yes'
 
-  # While loop until valid input
-  '''
-  valid = False
-  while valid == False:
-    response = input("\n" + message + f" ({F.LIGHTCYAN_EX}y{S.R}/{F.LIGHTRED_EX}n{S.R}): ").strip()
-    if response == "Y" or response == "y":
-      return True
-    elif response == "N" or response == "n":
-      return False
-    elif response == "X" or response == "x":
-      return None
-    else:
-      print("\nInvalid Input. Enter Y or N  --  Or enter X to return to main menu.")  
-  '''
-
 
 ############################### ERROR HANDLING MESSAGES #################################
 
@@ -263,11 +248,11 @@ def validateInput( scanOpts, optName, message, config, validConfigSetting ):
 
     if scanMode == False:
       print(f"\nInvalid config `{config[optName]}` for `{optName}`\n")
-      answer = inquirer.prompt( question)
+      answer = inquirer.prompt( question )
     else:
       return scanMode
 
   else:
-    answer = inquirer.prompt( question)
+    answer = inquirer.prompt( question )
 
   return answer['question']
