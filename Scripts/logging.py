@@ -4,6 +4,7 @@ from Scripts.shared_imports import *
 import Scripts.utils as utils
 import Scripts.auth as auth
 from Scripts.utils import choice
+from unicodedata import category as unicode_category
 
 import rtfunicode
 import os
@@ -287,7 +288,14 @@ def print_prepared_comments(current, commentsContents, scanVideoID, comments, j,
 # Takes in a string that contains unicode, and returns a string with properly escaped unicode format for use in rtf files
 # Uses 'rtfunicode' module to encode with proper rtf-compatible unicode escapes, then decode back to utf-8 so it can be written to file and read by wordpad or whatever
 def make_rtf_compatible(text):
-  return text.encode('rtfunicode').decode('utf-8')
+  try:
+    return text.encode('rtfunicode').decode('utf-8')
+  except:
+    intermediate = "".join(char for char in text if unicode_category(char) not in ["Mn", "Cc", "Cf", "Cs", "Co", "Cn"])
+    try:
+      return intermediate.encode('rtfunicode').decode('utf-8')
+    except:
+      return intermediate
 
 # Writes properly to rtf file, also can prepare with necessary header information and formatting settings
 def write_rtf(fileName, newText=None, firstWrite=False, fullWrite=False):
@@ -512,7 +520,7 @@ def get_extra_json_data(channelIDs, jsonSettingsDict):
     remainder = total % 50
     numDivisions = int((total-remainder)/50)
     for i in range(numDivisions):
-      fetch_data(channelIDs[i*50:i*50+50])         
+      fetch_data(channelIDs[i*50:i*50+50])
     if remainder > 0:
       fetch_data(channelIDs[numDivisions*50:])
   else:

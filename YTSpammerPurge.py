@@ -36,7 +36,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.15.0-Beta2"
+version = "2.15.0-Beta3"
 configVersion = 26
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -1513,8 +1513,8 @@ def main():
         print("\nWriting JSON log file...")
         if config['json_extra_data'] == True:
           if current.errorOccurred == False:
-            jsonDataDict = logging.get_extra_json_data(list(combinedCommentDict.keys()), jsonSettingsDict)
-            logging.write_json_log(jsonSettingsDict, combinedCommentDict.keys(), jsonDataDict)
+            jsonDataDict = logging.get_extra_json_data(list(current.matchSamplesDict.keys()), jsonSettingsDict)
+            logging.write_json_log(jsonSettingsDict, combinedCommentDict, jsonDataDict)
           else:
             print(f"\n{F.LIGHTRED_EX}NOTE:{S.R} Extra JSON data collection disabled due to error during scanning")
         else:
@@ -1524,10 +1524,10 @@ def main():
     ### ---------------- Reporting / Deletion Begin  ----------------
     if returnToMenu == False:
       if proceedWithDeletion == True:
-        operations.delete_found_comments(list(combinedCommentDict.keys()), banChoice, deletionMode)
+        operations.delete_found_comments(list(combinedCommentDict), banChoice, deletionMode)
         if deletionMode != "reportSpam":
           if config['check_deletion_success'] == True:
-            operations.check_deleted_comments(list(combinedCommentDict.keys()))
+            operations.check_deleted_comments(list(combinedCommentDict))
           elif config['check_deletion_success'] == False:
             print("\nSkipped checking if deletion was successful.\n")
 

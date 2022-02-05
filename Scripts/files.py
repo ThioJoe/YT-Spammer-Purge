@@ -851,6 +851,7 @@ def parse_comment_list(config, recovery=False, removal=False, returnFileName=Fal
     if str(listFileName).lower() == "x":
       return "MainMenu", None
 
+    listFileName = listFileName.strip("\"").strip("'") # Remove quotes, if added by dragging and dropping or pasting path
     if len(listFileName) > 0:
       if os.path.exists(listFileName):
         pass
