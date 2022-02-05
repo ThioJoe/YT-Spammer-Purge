@@ -89,7 +89,7 @@ Read some additional details about 'moderator mode' on the [wiki page here](http
 ## Installation
 
 If using the python script version (not the exe), there is a requirements.txt with necessary modules. Created with Python 3.9.7
-The Windows .EXE version requires Windows 8 or above [(Why?)](https://pyinstaller.readthedocs.io/en/stable/requirements.html#windows)
+The Windows .EXE version requires Windows 8 or above [(Why?)](https://pyinstaller.readthedocs.io/en/stable/requirements.html#windows). A resolution to this can be fixed by downloading the latest driver, for some computers located [here](https://support.microsoft.com/en-us/topic/update-for-universal-c-runtime-in-windows-c0514201-7fe6-95a3-b0a5-287930f3560c).
 
 Either way, you DO need to acquire your own API credentials file to access the YouTube API - [See Instructions Here](https://github.com/ThioJoe/YT-Spammer-Purge/wiki/Instructions:-Obtaining-an-API-Key).
 
