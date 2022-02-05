@@ -7,3 +7,4 @@ confusables==1.2.0
 certifi>=2021.10.8
 six>=1.16.0
 python-Levenshtein>=0.12.2
+inquirer>=2.9.1
