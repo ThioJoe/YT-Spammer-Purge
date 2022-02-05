@@ -216,41 +216,32 @@ def print_error_title_fetch():
   input("\n Press Enter to continue...")
 
 
-'''
-  Check if the `value` is a valid option of `settings`
-  it checks:
-    - strict comparsion (prompt) eg. 'chosenVideos' == 'chosenVideos'
-    - setting index     (config file) eg. '1' == 'chosenVideos'
-    - lowercase         (config file) eg. 'chosenvideos' == 'chosenVideos'
-'''
-def getSetting( settings, value ):
-  for ind, sett in enumerate( settings ):
-    if ( value == sett[1] or value == str( ind ) or value == sett[1].lower() ):
-      return sett[1]
-
-  return False
-
-
-'''
-  Validates a setting value or prompts the use to choose a valid option
-'''
-def validateInput( scanOpts, optName, message, config, validConfigSetting ):
+def validate_input(
+    choices: tuple[str, str], optName: str,
+    message: str, config: dict,
+    validConfigSetting: bool ) -> str:
+  '''Validates a setting value from config or prompts the user to choose a valid option.'''
 
   question = [
     inquirer.List( 'question',
       message=message,
-      choices=scanOpts,
+      choices=choices,
     ),
   ]
 
   if validConfigSetting == True and config and config[optName] != 'ask':
-    scanMode = getSetting( scanOpts, config[optName] )
 
-    if scanMode == False:
+    scanMode = False
+
+    for ind, choice in enumerate( choices ):
+      if ( config[optName] == choice[1] or config[optName] == str( ind ) or config[optName] == choice[1].lower() ):
+        scanMode = choice[1]
+
+    if scanMode != False:
+      return scanMode
+    else:
       print(f"\nInvalid config `{config[optName]}` for `{optName}`\n")
       answer = inquirer.prompt( question )
-    else:
-      return scanMode
 
   else:
     answer = inquirer.prompt( question )

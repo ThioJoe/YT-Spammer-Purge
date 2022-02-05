@@ -51,7 +51,7 @@ import Scripts.operations as operations
 import Scripts.prepare_modes as modes
 from Scripts.community_downloader import main as get_community_comments #Args = post's ID, comment limit
 import Scripts.community_downloader as community_downloader
-from Scripts.utils import choice, validateInput
+from Scripts.utils import choice, validate_input
 
 # Standard Libraries
 import time
@@ -422,7 +422,7 @@ def main():
     validConfigSetting:bool = True
     while validMode == False:
 
-      scanMode = validateInput( scanOpts, 'scan_mode', 'Choose what to do now', config, validConfigSetting )
+      scanMode = validate_input( scanOpts, 'scan_mode', 'Choose what to do now', config, validConfigSetting )
 
       if scanMode == 'q':
         sys.exit()
@@ -915,7 +915,7 @@ def main():
 
     validConfigSetting = True
 
-    filterMode = validateInput( spamOpts, 'filter_mode', 'Choose how to identify spammers', config, validConfigSetting )
+    filterMode = validate_input( spamOpts, 'filter_mode', 'Choose how to identify spammers', config, validConfigSetting )
 
     if filterMode == 'x':
       return True # Return to main menu
@@ -954,7 +954,7 @@ def main():
         ),
       ]
 
-      filterSubMode = validateInput( filterOpts, 'filter_submode', question, config, validConfigSetting )
+      filterSubMode = validate_input( filterOpts, 'filter_submode', question, config, validConfigSetting )
 
       if filterSubMode == 'x':
         return True
