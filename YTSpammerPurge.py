@@ -904,7 +904,7 @@ def main():
 
 
     if userNotChannelOwner == True and moderator_mode == False:
-      print(f" {F.LIGHTRED_EX}Note: With 'Not Your Channel Mode' enabled, you can only report matched comments while using 'Auto-Smart Mode'.{S.R}") # Based on filterModesAllowedforNonOwners
+      print(f" {F.LIGHTRED_EX}Note: With 'Not Your Channel Mode' enabled, you can only report matched comments while using 'Auto-Smart Mode' \n or 'Sensitive-Smart Mode'.{S.R}") # Based on filterModesAllowedforNonOwners
     elif userNotChannelOwner == True and moderator_mode == True:
       print(f" {F.LIGHTRED_EX}Note: With 'Moderator Mode', you can hold for review using: 'Auto-Smart', 'Sensitive-Smart', and Channel ID modes.{S.R}")
     # Make sure input is valid, if not ask again
