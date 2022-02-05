@@ -21,7 +21,7 @@
 ###				       a project via the Google Developers Console (aka 'Google Cloud Platform').
 ###              The credential file should be re-named 'client_secret.json' and be placed in the 
 ###              same directory as this script.
-###				            >>> See the Readme for instructions on this.
+###				            >>> See the Readme for instructions on this 👆
 ###
 ###           2. I suck at programming so if something doesn't work I'll try to fix it but might not
 ###              even know how, so don't expect too much.
