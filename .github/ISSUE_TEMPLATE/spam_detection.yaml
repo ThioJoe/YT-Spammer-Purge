@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |      
-        IS THIS A FEATURE REQUEST OR IDEA? SUBMIT A DISCUSSION POST INSTEAD HERE: https://github.com/ThioJoe/YouTube-Spammer-Purge/discussions
+        IS THIS A FEATURE REQUEST OR IDEA? SUBMIT A DISCUSSION POST INSTEAD HERE: https://github.com/ThioJoe/YT-Spammer-Purge/discussions
   - type: dropdown
     id: filter-mode
     attributes:
