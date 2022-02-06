@@ -543,10 +543,15 @@ def recover_deleted_comments(config):
 def delete_comment_list(config):
   progressFileFolder = os.path.join(RESOURCES_FOLDER_NAME, "Removal_List_Progress")
   print(f"\n\n-------------------- {F.LIGHTRED_EX}Delete Using a List / Log{S.R} --------------------")
-  print("\nUse new comment list, or continue where you left off with another list?")
-  print(f"  1. Use {F.LIGHTCYAN_EX}New List{S.R}")
-  print(f"  2. {F.LIGHTMAGENTA_EX}Continue With{S.R} a List")
-  listChoice = input("\nSelection (1 or 2): ")
+  while True:
+    print("\nUse new comment list, or continue where you left off with another list?")
+    print(f"  1. Use {F.LIGHTCYAN_EX}New List{S.R}")
+    print(f"  2. {F.LIGHTMAGENTA_EX}Continue With{S.R} a List")
+    listChoice = input("\nSelection (1 or 2): ")
+    if listChoice == "1" or listChoice == "2":
+      break
+    else:
+      print(f"\n{F.LIGHTRED_EX}Invalid selection!{S.R} Please try again.")
 
   if listChoice == "1":
     continued = False
