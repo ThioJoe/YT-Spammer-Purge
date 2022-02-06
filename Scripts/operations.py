@@ -744,7 +744,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
       # Processed Variables
       combinedString = authorChannelName + commentText
       combinedSet = utils.make_char_set(combinedString, stripLettersNumbers=True, stripPunctuation=True)
-      textSet = set(commentText)
+      upLowTextSet = set(commentText.replace(miscData.channelOwnerName, ""))
       #usernameSet = utils.make_char_set(authorChannelName)
 
       # Run Checks
@@ -767,7 +767,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
         add_spam(current, config, miscData, currentCommentDict, videoID)
       elif any(word in commentText.lower() for word in compiledRegexDict['textExactBlackWords']):
         add_spam(current, config, miscData, currentCommentDict, videoID)
-      elif any((word in commentText and not textSet.intersection(lowAlSet)) for word in compiledRegexDict['textUpLowBlackWords']):
+      elif any((word in commentText and not upLowTextSet.intersection(lowAlSet)) for word in compiledRegexDict['textUpLowBlackWords']):
         add_spam(current, config, miscData, currentCommentDict, videoID)
       elif any(findOnlyObfuscated(expression[1], expression[0], authorChannelName) for expression in compiledRegexDict['usernameObfuBlackWords']):
         add_spam(current, config, miscData, currentCommentDict, videoID)
