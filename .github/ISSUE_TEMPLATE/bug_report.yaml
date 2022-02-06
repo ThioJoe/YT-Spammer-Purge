@@ -33,8 +33,14 @@ body:
   - type: input
     id: version
     attributes:
+      label: Python version
+      required: false
+      description: If you are running the Python script (not the exe) please mention the version of Python you are running. If you are running the exe file, please ignore this.)
+  - type: input
+    id: version
+    attributes:
       label: Release version
-      description: What version of this program are you using? (can be found in the title when running (eg. ======== YOUTUBE SPAMMER PURGE VERSION (insert version here) or in the `version` variable in the `YouTubeSpammerPurge.py` file.)
+      description: What version of this program are you using? (can be found in the title when running (eg. ======== YOUTUBE SPAMMER PURGE VERSION (insert version here) or in the `version` variable in the `YouTubeSpammerPurge.py` file.)    
   - type: textarea
     id: steps-to-reproduce
     attributes:
