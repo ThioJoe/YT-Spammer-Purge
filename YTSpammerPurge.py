@@ -1557,7 +1557,10 @@ def main():
         time.sleep(5)
         sys.exit()
       else:
-        input(f"\nDeletion {F.LIGHTRED_EX}Cancelled{S.R}. Press Enter to to return to main menu...")
+        if confirmDelete != None and str(confirmDelete.lower()) == "none":
+          input(f"\nDeletion {F.LIGHTCYAN_EX}Declined{S.R}. Press Enter to to return to main menu...")
+        else:
+          input(f"\nDeletion {F.LIGHTRED_EX}Cancelled{S.R}. Press Enter to to return to main menu...")
         return True
     else:
       if config['auto_close'] == True:
