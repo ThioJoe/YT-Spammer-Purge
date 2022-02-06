@@ -188,6 +188,7 @@ def main():
   # Check for primary config file, load into dictionary 'config'. If no config found, loads data from default config in assets folder
   os.system(clear_command)
   config = files.load_config_file(configVersion)
+  validation.validate_config_settings(config)
   os.system(clear_command)
 
   # Check for program and list updates if auto updates enabled in config
@@ -1251,8 +1252,9 @@ def main():
 
     elif config['skip_deletion'] != False:
       print("Error Code C-3: Invalid value for 'skip_deletion' in config file. Must be 'True' or 'False'. Current Value:  " + str(config['skip_deletion']))
-      input("\nPress Enter to exit...")
-      sys.exit()
+      print(f"Defaulting to '{F.YELLOW}False{S.R}'")
+      input("\nPress Enter to continue...")
+
     ### ----------------------------------------------------------------  
 
     ### ------------- Decide whether to ask before deleting -------------
