@@ -5,6 +5,7 @@ import re
 
 from colorama import init, Fore as F, Back as B, Style as S
 
+
 # Global Hardcoded Constants
 RESOURCES_FOLDER_NAME = "SpamPurge_Resources"
 
