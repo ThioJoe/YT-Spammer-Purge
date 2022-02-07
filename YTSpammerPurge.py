@@ -1046,12 +1046,13 @@ def main():
       }
 
     if scanMode == "communityPost" or scanMode == "recentCommunityPosts":
-      def scan_community_post(config, communityPostID, limit, postScanProgressDict=None, postText=None):
+      def scan_community_post(current, config, communityPostID, limit, postScanProgressDict=None, postText=None):
         authorKeyAllCommentsDict = {}
         allCommunityCommentsDict = get_community_comments(communityPostID=communityPostID, limit=limit, postScanProgressDict=postScanProgressDict, postText=postText)
         retrievedCount = len(allCommunityCommentsDict)
         print(f"\nRetrieved {retrievedCount} comments from post.\n")
         scannedCount = 0
+        threadDict = {}
 
         # Analyze and store comments
         for key, value in allCommunityCommentsDict.items():
@@ -1069,6 +1070,14 @@ def main():
           except TypeError:
             pass
           operations.check_against_filter(current, filtersDict, miscData, config, currentCommentDict, videoID=communityPostID)
+
+          # Scam for spam threads
+          if config['detect_spam_threads'] == True:
+            threadDict = operations.make_community_thread_dict(key, allCommunityCommentsDict)
+            if threadDict:
+              parentCommentDict = dict(currentCommentDict)
+              parentCommentDict['videoID'] = communityPostID
+              current = operations.check_spam_threads(current, filtersDict, miscData, config, parentCommentDict, threadDict)
           scannedCount += 1
 
           # Print Progress
@@ -1083,7 +1092,7 @@ def main():
           print("                                                                                                                       ")
           
       if scanMode == "communityPost":
-        scan_community_post(config, communityPostID, maxScanNumber)
+        scan_community_post(current, config, communityPostID, maxScanNumber)
 
       elif scanMode == "recentCommunityPosts":
         postScanProgressDict = {'scanned':0, 'total':numRecentPosts}
@@ -1094,7 +1103,7 @@ def main():
           postText = list(post.values())[0]
           current.vidTitleDict[id] = f"[Community Post]: {postText}"
 
-          scan_community_post(config, id, maxScanNumber, postScanProgressDict=postScanProgressDict, postText=postText)
+          scan_community_post(current, config, id, maxScanNumber, postScanProgressDict=postScanProgressDict, postText=postText)
           if postScanProgressDict['scanned'] == numRecentPosts:
             break
 

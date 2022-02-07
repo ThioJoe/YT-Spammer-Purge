@@ -291,11 +291,7 @@ def validate_config_settings(config):
         print_quit_and_report()
       if len(videoList) > 0:
         for video in videoList:
-          if len(video) != 11:
-            print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} There appears to be an invalid video ID in setting 'videos_to_scan': {str(value)}")
-            print("If listing just the video ID, make sure it is 11 characters long!")
-            print_quit_and_report()
-          elif not validate_video_id(value, basicCheck=True):
+          if not validate_video_id(video, basicCheck=True):
             print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} There appears to be an invalid video ID or Link in setting 'videos_to_scan': {str(value)}")
             print_quit_and_report()
         return True
@@ -305,10 +301,10 @@ def validate_config_settings(config):
         print_quit_and_report()
 
   def validate_channel_to_scan(value):
-    if value == 'ask':
+    if value == 'ask' or value == 'mine':
       return True
     else:
-      result, channelID, channelName = validate_channel_id(value, silent=True)
+      result, channelID, channelName = validate_channel_id(value)
       if result == False:
         print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Config setting for 'channel_to_scan' appears invalid: {str(value)}")
         print("Make sure it is either a single channel ID or channel link.  If it's a link, try using the channel ID instead.")
@@ -336,7 +332,6 @@ def validate_config_settings(config):
   def validate_chars(value):
     if value == 'ask':
       return True
-
     result = utils.make_char_set(value, stripLettersNumbers=True, stripKeyboardSpecialChars=False, stripPunctuation=True)
     if result:
       return True
@@ -348,7 +343,6 @@ def validate_config_settings(config):
   def validate_strings(value):
     if value == 'ask':
       return True
-
     try:
       result = utils.string_to_list(value)
       if len(result) > 0:
@@ -365,7 +359,6 @@ def validate_config_settings(config):
   def validate_regex_setting(value):
     if value == 'ask':
       return True
-
     isValid, expression = validate_regex(value)
     if isValid:
       return True
@@ -457,7 +450,7 @@ def validate_config_settings(config):
         if simple_settings_check(settingName, settingValue) == True:
           continue
         else:
-          print_int_fail()
+          print_int_fail(settingName, settingValue)
 
     elif settingName in specialCheck:
       if specialCheck[settingName](settingValue) == True:
