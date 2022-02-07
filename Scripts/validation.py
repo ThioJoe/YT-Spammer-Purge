@@ -464,7 +464,7 @@ def validate_config_settings(config):
 
     # Check simple value settings
     else:
-      result = simple_settings_check(settingName, settingValue) == True
+      result = simple_settings_check(settingName, settingValue)
       if result == True:
         continue
       elif result == None:
