@@ -101,7 +101,15 @@ def get_comments(current, filtersDict, miscData, config, allVideoCommentsDict, s
       'commentText':commentText,
       'commentID':parent_id,
       'videoID': videoID,
-      }  
+      }
+    if config['json_log_all_comments'] == True:
+      currentCommentDict['uploaderChannelID'] = miscData.channelOwnerID
+      currentCommentDict['uploaderChannelName'] = miscData.channelOwnerName
+      currentCommentDict['textUnsanitized'] = str(commentText)
+      currentCommentDict['videoTitle'] = utils.get_video_title(current, videoID)
+      currentCommentDict['matchReason'] = None
+      currentCommentDict['isSpam'] = 'False'
+
     check_against_filter(current, filtersDict, miscData, config, currentCommentDict, videoID)
     current.scannedCommentsCount += 1
 
@@ -227,6 +235,14 @@ def get_replies(current, filtersDict, miscData, config, parent_id, videoID, pare
       'commentID':replyID,
       'videoID': videoID
       }
+    if config['json_log_all_comments'] == True:
+      currentCommentDict['uploaderChannelID'] = miscData.channelOwnerID
+      currentCommentDict['uploaderChannelName'] = miscData.channelOwnerName
+      currentCommentDict['textUnsanitized'] = str(commentText)
+      currentCommentDict['videoTitle'] = utils.get_video_title(current, videoID)
+      currentCommentDict['matchReason'] = None
+      currentCommentDict['isSpam'] = 'False'
+
     if parentCommentDict:
       threadDict[replyID] = currentCommentDict
 
@@ -478,7 +494,8 @@ def add_spam(current, config, miscData, currentCommentDict, videoID, matchReason
   else:
     current.authorMatchCountDict[authorChannelID] = 1
 
-  if config['json_log'] == True and config['json_extra_data'] == True:
+  # If json_log_all_comments is enabled, this is not needed because this info is logged for all comments
+  if config['json_log'] == True and config['json_log_all_comments'] == False:
     dictToUse[commentID]['uploaderChannelID'] = miscData.channelOwnerID
     dictToUse[commentID]['uploaderChannelName'] = miscData.channelOwnerName
     dictToUse[commentID]['videoTitle'] = utils.get_video_title(current, videoID)

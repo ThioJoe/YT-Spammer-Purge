@@ -36,8 +36,8 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.15.0-Beta4"
-configVersion = 26
+version = "2.16.0-Beta1"
+configVersion = 27
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 # Import other module files
@@ -1166,9 +1166,18 @@ def main():
 
     # Counts number of found spam comments and prints list
     spam_count = len(current.matchedCommentsDict)
-    if spam_count == 0 and not current.duplicateCommentsDict: # If no spam comments found, exits
+    if spam_count == 0 and not current.duplicateCommentsDict and not current.spamThreadsDict: # If no spam comments found, exits
       print(f"{B.RED}{F.BLACK} No matched comments or users found! {F.R}{B.R}{S.R}\n")
       print(f"If you see missed spam or false positives, you can submit a filter suggestion here: {F.YELLOW}TJoe.io/filter-feedback{S.R}")
+
+      # Can still log to json even though no comments
+      if config['json_log_all_comments'] and config['json_log'] and config['enable_logging'] != False:
+        print(f"Because you enabled '{F.LIGHTCYAN_EX}json_log_all_comments{S.R}' in config, {F.LIGHTCYAN_EX}continuing on to log anyway{S.R}.")
+        jsonSettingsDict = {}
+        current, logMode, jsonSettingsDict = logging.prepare_logFile_settings(current, config, miscData, jsonSettingsDict, filtersDict, bypass)
+        jsonDataDict = logging.get_extra_json_data([], jsonSettingsDict)
+        logging.write_json_log(current, config, jsonSettingsDict, {}, jsonDataDict)
+
       if config['auto_close'] == False:
         input("\nPress Enter to return to main menu...")
         return True
@@ -1194,7 +1203,7 @@ def main():
 
     # Prepare log file and json log file settings - Location and names
     jsonSettingsDict = {}
-    if loggingEnabled == True:    
+    if loggingEnabled == True:
       current, logMode, jsonSettingsDict = logging.prepare_logFile_settings(current, config, miscData, jsonSettingsDict, filtersDict, bypass)
       print("\n-----------------------------------------------------------------------------------------------------------------\n")
     else:
@@ -1209,19 +1218,8 @@ def main():
     # Print comments  and write to log files
     logFileContents, logMode = logging.print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMode)
 
-    if loggingEnabled:
-      logInfo = {
-        'logMode': logMode,
-        'logFileContents': logFileContents,
-        'jsonSettingsDict': jsonSettingsDict,
-        'filtersDict': filtersDict,
-      }
-    else:
-      logInfo = None
-
     print(f"\n{F.WHITE}{B.RED} NOTE: {S.R} Check that all comments listed above are indeed spam.")
     print(f" > If you see missed spam or false positives, you can submit a filter suggestion here: {F.YELLOW}TJoe.io/filter-feedback{S.R}")
-
     print()
 
     ### ---------------- Decide whether to skip deletion ----------------
@@ -1516,11 +1514,11 @@ def main():
         if config['json_extra_data'] == True:
           if current.errorOccurred == False:
             jsonDataDict = logging.get_extra_json_data(list(current.matchSamplesDict.keys()), jsonSettingsDict)
-            logging.write_json_log(jsonSettingsDict, combinedCommentDict, jsonDataDict)
+            logging.write_json_log(current, config, jsonSettingsDict, combinedCommentDict, jsonDataDict)
           else:
             print(f"\n{F.LIGHTRED_EX}NOTE:{S.R} Extra JSON data collection disabled due to error during scanning")
         else:
-          logging.write_json_log(jsonSettingsDict, combinedCommentDict)
+          logging.write_json_log(current, config, jsonSettingsDict, combinedCommentDict)
         if returnToMenu == True:
           print("\nJSON Operation Finished.")
     ### ---------------- Reporting / Deletion Begin  ----------------

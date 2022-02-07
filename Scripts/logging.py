@@ -425,7 +425,7 @@ def write_plaintext_log(fileName, newText=None, firstWrite=False, fullWrite=Fals
             break 
 
 ############################ JSON Log & File Handling ###############################
-def write_json_log(jsonSettingsDict, commentsDict, jsonDataDict=None):
+def write_json_log(current, config, jsonSettingsDict, commentsDict, jsonDataDict=None):
   success = False
   attempts = 0
   if jsonDataDict:
@@ -436,6 +436,16 @@ def write_json_log(jsonSettingsDict, commentsDict, jsonDataDict=None):
 
   fileName = jsonSettingsDict['jsonLogFileName']
   jsonEncoding = jsonSettingsDict['encoding']
+
+  # Marks comments as spam in dictionary before writing
+  if config['json_log_all_comments'] == True:
+    allCommentsDict = current.allScannedCommentsDict
+    for authorID in allCommentsDict:
+      for i, comment in enumerate(allCommentsDict[authorID]):
+        if comment['commentID'] in dictionaryToWrite['Comments']: # If it's in the dictionary with spam comments
+          commentID = comment['commentID']
+          allCommentsDict[authorID][i]['isSpam'] = 'True'
+          allCommentsDict[authorID][i]['matchReason'] = dictionaryToWrite['Comments'][commentID]['matchReason']
 
   # If directory does not exist for desired log file path, create it
   logFolderPath = os.path.dirname(os.path.realpath(fileName))
@@ -452,8 +462,16 @@ def write_json_log(jsonSettingsDict, commentsDict, jsonDataDict=None):
     try:
       attempts += 1
       with open(fileName, "w", encoding=jsonEncoding) as file:
-        file.write(json.dumps(dictionaryToWrite, indent=4, ensure_ascii=False))
-        file.close()
+        if config['json_log_all_comments'] == True:
+          # Dictionary format arranged by author ID, need to flatten to just comment info
+          for authorCommentsList in allCommentsDict.values():
+            for comment in authorCommentsList:
+              json_record = json.dumps(comment, ensure_ascii=False)
+              file.write(json_record + '\n')
+          file.close()
+        else:
+          file.write(json.dumps(dictionaryToWrite, indent=4, ensure_ascii=False))
+          file.close()
       success = True
     except PermissionError:
       if attempts < 3:
@@ -523,8 +541,10 @@ def get_extra_json_data(channelIDs, jsonSettingsDict):
       fetch_data(channelIDs[i*50:i*50+50])
     if remainder > 0:
       fetch_data(channelIDs[numDivisions*50:])
-  else:
+  elif total > 0:
     fetch_data(channelIDs)
+  else:
+    pass
   
   # Get info about uploader
   response = auth.YOUTUBE.channels().list(part="snippet,statistics", id=channelOwnerID, fields=fieldsToFetch).execute()
