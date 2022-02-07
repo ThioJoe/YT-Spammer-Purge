@@ -417,6 +417,7 @@ def validate_config_settings(config):
     'json_log': (True, False),
     #'json_encoding': None,
     'json_extra_data': (True, False),
+    'json_log_all_comments': (True, False),
     'json_profile_picture': (False, 'default', 'medium', 'high'),
     #'quota_limit': (),
     #'config_version': (),
