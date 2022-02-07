@@ -1174,8 +1174,7 @@ def main():
         print("Error Code C-2: Invalid value for 'enable_logging' in config file:  " + logSetting)
 
     # Counts number of found spam comments and prints list
-    spam_count = len(current.matchedCommentsDict)
-    if spam_count == 0 and not current.duplicateCommentsDict: # If no spam comments found, exits
+    if not current.matchedCommentsDict and not current.duplicateCommentsDict and not current.spamThreadsDict: # If no spam comments found, exits
       print(f"{B.RED}{F.BLACK} No matched comments or users found! {F.R}{B.R}{S.R}\n")
       print(f"If you see missed spam or false positives, you can submit a filter suggestion here: {F.YELLOW}TJoe.io/filter-feedback{S.R}")
       if config['auto_close'] == False:
@@ -1424,7 +1423,7 @@ def main():
           exclude = True
 
           # Check that remaining comments list to remove is not empty
-          if not current.matchedCommentsDict:
+          if not current.matchedCommentsDict and not current.duplicateCommentsDict and not current.spamThreadsDict:
             print(f"\n{F.YELLOW}All authors excluded, no comments left to remove!{S.R}")
             input("\nPress Enter to log and/or return to main menu...")
             returnToMenu = True
