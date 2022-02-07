@@ -447,6 +447,16 @@ def check_spam_threads(current, filtersDict, miscData, config, parentCommentDict
   return current
 
   
+###################################### Community Post Thread Dict Maker #####################################################
+def make_community_thread_dict(commentID, allCommunityCommentsDict):
+  threadDict = {}
+  if "." not in commentID: # Checks if is top level comment or reply
+    for id in allCommunityCommentsDict.keys():
+      if commentID in id and commentID != id:
+        threadDict[id] = allCommunityCommentsDict[id]
+
+  return threadDict
+  
 
 ###################################### ADD SPAM #####################################################
 
