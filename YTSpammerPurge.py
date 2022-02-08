@@ -305,21 +305,21 @@ def main():
   # Declare Classes
   @dataclass
   class ScanInstance:
-    matchedCommentsDict: dict
-    duplicateCommentsDict: dict
-    otherCommentsByMatchedAuthorsDict: dict
-    spamThreadsDict: dict
-    allScannedCommentsDict: dict
-    vidIdDict: dict
-    vidTitleDict: dict
-    matchSamplesDict: dict
-    authorMatchCountDict: dict
-    scannedRepliesCount: int
-    scannedCommentsCount: int
-    logTime: str
-    logFileName: str
-    errorOccurred:bool
-    # matchTypeCount:dict
+    matchedCommentsDict: dict         #Comments flagged by the filter
+    duplicateCommentsDict: dict       #Comments flagged as duplicates
+    otherCommentsByMatchedAuthorsDict: dict #Comments not matched, but are by a matched author
+    scannedThingsList: list           #List of posts or videos that were scanned
+    spamThreadsDict: dict             #Comments flagged as parent of spam threads
+    allScannedCommentsDict: dict      #All comments scanned for this instance
+    vidIdDict: dict                   #Contains the video ID on which each comment is found
+    vidTitleDict: dict                #Contains the titles of each video ID
+    matchSamplesDict: dict            #Contains sample info for every flagged comment of all types
+    authorMatchCountDict: dict        #The number of flagged comments per author
+    scannedRepliesCount: int          #The current number of replies scanned so far
+    scannedCommentsCount: int         #The current number of comments scanned so far
+    logTime: str                      #The time at which the scan was started
+    logFileName: str                  #Contains a string of the current date/time to be used as a log file name or anything else
+    errorOccurred:bool                #True if an error occurred during the scan
 
 
   ##############################################
@@ -335,6 +335,7 @@ def main():
       matchedCommentsDict={},
       duplicateCommentsDict={},
       otherCommentsByMatchedAuthorsDict={},
+      scannedThingsList=[],
       spamThreadsDict = {},
       allScannedCommentsDict={},
       vidIdDict={}, 
@@ -352,6 +353,8 @@ def main():
     maxScanNumber = 999999999
     scanVideoID = None
     videosToScan = []
+    recentPostsListofDicts = []
+    postURL = ""
     loggingEnabled = False
     userNotChannelOwner = False
 
@@ -832,6 +835,7 @@ def main():
       print(f"Retrieved {F.YELLOW}{len(recentPostsListofDicts)} recent posts{S.R} from {F.LIGHTCYAN_EX}{channelTitle}{S.R}")
       print(f"\n  Post Content Samples:")
       for i in range(len(recentPostsListofDicts)):
+        # recentPostsListofDicts = {post id : post text} - Below prints sample of post text
         print(f"    {i+1}.".ljust(9, " ") + f"{list(recentPostsListofDicts[i].values())[0][0:50]}")
 
       if userNotChannelOwner == True:
@@ -1037,6 +1041,16 @@ def main():
         inputtedUsernameFilter = filterSettings[0]
         inputtedCommentTextFilter = filterSettings[0]
 
+    # Prepare scan mode info dictionary
+    if videosToScan:
+      current.scannedThingsList = list(item['videoID'] for item in videosToScan)
+    elif recentPostsListofDicts:
+     current.scannedThingsList = list(list(post.keys())[0] for post in recentPostsListofDicts)[0:numRecentPosts]
+    elif postURL:
+      current.scannedThingsList = [postURL]
+    else:
+      current.scannedThingsList = []
+
     ##################### START SCANNING #####################
     filtersDict = { 
       'filterSettings': filterSettings,
@@ -1102,8 +1116,8 @@ def main():
 
         for post in recentPostsListofDicts:
           postScanProgressDict['scanned'] += 1
-          id = list(post.keys())[0] # Each dict only has one key/value pair
-          postText = list(post.values())[0]
+          id = list(post.keys())[0] # Each dict only has one key/value pair, so makes list of length 1, so id is in index 0
+          postText = list(post.values())[0] # Same as above but applies to values
           current.vidTitleDict[id] = f"[Community Post]: {postText}"
 
           scan_community_post(current, config, id, maxScanNumber, postScanProgressDict=postScanProgressDict, postText=postText)

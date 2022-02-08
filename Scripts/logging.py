@@ -713,9 +713,7 @@ def prepare_logFile_settings(current, config, miscData, jsonSettingsDict, filter
       jsonSettingsDict['channelOwnerName'] = miscData.channelOwnerName
 
       #Encoding
-      allowedEncodingModes = ['utf-8', 'utf-16', 'utf-32', 'rtfunicode']
-      if config['json_encoding'] in allowedEncodingModes:
-        jsonSettingsDict['encoding'] = config['json_encoding']
+      jsonSettingsDict['encoding'] = config['json_encoding']
 
     elif config['json_log'] == False:
       jsonLogging = False
@@ -795,16 +793,21 @@ def write_log_heading(current, logMode, filtersDict, afterExclude=False, combine
     write_plaintext_log(current.logFileName, firstWrite=True)
     write_func(current.logFileName, "----------- YouTube Spammer Purge Log File -----------", logMode, 2)
 
+  # Write Scan Settings
+  if current.scannedThingsList:
+    write_func(current.logFileName, "Video(s) or Post(s) Scanned: " + ", ".join(current.scannedThingsList), logMode, 2)
+
+  # Write Filter Settings
   if filterMode == "ID":
     write_func(current.logFileName, "Channel IDs of spammer searched: " + ", ".join(inputtedSpammerChannelID), logMode, 2)
   elif filterMode == "Username":
-    write_func(current.logFileName, "Characters searched in Usernames: " + ", ".join(inputtedUsernameFilter), logMode, 2)
+    write_func(current.logFileName, "Searched in Usernames: " + ", ".join(inputtedUsernameFilter), logMode, 2)
   elif filterMode == "Text":
-    write_func(current.logFileName, "Characters searched in Comment Text: " + ", ".join(inputtedCommentTextFilter), logMode, 2)
+    write_func(current.logFileName, "Searched in Comment Text: " + ", ".join(inputtedCommentTextFilter), logMode, 2)
   elif filterMode == "NameAndText":
-    write_func(current.logFileName, "Characters searched in Usernames and Comment Text: " + ", ".join(filterSettings[1]), logMode, 2)
+    write_func(current.logFileName, "Searched in Usernames and Comment Text: " + ", ".join(filterSettings[1]), logMode, 2)
   elif filterMode == "AutoASCII":
-    write_func(current.logFileName, "Automatic Search Mode: " + str(filterSettings[1]), logMode, 2)
+    write_func(current.logFileName, "Auto-ASCII Username Search Mode: " + str(filterSettings[1]), logMode, 2)
   elif filterMode == "AutoSmart":
     write_func(current.logFileName, "Automatic Search Mode: Smart Mode ", logMode, 2)
   elif filterMode == "SensitiveSmart":
