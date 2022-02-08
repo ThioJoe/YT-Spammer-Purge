@@ -340,8 +340,10 @@ def check_spam_threads(current, filtersDict, miscData, config, parentCommentDict
       for word in ignoreList:
         if word in n:
           removeList.append(n)
-    for item in removeList:
-      nameList.remove(item)
+    if removeList:
+      for item in removeList:
+        if item in nameList:
+          nameList.remove(item)
     return nameList
   # -------------------------------------------------------------------------------
 
