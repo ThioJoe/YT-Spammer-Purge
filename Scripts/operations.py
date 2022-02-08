@@ -1206,7 +1206,7 @@ def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToEx
 
 ################################# Get Most Recent Videos #####################################
 # Returns a list of lists
-def get_recent_videos(channel_id, numVideosTotal):
+def get_recent_videos(current, channel_id, numVideosTotal):
   def get_block_of_videos(nextPageToken, j, k, numVideosBlock = 5):
     result = auth.YOUTUBE.search().list(
       part="snippet",
@@ -1227,6 +1227,9 @@ def get_recent_videos(channel_id, numVideosTotal):
         print(f"{B.YELLOW}{F.BLACK} Skipping {S.R} {F.LIGHTRED_EX}Video with no comments:{S.R} " + str(item['snippet']['title']))
         k+=1
         continue
+      
+      if videoID not in current.vidTitleDict:
+        current.vidTitleDict[videoID] = videoTitle
 
       recentVideos.append({})
       recentVideos[j]['videoID'] = videoID

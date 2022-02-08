@@ -497,6 +497,8 @@ def main():
             videosToScan[i]['channelOwnerID'] = str(videoListResult[i][4])
             videosToScan[i]['channelOwnerName'] = str(videoListResult[i][5])
             miscData.totalCommentCount += int(videoListResult[i][3])
+            if str(videoListResult[i][1]) not in current.vidTitleDict:
+              current.vidTitleDict[videoListResult[i][1]] = str(videoListResult[i][2])
           else:
             print(f"\nInvalid Video: {enteredVideosList[i]}  |  Video ID = {videoListResult[1]}")
             validConfigSetting = False
@@ -640,7 +642,7 @@ def main():
 
         if validEntry == True:
           # Fetch recent videos and print titles to user for confirmation
-          videosToScan = operations.get_recent_videos(channelID, numVideos)
+          videosToScan = operations.get_recent_videos(current, channelID, numVideos)
           if str(videosToScan) == "MainMenu":
             return True # Return to main menu
           if len(videosToScan) == 0:

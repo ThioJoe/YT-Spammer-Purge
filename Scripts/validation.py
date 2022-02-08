@@ -51,6 +51,7 @@ def validate_video_id(video_url_or_id, silent=False, pass_exception=False, basic
             print(f"                    Bug Report Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
             input("\nPress Enter to return to the main menu...")
             return "MainMenu", "MainMenu", "MainMenu", "MainMenu", "MainMenu"
+            
 
           return True, possibleVideoID, videoTitle, commentCount, channelID, channelTitle
 
@@ -478,5 +479,5 @@ def validate_config_settings(config):
     if settingName not in list(config.keys()):
       print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} The config setting '{settingName}' is missing from the config file!")
       print(" > Did you remove it or are you using an old config file? (It should have auto-updated)")
-      print(" > You may need to delete and the config file.")
+      print(" > You may need to delete and regenerate the config file.")
       print_quit_and_report()

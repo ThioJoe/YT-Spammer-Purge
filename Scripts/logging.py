@@ -53,6 +53,14 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
   duplicateSamplesContent = ""
   hasDuplicates = False
   hasSpamThreads = False
+
+  # Decide whether to write notice for spam threads based on video title
+  if current.spamThreadsDict and current.vidTitleDict:
+    keywords = ['invest', 'crypto', 'bitcoin', 'ethereum', 'nft', 'market', 'stock']
+    if any(word in str(list(current.vidTitleDict.values())).lower() for word in keywords):
+      spamThreadNotice = True
+    else:
+      spamThreadNotice = False
   
 
   def print_and_write(value, writeValues, printValues):
@@ -83,6 +91,9 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
   if hasSpamThreads == True:
     if doWritePrint:
       print(f"{S.BRIGHT}{F.MAGENTA}============================ Match Samples: Spam Bot Threads ============================{S.R}")
+      if spamThreadNotice == True:
+          print(f"{F.YELLOW}{F.BLACK}{B.YELLOW} NOTE: {S.R}{F.YELLOW} If video is about investing/crypto, inspect these extra well for false positives{S.R}")
+          print("-----------------------------------------------------------------------------------------")
   for value in current.matchSamplesDict.values():
     if value['matchReason'] == "Spam Bot Thread":
       spamThreadValuesPreparedToWrite, spamThreadValuesPreparedToPrint = print_and_write(value, spamThreadValuesPreparedToWrite, spamThreadValuesPreparedToPrint)
@@ -111,6 +122,9 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
         write_rtf(current.logFileName, matchSamplesContent)
       if current.spamThreadsDict:
         spamThreadSamplesContent = " \n \\line\\line ============================ Match Samples: Spam Bot Threads ============================ \\line\\line \n" + spamThreadValuesPreparedToWrite
+        if spamThreadNotice == True:
+          spamThreadSamplesContent +=   "->NOTE: If video is about investing/crypto, inspect these extra well for false positives<- \\line \n"
+          spamThreadSamplesContent +=   "------------------------------------------------------------------------------------------ \\line\\line \n"
         if doWritePrint:
           write_rtf(current.logFileName, spamThreadSamplesContent)
       if hasDuplicates == True:
@@ -124,7 +138,10 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
       if doWritePrint:
         write_plaintext_log(current.logFileName, matchSamplesContent)
       if current.spamThreadsDict:
-        spamThreadSamplesContent = "\n============================ Match Samples: Spam Bot Threads ============================\n" + spamThreadValuesPreparedToWrite
+        spamThreadSamplesContent =    "\n============================ Match Samples: Spam Bot Threads ============================\n" + spamThreadValuesPreparedToWrite
+        if spamThreadNotice == True:
+          spamThreadSamplesContent +=   "->NOTE: If video is about investing/crypto, inspect these extra well for false positives<-\n"
+          spamThreadSamplesContent +=   "------------------------------------------------------------------------------------------\n"
         if doWritePrint:
           write_plaintext_log(current.logFileName, spamThreadSamplesContent)
       if hasDuplicates == True:
