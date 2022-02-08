@@ -279,6 +279,9 @@ def print_prepared_comments(current, commentsContents, scanVideoID, comments, j,
     # Appends comment ID to new list of comments so it's in the correct order going forward, as provided by API and presented to user
     # Must use append here, not extend, or else it would add each character separately
     j += 1
+  
+  # Sort samples by certain value
+  current = sort_samples(current)
 
   return j, commentsContents
 
@@ -612,27 +615,71 @@ def download_profile_pictures(pictureUrlsDict, jsonSettingsDict):
 
 # Adds a sample to current.matchSamplesDict and preps formatting
 def add_sample(current, authorID, authorNameRaw, commentText, matchReason):
+  def remove_unicode_categories(string):
+    unicodeStrip = ["Mn", "Cc", "Cf", "Cs", "Co", "Cn", "Sk"]
+    return "".join(char for char in string if unicode_category(char) not in unicodeStrip)
 
   # Make index number and string formatted version
-  index = len(current.matchSamplesDict) + 1
-  iString = f"{str(index)}. ".ljust(4)
+  # index = len(current.matchSamplesDict) + 1
+  # iString = f"{str(index)}. ".ljust(4)
   authorNumComments = current.authorMatchCountDict[authorID]
   cString = f"[x{str(authorNumComments)}] ".ljust(7)
 
   # Left Justify Author Name and Comment Text
-  if len(authorNameRaw) > 20:
-    authorName = authorNameRaw[0:17] + "..."
+  authorName = remove_unicode_categories(authorNameRaw)
+  if len(authorName) > 20:
+    authorName = authorName[0:17] + "..."
     authorName = authorName[0:20].ljust(20)+": "
   else: 
     authorName = authorNameRaw[0:20].ljust(20)+": "
 
   commentText = str(commentText).replace("\n", " ").replace("\r", " ")
+  commentText = remove_unicode_categories(commentText)
   if len(commentText) > 82:
     commentText = commentText[0:79] + "..."
   commentText = commentText[0:82].ljust(82)
 
   # Add comment sample, author ID, name, and counter
-  current.matchSamplesDict[authorID] = {'index':index, 'cString':cString, 'iString':iString, 'count':authorNumComments, 'authorID':authorID, 'authorName':authorNameRaw, 'nameAndText':authorName + commentText, 'matchReason':matchReason}
+  current.matchSamplesDict[authorID] = {'cString':cString, 'count':authorNumComments, 'authorID':authorID, 'authorName':authorNameRaw, 'nameAndText':authorName + commentText, 'matchReason':matchReason}
+
+# Sort match samples by count per author
+def sort_samples(current):
+  sortBy = 'count'
+  dictToSort = current.matchSamplesDict
+  newDict = {}
+  # Takes dictionary, and sorts it by nested value within a value
+  # Returns list of tuples in format: [(key, {innerKey:innerValue}), ...]
+  sortedTupleList = list(reversed(sorted(dictToSort.items(), key=lambda item: item[1][sortBy])))
+
+  # Use sorted tuple list to re-create dictionary, but sorted by sortBy, and grouped by match type
+  for item in sortedTupleList:
+    if item[1]['matchReason'] == 'Filter Match':
+      newDict[item[0]] = item[1]
+  for item in sortedTupleList:
+    if item[1]['matchReason'] == 'Spam Bot Thread':
+      newDict[item[0]] = item[1]
+  for item in sortedTupleList:
+    if item[1]['matchReason'] == 'Duplicate':
+      newDict[item[0]] = item[1]        
+
+  # # Assign Indexes and strings to print with index for each author
+  # def assign_index(author, i):
+  #   iString = f"{str(i)}. ".ljust(4)
+  #   current.matchSamplesDict[author]['index'] = i
+  #   current.matchSamplesDict[author]['iString'] = iString
+  #   i += 1
+  #   return i
+
+  i = 1
+  for author in newDict.keys():
+    iString = f"{str(i)}. ".ljust(4)
+    newDict[author]['index'] = i
+    newDict[author]['iString'] = iString
+    i += 1
+
+  current.matchSamplesDict = newDict
+
+  return current
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 

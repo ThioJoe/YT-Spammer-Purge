@@ -324,7 +324,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   textUpLowBlackWords_Raw = [b'O<5pAPfk=tPE;UCQv', b'Ngz!@OGO}8L0KR|MO0KpQXoT5PE<usQ~', b'O<5pTNkm0YQy@W7MF', b'Qbj>TAWc~yP*P7uNlZl']
 
   # General Settings
-  unicodeCategoriesStrip = ["Mn", "Cc", "Cf", "Cs", "Co", "Cn"] # Categories of unicode characters to strip during normalization
+  unicodeCategoriesStrip = ["Mn", "Cc", "Cf", "Cs", "Co", "Cn", "Sk"] # Categories of unicode characters to strip during normalization
   lowAl = b'VPa!sWoBn+X=-b1ZEkOHadLBXb#`}nd3p'
 
   # Create General Lists
