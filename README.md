@@ -1,10 +1,5 @@
-<h1 align="center">
-<img src="/assets/icon.png" alt="Icon" width="100" height="100" </img>
-<br>
-YouTube Spammer Purge
-<br>
-</h1>
-
+# YouTube Spammer Purge
+<img src="/assets/icon.png" alt="Icon" align="right" width="100" height="100"> </img>
 
 **What Is This?** - Allows you to filter and search for spammer comments on your channel and other's channel(s) in many different ways AND delete/report them all at once (see features below).
 
