@@ -39,7 +39,7 @@
 version = "2.16.0-Beta1"
 configVersion = 27
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-
+print("Importing Script Modules...")
 # Import other module files
 from Scripts.shared_imports import *
 import Scripts.auth as auth
@@ -53,6 +53,7 @@ from Scripts.community_downloader import main as get_community_comments #Args = 
 import Scripts.community_downloader as community_downloader
 from Scripts.utils import choice
 
+print("Importing Standard Libraries...")
 # Standard Libraries
 import time
 import ast
@@ -63,6 +64,7 @@ import platform
 import json
 from pkg_resources import parse_version
 
+print("Importing Third-Party Modules...")
 # Other Libraries
 from googleapiclient.errors import HttpError
 
@@ -1603,7 +1605,7 @@ if __name__ == "__main__":
 
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------
-
+  print("Running Main Program...")
   try:
     #remind()
     main()
