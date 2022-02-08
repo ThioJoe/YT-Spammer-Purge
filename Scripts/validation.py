@@ -432,8 +432,7 @@ def validate_config_settings(config):
     'regex_to_filter': validate_regex_setting
     }
 
-  # ADD CHECK FOR EMPTY STRING!
-
+  # Checks all settings in the config file to ensure they are valid
   for settingName, settingValue in config.items():
     if settingValue == None or settingValue == '':
       print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} The config setting '{settingName}' appears empty!")
@@ -467,3 +466,17 @@ def validate_config_settings(config):
         print(f"Consider reporting it: {F.YELLOW}TJoe.io/bug-report{S.R}")
         input(f"\n It might not cause an issue, so press Enter to continue anyway...")
         continue
+  
+
+  # Checks to see if any settings are missing from the config file
+  allSettingsDict = []
+  allSettingsDict.extend(validSettingsDict.keys())
+  allSettingsDict.extend(specialCheck.keys())
+  allSettingsDict.extend(integerSettings)
+
+  for settingName in allSettingsDict:
+    if settingName not in list(config.keys()):
+      print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} The config setting '{settingName}' is missing from the config file!")
+      print(" > Did you remove it or are you using an old config file? (It should have auto-updated)")
+      print(" > You may need to delete and the config file.")
+      print_quit_and_report()
