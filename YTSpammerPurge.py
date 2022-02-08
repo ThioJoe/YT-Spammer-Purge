@@ -527,11 +527,12 @@ def main():
             i += 1
             if i==6 and len(enteredVideosList) > 5:
               remainingCount = str(len(enteredVideosList) - 5)
-              userChoice = choice(f"You have entered many videos, do you need to see the rest (x{remainingCount})?")
-              if userChoice == False:
-                break
-              elif userChoice == None:
-                return True # Return to main menu
+              if config['skip_confirm_video'] == False:
+                userChoice = choice(f"You have entered many videos, do you need to see the rest (x{remainingCount})?")
+                if userChoice == False:
+                  break
+                elif userChoice == None:
+                  return True # Return to main menu
             print(f" {i}. {video['videoTitle']}")
           print("")
           
