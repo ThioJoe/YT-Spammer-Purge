@@ -560,7 +560,7 @@ def main():
               print(f"\n{B.YELLOW}{F.BLACK} WARNING: {S.R} You have chosen to scan a large amount of comments. The default API quota limit ends up")
               print(f" around {F.YELLOW}10,000 comment deletions per day{S.R}. If you find more spam than that you will go over the limit.")
               print(f"        > Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
-              if userNotChannelOwner == True or moderator_mode == True:
+              if userNotChannelOwner == False or moderator_mode == True:
                 print(f"{F.LIGHTCYAN_EX}> Note:{S.R} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")
             confirm = choice("Is this video list correct?", bypass=validConfigSetting)
             if confirm == None:
@@ -900,23 +900,45 @@ def main():
 # ====================================================================================================================================================================================================
 # ====================================================================================================================================================================================================
 
+    # Set Menu Colors
+    autoSmartColor = F.YELLOW
+    sensitiveColor = F.YELLOW
+    IDColor = F.LIGHTRED_EX
+    usernameColor = F.LIGHTBLUE_EX
+    textColor = F.CYAN
+    usernameTextColor = F.LIGHTBLUE_EX
+    asciiColor = F.LIGHTMAGENTA_EX
+    styleID = S.BRIGHT
+    styleOther = S.BRIGHT
+    a1 = ""
+    a2 = ""
+
+    # Change menu display & colors of some options depending on privileges
+    if userNotChannelOwner:
+      styleOther = S.DIM
+      a2 = f"{F.LIGHTRED_EX}*{S.R}" # a = asterisk
+
+    if not moderator_mode and userNotChannelOwner:
+      styleID = S.DIM
+      a1 = f"{F.LIGHTRED_EX}*{S.R}"
+
     # User inputs filtering mode
     print("\n-------------------------------------------------------")
     print(f"~~~~~~~~~~~ Choose how to identify spammers ~~~~~~~~~~~")
     print("-------------------------------------------------------")
-    print(f" 1. {F.BLACK}{B.LIGHTGREEN_EX}(RECOMMENDED):{S.R} {F.YELLOW}Auto-Smart Mode{S.R}: Automatically detects multiple spammer techniques")
-    print(f" 2. {F.YELLOW}Sensitive-Smart Mode{S.R}: Much more likely to catch all spammers, but with significantly more false positives")  
-    print(f" 3. Enter Spammer's {F.LIGHTRED_EX}channel ID(s) or link(s){S.R}")
-    print(f" 4. Scan {F.LIGHTBLUE_EX}usernames{S.R} for criteria you choose")
-    print(f" 5. Scan {F.CYAN}comment text{S.R} for criteria you choose")
-    print(f" 6. Scan both {F.LIGHTBLUE_EX}usernames{S.R} and {F.CYAN}comment text{S.R} for criteria you choose")
-    print(f" 7. ASCII Mode: Scan usernames for {F.LIGHTMAGENTA_EX}ANY non-ASCII special characters{S.R} (May cause collateral damage!)")
+    print(f"{S.BRIGHT} 1. {S.R}{F.BLACK}{B.LIGHTGREEN_EX}(RECOMMENDED):{S.R} {S.BRIGHT}{autoSmartColor}Auto-Smart Mode{F.R}: Automatically detects multiple spammer techniques{S.R}")
+    print(f"{S.BRIGHT} 2. {sensitiveColor}Sensitive-Smart Mode{F.R}: Much more likely to catch all spammers, but with significantly more false positives{S.R}")  
+    print(f"{a1}{styleID} 3. Enter Spammer's {IDColor}channel ID(s) or link(s){F.R}{S.R}")
+    print(f"{a2}{styleOther} 4. Scan {usernameColor}usernames{F.R} for criteria you choose{S.R}")
+    print(f"{a2}{styleOther} 5. Scan {textColor}comment text{F.R} for criteria you choose{S.R}")
+    print(f"{a2}{styleOther} 6. Scan both {usernameTextColor}usernames{F.R} and {textColor}comment text{F.R} for criteria you choose{S.R}")
+    print(f"{a2}{styleOther} 7. ASCII Mode: Scan usernames for {asciiColor}ANY non-ASCII special characters{F.R} (May cause collateral damage!){S.R}")
 
 
     if userNotChannelOwner == True and moderator_mode == False:
-      print(f" {F.LIGHTRED_EX}Note: With 'Not Your Channel Mode' enabled, you can only report matched comments while using 'Auto-Smart Mode' \n or 'Sensitive-Smart Mode'.{S.R}") # Based on filterModesAllowedforNonOwners
+      print(f" {F.LIGHTRED_EX}*Note: With 'Not Your Channel Mode' enabled, you can only report matched comments while using 'Auto-Smart Mode' \n        or 'Sensitive-Smart Mode'.{S.R}") # Based on filterModesAllowedforNonOwners
     elif userNotChannelOwner == True and moderator_mode == True:
-      print(f" {F.LIGHTRED_EX}Note: With 'Moderator Mode', you can hold for review using: 'Auto-Smart', 'Sensitive-Smart', and Channel ID modes.{S.R}")
+      print(f" {F.LIGHTRED_EX}*Note: With 'Moderator Mode', you can Hold and/or Report using: 'Auto-Smart', 'Sensitive-Smart', and Channel ID modes.{S.R}")
     # Make sure input is valid, if not ask again
     validFilterMode = False
     validFilterSubMode = False
