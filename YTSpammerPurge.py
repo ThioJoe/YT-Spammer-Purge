@@ -1534,7 +1534,22 @@ def main():
     ### ---------------- Reporting / Deletion Begin  ----------------
     if returnToMenu == False:
       if proceedWithDeletion == True:
-        operations.delete_found_comments(list(combinedCommentDict), banChoice, deletionMode)
+        try:
+          ReportTimes=input("Report the comments n time(s) (1): ")#Added, Report the commenter more than one time to urge youtube to remove the comments.
+        except KeyboardInterrupt:
+          print("\n\nProcess Cancelled via Keyboard Shortcut")
+          sys.exit()
+        if ReportTimes == "":
+          ReportTimes=1
+        try:
+          ReportTimes=int(ReportTimes)
+        except:
+          print("Error:The value you entered is not valid.(1-5)")
+        if ReportTimes > 5 or ReportTimes < 1:
+          print("Error:The value you entered is not valid.(1-5)")
+          input("\n Press Enter to Exit...")
+          sys.exit()
+        operations.delete_found_comments(list(combinedCommentDict), banChoice, deletionMode,ReportTimes)
         if deletionMode != "reportSpam":
           if config['check_deletion_success'] == True:
             operations.check_deleted_comments(list(combinedCommentDict))

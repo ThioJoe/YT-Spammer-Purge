@@ -885,12 +885,13 @@ def delete_found_comments(commentsList, banChoice, deletionMode, recoveryMode=Fa
 
   failedComments = []
   # Local Functions 
-  def setStatus(commentIDs, failedComments): #Does the actual deletion
+  def setStatus(commentIDs, failedComments, reportnTimes=1): #Does the actual deletion
     if deletionMode == "reportSpam":
-      result = auth.YOUTUBE.comments().markAsSpam(id=commentIDs).execute()
-      if len(result) > 0:
-        print("\nSomething may gone wrong when reporting the comments.")
-        failedComments += commentIDs
+      for n in range(0,reportnTimes):
+        result = auth.YOUTUBE.comments().markAsSpam(id=commentIDs).execute()
+        if len(result) > 0:
+          print("\nSomething may gone wrong when reporting the comments.")
+          failedComments += commentIDs
     elif deletionMode == "heldForReview" or deletionMode == "rejected" or deletionMode == "published":
       try:
         response = auth.YOUTUBE.comments().setModerationStatus(id=commentIDs, moderationStatus=deletionMode, banAuthor=banChoice).execute()
