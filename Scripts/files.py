@@ -347,17 +347,11 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
             sys.exit()
           else:
             extraFolderPath = f"{cwd}/{stagingFolder}/{extraFolderPath[0]}"
-            move("./config", extraFolderPath)
-            for file_name in os.listdir(cwd):
-              try:
-                os.remove(file_name)
-              except IsADirectoryError:
-                  rmtree(file_name)
+            
             for file_name in os.listdir(extraFolderPath):
-              if os.path.exists(file_name):
-                try:
+              try:
                   os.remove(file_name)
-                except IsADirectoryError:
+              except IsADirectoryError:
                   rmtree(file_name)
               move(f"{extraFolderPath}/{file_name}", f"{cwd}/{file_name}")
 
