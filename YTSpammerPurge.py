@@ -37,7 +37,7 @@
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
 version = "2.16.0-Beta1"
-configVersion = 27
+configVersion = 28
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 print("Importing Script Modules...")
 # Import other module files
@@ -874,7 +874,7 @@ def main():
 
     # Create config file
     elif scanMode == "makeConfig":
-      result = files.create_config_file()
+      result = files.create_config_file(configDict=config)
       if str(result) == "MainMenu":
         return True
 
