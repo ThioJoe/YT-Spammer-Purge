@@ -183,16 +183,21 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
     return None
 
   if parse_version(latestVersion) > parse_version(currentVersion):
-    isUpdateAvailable = True
+    if isBeta == True:
+      isUpdateAvailable = "beta"
+    else:
+      isUpdateAvailable = True
+
     if silentCheck == False:
       print("------------------------------------------------------------------------------------------")
       if isBeta == True:
-        print(f" {F.YELLOW}A new {F.LIGHTGREEN_EX}beta{F.YELLOW} version{S.R} is available!")
+        print(f" {F.YELLOW}A new {F.LIGHTGREEN_EX}beta{F.YELLOW} version{S.R} is available! Visit {F.YELLOW}TJoe.io/latest{S.R} to see what's new.")
       else:
-        print(f" A {F.LIGHTGREEN_EX}new version{S.R} is available!")
-      print(f" > Current Version: {currentVersion}")
-      print(f" > Latest Version: {F.LIGHTGREEN_EX}{latestVersion}{S.R}")
-      print("(To stop receiving beta releases, change the 'release_channel' setting in the config file)")
+        print(f" A {F.LIGHTGREEN_EX}new version{S.R} is available! Visit {F.YELLOW}TJoe.io/latest{S.R} to see what's new.")
+      print(f"   > Current Version: {currentVersion}")
+      print(f"   > Latest Version: {F.LIGHTGREEN_EX}{latestVersion}{S.R}")
+      if isBeta == True:
+        print("(To stop receiving beta releases, change the 'release_channel' setting in the config file)")
       print("------------------------------------------------------------------------------------------")
       userChoice = choice("Update Now?")
       if userChoice == True:
@@ -368,7 +373,6 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
       elif userChoice == "False" or userChoice == None:
         return False
     elif silentCheck == True:
-      isUpdateAvailable = True
       return isUpdateAvailable
 
   elif parse_version(latestVersion) == parse_version(currentVersion):
@@ -589,21 +593,23 @@ def list_config_files(relativePath=None):
   else:
     path = os.path.abspath(relativePath)
 
+  # Only get non-primary log files
   for file in os.listdir(path):
-    try:
-      match = re.search(configNumExpression, file.lower()).group(0)
-      # Only exact matches, no backups
-      if file.lower() == "spampurgeconfig" + match + ".ini":
-        fileList.append(file)
-    except AttributeError as ax:
-      if "NoneType" in str(ax):
-        pass
-      else:
-        traceback.print_exc()
-        print("--------------------------------------------------------------------------------")
-        print("Something went wrong when getting list of config files. Check your regex.")
-        input("\nPress Enter to exit...")
-        sys.exit()
+    if "spampurgeconfig" in file.lower() and file.lower() != "spampurgeconfig.ini":
+      try:
+        match = re.search(configNumExpression, file.lower()).group(0)
+        # Only exact matches, no backups
+        if file.lower() == "spampurgeconfig" + match + ".ini":
+          fileList.append(file)
+      except AttributeError as ax:
+        if "NoneType" in str(ax):
+          pass
+        else:
+          traceback.print_exc()
+          print("--------------------------------------------------------------------------------")
+          print("Something went wrong when getting list of config files. Check your regex.")
+          input("\nPress Enter to exit...")
+          sys.exit()
     
   return fileList
 
@@ -845,6 +851,7 @@ def parse_comment_list(config, recovery=False, removal=False, returnFileName=Fal
     if str(listFileName).lower() == "x":
       return "MainMenu", None
 
+    listFileName = listFileName.strip("\"").strip("'") # Remove quotes, if added by dragging and dropping or pasting path
     if len(listFileName) > 0:
       if os.path.exists(listFileName):
         pass

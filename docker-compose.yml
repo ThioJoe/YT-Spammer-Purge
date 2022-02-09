@@ -1,0 +1,11 @@
+version: '3.7'
+
+services:
+  yt-spammer-purge:
+    image: ghcr.io/thiojoe/yt-spammer-purge:latest
+    volumes:
+      - ./SpamPurgeConfig.ini:/usr/src/app/SpamPurgeConfig.ini
+      - ./client_secrets.json:/usr/src/app/client_secrets.json
+      - ./token.pickle:/usr/src/app/token.pickle
+      - ./SpamPurge_Resources:/usr/src/app/SpamPurge_Resources
+
