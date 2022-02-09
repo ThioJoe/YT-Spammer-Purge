@@ -1194,10 +1194,13 @@ def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToEx
     addWhitelist = False
 
   if addWhitelist == True:
-    with open(miscData.resources['Whitelist']['PathWithName'], "a", encoding="utf-8") as f:
+    with open(miscData.resources['Whitelist']['PathWithName'], "a+", encoding="utf-8") as f:
+      f.seek(0)
+      currentWhitelist = f.read()
       for author in authorsToExcludeSet:
-        f.write(f"# [Excluded]  Channel Name: {current.matchSamplesDict[author]['authorName']}  |  Channel ID: " + "\n")
-        f.write(f"{author}\n")
+        if not author in currentWhitelist:
+          f.write(f"\n# [Excluded]  Channel Name: {current.matchSamplesDict[author]['authorName']}  |  Channel ID: " + "\n")
+          f.write(f"{author}\n")
   
   input("\nPress Enter to decide what to do with the rest...")
   
