@@ -346,19 +346,19 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
             input("\nPress Enter to Exit...")
             sys.exit()
           else:
+            configFiles = ["client_secrets.json", "token.pickle"]
             extraFolderPath = f"{cwd}/{stagingFolder}/{extraFolderPath[0]}"
-            move("./config", extraFolderPath)
+
+            for file in configFiles:
+              move(file, extraFolderPath)
+
             for file_name in os.listdir(cwd):
-              try:
-                os.remove(file_name)
-              except IsADirectoryError:
-                  rmtree(file_name)
-            for file_name in os.listdir(extraFolderPath):
-              if os.path.exists(file_name):
+              if not file_name == stagingFolder:
                 try:
                   os.remove(file_name)
                 except IsADirectoryError:
-                  rmtree(file_name)
+                    rmtree(file_name)
+            for file_name in os.listdir(extraFolderPath):
               move(f"{extraFolderPath}/{file_name}", f"{cwd}/{file_name}")
 
           rmtree(stagingFolder)
