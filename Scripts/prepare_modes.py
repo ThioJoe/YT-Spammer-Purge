@@ -12,7 +12,7 @@ import Scripts.files as files
 from confusables import confusable_regex, normalize
 import pathlib
 
-# the forseeable future
+# the foreseeable future
 import __future__
 
 ##########################################################################################
