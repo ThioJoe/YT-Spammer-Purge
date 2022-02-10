@@ -12,6 +12,9 @@ import Scripts.files as files
 from confusables import confusable_regex, normalize
 import pathlib
 
+# the forseeable future
+import __future__
+
 ##########################################################################################
 ################################## FILTERING MODES #######################################
 ##########################################################################################
