@@ -5,6 +5,11 @@ YouTube Spammer Purge
 <br>
 </h1>
 
+[![Issues](https://img.shields.io/github/issues/ThioJoe/YT-Spammer-Purge)](https://shields.io/)
+[![Pull requests](https://img.shields.io/github/issues-pr/ThioJoe/YT-Spammer-Purge)](https://shields.io/)
+[![Version](https://img.shields.io/github/v/release/ThioJoe/YT-Spammer-Purge)](https://shields.io/)
+[![CodeQL](https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/codeql-analysis.yml)
+[![docker-build](https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/docker-build.yml/badge.svg)](https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/docker-build.yml)
 
 **What Is This?** - Allows you to filter and search for spammer comments on your channel and other's channel(s) in many different ways AND delete/report them all at once (see features below).
 
