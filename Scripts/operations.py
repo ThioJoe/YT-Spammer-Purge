@@ -1171,9 +1171,9 @@ def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToEx
   if config['whitelist_excluded'] == 'ask':
     print(f"\nAdd these {F.LIGHTGREEN_EX}excluded{S.R} users to the {F.LIGHTGREEN_EX}whitelist{S.R} for future scans?")
     addWhitelist = choice("Whitelist Users?")
-  elif config['whitelist_excluded'] == "True":
+  elif config['whitelist_excluded'] == True:
     addWhitelist = True
-  elif config['whitelist_excluded'] == "False":
+  elif config['whitelist_excluded'] == False:
     addWhitelist = False
 
   if addWhitelist == True:
