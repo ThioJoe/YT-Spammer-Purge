@@ -446,11 +446,18 @@ def validate_config_settings(config):
 
     # Check integer value settings
     if settingName in integerSettings:
-      try:
-        int(settingValue)
-        continue
-      except ValueError:
-        # Check if there is another valid value besides an integer
+      if settingValue != 'ask':
+        try:
+          int(settingValue)
+          continue
+        except ValueError:
+          # Check if there is another valid value besides an integer
+          if simple_settings_check(settingName, settingValue) == True:
+            continue
+          else:
+            print_int_fail(settingName, settingValue)
+      else:
+        # Check if 'ask' is a valid value
         if simple_settings_check(settingName, settingValue) == True:
           continue
         else:

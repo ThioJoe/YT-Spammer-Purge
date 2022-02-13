@@ -72,13 +72,14 @@ def get_comments(current, filtersDict, miscData, config, allVideoCommentsDict, s
     parent_id = item["snippet"]["topLevelComment"]["id"]
     numReplies = item["snippet"]["totalReplyCount"]
 
+    # In case there are no replies
+    if 'replies' in item and 'comments' in item["replies"]:
+      limitedRepliesList = item["replies"]["comments"] # API will return a limited number of replies (~5), but to get all, need to make separate call
+    else:
+      limitedRepliesList = []
+
     # On rare occasions a comment will be there but the channel name will be empty, so this allows placeholders
     try:
-      limitedRepliesList = item["replies"]["comments"] # API will return a limited number of replies (~5), but to get all, need to make separate call
-    except KeyError:
-      limitedRepliesList = []
-      pass
-    try: 
       parentAuthorChannelID = comment["snippet"]["authorChannelId"]["value"]
     except KeyError:
       parentAuthorChannelID = "[Deleted Channel]"
@@ -88,6 +89,7 @@ def get_comments(current, filtersDict, miscData, config, allVideoCommentsDict, s
       authorChannelName = comment["snippet"]["authorDisplayName"]
     except KeyError:
       authorChannelName = "[Deleted Channel]"
+
     try:
       commentText = comment["snippet"]["textDisplay"] # Remove Return carriages
     except KeyError:
@@ -115,10 +117,11 @@ def get_comments(current, filtersDict, miscData, config, allVideoCommentsDict, s
 
     #Log All Comments
     try:
-      allVideoCommentsDict[parentAuthorChannelID].append(currentCommentDict)
-    except KeyError:
-      allVideoCommentsDict[parentAuthorChannelID] = [currentCommentDict]
-    except TypeError:
+      if parentAuthorChannelID in allVideoCommentsDict:
+        allVideoCommentsDict[parentAuthorChannelID].append(currentCommentDict)
+      else:
+        allVideoCommentsDict[parentAuthorChannelID] = [currentCommentDict]
+    except TypeError: # This might not be necessary, might remove later if not
       pass
     
     # If there are more replies than in the limited list
@@ -250,10 +253,11 @@ def get_replies(current, filtersDict, miscData, config, parent_id, videoID, pare
 
     #Log All Comments
     try:
-      allVideoCommentsDict[authorChannelID].append(currentCommentDict)
-    except KeyError:
-      allVideoCommentsDict[authorChannelID] = [currentCommentDict]
-    except TypeError:
+      if authorChannelID in allVideoCommentsDict:
+        allVideoCommentsDict[authorChannelID].append(currentCommentDict)
+      else:
+        allVideoCommentsDict[authorChannelID] = [currentCommentDict]
+    except TypeError: # Again, might not be necessary, might remove later
       pass
 
     # Update latest stats
