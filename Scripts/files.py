@@ -702,6 +702,7 @@ def ingest_list_file(relativeFilePath, keepCase = True):
     return None
 
 def get_list_file_version(relativeFilePath):
+  listVersion = None
   if os.path.exists(relativeFilePath):
     matchBetweenBrackets = '(?<=\[)(.*?)(?=\])' # Matches text between first set of two square brackets
     with open(relativeFilePath, 'r', encoding="utf-8") as file:
@@ -710,6 +711,7 @@ def get_list_file_version(relativeFilePath):
           matchItem = re.search(matchBetweenBrackets, line)
           if matchItem:
             listVersion = str(matchItem.group(0))
+            break
         except AttributeError:
           pass
       return listVersion
