@@ -271,7 +271,7 @@ def prepare_filter_mode_non_ascii(scanMode, config):
 
 # Auto smart mode
 def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
-  rootDomainList = miscData.rootDomainsList
+  rootDomainList = miscData.resources['rootDomainList']
   spamDomainsList = miscData.spamLists['spamDomainsList'] # List of domains from crowd sourced list
   #spamThreadsList = miscData.spamLists['spamThreadsList'] # List of filters associated with spam threads from crowd sourced list
   spamAccountsList = miscData.spamLists['spamAccountsList'] # List of mentioned instagram/telegram scam accounts from crowd sourced list

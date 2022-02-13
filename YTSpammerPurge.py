@@ -250,14 +250,15 @@ def main():
     channelOwnerID = "", 
     channelOwnerName = "",
     )
-
+    
+  miscData.resources = resourcesDict
   rootDomainListAssetFile = "rootZoneDomainList.txt"
   rootDomainList = files.ingest_asset_file(rootDomainListAssetFile)
-  miscData.resources = rootDomainList
+  miscData.resources['rootDomainList'] = rootDomainList
   miscData.spamLists['spamDomainsList'] = spamListDict['Lists']['Domains']['FilterContents']
   miscData.spamLists['spamAccountsList'] = spamListDict['Lists']['Accounts']['FilterContents']
   miscData.spamLists['spamThreadsList'] = spamListDict['Lists']['Threads']['FilterContents']
-  miscData.resources = resourcesDict
+  
 
   # Create Whitelist if it doesn't exist, 
   if not os.path.exists(whitelistPathWithName):
