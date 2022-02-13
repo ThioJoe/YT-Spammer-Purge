@@ -37,7 +37,7 @@
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
 version = "2.15.3"
-configVersion = 26
+configVersion = 29
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 # Import other module files
@@ -103,9 +103,7 @@ def main():
   clear_command = "cls" if platform.system() == "Windows" else "clear"
   os.system(clear_command)
 
-
   print("\nLoading YT Spammer Purge @ " + str(version) + "...")
-
 
            #### Prepare Resources ####
   resourceFolder = RESOURCES_FOLDER_NAME
@@ -191,17 +189,10 @@ def main():
   os.system(clear_command)
 
   # Disable colors before they are used anywhere
-  try:
-    if config['colors_enabled'] == False:
-      # Initiates colorama and creates shorthand variables for resetting colors
-      init(autoreset=True, strip=True, convert=False)
-      # Disables colors entirely
-    else:
-      # Initiates colorama and creates shorthand variables for resetting colors
-      init(autoreset=True)
-
-  except Exception as e:
-    print('`colors_enabled` is not set properly (?) -- ignoring')
+  if config['colors_enabled'] == False:
+    # Disables colors entirely
+    init(autoreset=True, strip=True, convert=False)
+  else:
     # Initiates colorama and creates shorthand variables for resetting colors
     init(autoreset=True)
 
@@ -289,7 +280,6 @@ def main():
   os.system(clear_command)
 
   # Authenticate with the Google API - If token expired and invalid, deletes and re-authenticates
-
   YOUTUBE = auth.first_authentication()
 
   #----------------------------------- Begin Showing Program ---------------------------------
