@@ -37,7 +37,7 @@
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
 version = "2.16.0-Beta2"
-configVersion = 28
+configVersion = 29
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 print("Importing Script Modules...")
 # Import other module files
@@ -68,7 +68,7 @@ print("Importing Third-Party Modules...")
 # Other Libraries
 from googleapiclient.errors import HttpError
 
-    
+
 
 ##########################################################################################
 ##########################################################################################
@@ -76,7 +76,13 @@ from googleapiclient.errors import HttpError
 ##########################################################################################
 ##########################################################################################
 
+
 def main():
+  # Fix issue with unassigned variables
+  global S
+  global B
+  global F
+
   # Run check on python version, must be 3.6 or higher because of f strings
   if sys.version_info[0] < 3 or sys.version_info[1] < 6:
     print("Error Code U-2: This program requires running python 3.6 or higher! You are running" + str(sys.version_info[0]) + "." + str(sys.version_info[1]))
@@ -99,17 +105,7 @@ def main():
   clear_command = "cls" if platform.system() == "Windows" else "clear"
   os.system(clear_command)
 
-  # Initiates colorama and creates shorthand variables for resetting colors
-  init(autoreset=True)
-  S.R = S.RESET_ALL
-  F.R = F.RESET
-  B.R = B.RESET
-
   print("\nLoading YT Spammer Purge @ " + str(version) + "...")
-
-  # Authenticate with the Google API - If token expired and invalid, deletes and re-authenticates
- 
-  YOUTUBE = auth.first_authentication()
 
            #### Prepare Resources ####
   resourceFolder = RESOURCES_FOLDER_NAME
@@ -194,6 +190,14 @@ def main():
   validation.validate_config_settings(config)
   os.system(clear_command)
 
+  # Disable colors before they are used anywhere
+  if config['colors_enabled'] == False:
+    # Disables colors entirely
+    init(autoreset=True, strip=True, convert=False)
+  else:
+    # Initiates colorama and creates shorthand variables for resetting colors
+    init(autoreset=True)
+
   # Check for program and list updates if auto updates enabled in config
   try:
     if config['release_channel'] == "all":
@@ -277,6 +281,10 @@ def main():
     moderator_mode = False
 
   os.system(clear_command)
+
+  # Authenticate with the Google API - If token expired and invalid, deletes and re-authenticates
+  YOUTUBE = auth.first_authentication()
+
   #----------------------------------- Begin Showing Program ---------------------------------
   print(f"{F.LIGHTYELLOW_EX}\n===================== YOUTUBE SPAMMER PURGE v" + version + f" ====================={S.R}")
   print("=========== https://github.com/ThioJoe/YT-Spammer-Purge ===========")
