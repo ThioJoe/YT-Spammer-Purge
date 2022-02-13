@@ -13,7 +13,7 @@ YouTube Spammer Purge
     <img src="https://img.shields.io/github/issues-pr/ThioJoe/YT-Spammer-Purge" />
   </a>
   <a href="https://github.com/ThioJoe/YT-Spammer-Purge/releases">
-    <img src="https://img.shields.io/github/v/release/ThioJoe/YT-Spammer-Purge" />
+    <img src="https://img.shields.io/github/v/release/ThioJoe/YT-Spammer-Purge?include_prereleases&label=Latest%20Release" />
   </a>
   <a href="https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/codeql-analysis.yml">
     <img src="https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/codeql-analysis.yml/badge.svg" />
