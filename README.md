@@ -5,11 +5,23 @@ YouTube Spammer Purge
 <br>
 </h1>
 
-[![Issues](https://img.shields.io/github/issues/ThioJoe/YT-Spammer-Purge)](https://shields.io/)
-[![Pull requests](https://img.shields.io/github/issues-pr/ThioJoe/YT-Spammer-Purge)](https://shields.io/)
-[![Version](https://img.shields.io/github/v/release/ThioJoe/YT-Spammer-Purge)](https://shields.io/)
-[![CodeQL](https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/codeql-analysis.yml)
-[![docker-build](https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/docker-build.yml/badge.svg)](https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/docker-build.yml)
+<div align="center">
+  <a href="https://github.com/ThioJoe/YT-Spammer-Purge/issues">
+    <img src="https://img.shields.io/github/issues/ThioJoe/YT-Spammer-Purge" />
+  </a>
+  <a href="https://github.com/ThioJoe/YT-Spammer-Purge/pulls">
+    <img src="https://img.shields.io/github/issues-pr/ThioJoe/YT-Spammer-Purge" />
+  </a>
+  <a href="https://github.com/ThioJoe/YT-Spammer-Purge/releases">
+    <img src="https://img.shields.io/github/v/release/ThioJoe/YT-Spammer-Purge" />
+  </a>
+  <a href="https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/codeql-analysis.yml">
+    <img src="https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/codeql-analysis.yml/badge.svg" />
+  </a>
+  <a href="https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/docker-build.yml">
+    <img src="https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/docker-build.yml/badge.svg" />
+  </a>
+</div>
 
 **What Is This?** - Allows you to filter and search for spammer comments on your channel and other's channel(s) in many different ways AND delete/report them all at once (see features below).
 
