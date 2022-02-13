@@ -72,13 +72,14 @@ def get_comments(current, filtersDict, miscData, config, allVideoCommentsDict, s
     parent_id = item["snippet"]["topLevelComment"]["id"]
     numReplies = item["snippet"]["totalReplyCount"]
 
+    # In case there are no replies
+    if 'replies' in item and 'comments' in item["replies"]:
+      limitedRepliesList = item["replies"]["comments"] # API will return a limited number of replies (~5), but to get all, need to make separate call
+    else:
+      limitedRepliesList = []
+
     # On rare occasions a comment will be there but the channel name will be empty, so this allows placeholders
     try:
-      limitedRepliesList = item["replies"]["comments"] # API will return a limited number of replies (~5), but to get all, need to make separate call
-    except KeyError:
-      limitedRepliesList = []
-      pass
-    try: 
       parentAuthorChannelID = comment["snippet"]["authorChannelId"]["value"]
     except KeyError:
       parentAuthorChannelID = "[Deleted Channel]"
@@ -88,6 +89,7 @@ def get_comments(current, filtersDict, miscData, config, allVideoCommentsDict, s
       authorChannelName = comment["snippet"]["authorDisplayName"]
     except KeyError:
       authorChannelName = "[Deleted Channel]"
+
     try:
       commentText = comment["snippet"]["textDisplay"] # Remove Return carriages
     except KeyError:
@@ -101,16 +103,25 @@ def get_comments(current, filtersDict, miscData, config, allVideoCommentsDict, s
       'commentText':commentText,
       'commentID':parent_id,
       'videoID': videoID,
-      }  
+      }
+    if config['json_log_all_comments'] == True:
+      currentCommentDict['uploaderChannelID'] = miscData.channelOwnerID
+      currentCommentDict['uploaderChannelName'] = miscData.channelOwnerName
+      currentCommentDict['textUnsanitized'] = str(commentText)
+      currentCommentDict['videoTitle'] = utils.get_video_title(current, videoID)
+      currentCommentDict['matchReason'] = None
+      currentCommentDict['isSpam'] = 'False'
+
     check_against_filter(current, filtersDict, miscData, config, currentCommentDict, videoID)
     current.scannedCommentsCount += 1
 
     #Log All Comments
     try:
-      allVideoCommentsDict[parentAuthorChannelID].append(currentCommentDict)
-    except KeyError:
-      allVideoCommentsDict[parentAuthorChannelID] = [currentCommentDict]
-    except TypeError:
+      if parentAuthorChannelID in allVideoCommentsDict:
+        allVideoCommentsDict[parentAuthorChannelID].append(currentCommentDict)
+      else:
+        allVideoCommentsDict[parentAuthorChannelID] = [currentCommentDict]
+    except TypeError: # This might not be necessary, might remove later if not
       pass
     
     # If there are more replies than in the limited list
@@ -227,6 +238,14 @@ def get_replies(current, filtersDict, miscData, config, parent_id, videoID, pare
       'commentID':replyID,
       'videoID': videoID
       }
+    if config['json_log_all_comments'] == True:
+      currentCommentDict['uploaderChannelID'] = miscData.channelOwnerID
+      currentCommentDict['uploaderChannelName'] = miscData.channelOwnerName
+      currentCommentDict['textUnsanitized'] = str(commentText)
+      currentCommentDict['videoTitle'] = utils.get_video_title(current, videoID)
+      currentCommentDict['matchReason'] = None
+      currentCommentDict['isSpam'] = 'False'
+
     if parentCommentDict:
       threadDict[replyID] = currentCommentDict
 
@@ -234,10 +253,11 @@ def get_replies(current, filtersDict, miscData, config, parent_id, videoID, pare
 
     #Log All Comments
     try:
-      allVideoCommentsDict[authorChannelID].append(currentCommentDict)
-    except KeyError:
-      allVideoCommentsDict[authorChannelID] = [currentCommentDict]
-    except TypeError:
+      if authorChannelID in allVideoCommentsDict:
+        allVideoCommentsDict[authorChannelID].append(currentCommentDict)
+      else:
+        allVideoCommentsDict[authorChannelID] = [currentCommentDict]
+    except TypeError: # Again, might not be necessary, might remove later
       pass
 
     # Update latest stats
@@ -252,13 +272,14 @@ def get_replies(current, filtersDict, miscData, config, parent_id, videoID, pare
 
 #####################################################################################################
 def check_spam_threads(current, filtersDict, miscData, config, parentCommentDict, threadDict):
-  threadWords = filtersDict['CustomCommentTextFilter']['threadFiltersDict']['threadWords']
-  threadPhrases = filtersDict['CustomCommentTextFilter']['threadFiltersDict']['threadPhrases']
-  monetWords = filtersDict['CustomCommentTextFilter']['threadFiltersDict']['monetWords']
-  monetStrings = filtersDict['CustomCommentTextFilter']['threadFiltersDict']['monetStrings']
+  # Note For Debugging: Parent Comment Author ID = parentCommentDict['authorChannelID']
+  threadWordsRegex = filtersDict['CustomCommentTextFilter']['threadFiltersDict']['threadWordsRegex']
+  threadPhrasesRegex = filtersDict['CustomCommentTextFilter']['threadFiltersDict']['threadPhrasesRegex']
+  monetWordsRegex = filtersDict['CustomCommentTextFilter']['threadFiltersDict']['monetWordsRegex']
   nameRegex = filtersDict['CustomCommentTextFilter']['threadFiltersDict']['nameRegex']
   nakedNameRegex = filtersDict['CustomCommentTextFilter']['threadFiltersDict']['nakedNameRegex']
   cashRegex = filtersDict['CustomCommentTextFilter']['threadFiltersDict']['cashRegex']
+  salutationRegex = filtersDict['CustomCommentTextFilter']['threadFiltersDict']['salutationRegex']
   ignoreList = ['earn', 'trade', 'invest', 'signal', 'crypto', ' is', ' she', ' he']
   spam = False
   threadAnalysisDict = {}
@@ -269,38 +290,48 @@ def check_spam_threads(current, filtersDict, miscData, config, parentCommentDict
   if any(item in parentCommentDict['commentText'].lower() for item in miscData.spamLists['spamThreadsList']):
     add_spam(current, config, miscData, parentCommentDict, parentCommentDict['videoID'], matchReason="Spam Bot Thread")
     return current
-
   # Preliminary Analysis
-  for word in threadWords:
-    if word in parentCommentDict['commentText'].lower():
-      preliminaryCount += 1
+  matchCount = threadWordsRegex.findall(parentCommentDict['commentText'].lower())
+  if matchCount:
+      preliminaryCount += len(matchCount)
+  if salutationRegex.search(parentCommentDict['commentText'].lower()):
+    preliminaryCount += 1
   if preliminaryCount < 2:
     return current
 
   # Shoves all comments by each author into one each. Each author ID is key, combined comments text is value
   for _, data in threadDict.items():
     if data['authorChannelID'] in threadAnalysisDict:
-      threadAnalysisDict[data['authorChannelID']] = threadAnalysisDict[data['authorChannelID']] + " " + re.sub(' +', ' ', data['commentText'].lower()).replace("\n", " ").replace("\r", " ")
+      threadAnalysisDict[data['authorChannelID']] = threadAnalysisDict[data['authorChannelID']] + " " + re.sub(' +', ' ', data['commentText']).replace("\n", " ").replace("\r", " ").lower()
     else:
-      threadAnalysisDict[data['authorChannelID']] = re.sub(' +', ' ', data['commentText'].lower()).replace("\n", " ").replace("\r", " ")
+      threadAnalysisDict[data['authorChannelID']] = re.sub(' +', ' ', data['commentText']).replace("\n", " ").replace("\r", " ").lower()
 
   # When all authors have one combined comment text, put each into list
   threadAnalysisList = list(threadAnalysisDict.values())
   
   # -------------------------------------------------------------------------------
   def processResult(regResult, naked):
-    len1 = len(regResult.group(1))
-    len2 = len(regResult.group(2))
-    len3 = len(regResult.group(3))
+    if naked:
+      g1 = 1
+      g2 = 20
+      g3 = 21
+    else:
+      g1 = 1
+      g2 = 11
+      g3 = 12
 
-    if not (naked and len1 > 2 and len3 > 2) or (naked and len2 >= 4 and len3 >= 5):
-      name = regResult.group(2).strip() + " " + regResult.group(3).strip()
+    len1 = len(regResult.group(g1))
+    len2 = len(regResult.group(g2))
+    len3 = len(regResult.group(g3))
+
+    if (not naked and len3 > 3) or (naked and len2 >= 4 and len3 >= 5):
+      name = regResult.group(g2).strip() + " " + regResult.group(g3).strip()
       name = re.sub(' +', ' ', name)
     else:
       name = ""
 
     if not naked:
-      partialName = regResult.group(1).strip() + " " + regResult.group(2).strip()
+      partialName = regResult.group(1).strip() + " " + regResult.group(g2).strip()
       partialName = re.sub(' +', ' ', partialName)
     else:
       partialName = ""
@@ -398,14 +429,14 @@ def check_spam_threads(current, filtersDict, miscData, config, parentCommentDict
       elif partialName and partialName in comment:
         partialNameCount += 1
     susMention = False
-    if any(word in comment for word in threadWords):
+    if threadWordsRegex.search(comment):
       yellowCount += 1
       susMention = True
-    if any(phrase in comment for phrase in threadPhrases):
+    if threadPhrasesRegex.search(comment):
       redCount += 1
       susMention = True
-    if re.search(cashRegex, comment):
-      if any(word in comment for word in monetWords):
+    if cashRegex.search(comment):
+      if monetWordsRegex.search(comment):
         redCount += 1
       else:
         yellowCount += 1
@@ -490,7 +521,8 @@ def add_spam(current, config, miscData, currentCommentDict, videoID, matchReason
   else:
     current.authorMatchCountDict[authorChannelID] = 1
 
-  if config['json_log'] == True and config['json_extra_data'] == True:
+  # If json_log_all_comments is enabled, this is not needed because this info is logged for all comments
+  if config['json_log'] == True and config['json_log_all_comments'] == False:
     dictToUse[commentID]['uploaderChannelID'] = miscData.channelOwnerID
     dictToUse[commentID]['uploaderChannelName'] = miscData.channelOwnerName
     dictToUse[commentID]['videoTitle'] = utils.get_video_title(current, videoID)
@@ -691,6 +723,8 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
       smartFilter = filtersDict['CustomCommentTextFilter']
       # Receive Variables
       compiledRegexDict = smartFilter['compiledRegexDict']
+      compiledObfuRegexDict = smartFilter['compiledObfuRegexDict']
+      basicFilterDict = smartFilter['basicFilterDict']
       numberFilterSet = smartFilter['spammerNumbersSet']
       compiledNumRegex = smartFilter['compiledNumRegex']
       minNumbersMatchCount = smartFilter['minNumbersMatchCount']
@@ -716,18 +750,19 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
         rootDomainRegex = smartFilter['sensitiveRootDomainRegex']
 
       # Functions --------------------------------------------------------------
-      def findOnlyObfuscated(regexExpression, originalWord, stringToSearch):
+      def findObf(expression, chars, stringToSearch):
         # Confusable thinks s and f look similar, have to compensate to avoid false positive
-        ignoredConfusablesConverter = {ord('f'):ord('s'),ord('s'):ord('f')} 
-        result = re.findall(regexExpression, stringToSearch.lower())  
+        ignoredConfusablesConverter = {ord('f'):ord('s'),ord('s'):ord('f')}
+        result = expression.findall(stringToSearch.lower())
         if not result:
           return False
         else:
           for match in result:
-            lowerWord = originalWord.lower()
-            for char in compiledRegexDict['bufferChars']:
-              match = match.strip(char)
-            if match.lower() != lowerWord and match.lower() != lowerWord.translate(ignoredConfusablesConverter):
+            lowerChars = chars.lower()
+            for bufferChar in compiledRegexDict['bufferChars']:
+              match = match.strip(bufferChar)
+            #if match.lower() != lowerWord and match.lower() != lowerWord.translate(ignoredConfusablesConverter):
+            if any(char not in lowerChars for char in match) and any(char not in lowerChars.translate(ignoredConfusablesConverter) for char in match):
               return True
 
       def remove_unicode_categories(string):
@@ -769,27 +804,27 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
       # Black Tests
         #elif usernameBlackCharsSet.intersection(usernameSet):
         #  add_spam(current, config, miscData, currentCommentDict, videoID)
-      elif any(re.search(expression[1], authorChannelName) for expression in compiledRegexDict['usernameBlackWords']):
+      elif compiledRegexDict['usernameBlackWords'].search(authorChannelName):
         add_spam(current, config, miscData, currentCommentDict, videoID)
-      elif config['detect_sub_challenge_spam'] and any(re.search(expression[1], authorChannelName) for expression in compiledRegexDict['usernameNovidBlackWords']):
+      elif config['detect_sub_challenge_spam'] and compiledRegexDict['usernameNovidBlackWords'].search(authorChannelName):
         add_spam(current, config, miscData, currentCommentDict, videoID)
-      elif any(findOnlyObfuscated(expression[1], expression[0], combinedString) for expression in compiledRegexDict['blackAdWords']):
+      elif compiledRegexDict['blackAdWords'].search(authorChannelName):
         add_spam(current, config, miscData, currentCommentDict, videoID)
-      elif any(findOnlyObfuscated(expression[1], expression[0], commentText) for expression in compiledRegexDict['textObfuBlackWords']):
+      elif any(findObf(expressionPair[0], expressionPair[1], commentText) for expressionPair in compiledObfuRegexDict['textObfuBlackWords']):
         add_spam(current, config, miscData, currentCommentDict, videoID)
-      elif any(word in commentText.lower() for word in compiledRegexDict['textExactBlackWords']):
+      elif any(word in commentText.lower() for word in basicFilterDict['textExactBlackWords']):
         add_spam(current, config, miscData, currentCommentDict, videoID)
-      elif any((word in commentText and not upLowTextSet.intersection(lowAlSet)) for word in compiledRegexDict['textUpLowBlackWords']):
+      elif any((word in commentText and not upLowTextSet.intersection(lowAlSet)) for word in basicFilterDict['textUpLowBlackWords']):
         add_spam(current, config, miscData, currentCommentDict, videoID)
-      elif any(findOnlyObfuscated(expression[1], expression[0], authorChannelName) for expression in compiledRegexDict['usernameObfuBlackWords']):
+      elif any(findObf(expressionPair[0], expressionPair[1], commentText) for expressionPair in compiledObfuRegexDict['usernameObfuBlackWords']):  
         add_spam(current, config, miscData, currentCommentDict, videoID)
-      elif re.search(spamListCombinedRegex, combinedString):
+      elif spamListCombinedRegex.search(combinedString.lower()):
         add_spam(current, config, miscData, currentCommentDict, videoID)
       elif config['detect_link_spam'] and check_if_only_link(commentText.strip()):
         add_spam(current, config, miscData, currentCommentDict, videoID)
       elif sensitive and re.search(smartFilter['usernameConfuseRegex'], authorChannelName):
         add_spam(current, config, miscData, currentCommentDict, videoID)
-      elif not sensitive and (findOnlyObfuscated(smartFilter['usernameConfuseRegex'], miscData.channelOwnerName, authorChannelName) or authorChannelName == miscData.channelOwnerName):
+      elif not sensitive and (findObf(smartFilter['usernameConfuseRegex'], list(miscData.channelOwnerName), authorChannelName) or authorChannelName == miscData.channelOwnerName):
         add_spam(current, config, miscData, currentCommentDict, videoID)
       # Multi Criteria Tests
       else:
@@ -803,7 +838,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
             languageCount += 1
 
         # Yellow Tests
-        if any(findOnlyObfuscated(expression[1], expression[0], combinedString) for expression in compiledRegexDict['yellowAdWords']):
+        if compiledRegexDict['yellowAdWords'].search(combinedString):
           yellowCount += 1
 
         hrtTest = len(hrtSet.intersection(combinedSet))
@@ -818,8 +853,11 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
         if yellowAdEmojiSet.intersection(combinedSet):
           yellowCount += 1
 
-        if not sensitive and spamGenEmojiSet.intersection(combinedSet):
+        if not sensitive and any(emoji in commentText for emoji in spamGenEmojiSet):
           yellowCount += 1
+
+        if not sensitive and any(emoji in authorChannelName for emoji in spamGenEmojiSet):
+          redCount += 1
 
         if combinedString.count('#') >= 5:
           yellowCount += 1
@@ -830,15 +868,15 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
         if languageCount >= 2:
           yellowCount += 1
 
-        if re.search(rootDomainRegex, combinedString.lower()):
+        if rootDomainRegex.search(combinedString.lower()):
           yellowCount += 1
 
         # Red Tests
         #if any(foundObfuscated(re.findall(expression[1], combinedString), expression[0]) for expression in compiledRegexDict['redAdWords']):
-        if any(findOnlyObfuscated(expression[1], expression[0], combinedString) for expression in compiledRegexDict['redAdWords']):
+        if compiledRegexDict['redAdWords'].search(combinedString):
           redCount += 1
 
-        if any(re.search(expression[1], combinedString) for expression in compiledRegexDict['exactRedAdWords']):
+        if any(word in combinedString.lower() for word in basicFilterDict['exactRedAdWords']):
           redCount += 1
 
         if redAdEmojiSet.intersection(combinedSet):
@@ -847,7 +885,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
         if sensitive and spamGenEmojiSet.intersection(combinedSet):
           redCount += 1
 
-        if any(re.search(expression[1], authorChannelName) for expression in compiledRegexDict['usernameRedWords']):
+        if compiledRegexDict['usernameRedWords'].search(authorChannelName.lower()):
           redCount += 1
 
         # Calculate Score
@@ -855,7 +893,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
           add_spam(current, config, miscData, currentCommentDict, videoID)
         elif redCount >= 2:
           add_spam(current, config, miscData, currentCommentDict, videoID)
-        elif redCount >= 1 and yellowCount >= 1:
+        elif redCount >= 1 and yellowCount >= 2:
           add_spam(current, config, miscData, currentCommentDict, videoID)
         elif sensitive and redCount >= 1:
           add_spam(current, config, miscData, currentCommentDict, videoID)
@@ -1177,10 +1215,13 @@ def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToEx
     addWhitelist = False
 
   if addWhitelist == True:
-    with open(miscData.resources['Whitelist']['PathWithName'], "a", encoding="utf-8") as f:
+    with open(miscData.resources['Whitelist']['PathWithName'], "a+", encoding="utf-8") as f:
+      f.seek(0)
+      currentWhitelist = f.read()
       for author in authorsToExcludeSet:
-        f.write(f"# [Excluded]  Channel Name: {current.matchSamplesDict[author]['authorName']}  |  Channel ID: " + "\n")
-        f.write(f"{author}\n")
+        if not author in currentWhitelist:
+          f.write(f"\n# [Excluded]  Channel Name: {current.matchSamplesDict[author]['authorName']}  |  Channel ID: " + "\n")
+          f.write(f"{author}\n")
   
   input("\nPress Enter to decide what to do with the rest...")
   
@@ -1189,7 +1230,7 @@ def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToEx
 
 ################################# Get Most Recent Videos #####################################
 # Returns a list of lists
-def get_recent_videos(channel_id, numVideosTotal):
+def get_recent_videos(current, channel_id, numVideosTotal):
   def get_block_of_videos(nextPageToken, j, k, numVideosBlock = 5):
     result = auth.YOUTUBE.search().list(
       part="snippet",
@@ -1210,6 +1251,9 @@ def get_recent_videos(channel_id, numVideosTotal):
         print(f"{B.YELLOW}{F.BLACK} Skipping {S.R} {F.LIGHTRED_EX}Video with no comments:{S.R} " + str(item['snippet']['title']))
         k+=1
         continue
+      
+      if videoID not in current.vidTitleDict:
+        current.vidTitleDict[videoID] = videoTitle
 
       recentVideos.append({})
       recentVideos[j]['videoID'] = videoID
