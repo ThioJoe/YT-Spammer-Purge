@@ -1559,7 +1559,7 @@ def main():
       print("                               ")
 
       # Write Json Log File
-      if config['json_log'] == True and loggingEnabled and current.matchedCommentsDict:
+      if config['json_log'] == True and loggingEnabled and (current.matchedCommentsDict or current.duplicateCommentsDict or current.spamThreadsDict):
         print("\nWriting JSON log file...")
         if config['json_extra_data'] == True:
           if current.errorOccurred == False:
