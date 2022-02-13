@@ -149,6 +149,7 @@ def main():
     except:
       print("\nError: Could not create folder. To update the spam lists, try creating a folder called 'SpamPurge_Resources',")
       print("       then inside that, create another folder called 'Spam_Lists'.")
+      input("Press Enter to continue...")
 
   if os.path.isdir(resourceFolder) and not os.path.isdir(spamListFolder):
     try:
@@ -171,7 +172,7 @@ def main():
 
     listVersion = files.get_list_file_version(spamList['Path'])
     spamList['Version'] = listVersion
-    if parse_version(listVersion) > parse_version(latestLocalSpamListVersion):
+    if listVersion and parse_version(listVersion) > parse_version(latestLocalSpamListVersion):
       latestLocalSpamListVersion = listVersion
 
   spamListDict['Meta']['VersionInfo']['LatestLocalVersion'] = latestLocalSpamListVersion

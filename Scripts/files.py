@@ -349,11 +349,12 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
             extraFolderPath = f"{cwd}/{stagingFolder}/{extraFolderPath[0]}"
             
             for file_name in os.listdir(extraFolderPath):
-              try:
-                  os.remove(file_name)
-              except IsADirectoryError:
-                  rmtree(file_name)
-              move(f"{extraFolderPath}/{file_name}", f"{cwd}/{file_name}")
+              if os.path.exists(file_name):
+                try:
+                    os.remove(file_name)
+                except IsADirectoryError:
+                    rmtree(file_name)
+                move(f"{extraFolderPath}/{file_name}", f"{cwd}/{file_name}")
 
           rmtree(stagingFolder)
           print(f"\n> Update completed: {currentVersion} ==> {F.GREEN}{latestVersion}{S.R}")
@@ -756,6 +757,7 @@ def ingest_list_file(relativeFilePath, keepCase = True):
     return None
 
 def get_list_file_version(relativeFilePath):
+  listVersion = None
   if os.path.exists(relativeFilePath):
     matchBetweenBrackets = '(?<=\[)(.*?)(?=\])' # Matches text between first set of two square brackets
     with open(relativeFilePath, 'r', encoding="utf-8") as file:
@@ -764,6 +766,7 @@ def get_list_file_version(relativeFilePath):
           matchItem = re.search(matchBetweenBrackets, line)
           if matchItem:
             listVersion = str(matchItem.group(0))
+            break
         except AttributeError:
           pass
       return listVersion

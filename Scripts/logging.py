@@ -822,7 +822,7 @@ def write_log_heading(current, logMode, filtersDict, afterExclude=False, combine
   elif filterMode == "Text":
     write_func(current.logFileName, "Searched in Comment Text: " + ", ".join(inputtedCommentTextFilter), logMode, 2)
   elif filterMode == "NameAndText":
-    write_func(current.logFileName, "Searched in Usernames and Comment Text: " + ", ".join(filterSettings[1]), logMode, 2)
+    write_func(current.logFileName, "Characters searched in Usernames and Comment Text: " + ", ".join(inputtedCommentTextFilter), logMode, 2)
   elif filterMode == "AutoASCII":
     write_func(current.logFileName, "Auto-ASCII Username Search Mode: " + str(filterSettings[1]), logMode, 2)
   elif filterMode == "AutoSmart":
