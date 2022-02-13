@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
+from copy import copy
+import platform
+import tarfile
 from Scripts.shared_imports import *
 from Scripts.utils import choice
 
@@ -7,7 +10,7 @@ from datetime import datetime, date, timedelta
 from configparser import ConfigParser
 from pkg_resources import parse_version
 from random import randrange
-from shutil import copyfile
+from shutil import copyfile, move, rmtree
 from itertools import islice
 
 import io
@@ -188,12 +191,13 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
     if silentCheck == False:
       print("------------------------------------------------------------------------------------------")
       if isBeta == True:
-        print(f" {F.YELLOW}A new {F.LIGHTGREEN_EX}beta{F.YELLOW} version{S.R} is available!")
+        print(f" {F.YELLOW}A new {F.LIGHTGREEN_EX}beta{F.YELLOW} version{S.R} is available! Visit {F.YELLOW}TJoe.io/latest{S.R} to see what's new.")
       else:
-        print(f" A {F.LIGHTGREEN_EX}new version{S.R} is available!")
-      print(f" > Current Version: {currentVersion}")
-      print(f" > Latest Version: {F.LIGHTGREEN_EX}{latestVersion}{S.R}")
-      print("(To stop receiving beta releases, change the 'release_channel' setting in the config file)")
+        print(f" A {F.LIGHTGREEN_EX}new version{S.R} is available! Visit {F.YELLOW}TJoe.io/latest{S.R} to see what's new.")
+      print(f"   > Current Version: {currentVersion}")
+      print(f"   > Latest Version: {F.LIGHTGREEN_EX}{latestVersion}{S.R}")
+      if isBeta == True:
+        print("(To stop receiving beta releases, change the 'release_channel' setting in the config file)")
       print("------------------------------------------------------------------------------------------")
       userChoice = choice("Update Now?")
       if userChoice == True:
@@ -300,10 +304,66 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
             print(f" > And don't forget to report any problems you encounter here: {F.YELLOW}TJoe.io/bug-report{S.R}")
           input("\nPress Enter to Exit...")
           sys.exit()
+        elif platform.system() == "Linux":
+          # Current working directory
+          cwd = os.getcwd()
+          # what we want the tar file to be called on the system
+          tarFileName = "yt-spammer.tar.gz"
+          # Name of this file
+          # Temp folder for update
+          stagingFolder = "temp"
+
+          # Fetch the latest update
+          print(f"\n> Downloading version: {F.GREEN}{latestVersion}{S.R}")
+
+          url = f'https://codeload.github.com/ThioJoe/YT-Spammer-Purge/tar.gz/refs/tags/v{latestVersion}'
+          r = requests.get(url, stream=True)
+          if(r.status_code == 200):
+            with open(tarFileName, 'wb') as file:
+              for chunk in r.iter_content(chunk_size=1048576):
+                if chunk:
+                  file.write(chunk)
+          else:
+            print("Downloading of new version failed!")
+            print(f"\n> {F.RED}Error: {S.R}GitHub returned a non 200 status code while trying to download newer version.\nStatus returned: {r.status_code}")
+            input("Press Enter to Exit...")
+            sys.exit()
+          
+          # Extract the tar file and delete it
+          print("\n> Extracting...")
+          with tarfile.open(tarFileName) as file:
+            file.extractall(f'./{stagingFolder}')
+          os.remove(tarFileName)
+          print(f"> Installing...")
+          # Retrieve the name of the folder containing the main file, we are assuming there will always be only one folder here
+          extraFolderPath = os.listdir(f"./{stagingFolder}")
+          # If there happens to be more then one folder
+          if(len(extraFolderPath) != 1):
+            print(f"\n> {F.RED} Error:{S.R} more then one folder in {stagingFolder}! Please make a bug report.")
+            print(f"\n{F.RED}Aborting Update!{S.R}")
+            print("\n> Cleaning up...")
+            rmtree(stagingFolder)
+            input("\nPress Enter to Exit...")
+            sys.exit()
+          else:
+            extraFolderPath = f"{cwd}/{stagingFolder}/{extraFolderPath[0]}"
+            
+            for file_name in os.listdir(extraFolderPath):
+              if os.path.exists(file_name):
+                try:
+                    os.remove(file_name)
+                except IsADirectoryError:
+                    rmtree(file_name)
+                move(f"{extraFolderPath}/{file_name}", f"{cwd}/{file_name}")
+
+          rmtree(stagingFolder)
+          print(f"\n> Update completed: {currentVersion} ==> {F.GREEN}{latestVersion}{S.R}")
+          print("> Restart the script to apply the update.")
+          input("\nPress Enter to Exit...")
+          sys.exit()
 
         else:
-          # We do this because we pull the .exe for windows, but maybe we could use os.system('git pull')? Because this is a GIT repo, unlike the windows version
-          print(f"> {F.RED} Error:{S.R} You are using an unsupported OS for the autoupdater (macos/linux). \n This updater only supports Windows (right now). Feel free to get the files from github: https://github.com/ThioJoe/YT-Spammer-Purge")
+          print(f"> {F.RED} Error:{S.R} You are using an unsupported OS for the autoupdater (macos). \n This updater only supports Windows and Linux (right now). Feel free to get the files from github: https://github.com/ThioJoe/YT-Spammer-Purge")
           return False
       elif userChoice == "False" or userChoice == None:
         return False
@@ -528,21 +588,23 @@ def list_config_files(relativePath=None):
   else:
     path = os.path.abspath(relativePath)
 
+  # Only get non-primary log files
   for file in os.listdir(path):
-    try:
-      match = re.search(configNumExpression, file.lower()).group(0)
-      # Only exact matches, no backups
-      if file.lower() == "spampurgeconfig" + match + ".ini":
-        fileList.append(file)
-    except AttributeError as ax:
-      if "NoneType" in str(ax):
-        pass
-      else:
-        traceback.print_exc()
-        print("--------------------------------------------------------------------------------")
-        print("Something went wrong when getting list of config files. Check your regex.")
-        input("\nPress Enter to exit...")
-        sys.exit()
+    if "spampurgeconfig" in file.lower() and file.lower() != "spampurgeconfig.ini":
+      try:
+        match = re.search(configNumExpression, file.lower()).group(0)
+        # Only exact matches, no backups
+        if file.lower() == "spampurgeconfig" + match + ".ini":
+          fileList.append(file)
+      except AttributeError as ax:
+        if "NoneType" in str(ax):
+          pass
+        else:
+          traceback.print_exc()
+          print("--------------------------------------------------------------------------------")
+          print("Something went wrong when getting list of config files. Check your regex.")
+          input("\nPress Enter to exit...")
+          sys.exit()
     
   return fileList
 
@@ -640,6 +702,7 @@ def ingest_list_file(relativeFilePath, keepCase = True):
     return None
 
 def get_list_file_version(relativeFilePath):
+  listVersion = None
   if os.path.exists(relativeFilePath):
     matchBetweenBrackets = '(?<=\[)(.*?)(?=\])' # Matches text between first set of two square brackets
     with open(relativeFilePath, 'r', encoding="utf-8") as file:
@@ -648,6 +711,7 @@ def get_list_file_version(relativeFilePath):
           matchItem = re.search(matchBetweenBrackets, line)
           if matchItem:
             listVersion = str(matchItem.group(0))
+            break
         except AttributeError:
           pass
       return listVersion
@@ -784,6 +848,7 @@ def parse_comment_list(config, recovery=False, removal=False, returnFileName=Fal
     if str(listFileName).lower() == "x":
       return "MainMenu", None
 
+    listFileName = listFileName.strip("\"").strip("'") # Remove quotes, if added by dragging and dropping or pasting path
     if len(listFileName) > 0:
       if os.path.exists(listFileName):
         pass

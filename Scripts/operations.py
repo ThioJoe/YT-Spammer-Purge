@@ -20,12 +20,11 @@ from googleapiclient.errors import HttpError
 ##########################################################################################
 
 # Call the API's commentThreads.list method to list the existing comments.
-def get_comments(current, filtersDict, miscData, config, currentVideoDict, scanVideoID=None, nextPageToken=None, videosToScan=None):  # None are set as default if no parameters passed into function
+def get_comments(current, filtersDict, miscData, config, allVideoCommentsDict, scanVideoID=None, nextPageToken=None, videosToScan=None):  # None are set as default if no parameters passed into function
   # Initialize some variables
   authorChannelName = None
   commentText = None
   parentAuthorChannelID = None
-  allCommentsDict = currentVideoDict
 
   fieldsToFetch = "nextPageToken,items/snippet/topLevelComment/id,items/replies/comments,items/snippet/totalReplyCount,items/snippet/topLevelComment/snippet/videoId,items/snippet/topLevelComment/snippet/authorChannelId/value,items/snippet/topLevelComment/snippet/authorDisplayName,items/snippet/topLevelComment/snippet/textDisplay"
 
@@ -69,7 +68,7 @@ def get_comments(current, filtersDict, miscData, config, currentVideoDict, scanV
   # Also goes through each thread and executes get_replies() to get reply content and matches
   for item in results["items"]:
     comment = item["snippet"]["topLevelComment"]
-    videoID = comment["snippet"]["videoId"] # Only enable if NOT checking specific video
+    videoID = comment["snippet"]["videoId"]
     parent_id = item["snippet"]["topLevelComment"]["id"]
     numReplies = item["snippet"]["totalReplyCount"]
 
@@ -101,38 +100,47 @@ def get_comments(current, filtersDict, miscData, config, currentVideoDict, scanV
       'authorChannelName':authorChannelName, 
       'commentText':commentText,
       'commentID':parent_id,
-      }
+      'videoID': videoID,
+      }  
     check_against_filter(current, filtersDict, miscData, config, currentCommentDict, videoID)
     current.scannedCommentsCount += 1
 
     #Log All Comments
     try:
-      allCommentsDict[parentAuthorChannelID].append(currentCommentDict)
+      allVideoCommentsDict[parentAuthorChannelID].append(currentCommentDict)
     except KeyError:
-      allCommentsDict[parentAuthorChannelID] = [currentCommentDict]
+      allVideoCommentsDict[parentAuthorChannelID] = [currentCommentDict]
     except TypeError:
       pass
     
+    # If there are more replies than in the limited list
     if numReplies > 0 and len(limitedRepliesList) < numReplies:
-      allCommentsDict = get_replies(current, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, allCommentsDict)
-      if allCommentsDict == "Error":
+      if numReplies > 7 and (filtersDict['filterMode'] == "AutoSmart" or filtersDict['filterMode'] == "SensitiveSmart") and config['detect_spam_threads'] == True:
+        parentCommentDict = currentCommentDict
+      else:
+        parentCommentDict = None
+
+      allVideoCommentsDict = get_replies(current, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, allVideoCommentsDict, parentCommentDict=parentCommentDict)
+      if allVideoCommentsDict == "Error":
         return "Error", None
+
+    # If all the replies are in the limited list
     elif numReplies > 0 and len(limitedRepliesList) == numReplies: # limitedRepliesList can never be more than numReplies
-      allCommentsDict = get_replies(current, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, allCommentsDict, repliesList=limitedRepliesList)
-      if allCommentsDict == "Error":
+      allVideoCommentsDict = get_replies(current, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, allVideoCommentsDict, repliesList=limitedRepliesList)
+      if allVideoCommentsDict == "Error":
         return "Error", None
     else:
       print_count_stats(current, miscData, videosToScan, final=False)  # Updates displayed stats if no replies
 
   # Runs after all comments scanned
-  if RetrievedNextPageToken == "End" and allCommentsDict:
+  if RetrievedNextPageToken == "End" and allVideoCommentsDict:
     dupeCheckModes = utils.string_to_list(config['duplicate_check_modes'])
     if filtersDict['filterMode'].lower() in dupeCheckModes:
       print(" Analyzing For Duplicates                                                                                        ", end="\r")
-      check_duplicates(current, config, miscData, allCommentsDict, videoID)
-      print("                                                                                                                       ")
+      check_duplicates(current, config, miscData, allVideoCommentsDict, videoID)
 
-  return RetrievedNextPageToken, allCommentsDict
+  current.allScannedCommentsDict.update(allVideoCommentsDict)
+  return RetrievedNextPageToken, allVideoCommentsDict
 
 
 ##########################################################################################
@@ -140,10 +148,11 @@ def get_comments(current, filtersDict, miscData, config, currentVideoDict, scanV
 ##########################################################################################
 
 # Call the API's comments.list method to list the existing comment replies.
-def get_replies(current, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, allCommentsDict, repliesList=None):
+def get_replies(current, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, allVideoCommentsDict, parentCommentDict=None, repliesList=None):
   # Initialize some variables
   authorChannelName = None
   commentText = None
+  threadDict = {}
   
   if repliesList == None:
     fieldsToFetch = "nextPageToken,items/snippet/authorChannelId/value,items/id,items/snippet/authorDisplayName,items/snippet/textDisplay"
@@ -216,50 +225,300 @@ def get_replies(current, filtersDict, miscData, config, parent_id, videoID, pare
       'authorChannelName':authorChannelName, 
       'commentText':commentText,
       'commentID':replyID,
+      'videoID': videoID
       }
+    if parentCommentDict:
+      threadDict[replyID] = currentCommentDict
+
     check_against_filter(current, filtersDict, miscData, config, currentCommentDict, videoID, allThreadAuthorNames=allThreadAuthorNames)
 
     #Log All Comments
     try:
-      allCommentsDict[authorChannelID].append(currentCommentDict)
+      allVideoCommentsDict[authorChannelID].append(currentCommentDict)
     except KeyError:
-      allCommentsDict[authorChannelID] = [currentCommentDict]
+      allVideoCommentsDict[authorChannelID] = [currentCommentDict]
     except TypeError:
       pass
 
     # Update latest stats
     current.scannedRepliesCount += 1 
     print_count_stats(current, miscData, videosToScan, final=False)
+  
+  if parentCommentDict:
+    current = check_spam_threads(current, filtersDict, miscData, config, parentCommentDict, threadDict)
 
-  return allCommentsDict
+  return allVideoCommentsDict
 
+
+#####################################################################################################
+def check_spam_threads(current, filtersDict, miscData, config, parentCommentDict, threadDict):
+  threadWords = filtersDict['CustomCommentTextFilter']['threadFiltersDict']['threadWords']
+  threadPhrases = filtersDict['CustomCommentTextFilter']['threadFiltersDict']['threadPhrases']
+  monetWords = filtersDict['CustomCommentTextFilter']['threadFiltersDict']['monetWords']
+  monetStrings = filtersDict['CustomCommentTextFilter']['threadFiltersDict']['monetStrings']
+  nameRegex = filtersDict['CustomCommentTextFilter']['threadFiltersDict']['nameRegex']
+  nakedNameRegex = filtersDict['CustomCommentTextFilter']['threadFiltersDict']['nakedNameRegex']
+  cashRegex = filtersDict['CustomCommentTextFilter']['threadFiltersDict']['cashRegex']
+  ignoreList = ['earn', 'trade', 'invest', 'signal', 'crypto', ' is', ' she', ' he']
+  spam = False
+  threadAnalysisDict = {}
+  preliminaryCount, redCount, yellowCount, nameCount, fullNameCount, partialNameCount, susMentionCount = 0, 0, 0, 0, 0, 0, 0
+  nameList, partialNameList, fullNameList =[] , [], []
+  name, partialName, fullName = "", "", ""
+
+  if any(item in parentCommentDict['commentText'].lower() for item in miscData.spamLists['spamThreadsList']):
+    add_spam(current, config, miscData, parentCommentDict, parentCommentDict['videoID'], matchReason="Spam Bot Thread")
+    return current
+
+  # Preliminary Analysis
+  for word in threadWords:
+    if word in parentCommentDict['commentText'].lower():
+      preliminaryCount += 1
+  if preliminaryCount < 2:
+    return current
+
+  # Shoves all comments by each author into one each. Each author ID is key, combined comments text is value
+  for _, data in threadDict.items():
+    if data['authorChannelID'] in threadAnalysisDict:
+      threadAnalysisDict[data['authorChannelID']] = threadAnalysisDict[data['authorChannelID']] + " " + re.sub(' +', ' ', data['commentText'].lower()).replace("\n", " ").replace("\r", " ")
+    else:
+      threadAnalysisDict[data['authorChannelID']] = re.sub(' +', ' ', data['commentText'].lower()).replace("\n", " ").replace("\r", " ")
+
+  # When all authors have one combined comment text, put each into list
+  threadAnalysisList = list(threadAnalysisDict.values())
+  
+  # -------------------------------------------------------------------------------
+  def processResult(regResult, naked):
+    len1 = len(regResult.group(1))
+    len2 = len(regResult.group(2))
+    len3 = len(regResult.group(3))
+
+    if not (naked and len1 > 2 and len3 > 2) or (naked and len2 >= 4 and len3 >= 5):
+      name = regResult.group(2).strip() + " " + regResult.group(3).strip()
+      name = re.sub(' +', ' ', name)
+    else:
+      name = ""
+
+    if not naked:
+      partialName = regResult.group(1).strip() + " " + regResult.group(2).strip()
+      partialName = re.sub(' +', ' ', partialName)
+    else:
+      partialName = ""
+
+    if not naked:
+      fullName = regResult.group(0)
+    else:
+      fullName = ""
+
+    return name, partialName, fullName
+  # -------------------------------------------------------------------------------
+  def regexSearchNames(regex, name, partialName, fullName, naked=False):
+    # Get Potential Names
+    for comment in threadAnalysisList:
+      regResult = re.search(regex, comment)
+      if regResult:
+        x, y, z = processResult(regResult, naked)
+        # Strip empty
+        name.append(x)
+        partialName.append(y)
+        fullName.append(z)
+
+    regResult = re.search(regex, parentCommentDict['commentText'].lower())
+    if regResult:
+      x, y, z = processResult(regResult, naked)
+      if x:
+        name.append(x)
+      if y:
+        partialName.append(y)
+      if z:
+        fullName.append(z)
+    return name, partialName, fullName
+  # -------------------------------------------------------------------------------
+  def remove_ignore(nameList):
+    removeList = []
+    for n in nameList:
+      for word in ignoreList:
+        if word in n:
+          removeList.append(n)
+    if removeList:
+      for item in removeList:
+        if item in nameList:
+          nameList.remove(item)
+    return nameList
+  # -------------------------------------------------------------------------------
+
+  nameList, partialNameList, fullNameList = regexSearchNames(nameRegex, nameList, partialNameList, fullNameList)
+  if not nameList:
+    nameList, partialNameList, fullNameList = regexSearchNames(nakedNameRegex, nameList, partialNameList, fullNameList,naked=True)
+    partialNameList = []
+    fullNameList = []
+
+  while "" in nameList:
+    nameList.remove("")
+  while "" in partialNameList:
+    partialNameList.remove("")
+  while "" in fullNameList:
+    fullNameList.remove("")
+  
+  # Determine most common names
+  if nameList:
+    name = max(set(nameList), key = nameList.count)
+    if nameList.count(name) == 1:
+      nameList = remove_ignore(nameList)
+      if nameList:
+        name = max(set(nameList), key = nameList.count)
+      else:
+        name = ""
+
+  if partialNameList:
+    partialName = max(set(partialNameList), key = partialNameList.count)
+    if partialNameList.count(partialName) == 1:
+      partialNameList = remove_ignore(partialNameList)
+      if partialNameList:
+        partialName = max(set(partialNameList), key = partialNameList.count)
+      else:
+        partialName = ""
+
+  if fullNameList:
+    fullName = max(set(fullNameList), key = fullNameList.count)
+    if fullNameList.count(fullName) == 1:
+      fullNameList = remove_ignore(fullNameList)
+      if fullNameList:
+        fullName = max(set(fullNameList), key = fullNameList.count)
+      else:
+        fullName = ""
+  
+  # Analyze Thread
+  for comment in threadAnalysisList:
+    if name:
+      if fullName and fullName in comment:
+        fullNameCount += 1
+      elif name and name in comment:
+        nameCount += 1
+      elif partialName and partialName in comment:
+        partialNameCount += 1
+    susMention = False
+    if any(word in comment for word in threadWords):
+      yellowCount += 1
+      susMention = True
+    if any(phrase in comment for phrase in threadPhrases):
+      redCount += 1
+      susMention = True
+    if re.search(cashRegex, comment):
+      if any(word in comment for word in monetWords):
+        redCount += 1
+      else:
+        yellowCount += 1
+      susMention = True
+    if susMention:
+      susMentionCount += 1
+
+  if fullName in parentCommentDict['commentText'].lower() or name in parentCommentDict['commentText'].lower():
+    fullNameCount += 1
+    redCount += 1
+
+  susRatio = susMentionCount / len(threadAnalysisList) # Number of people, not replies
+  allNameCount = nameCount + partialNameCount + fullNameCount
+
+  if susRatio > 0.7:
+    if filtersDict['filterMode'] == "SensitiveSmart":
+      add_spam(current, config, miscData, parentCommentDict, parentCommentDict['videoID'], matchReason="Spam Bot Thread")
+      return current
+    elif len(threadAnalysisList) >= 10:
+      redCount += 2
+    else:
+      redCount += 1
+  elif susRatio < 0.3:
+    return current
+
+  # Score
+  if redCount >= 1 and yellowCount >= 5 and (susRatio > 0.75 or (allNameCount >= 4 or fullNameCount >= 2)):
+    spam = True
+  elif redCount > 2 and yellowCount >= 3 and (susRatio > 0.70 or (allNameCount >= 4 or fullNameCount >= 2)):
+    spam = True
+  elif redCount >= 2 and (allNameCount >= 5 or fullNameCount >= 3) and susRatio > 0.6:
+    spam = True
+  elif redCount >= 5 and susRatio > 0.5:
+    spam = True
+  elif yellowCount >= 10 and susRatio > 0.65:
+    spam = True
+
+  if spam == True:
+    add_spam(current, config, miscData, parentCommentDict, parentCommentDict['videoID'], matchReason="Spam Bot Thread")
+
+  return current
+
+  
+###################################### Community Post Thread Dict Maker #####################################################
+def make_community_thread_dict(commentID, allCommunityCommentsDict):
+  threadDict = {}
+  if "." not in commentID: # Checks if is top level comment or reply
+    for id in allCommunityCommentsDict.keys():
+      if commentID in id and commentID != id:
+        threadDict[id] = allCommunityCommentsDict[id]
+
+  return threadDict
+  
+
+###################################### ADD SPAM #####################################################
 
 # If the comment/username matches criteria based on mode, add key/value pair of comment ID and author ID to current.matchedCommentsDict
 # Also add key-value pair of comment ID and video ID to dictionary
 # Also count how many spam comments for each author
-def add_spam(current, config, miscData, currentCommentDict, videoID, matchReason="Generic/Unspecified"):
+def add_spam(current, config, miscData, currentCommentDict, videoID, matchReason="Filter Match"):
+  if matchReason == "Filter Match":
+    dictToUse = current.matchedCommentsDict
+  elif matchReason == "Duplicate":
+    dictToUse = current.duplicateCommentsDict
+  elif matchReason == "Also By Matched Author":
+    dictToUse = current.otherCommentsByMatchedAuthorsDict
+  elif matchReason == "Spam Bot Thread":
+    dictToUse = current.spamThreadsDict
+
   commentID = currentCommentDict['commentID']
   authorChannelName = currentCommentDict['authorChannelName']
   authorChannelID = currentCommentDict['authorChannelID']
   commentTextRaw = str(currentCommentDict['commentText']) # Use str() to ensure not pointing to same place in memory
   commentText = str(currentCommentDict['commentText']).replace("\r", "")
 
-  current.matchedCommentsDict[commentID] = {'text':commentText, 'textUnsanitized':commentTextRaw, 'authorName':authorChannelName, 'authorID':authorChannelID, 'videoID':videoID, 'matchReason':matchReason}
+  dictToUse[commentID] = {'text':commentText, 'textUnsanitized':commentTextRaw, 'authorName':authorChannelName, 'authorID':authorChannelID, 'videoID':videoID, 'matchReason':matchReason}
   current.vidIdDict[commentID] = videoID # Probably remove this later, but still being used for now
+
+  # Count of comments per author
   if authorChannelID in current.authorMatchCountDict:
     current.authorMatchCountDict[authorChannelID] += 1
   else:
     current.authorMatchCountDict[authorChannelID] = 1
-  if config['json_log'] == True and config['json_extra_data'] == True:
-    current.matchedCommentsDict[commentID]['uploaderChannelID'] = miscData.channelOwnerID
-    current.matchedCommentsDict[commentID]['uploaderChannelName'] = miscData.channelOwnerName
-    current.matchedCommentsDict[commentID]['videoTitle'] = utils.get_video_title(current, videoID)
 
-  # if debugSingleComment == True: 
-  #   input("--- Yes, Matched -----")
+  if config['json_log'] == True and config['json_extra_data'] == True:
+    dictToUse[commentID]['uploaderChannelID'] = miscData.channelOwnerID
+    dictToUse[commentID]['uploaderChannelName'] = miscData.channelOwnerName
+    dictToUse[commentID]['videoTitle'] = utils.get_video_title(current, videoID)
+
+def get_all_author_comments(current, config, miscData, allCommentsDict):
+  # Make set of all matched author IDs
+  print(" Finding all other comments by authors...", end="\r")
+  totalCommentsAmount = len(allCommentsDict)
+  scannedCount = 0
+  matchedAuthorIDSet = set()
+  for _, commentData in current.matchedCommentsDict.items():
+    matchedAuthorIDSet.add(commentData['authorID'])
+
+  # Go through all comments
+  for authorID, authorCommentsListofDicts in allCommentsDict.items():
+    if authorID in matchedAuthorIDSet:
+      for commentDict in authorCommentsListofDicts:
+        scannedCount += 1
+        print(f" Finding all other comments by authors: [ {scannedCount/totalCommentsAmount*100:.2f}% ]".ljust(40, " "), end="\r")
+        if commentDict['commentID'] not in current.matchedCommentsDict:
+          add_spam(current, config, miscData, commentDict, commentDict['videoID'], matchReason="Also By Matched Author")
+  print("".ljust(55, " "))
+
+  return current
+
 
 ############################## Check Duplicates ######################################
-def check_duplicates(current, config, miscData, allCommentsDict, videoID):
+def check_duplicates(current, config, miscData, allVideoCommentsDict, videoID):
   # Get Lenvenshtein Distance Setting
   try:
     levenshtein = float(config['levenshtein_distance'])
@@ -285,11 +544,11 @@ def check_duplicates(current, config, miscData, allCommentsDict, videoID):
     input("\nPress Enter to continue...")
   
   # Calculate number of authors to check, for progress
-  authorCount = len(allCommentsDict)
+  authorCount = len(allVideoCommentsDict)
   scannedCount = 0
 
   # Run the actual duplicate checking
-  for authorID, authorCommentsList in allCommentsDict.items():
+  for authorID, authorCommentsList in allVideoCommentsDict.items():
     # Don't scan channel owner, current user, or any user in whitelist. Also don't bother if author is already in matchedCommentsDict
     if auth.CURRENTUSER.id == authorID or miscData.channelOwnerID == authorID or authorID in miscData.resources['Whitelist']['WhitelistContents'] or any(authorID == value['authorID'] for key,value in current.matchedCommentsDict.items()):
       scannedCount +=1
@@ -318,9 +577,11 @@ def check_duplicates(current, config, miscData, allCommentsDict, videoID):
           numDupes += uniqueMatches
       if numDupes > 0:
         for commentDict in authorCommentsList:
-          add_spam(current, config, miscData, commentDict, videoID, matchReason="Duplicates")
+          add_spam(current, config, miscData, commentDict, videoID, matchReason="Duplicate")
       scannedCount +=1
       print(f" Analyzing For Duplicates: [ {scannedCount/authorCount*100:.2f}% ]   (Can be disabled & customized in config)".ljust(75, " "), end="\r")
+
+  print("".ljust(90, " ")) # Erase line
 
 
 ##########################################################################################
@@ -337,7 +598,8 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
   commentTextRaw = str(currentCommentDict['commentText']) # Use str() to ensure not pointing to same place in memory
   commentText = str(currentCommentDict['commentText']).replace("\r", "")
 
-  ##Debugging
+  # #Debugging
+  # print(f"{F.LIGHTRED_EX}DEBUG MODE{S.R} - If you see this, I forgot to disable it before release, oops. \n Please report here: {F.YELLOW}TJoe.io/bug-report{S.R}")
   # print("Comment ID: " + commentID)
   # debugSingleComment = True #Debug usage
   # if debugSingleComment == True:
@@ -494,7 +756,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
       # Processed Variables
       combinedString = authorChannelName + commentText
       combinedSet = utils.make_char_set(combinedString, stripLettersNumbers=True, stripPunctuation=True)
-      textSet = set(commentText)
+      upLowTextSet = set(commentText.replace(miscData.channelOwnerName, ""))
       #usernameSet = utils.make_char_set(authorChannelName)
 
       # Run Checks
@@ -517,7 +779,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
         add_spam(current, config, miscData, currentCommentDict, videoID)
       elif any(word in commentText.lower() for word in compiledRegexDict['textExactBlackWords']):
         add_spam(current, config, miscData, currentCommentDict, videoID)
-      elif any((word in commentText and not textSet.intersection(lowAlSet)) for word in compiledRegexDict['textUpLowBlackWords']):
+      elif any((word in commentText and not upLowTextSet.intersection(lowAlSet)) for word in compiledRegexDict['textUpLowBlackWords']):
         add_spam(current, config, miscData, currentCommentDict, videoID)
       elif any(findOnlyObfuscated(expression[1], expression[0], authorChannelName) for expression in compiledRegexDict['usernameObfuBlackWords']):
         add_spam(current, config, miscData, currentCommentDict, videoID)
@@ -527,7 +789,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
         add_spam(current, config, miscData, currentCommentDict, videoID)
       elif sensitive and re.search(smartFilter['usernameConfuseRegex'], authorChannelName):
         add_spam(current, config, miscData, currentCommentDict, videoID)
-      elif not sensitive and findOnlyObfuscated(smartFilter['usernameConfuseRegex'], miscData.channelOwnerName, authorChannelName):
+      elif not sensitive and (findOnlyObfuscated(smartFilter['usernameConfuseRegex'], miscData.channelOwnerName, authorChannelName) or authorChannelName == miscData.channelOwnerName):
         add_spam(current, config, miscData, currentCommentDict, videoID)
       # Multi Criteria Tests
       else:
@@ -599,6 +861,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
           add_spam(current, config, miscData, currentCommentDict, videoID)
   else:
     pass
+
 
 ##########################################################################################
 ################################ DELETE COMMENTS #########################################
@@ -699,9 +962,9 @@ def check_deleted_comments(commentInput):
       commentList = list(commentInput.keys())
       
     # Wait 2 seconds so YouTube API has time to update comment status
-    print("Preparing...", end="\r")
+    print(" Preparing to check deletion status...", end="\r")
     time.sleep(1)
-    print("                               ")
+    print("                                                      ")
     print("    (Note: You can disable deletion success checking in the config file, to save time and API quota)\n")
     for commentID in commentList:
       try:
@@ -854,10 +1117,26 @@ def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToEx
   for comment, metadata in current.matchedCommentsDict.items():
     if metadata['authorID'] in authorsToExcludeSet:
       commentIDExcludeSet.add(comment)
+  for comment, metadata in current.duplicateCommentsDict.items():
+    if metadata['authorID'] in authorsToExcludeSet:
+      commentIDExcludeSet.add(comment)
+  for comment, metadata in current.otherCommentsByMatchedAuthorsDict.items():
+    if metadata['authorID'] in authorsToExcludeSet:
+      commentIDExcludeSet.add(comment)
+  for comment, metadata in current.spamThreadsDict.items():
+    if metadata['authorID'] in authorsToExcludeSet:
+      commentIDExcludeSet.add(comment)    
+
   # Remove all comments by selected authors from dictionary of comments
   for comment in commentIDExcludeSet:
     if comment in current.matchedCommentsDict.keys():
       excludedCommentsDict[comment] = current.matchedCommentsDict.pop(comment)
+    if comment in current.duplicateCommentsDict.keys():
+      excludedCommentsDict[comment] = current.duplicateCommentsDict.pop(comment)
+    if comment in current.otherCommentsByMatchedAuthorsDict.keys():
+      excludedCommentsDict[comment] = current.otherCommentsByMatchedAuthorsDict.pop(comment)
+    if comment in current.spamThreadsDict.keys():
+      excludedCommentsDict[comment] = current.spamThreadsDict.pop(comment)
 
   # Create strings that can be used in log files
   
@@ -866,9 +1145,11 @@ def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToEx
   plaintextFormattedExcludes += f"\nComments Excluded From Deletion:\n"
   plaintextFormattedExcludes += f"(Values = Comment ID | Author ID | Author Name | Comment Text)\n"
   for commentID, meta in excludedCommentsDict.items():
-    rtfFormattedExcludes += f"{str(commentID)}  |  {str(excludedCommentsDict[commentID]['authorID'])}  |  {str(excludedCommentsDict[commentID]['authorName'])}  |   {str(excludedCommentsDict[commentID]['text'])} \\line \n"
+    sanitizedText = str(excludedCommentsDict[commentID]['text']).replace("\n", " ").replace("\r", " ")
+    rtfFormattedExcludes += f"{str(commentID)}  |  {str(excludedCommentsDict[commentID]['authorID'])}  |  {str(excludedCommentsDict[commentID]['authorName'])}  |   {sanitizedText} \\line \n"
   for commentID, meta in excludedCommentsDict.items():
-    plaintextFormattedExcludes += f"{str(commentID)}  |  {str(excludedCommentsDict[commentID]['authorID'])}  |  {str(excludedCommentsDict[commentID]['authorName'])}  |   {str(excludedCommentsDict[commentID]['text'])}\n"
+    sanitizedText = str(excludedCommentsDict[commentID]['text']).replace("\n", " ").replace("\r", " ")
+    plaintextFormattedExcludes += f"{str(commentID)}  |  {str(excludedCommentsDict[commentID]['authorID'])}  |  {str(excludedCommentsDict[commentID]['authorName'])}  |   {sanitizedText} \n"
 
   # Verify removal
   for comment in current.matchedCommentsDict.keys():
@@ -890,9 +1171,9 @@ def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToEx
   if config['whitelist_excluded'] == 'ask':
     print(f"\nAdd these {F.LIGHTGREEN_EX}excluded{S.R} users to the {F.LIGHTGREEN_EX}whitelist{S.R} for future scans?")
     addWhitelist = choice("Whitelist Users?")
-  elif config['whitelist_excluded'] == "True":
+  elif config['whitelist_excluded'] == True:
     addWhitelist = True
-  elif config['whitelist_excluded'] == "False":
+  elif config['whitelist_excluded'] == False:
     addWhitelist = False
 
   if addWhitelist == True:
@@ -900,20 +1181,10 @@ def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToEx
       for author in authorsToExcludeSet:
         f.write(f"# [Excluded]  Channel Name: {current.matchSamplesDict[author]['authorName']}  |  Channel ID: " + "\n")
         f.write(f"{author}\n")
-
-  # Re-Write Log File
-  if logInfo:
-    print("Updating log file, please wait...", end="\r")
-    logging.rewrite_log_file(current, logInfo)
-    if logInfo['logMode'] == "rtf":
-      logging.write_rtf(current.logFileName, str(rtfFormattedExcludes))
-    elif logInfo['logMode'] == "plaintext":
-      logging.write_plaintext_log(current.logFileName, str(plaintextFormattedExcludes))
-    print("                                          ")
   
   input("\nPress Enter to decide what to do with the rest...")
   
-  return current, excludedCommentsDict, authorsToExcludeSet, commentIDExcludeSet # May use excludedCommentsDict later for printing them to log file
+  return current, excludedCommentsDict, authorsToExcludeSet, commentIDExcludeSet, rtfFormattedExcludes, plaintextFormattedExcludes # May use excludedCommentsDict later for printing them to log file
 
 
 ################################# Get Most Recent Videos #####################################
@@ -995,7 +1266,7 @@ def print_count_stats(current, miscData, videosToScan, final):
   
   comScanned = str(current.scannedCommentsCount)
   repScanned = str(current.scannedRepliesCount)
-  matchCount = str(len(current.matchedCommentsDict))
+  matchCount = str(len(current.matchedCommentsDict) + len(current.spamThreadsDict))
 
   if final == True:
     print(f" {progress} Comments Scanned: {F.YELLOW}{comScanned}{S.R} | Replies Scanned: {F.YELLOW}{repScanned}{S.R} | Matches Found So Far: {F.LIGHTRED_EX}{matchCount}{S.R}\n")

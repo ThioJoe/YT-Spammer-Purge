@@ -2,19 +2,28 @@
 # -*- coding: UTF-8 -*-
 from Scripts.shared_imports import *
 import Scripts.auth as auth
+import Scripts.utils as utils
 
 from urllib.parse import urlparse
 from Scripts.community_downloader import get_post_channel_url
 
+import codecs
+
 ##################################### VALIDATE VIDEO ID #####################################
 # Regex matches putting video id into a match group. Then queries youtube API to verify it exists - If so returns true and isolated video ID
-def validate_video_id(video_url_or_id, silent=False, pass_exception=False):
+def validate_video_id(video_url_or_id, silent=False, pass_exception=False, basicCheck=False):
     youtube_video_link_regex = r"^\s*(?P<video_url>(?:(?:https?:)?\/\/)?(?:(?:www|m)\.)?(?:youtube\.com|youtu.be)(?:\/(?:[\w\-]+\?v=|embed\/|v\/)?))?(?P<video_id>[\w\-]{11})(?:(?(video_url)\S+|$))?\s*$"
     match = re.match(youtube_video_link_regex, video_url_or_id)
     if match == None:
+      if basicCheck == True:
+        return False
       if silent == False:
         print(f"\n{B.RED}{F.BLACK}Invalid Video link or ID!{S.R} Video IDs are 11 characters long.")
       return False, None, None, None, None
+    elif basicCheck == True:
+      possibleVideoID = match.group('video_id')
+      if len(possibleVideoID) == 11:
+        return True
     else:
       try:
         possibleVideoID = match.group('video_id')
@@ -185,4 +194,275 @@ def validate_regex(regex_from_user: str):
       is_valid = False
       processedExpression = None
 
-  return is_valid, processedExpression    
+  return is_valid, processedExpression
+
+
+############################# VALIDATE CONFIG SETTINGS #############################
+def validate_config_settings(config):
+
+  print("\nValidating Config Settings...")
+  print("-----------------------------------------------------\n")
+
+  # Helper Functions
+  def print_quit_and_report():
+    print(f"\nIf you think this is a bug or can't figure it out, report it on the GitHub page:  {F.YELLOW}TJoe.io/bug-report{S.R}")
+    input("\nPress Enter to exit...")
+    sys.exit()
+
+  def print_int_fail(setting, value):
+    print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting '{setting}': {str(value)}")
+    print("It should probably be an integer. Check the possible values listed in the config file for that setting.")
+    print_quit_and_report()
+
+  # Validation Functions
+  # --------------------------------------------------------------------------------------
+  def simple_settings_check(setting, value):
+    if setting in validSettingsDict:
+      # A None value means it can be any string
+      if validSettingsDict[setting] == None:
+        return True
+
+      # For settings that accept more than one value, check each
+      elif isinstance(value, str) and "," in str(value):
+        try:
+          settingList = utils.string_to_list(value)
+          for settingValue in settingList:
+            if settingValue not in validSettingsDict[setting]:
+              print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting '{setting}': {str(value)}")
+              print(f"It looks like you tried to enter a list. Check if that setting accepts multiple values or if you entered an invalid value.")
+              print_quit_and_report()
+          return True
+        except:
+          print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting '{setting}': {str(value)}")
+          print("It looks like you tried to enter a list. Check if that setting accepts multiple values or if you entered an invalid value.")
+          print_quit_and_report()
+
+      elif value in validSettingsDict[setting]:
+        return True
+      else:
+        print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting '{setting}': {str(value)}")
+        print("Check the config file to see valid possible values for that setting.")
+        print_quit_and_report()
+    else:
+      return None
+
+  def validate_levenshtein(value):
+    try:
+      value = float(value)
+      if value >= 0.0 and value <= 1.0:
+        return True
+      else:
+        print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'levenshtein_distance': {str(value)}")
+        print("It must be a number from 0 to 1!")
+        print_quit_and_report()
+    except:  
+      print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'levenshtein_distance': {str(value)}")
+      print("It must be a number from 0 to 1!")
+      print_quit_and_report()
+
+  def validate_directory(path):
+    if path == 'logs':
+      return True
+    elif os.path.isdir(path):
+      return True
+    else:
+      print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'log_path': {str(path)}")
+      print("Make sure the folder exists!")
+      print_quit_and_report()
+  
+  def validate_encoding(value):
+    try:
+      codecs.lookup(value)
+      return True
+    except LookupError:
+      print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'json_encoding': {str(value)}")
+      print("Make sure the encoding is valid!")
+      print_quit_and_report()
+
+  def validate_videos_to_scan(value):
+    if value == 'ask':
+      return True
+    else:
+      try:
+        videoList = utils.string_to_list(value)
+      except:
+        print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'videos_to_scan': {str(value)}")
+        print("Make sure it is either a single video ID / Link, or a comma separate list of them!")
+        print_quit_and_report()
+      if len(videoList) > 0:
+        for video in videoList:
+          if not validate_video_id(video, basicCheck=True):
+            print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} There appears to be an invalid video ID or Link in setting 'videos_to_scan': {str(value)}")
+            print_quit_and_report()
+        return True
+      else:
+        print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'videos_to_scan' (it may be empty!): {str(value)}")
+        print("Make sure it is either a single video ID / Link, or a comma separate list of them!")
+        print_quit_and_report()
+
+  def validate_channel_to_scan(value):
+    if value == 'ask' or value == 'mine':
+      return True
+    else:
+      result, channelID, channelName = validate_channel_id(value)
+      if result == False:
+        print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Config setting for 'channel_to_scan' appears invalid: {str(value)}")
+        print("Make sure it is either a single channel ID or channel link.  If it's a link, try using the channel ID instead.")
+        print_quit_and_report()
+      else:
+        return True
+
+  def validate_channel_ids_to_filter(value):
+    if value == 'ask':
+      return True
+    else:
+      try:
+        channelList = utils.string_to_list(value)
+      except:
+        print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'channel_ids_to_filter': {str(value)}")
+        print("Make sure it is either a single channel ID / Link, or a comma separate list of them!")
+        print_quit_and_report()
+      for channel in channelList:
+        if len(channel) != 24 or channel[0:2] != "UC":
+          print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} There appears to be an invalid channel ID in setting 'channel_ids_to_filter': {str(value)}")
+          print("A channel ID must be 24 charactres long and begin with 'UC'!")
+          print_quit_and_report()
+      return True
+  
+  def validate_chars(value):
+    if value == 'ask':
+      return True
+    result = utils.make_char_set(value, stripLettersNumbers=True, stripKeyboardSpecialChars=False, stripPunctuation=True)
+    if result:
+      return True
+    else:
+      print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'characters_to_filter': {str(value)}")
+      print("For this mode, numbers, letters, and punctuation are removed. But there were no characters left to search!")
+      print_quit_and_report()
+
+  def validate_strings(value):
+    if value == 'ask':
+      return True
+    try:
+      result = utils.string_to_list(value)
+      if len(result) > 0:
+        return True
+      else:
+        print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'strings_to_filter': {str(value)}")
+        print("The list appears empty! Make sure it is either a single string, or a comma separate list of them!")
+        print_quit_and_report()
+    except:
+      print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'strings_to_filter': {str(value)}")
+      print("Make sure it is either a single string, or a comma separate list of them!")
+      print_quit_and_report()
+  
+  def validate_regex_setting(value):
+    if value == 'ask':
+      return True
+    isValid, expression = validate_regex(value)
+    if isValid:
+      return True
+    else:
+      print(f"\n{B.RED}{F.WHITE} ERROR! {S.R}The config setting 'regex_to_filter' does not appear to be valid: {str(value)}")
+      print("Make sure it is a valid regular expresion! Example:  [^\x00-\xFF]")
+      print("You can test them out on websites like regex101.com")
+      print_quit_and_report()
+            
+  # --------------------------------------------------------------------------------------      
+
+  validSettingsDict = {
+    'use_this_config': (True, False, 'ask'),
+    'this_config_description': None,
+    'your_channel_id': None, # None because will be checked right away anyway
+    'auto_check_update': (True, False),
+    'release_channel': ('all', 'stable'),
+    'skip_confirm_video': (True, False),
+    'moderator_mode': (True, False),
+    'auto_close': (True, False),
+    'scan_mode': ('ask', 'chosenvideos', 'recentvideos', 'entirechannel', 'communitypost', 'recentcommunityposts'),
+    'max_comments': ('ask'), #
+    #'videos_to_scan': None,
+    #'channel_to_scan': None,
+    'recent_videos_amount': ('ask'), #
+    'filter_mode': ('ask', 'id', 'username', 'text', 'nameandtext', 'autoascii', 'autosmart', 'sensitivesmart'),
+    'filter_submode': ('ask', 'characters', 'strings', 'regex'),
+    #'channel_ids_to_filter': None,
+    'autoascii_sensitivity': ('ask', '1', '2', '3'),
+    #'characters_to_filter': None,
+    #'strings_to_filter': None,
+    #'regex_to_filter': None,
+    'detect_link_spam': (True, False),
+    'detect_sub_challenge_spam': (True, False),
+    'detect_spam_threads': (True, False),
+    'duplicate_check_modes': ('none', 'id', 'username', 'text', 'nameandtext', 'autoascii', 'autosmart', 'sensitivesmart'),
+    #'levenshtein_distance': (),
+    #'minimum_duplicates': None,
+    'skip_deletion': (True, False),
+    'delete_without_reviewing': (True, False),
+    'enable_ban': ('ask', False),
+    'remove_all_author_comments': ('ask', True, False),
+    'removal_type': ('rejected', 'heldforreview', 'reportspam'),
+    'whitelist_excluded': ('ask', True, False),
+    'check_deletion_success':(True, False),
+    'enable_logging': ('ask', True, False),
+    #'log_path': None,
+    'log_mode': ('rtf', 'plaintext'),
+    'json_log': (True, False),
+    #'json_encoding': None,
+    'json_extra_data': (True, False),
+    'json_profile_picture': (False, 'default', 'medium', 'high'),
+    #'quota_limit': (),
+    #'config_version': (),
+  }
+
+  # Settings that can or must contain an integer
+  integerSettings = ['max_comments', 'recent_videos_amount', 'minimum_duplicates', 'quota_limit', 'config_version']
+
+  # Dictionary of settings requiring specific checks, and the functions to validate them
+  specialCheck = {
+    'levenshtein_distance': validate_levenshtein,
+    'log_path': validate_directory,
+    'json_encoding': validate_encoding,
+    'videos_to_scan': validate_videos_to_scan,
+    'channel_to_scan': validate_channel_to_scan,
+    'channel_ids_to_filter': validate_channel_ids_to_filter,
+    'characters_to_filter': validate_chars,
+    'strings_to_filter': validate_strings,
+    'regex_to_filter': validate_regex_setting
+    }
+
+  # ADD CHECK FOR EMPTY STRING!
+
+  for settingName, settingValue in config.items():
+    if settingValue == None or settingValue == '':
+      print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} The config setting '{settingName}' appears empty!")
+      print("Please go and add a valid setting value!")
+      print_quit_and_report()
+
+    # Check integer value settings
+    if settingName in integerSettings:
+      try:
+        int(settingValue)
+        continue
+      except ValueError:
+        # Check if there is another valid value besides an integer
+        if simple_settings_check(settingName, settingValue) == True:
+          continue
+        else:
+          print_int_fail(settingName, settingValue)
+
+    elif settingName in specialCheck:
+      if specialCheck[settingName](settingValue) == True:
+        continue
+
+    # Check simple value settings
+    else:
+      result = simple_settings_check(settingName, settingValue)
+      if result == True:
+        continue
+      elif result == None:
+        print(f"\n{B.RED}{F.WHITE} WARNING! {S.R} An unknown setting was found:  '{settingName}': {str(settingValue)}")
+        print(f"If you didn't add or change this setting in the config file, a validation check was probably forgotten to be created!")
+        print(f"Consider reporting it: {F.YELLOW}TJoe.io/bug-report{S.R}")
+        input(f"\n It might not cause an issue, so press Enter to continue anyway...")
+        continue
