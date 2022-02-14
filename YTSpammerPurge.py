@@ -36,7 +36,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.16.0-Beta2"
+version = "2.16.0-Beta3"
 configVersion = 30
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 print("Importing Script Modules...")
@@ -317,6 +317,7 @@ def main():
   class ScanInstance:
     matchedCommentsDict: dict         #Comments flagged by the filter
     duplicateCommentsDict: dict       #Comments flagged as duplicates
+    repostedCommentsDict: dict          #Comments stolen from other users
     otherCommentsByMatchedAuthorsDict: dict #Comments not matched, but are by a matched author
     scannedThingsList: list           #List of posts or videos that were scanned
     spamThreadsDict: dict             #Comments flagged as parent of spam threads
@@ -344,6 +345,7 @@ def main():
     current = ScanInstance(
       matchedCommentsDict={},
       duplicateCommentsDict={},
+      repostedCommentsDict={},
       otherCommentsByMatchedAuthorsDict={},
       scannedThingsList=[],
       spamThreadsDict = {},
@@ -1228,7 +1230,7 @@ def main():
         print("Error Code C-2: Invalid value for 'enable_logging' in config file:  " + logSetting)
 
     # Counts number of found spam comments and prints list
-    if not current.matchedCommentsDict and not current.duplicateCommentsDict and not current.spamThreadsDict: # If no spam comments found, exits
+    if not current.matchedCommentsDict and not current.duplicateCommentsDict and not current.spamThreadsDict and not current.repostedCommentsDict: # If no spam comments found, exits
       print(f"{B.RED}{F.BLACK} No matched comments or users found! {F.R}{B.R}{S.R}\n")
       print(f"If you see missed spam or false positives, you can submit a filter suggestion here: {F.YELLOW}TJoe.io/filter-feedback{S.R}")
 
@@ -1252,6 +1254,8 @@ def main():
       print(f"\nNumber of {S.BRIGHT}{F.RED}Spam Bot Threads{S.R} Found: {S.BRIGHT}{B.RED}{F.WHITE} {str(len(current.spamThreadsDict))} {F.R}{B.R}{S.R}")
     if current.duplicateCommentsDict:
       print(f"\nNumber of {S.BRIGHT}{F.LIGHTBLUE_EX}Non-Matched But Duplicate{S.R} Comments Found: {S.BRIGHT}{F.WHITE}{B.BLUE} {str(len(current.duplicateCommentsDict))} {F.R}{B.R}{S.R}")
+    if current.repostedCommentsDict:
+      print(f"\nNumber of {S.BRIGHT}{F.LIGHTBLUE_EX}Non-Matched But Stolen & Reposted{S.R} Comments Found: {S.BRIGHT}{F.WHITE}{B.BLUE} {str(len(current.repostedCommentsDict))} {F.R}{B.R}{S.R}")
 
     # If spam comments were found, continue
     if bypass == False:
@@ -1475,7 +1479,7 @@ def main():
           exclude = True
 
           # Check that remaining comments list to remove is not empty
-          if not current.matchedCommentsDict and not current.duplicateCommentsDict and not current.spamThreadsDict:
+          if not current.matchedCommentsDict and not current.duplicateCommentsDict and not current.spamThreadsDict and not current.repostedCommentsDict:
             print(f"\n{F.YELLOW}All authors excluded, no comments left to remove!{S.R}")
             input("\nPress Enter to log and/or return to main menu...")
             returnToMenu = True
@@ -1493,6 +1497,7 @@ def main():
     combinedCommentDict = dict(current.matchedCommentsDict)
     combinedCommentDict.update(current.duplicateCommentsDict)
     combinedCommentDict.update(current.spamThreadsDict)
+    combinedCommentDict.update(current.repostedCommentsDict)
     includeOtherAuthorComments = False
 
     banChoice = False
@@ -1571,7 +1576,7 @@ def main():
       print("                               ")
 
       # Write Json Log File
-      if config['json_log'] == True and loggingEnabled and (current.matchedCommentsDict or current.duplicateCommentsDict or current.spamThreadsDict):
+      if config['json_log'] == True and loggingEnabled and (current.matchedCommentsDict or current.duplicateCommentsDict or current.spamThreadsDict or current.repostedCommentsDict):
         print("\nWriting JSON log file...")
         if config['json_extra_data'] == True:
           if current.errorOccurred == False:

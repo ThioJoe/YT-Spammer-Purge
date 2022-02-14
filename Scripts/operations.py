@@ -11,6 +11,7 @@ from Scripts.utils import choice
 import unicodedata
 import time
 import itertools
+from datetime import datetime
 #from collections import Counter
 from Levenshtein import ratio
 from googleapiclient.errors import HttpError
@@ -104,7 +105,8 @@ def get_comments(current, filtersDict, miscData, config, allVideoCommentsDict, s
       'commentText':commentText,
       'commentID':parent_id,
       'videoID': videoID,
-      'timestamp':timestamp
+      'timestamp':timestamp,
+      'originalCommentID': None
       }
     if config['json_log_all_comments'] == True:
       currentCommentDict['uploaderChannelID'] = miscData.channelOwnerID
@@ -113,6 +115,7 @@ def get_comments(current, filtersDict, miscData, config, allVideoCommentsDict, s
       currentCommentDict['videoTitle'] = utils.get_video_title(current, videoID)
       currentCommentDict['matchReason'] = None
       currentCommentDict['isSpam'] = 'False'
+
 
     check_against_filter(current, filtersDict, miscData, config, currentCommentDict, videoID)
     current.scannedCommentsCount += 1
@@ -152,7 +155,7 @@ def get_comments(current, filtersDict, miscData, config, allVideoCommentsDict, s
       print(" Analyzing For Duplicates                                                                                        ", end="\r")
       check_duplicates(current, config, miscData, allVideoCommentsDict, videoID)
       print("                                                                                                                       ")
-    repostCheckModes = utils.string_to_list(config['repost_comment_check_modes'])
+    repostCheckModes = utils.string_to_list(config['stolen_comments_check_modes'])
     if filtersDict['filterMode'].lower() in repostCheckModes:
       print(" Analyzing For Reposts                                                                                           ", end="\r")
       check_reposts(current, config, miscData, allVideoCommentsDict, videoID)
@@ -202,9 +205,9 @@ def get_replies(current, filtersDict, miscData, config, parent_id, videoID, pare
       replies.extend(results["items"])
 
       # Get token for next page
-      try:
-        replyPageToken = results['nextPageToken']
-      except KeyError:
+      if "nextPageToken" in results:
+        replyPageToken = results["nextPageToken"]
+      else:
         replyPageToken = "End"
 
   else:
@@ -246,7 +249,8 @@ def get_replies(current, filtersDict, miscData, config, parent_id, videoID, pare
       'commentText':commentText,
       'commentID':replyID,
       'videoID': videoID,
-      'timestamp':timestamp
+      'timestamp':timestamp,
+      'originalCommentID': None
       }
     if config['json_log_all_comments'] == True:
       currentCommentDict['uploaderChannelID'] = miscData.channelOwnerID
@@ -515,18 +519,17 @@ def add_spam(current, config, miscData, currentCommentDict, videoID, matchReason
     dictToUse = current.otherCommentsByMatchedAuthorsDict
   elif matchReason == "Spam Bot Thread":
     dictToUse = current.spamThreadsDict
-  if matchReason == "Repost":
-    current.matchedCommentsDict[commentID]['originalCommentID'] = currentCommentDict['originalCommentID']
-  else:
-    current.matchedCommentsDict[commentID]['originalCommentID'] = None
+  elif matchReason == "Repost":
+    dictToUse = current.repostedCommentsDict
 
   commentID = currentCommentDict['commentID']
   authorChannelName = currentCommentDict['authorChannelName']
   authorChannelID = currentCommentDict['authorChannelID']
   commentTextRaw = str(currentCommentDict['commentText']) # Use str() to ensure not pointing to same place in memory
   commentText = str(currentCommentDict['commentText']).replace("\r", "")
+  originalCommentID = currentCommentDict['originalCommentID']
 
-  dictToUse[commentID] = {'text':commentText, 'textUnsanitized':commentTextRaw, 'authorName':authorChannelName, 'authorID':authorChannelID, 'videoID':videoID, 'matchReason':matchReason}
+  dictToUse[commentID] = {'text':commentText, 'textUnsanitized':commentTextRaw, 'authorName':authorChannelName, 'authorID':authorChannelID, 'videoID':videoID, 'matchReason':matchReason, 'originalCommentID':originalCommentID}
   current.vidIdDict[commentID] = videoID # Probably remove this later, but still being used for now
 
   # Count of comments per author
@@ -619,7 +622,7 @@ def check_duplicates(current, config, miscData, allVideoCommentsDict, videoID):
               break
         
         # Only count each comment once by counting number of unique indexes in matchedIndexes
-        uniqueMatches = len(set(matchedIndexes))    
+        uniqueMatches = len(set(matchedIndexes))
         if uniqueMatches >= minimum_duplicates:
           numDupes += uniqueMatches
       if numDupes > 0:
@@ -631,90 +634,70 @@ def check_duplicates(current, config, miscData, allVideoCommentsDict, videoID):
   print("".ljust(90, " ")) # Erase line
 
 
-############################# Check Text Duplicates #####################################
-def check_reposts(current, config, miscData, allCommentsDict, videoID):
+############################# Check Text Reposts #####################################
+def check_reposts(current, config, miscData, allVideoCommentsDict, videoID):
   # Get Lenvenshtein Distance Setting
-  try:
-    levenshtein = float(config['levenshtein_distance'])
-    if levenshtein < 0 or levenshtein > 1:
-      print("\nError: Levenshtein_distance config setting must be between 0 and 1. Defaulting to 0.9")
+  if config['fuzzy_stolen_comment_detection'] == True:
+    try:
+      levenshtein = float(config['levenshtein_distance'])
+      if levenshtein < 0 or levenshtein > 1:
+        print("\nError: Levenshtein_distance config setting must be between 0 and 1. Defaulting to 0.9")
+        input("\nPress Enter to continue...")
+        levenshtein = 0.9
+    except ValueError:
+      print("\nError: Levenshtein_distance config setting must be a number between 0 and 1. Defaulting to 0.9")
       input("\nPress Enter to continue...")
       levenshtein = 0.9
-  except ValueError:
-    print("\nError: Levenshtein_distance config setting must be a number between 0 and 1. Defaulting to 0.9")
-    input("\nPress Enter to continue...")
-    levenshtein = 0.9
+    fuzzy = True
+  else:
+    fuzzy = False
 
   # Get duplicate count setting
   try:
-    repost_minimum_text_length = int(config['repost_minimum_text_length'])
-    if repost_minimum_text_length < 1:
-      repost_minimum_text_length = 25
+    minLength = int(config['repost_minimum_text_length'])
+    if minLength < 1:
+      minLength = 25
       print("\nError: Repost_minimum_text_length config setting must be greater than 0. Defaulting to 25.")
       input("\nPress Enter to continue...")
   except ValueError:
-    repost_minimum_text_length = 25
+    minLength = 25
     print("\nError: Repost_minimum_text_length config setting is invalid. Defaulting to 25.")
     input("\nPress Enter to continue...")
 
-  repostCommentsDict = []
+  flatCommentList = []
 
   # Calculate number of authors to check, for progress
-  authorCount = len(allCommentsDict)
+  authorCount = len(allVideoCommentsDict)
   scannedCount = 0
 
-  # Look for multi-author duplicates
-  for authorID, authorCommentsList in allCommentsDict.items():
-    # Don't scan channel owner, current user, or any user in whitelist
-    if auth.CURRENTUSER.id == authorID or miscData.channelOwnerID == authorID or authorID in miscData.resources['Whitelist']['WhitelistContents']:
-      scannedCount +=1
-      print(f" Analyzing For Reposts: [ {scannedCount/authorCount*100:.2f}% ]   (Can be disabled & customized in config)".ljust(75, " "), end="\r")
-    else:
-      for commentDict in authorCommentsList:
-        matched = False
-        for i,x in enumerate(repostCommentsDict):
-          key = next(iter(x))
+  # Create time-sorted list of all comments
+  for authorID, authorCommentsList in allVideoCommentsDict.items():
+    for commentDict in authorCommentsList:
+      if not commentDict['parentAuthorChannelID']:  # Only bother checking top level comments
+        flatCommentList.append(commentDict)
 
-          # Compare current comment against every other old comment          
-          if ratio(key, commentDict['commentText']) > levenshtein:
-            x[key].append(commentDict)
-            matched = True
+  flatCommentList.sort(key=lambda x: datetime.strptime(x['timestamp'], '%Y-%m-%dT%H:%M:%SZ'))
+  totalComments = len(flatCommentList)
+
+  # Run Duplicate Check
+  for i,x in enumerate(flatCommentList[1:], start=1): # x is comment dictionary. Enumerate starting with second comment (1:), because nothing came before it. Use start=1 so i-1 refers to correct index in flatCommentList
+    scrutinizedText = x['commentText']
+    for j in range(0,i-1): # Only need to check against comments that came before it, so have index less than current
+      authorID = flatCommentList[j]['authorChannelID']
+      if not (auth.CURRENTUSER.id == authorID and miscData.channelOwnerID == authorID and authorID in miscData.resources['Whitelist']['WhitelistContents']):
+        olderCommentText = flatCommentList[j]['commentText']
+        if len(scrutinizedText) >= minLength and (x['commentID'] not in current.matchedCommentsDict and x['commentID'] not in current.duplicateCommentsDict):
+          #if ratio(scrutinizedText, olderCommentText) > levenshtein:
+          if (not fuzzy and scrutinizedText == olderCommentText) or (fuzzy and ratio(scrutinizedText, olderCommentText) > levenshtein):
+            # List the indexes of the matched comments in the list
+            x['originalCommentID'] = flatCommentList[j]['commentID']
+            add_spam(current, config, miscData, x, videoID, matchReason="Repost")
             break
+    scannedCount += 1
+    print(f" Analyzing For Stolen Comments: [ {scannedCount/totalComments*100:.2f}% ]   (Can be disabled & customized in config)".ljust(75, " "), end="\r")
 
-        # If no match, store it as a key for further searching
-        if matched is False:
-            repostCommentsDict.append({commentDict['commentText']: [commentDict]})
-
-      scannedCount += 1
-      print(f" Analyzing For Reposts: [ {scannedCount/authorCount*100:.2f}% ]   (Can be disabled & customized in config)".ljust(75, " "), end="\r")
-
-
-  # Store comments that are reposts
-  for x in repostCommentsDict:
-    key = next(iter(x))
-    if len(x[key]) > 1 and len(key) > repost_minimum_text_length:
-
-      # Find the first comment
-      firstComment = None
-      for commentDict in x[key]:
-        # Store earliest timestamp
-        if commentDict['timestamp'] > "" if firstComment is None else firstComment['timestamp']:
-          firstComment = commentDict
-      
-      # Remove authors that have been reported already, and don't include the first comment author (this means min dupe check is ignored for copiers, not for the OG commentor)
-      toRemove = []
-      for commentDict in x[key]:
-        if any(commentDict['authorChannelID'] == value['authorID'] for key,value in current.matchedCommentsDict.items()) or commentDict['authorChannelID'] == firstComment['authorChannelID']:
-          toRemove.append(commentDict)
-      
-      for comment in toRemove:
-        x[key].remove(comment)
-
-      for commentDict in x[key]:
-        # Store for later use
-        commentDict['originalCommentID'] = firstComment['commentID']
-        add_spam(current, config, miscData, commentDict, videoID, matchReason="Repost")
-
+  print("".ljust(90, " ")) # Erase line
+    
 
 ##########################################################################################
 ############################## CHECK AGAINST FILTER ######################################
@@ -1263,7 +1246,10 @@ def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToEx
       commentIDExcludeSet.add(comment)
   for comment, metadata in current.spamThreadsDict.items():
     if metadata['authorID'] in authorsToExcludeSet:
-      commentIDExcludeSet.add(comment)    
+      commentIDExcludeSet.add(comment)
+  for comment, metadata in current.repostedCommentsDict.items():
+    if metadata['authorID'] in authorsToExcludeSet:
+      commentIDExcludeSet.add(comment)
 
   # Remove all comments by selected authors from dictionary of comments
   for comment in commentIDExcludeSet:
@@ -1275,6 +1261,8 @@ def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToEx
       excludedCommentsDict[comment] = current.otherCommentsByMatchedAuthorsDict.pop(comment)
     if comment in current.spamThreadsDict.keys():
       excludedCommentsDict[comment] = current.spamThreadsDict.pop(comment)
+    if comment in current.repostedCommentsDict.keys():
+      excludedCommentsDict[comment] = current.repostedCommentsDict.pop(comment)  
 
   # Create strings that can be used in log files
   
