@@ -29,6 +29,12 @@ def test_exclude_authors(tmp_path):
         kwargs["excludedCommentsDict"],
         kwargs["authorsToExcludeSet"],
         kwargs["commentIDExcludeSet"],
+        "\\line \n"
+        " Comments Excluded From Deletion: \\line \n"
+        "(Values = Comment ID | Author ID | Author Name | Comment Text) \\line \n",
+        "\n"
+        "Comments Excluded From Deletion:\n"
+        "(Values = Comment ID | Author ID | Author Name | Comment Text)\n",
     )
     res = exclude_authors(**kwargs)  # type: ignore
     assert res == exp_res
