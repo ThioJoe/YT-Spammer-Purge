@@ -654,20 +654,19 @@ def check_reposts(current, config, miscData, allVideoCommentsDict, videoID):
 
   # Get duplicate count setting
   try:
-    minLength = int(config['repost_minimum_text_length'])
+    minLength = int(config['stolen_minimum_text_length'])
     if minLength < 1:
       minLength = 25
-      print("\nError: Repost_minimum_text_length config setting must be greater than 0. Defaulting to 25.")
+      print("\nError: stolen_minimum_text_length config setting must be greater than 0. Defaulting to 25.")
       input("\nPress Enter to continue...")
   except ValueError:
     minLength = 25
-    print("\nError: Repost_minimum_text_length config setting is invalid. Defaulting to 25.")
+    print("\nError: stolen_minimum_text_length config setting is invalid. Defaulting to 25.")
     input("\nPress Enter to continue...")
 
   flatCommentList = []
 
   # Calculate number of authors to check, for progress
-  authorCount = len(allVideoCommentsDict)
   scannedCount = 0
 
   # Create time-sorted list of all comments
@@ -682,12 +681,13 @@ def check_reposts(current, config, miscData, allVideoCommentsDict, videoID):
   # Run Duplicate Check
   for i,x in enumerate(flatCommentList[1:], start=1): # x is comment dictionary. Enumerate starting with second comment (1:), because nothing came before it. Use start=1 so i-1 refers to correct index in flatCommentList
     scrutinizedText = x['commentText']
-    for j in range(0,i-1): # Only need to check against comments that came before it, so have index less than current
-      authorID = flatCommentList[j]['authorChannelID']
-      if not (auth.CURRENTUSER.id == authorID and miscData.channelOwnerID == authorID and authorID in miscData.resources['Whitelist']['WhitelistContents']):
+    scrutinizedAuthorID = x['authorChannelID']
+    if scrutinizedAuthorID == auth.CURRENTUSER.id or scrutinizedAuthorID == miscData.channelOwnerID or scrutinizedAuthorID == miscData.resources['Whitelist']['WhitelistContents']:
+      pass
+    else:
+      for j in range(0,i-1): # Only need to check against comments that came before it, so have index less than current
         olderCommentText = flatCommentList[j]['commentText']
-        if len(scrutinizedText) >= minLength and (x['commentID'] not in current.matchedCommentsDict and x['commentID'] not in current.duplicateCommentsDict):
-          #if ratio(scrutinizedText, olderCommentText) > levenshtein:
+        if len(scrutinizedText) >= minLength and flatCommentList[j]['authorChannelID'] != scrutinizedAuthorID and x['commentID'] not in current.matchedCommentsDict and x['commentID'] not in current.duplicateCommentsDict:
           if (not fuzzy and scrutinizedText == olderCommentText) or (fuzzy and ratio(scrutinizedText, olderCommentText) > levenshtein):
             # List the indexes of the matched comments in the list
             x['originalCommentID'] = flatCommentList[j]['commentID']

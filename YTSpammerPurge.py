@@ -1115,12 +1115,14 @@ def main():
             'authorChannelName':value['authorName'], 
             'commentText':value['commentText'],
             'commentID':key,
+            #'originalCommentID': None
             }
           try:
-            authorKeyAllCommentsDict[value['authorChannelID']].append(currentCommentDict)
-          except KeyError:
-            authorKeyAllCommentsDict[value['authorChannelID']] = [currentCommentDict]
-          except TypeError:
+            if value['authorChannelID'] in authorKeyAllCommentsDict:
+              authorKeyAllCommentsDict[value['authorChannelID']].append(currentCommentDict)
+            else:
+              authorKeyAllCommentsDict[value['authorChannelID']] = [currentCommentDict]
+          except TypeError: # Try/Except might not be necessary, might remove later
             pass
           operations.check_against_filter(current, filtersDict, miscData, config, currentCommentDict, videoID=communityPostID)
 
@@ -1142,9 +1144,9 @@ def main():
         dupeCheckModes = utils.string_to_list(config['duplicate_check_modes'])
         if filtersDict['filterMode'].lower() in dupeCheckModes:
           operations.check_duplicates(current, config, miscData, authorKeyAllCommentsDict, communityPostID)
-        repostCheckModes = utils.string_to_list(config['repost_comment_check_modes'])
-        if filtersDict['filterMode'].lower() in repostCheckModes:
-          operations.check_reposts(current, config, miscData, allCommunityCommentsDict, communityPostID)
+        # repostCheckModes = utils.string_to_list(config['stolen_comments_check_modes'])
+        # if filtersDict['filterMode'].lower() in repostCheckModes:
+        #   operations.check_reposts(current, config, miscData, allCommunityCommentsDict, communityPostID)
           print("                                                                                                                       ")
           
       if scanMode == "communityPost":
