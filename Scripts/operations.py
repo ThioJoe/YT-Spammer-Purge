@@ -528,8 +528,9 @@ def add_spam(current, config, miscData, currentCommentDict, videoID, matchReason
   commentTextRaw = str(currentCommentDict['commentText']) # Use str() to ensure not pointing to same place in memory
   commentText = str(currentCommentDict['commentText']).replace("\r", "")
   originalCommentID = currentCommentDict['originalCommentID']
+  timestamp = currentCommentDict['timestamp']
 
-  dictToUse[commentID] = {'text':commentText, 'textUnsanitized':commentTextRaw, 'authorName':authorChannelName, 'authorID':authorChannelID, 'videoID':videoID, 'matchReason':matchReason, 'originalCommentID':originalCommentID}
+  dictToUse[commentID] = {'text':commentText, 'textUnsanitized':commentTextRaw, 'authorName':authorChannelName, 'authorID':authorChannelID, 'videoID':videoID, 'matchReason':matchReason, 'originalCommentID':originalCommentID, 'timestamp':timestamp}
   current.vidIdDict[commentID] = videoID # Probably remove this later, but still being used for now
 
   # Count of comments per author
@@ -808,6 +809,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
       compiledRegexDict = smartFilter['compiledRegexDict']
       compiledObfuRegexDict = smartFilter['compiledObfuRegexDict']
       basicFilterDict = smartFilter['basicFilterDict']
+      preciseRegexDict = smartFilter['preciseRegexDict']
       numberFilterSet = smartFilter['spammerNumbersSet']
       compiledNumRegex = smartFilter['compiledNumRegex']
       minNumbersMatchCount = smartFilter['minNumbersMatchCount']
@@ -874,8 +876,13 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
       # Processed Variables
       combinedString = authorChannelName + commentText
       combinedSet = utils.make_char_set(combinedString, stripLettersNumbers=True, stripPunctuation=True)
-      upLowTextSet = set(commentText.replace(miscData.channelOwnerName, ""))
-      #usernameSet = utils.make_char_set(authorChannelName)
+      # UpLow Text Set
+      index = commentText.lower().rfind(miscData.channelOwnerName.lower())
+      if index != -1:
+        processedText = commentText.replace(commentText[index:index+len(miscData.channelOwnerName)], "")
+      else:
+        processedText = commentText
+      upLowTextSet = set(processedText)
 
       # Run Checks
       if authorChannelID == parentAuthorChannelID:
@@ -893,13 +900,15 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
         add_spam(current, config, miscData, currentCommentDict, videoID)
       elif compiledRegexDict['blackAdWords'].search(authorChannelName):
         add_spam(current, config, miscData, currentCommentDict, videoID)
+      elif compiledRegexDict['textBlackWords'].search(commentText):
+        add_spam(current, config, miscData, currentCommentDict, videoID)
       elif any(findObf(expressionPair[0], expressionPair[1], commentText) for expressionPair in compiledObfuRegexDict['textObfuBlackWords']):
         add_spam(current, config, miscData, currentCommentDict, videoID)
-      elif any(word in commentText.lower() for word in basicFilterDict['textExactBlackWords']):
+      elif preciseRegexDict['textExactBlackWords'].search(commentText.lower()):
         add_spam(current, config, miscData, currentCommentDict, videoID)
-      elif any((word in commentText and not upLowTextSet.intersection(lowAlSet)) for word in basicFilterDict['textUpLowBlackWords']):
+      elif preciseRegexDict['textUpLowBlackWords'].search(commentText) and not upLowTextSet.intersection(lowAlSet):
         add_spam(current, config, miscData, currentCommentDict, videoID)
-      elif any(findObf(expressionPair[0], expressionPair[1], commentText) for expressionPair in compiledObfuRegexDict['usernameObfuBlackWords']):  
+      elif any(findObf(expressionPair[0], expressionPair[1], authorChannelName) for expressionPair in compiledObfuRegexDict['usernameObfuBlackWords']):  
         add_spam(current, config, miscData, currentCommentDict, videoID)
       elif spamListCombinedRegex.search(combinedString.lower()):
         add_spam(current, config, miscData, currentCommentDict, videoID)
@@ -907,7 +916,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
         add_spam(current, config, miscData, currentCommentDict, videoID)
       elif sensitive and re.search(smartFilter['usernameConfuseRegex'], authorChannelName):
         add_spam(current, config, miscData, currentCommentDict, videoID)
-      elif not sensitive and (findObf(smartFilter['usernameConfuseRegex'], list(miscData.channelOwnerName), authorChannelName) or authorChannelName == miscData.channelOwnerName):
+      elif not sensitive and (findObf(smartFilter['usernameConfuseRegex'], miscData.channelOwnerName, authorChannelName) or authorChannelName == miscData.channelOwnerName):
         add_spam(current, config, miscData, currentCommentDict, videoID)
       # Multi Criteria Tests
       else:
@@ -959,7 +968,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
         if compiledRegexDict['redAdWords'].search(combinedString):
           redCount += 1
 
-        if any(word in combinedString.lower() for word in basicFilterDict['exactRedAdWords']):
+        if preciseRegexDict['exactRedAdWords'].search(combinedString.lower()):
           redCount += 1
 
         if redAdEmojiSet.intersection(combinedSet):

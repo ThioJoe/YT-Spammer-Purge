@@ -10,7 +10,7 @@ import Scripts.operations as operations
 import Scripts.files as files
 import Scripts.filter_variables as filter
 
-from confusables import confusable_regex, normalize
+from Scripts.confusablesCustom import confusable_regex, normalize
 from base64 import b85decode as b64decode
 import pathlib
 
@@ -303,6 +303,13 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
     'redAdWords': filter.redAdWordsCompiled,
     'yellowAdWords': filter.yellowAdWordsCompiled,
     'usernameRedWords': filter.usernameRedWordsCompiled,
+    'textBlackWords': filter.textBlackWordsCompiled,
+  }
+
+  preciseRegexDict = {
+    'textExactBlackWords': re.compile(filter.textExactBlackWords),
+    'textUpLowBlackWords': re.compile(filter.textUpLowBlackWords),
+    'exactRedAdWords': re.compile(filter.exactRedAdWords),
   }
 
   compiledObfuRegexDict = {
@@ -311,8 +318,6 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   }
 
   basicFilterDict = {
-    'textExactBlackWords': filter.textExactBlackWords,
-    'textUpLowBlackWords': filter.textUpLowBlackWords,
     'usernameRedWords': filter.usernameRedWordsCompiled,
     'exactRedAdWords': filter.exactRedAdWords,
   }    
@@ -346,7 +351,6 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   # Prepare Regex to detect nothing but video link in comment
   onlyVideoLinkRegex = re.compile(r"^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$")
   compiledRegexDict['onlyVideoLinkRegex'] = onlyVideoLinkRegex
-
 
   # Compile Thread Detection Regex
   nameRegex = re.compile(rf'\b{filter.salutationRegex}\s+([a-zA-Z]+\.?)\s+([a-zA-Z]+)')
@@ -427,6 +431,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
     'compiledRegexDict': compiledRegexDict,
     'compiledObfuRegexDict': compiledObfuRegexDict,
     'basicFilterDict': basicFilterDict,
+    'preciseRegexDict': preciseRegexDict,
     'usernameConfuseRegex': usernameConfuseRegex,
     'languages': languages,
     'sensitive': sensitive,

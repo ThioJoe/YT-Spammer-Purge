@@ -36,7 +36,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.16.0-Beta2"
+version = "2.16.0-Beta3"
 configVersion = 30
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 print("Importing Script Modules...")
@@ -1321,7 +1321,7 @@ def main():
       print(f"Defaulting to '{F.YELLOW}False{S.R}'")
       input("\nPress Enter to continue...")
 
-    ### ----------------------------------------------------------------  
+    ### ----------------------------------------------------------------
 
     ### ------------- Decide whether to ask before deleting -------------
     # Using config to determine deletion type, block invalid settings
