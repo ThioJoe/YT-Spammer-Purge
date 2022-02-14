@@ -26,7 +26,7 @@ def get_comments(current, filtersDict, miscData, config, allVideoCommentsDict, s
   commentText = None
   parentAuthorChannelID = None
 
-  fieldsToFetch = "nextPageToken,items/snippet/topLevelComment/id,items/replies/comments,items/snippet/totalReplyCount,items/snippet/topLevelComment/snippet/videoId,items/snippet/topLevelComment/snippet/authorChannelId/value,items/snippet/topLevelComment/snippet/authorDisplayName,items/snippet/topLevelComment/snippet/textDisplay"
+  fieldsToFetch = "nextPageToken,items/snippet/topLevelComment/id,items/replies/comments,items/snippet/totalReplyCount,items/snippet/topLevelComment/snippet/videoId,items/snippet/topLevelComment/snippet/authorChannelId/value,items/snippet/topLevelComment/snippet/authorDisplayName,items/snippet/topLevelComment/snippet/textDisplay,items/snippet/topLevelComment/snippet/publishedAt"
 
   try:
     # Gets all comment threads for a specific video
@@ -71,6 +71,7 @@ def get_comments(current, filtersDict, miscData, config, allVideoCommentsDict, s
     videoID = comment["snippet"]["videoId"]
     parent_id = item["snippet"]["topLevelComment"]["id"]
     numReplies = item["snippet"]["totalReplyCount"]
+    timestamp = item["snippet"]["topLevelComment"]["snippet"]["publishedAt"]
 
     # In case there are no replies
     if 'replies' in item and 'comments' in item["replies"]:
@@ -103,6 +104,7 @@ def get_comments(current, filtersDict, miscData, config, allVideoCommentsDict, s
       'commentText':commentText,
       'commentID':parent_id,
       'videoID': videoID,
+      'timestamp':timestamp
       }
     if config['json_log_all_comments'] == True:
       currentCommentDict['uploaderChannelID'] = miscData.channelOwnerID
@@ -149,6 +151,12 @@ def get_comments(current, filtersDict, miscData, config, allVideoCommentsDict, s
     if filtersDict['filterMode'].lower() in dupeCheckModes:
       print(" Analyzing For Duplicates                                                                                        ", end="\r")
       check_duplicates(current, config, miscData, allVideoCommentsDict, videoID)
+      print("                                                                                                                       ")
+    repostCheckModes = utils.string_to_list(config['repost_comment_check_modes'])
+    if filtersDict['filterMode'].lower() in repostCheckModes:
+      print(" Analyzing For Reposts                                                                                           ", end="\r")
+      check_reposts(current, config, miscData, allVideoCommentsDict, videoID)
+      print("                                                                                                                       ")
 
   current.allScannedCommentsDict.update(allVideoCommentsDict)
   return RetrievedNextPageToken, allVideoCommentsDict
@@ -166,7 +174,7 @@ def get_replies(current, filtersDict, miscData, config, parent_id, videoID, pare
   threadDict = {}
   
   if repliesList == None:
-    fieldsToFetch = "nextPageToken,items/snippet/authorChannelId/value,items/id,items/snippet/authorDisplayName,items/snippet/textDisplay"
+    fieldsToFetch = "nextPageToken,items/snippet/authorChannelId/value,items/id,items/snippet/authorDisplayName,items/snippet/textDisplay,items/snippet/publishedAt"
     replies = []
     replyPageToken = None
 
@@ -210,6 +218,7 @@ def get_replies(current, filtersDict, miscData, config, parent_id, videoID, pare
   # Need individual tries because not all are fetched for each mode
   for reply in replies:  
     replyID = reply["id"]
+    timestamp = reply["snippet"]["publishedAt"]
     try:
       authorChannelID = reply["snippet"]["authorChannelId"]["value"]
     except KeyError:
@@ -236,7 +245,8 @@ def get_replies(current, filtersDict, miscData, config, parent_id, videoID, pare
       'authorChannelName':authorChannelName, 
       'commentText':commentText,
       'commentID':replyID,
-      'videoID': videoID
+      'videoID': videoID,
+      'timestamp':timestamp
       }
     if config['json_log_all_comments'] == True:
       currentCommentDict['uploaderChannelID'] = miscData.channelOwnerID
@@ -505,6 +515,10 @@ def add_spam(current, config, miscData, currentCommentDict, videoID, matchReason
     dictToUse = current.otherCommentsByMatchedAuthorsDict
   elif matchReason == "Spam Bot Thread":
     dictToUse = current.spamThreadsDict
+  if matchReason == "Repost":
+    current.matchedCommentsDict[commentID]['originalCommentID'] = currentCommentDict['originalCommentID']
+  else:
+    current.matchedCommentsDict[commentID]['originalCommentID'] = None
 
   commentID = currentCommentDict['commentID']
   authorChannelName = currentCommentDict['authorChannelName']
@@ -520,6 +534,7 @@ def add_spam(current, config, miscData, currentCommentDict, videoID, matchReason
     current.authorMatchCountDict[authorChannelID] += 1
   else:
     current.authorMatchCountDict[authorChannelID] = 1
+
 
   # If json_log_all_comments is enabled, this is not needed because this info is logged for all comments
   if config['json_log'] == True and config['json_log_all_comments'] == False:
@@ -568,11 +583,11 @@ def check_duplicates(current, config, miscData, allVideoCommentsDict, videoID):
     minimum_duplicates = int(config['minimum_duplicates'])
     if minimum_duplicates < 2:
       minimum_duplicates = 4
-      print("\nError: Minimum_Duplicates config setting must be greater than 1. Defaulting to 4.")
+      print("\nError: minimum_duplicates config setting must be greater than 1. Defaulting to 4.")
       input("\nPress Enter to continue...")
   except ValueError:
     minimum_duplicates = 4
-    print("\nError: Minimum_Duplicates config setting is invalid. Defaulting to 4.")
+    print("\nError: minimum_duplicates config setting is invalid. Defaulting to 4.")
     input("\nPress Enter to continue...")
   
   # Calculate number of authors to check, for progress
@@ -614,6 +629,91 @@ def check_duplicates(current, config, miscData, allVideoCommentsDict, videoID):
       print(f" Analyzing For Duplicates: [ {scannedCount/authorCount*100:.2f}% ]   (Can be disabled & customized in config)".ljust(75, " "), end="\r")
 
   print("".ljust(90, " ")) # Erase line
+
+
+############################# Check Text Duplicates #####################################
+def check_reposts(current, config, miscData, allCommentsDict, videoID):
+  # Get Lenvenshtein Distance Setting
+  try:
+    levenshtein = float(config['levenshtein_distance'])
+    if levenshtein < 0 or levenshtein > 1:
+      print("\nError: Levenshtein_distance config setting must be between 0 and 1. Defaulting to 0.9")
+      input("\nPress Enter to continue...")
+      levenshtein = 0.9
+  except ValueError:
+    print("\nError: Levenshtein_distance config setting must be a number between 0 and 1. Defaulting to 0.9")
+    input("\nPress Enter to continue...")
+    levenshtein = 0.9
+
+  # Get duplicate count setting
+  try:
+    repost_minimum_text_length = int(config['repost_minimum_text_length'])
+    if repost_minimum_text_length < 1:
+      repost_minimum_text_length = 25
+      print("\nError: Repost_minimum_text_length config setting must be greater than 0. Defaulting to 25.")
+      input("\nPress Enter to continue...")
+  except ValueError:
+    repost_minimum_text_length = 25
+    print("\nError: Repost_minimum_text_length config setting is invalid. Defaulting to 25.")
+    input("\nPress Enter to continue...")
+
+  repostCommentsDict = []
+
+  # Calculate number of authors to check, for progress
+  authorCount = len(allCommentsDict)
+  scannedCount = 0
+
+  # Look for multi-author duplicates
+  for authorID, authorCommentsList in allCommentsDict.items():
+    # Don't scan channel owner, current user, or any user in whitelist
+    if auth.CURRENTUSER.id == authorID or miscData.channelOwnerID == authorID or authorID in miscData.resources['Whitelist']['WhitelistContents']:
+      scannedCount +=1
+      print(f" Analyzing For Reposts: [ {scannedCount/authorCount*100:.2f}% ]   (Can be disabled & customized in config)".ljust(75, " "), end="\r")
+    else:
+      for commentDict in authorCommentsList:
+        matched = False
+        for i,x in enumerate(repostCommentsDict):
+          key = next(iter(x))
+
+          # Compare current comment against every other old comment          
+          if ratio(key, commentDict['commentText']) > levenshtein:
+            x[key].append(commentDict)
+            matched = True
+            break
+
+        # If no match, store it as a key for further searching
+        if matched is False:
+            repostCommentsDict.append({commentDict['commentText']: [commentDict]})
+
+      scannedCount += 1
+      print(f" Analyzing For Reposts: [ {scannedCount/authorCount*100:.2f}% ]   (Can be disabled & customized in config)".ljust(75, " "), end="\r")
+
+
+  # Store comments that are reposts
+  for x in repostCommentsDict:
+    key = next(iter(x))
+    if len(x[key]) > 1 and len(key) > repost_minimum_text_length:
+
+      # Find the first comment
+      firstComment = None
+      for commentDict in x[key]:
+        # Store earliest timestamp
+        if commentDict['timestamp'] > "" if firstComment is None else firstComment['timestamp']:
+          firstComment = commentDict
+      
+      # Remove authors that have been reported already, and don't include the first comment author (this means min dupe check is ignored for copiers, not for the OG commentor)
+      toRemove = []
+      for commentDict in x[key]:
+        if any(commentDict['authorChannelID'] == value['authorID'] for key,value in current.matchedCommentsDict.items()) or commentDict['authorChannelID'] == firstComment['authorChannelID']:
+          toRemove.append(commentDict)
+      
+      for comment in toRemove:
+        x[key].remove(comment)
+
+      for commentDict in x[key]:
+        # Store for later use
+        commentDict['originalCommentID'] = firstComment['commentID']
+        add_spam(current, config, miscData, commentDict, videoID, matchReason="Repost")
 
 
 ##########################################################################################

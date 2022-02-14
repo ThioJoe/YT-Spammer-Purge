@@ -37,7 +37,7 @@
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
 version = "2.16.0-Beta2"
-configVersion = 29
+configVersion = 30
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 print("Importing Script Modules...")
 # Import other module files
@@ -1140,6 +1140,9 @@ def main():
         dupeCheckModes = utils.string_to_list(config['duplicate_check_modes'])
         if filtersDict['filterMode'].lower() in dupeCheckModes:
           operations.check_duplicates(current, config, miscData, authorKeyAllCommentsDict, communityPostID)
+        repostCheckModes = utils.string_to_list(config['repost_comment_check_modes'])
+        if filtersDict['filterMode'].lower() in repostCheckModes:
+          operations.check_reposts(current, config, miscData, allCommunityCommentsDict, communityPostID)
           print("                                                                                                                       ")
           
       if scanMode == "communityPost":
