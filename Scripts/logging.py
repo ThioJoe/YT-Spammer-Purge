@@ -10,6 +10,7 @@ import rtfunicode
 import os
 import requests
 import json
+from Levenshtein import ratio
 
 
 ##########################################################################################
@@ -31,6 +32,8 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
     j, commentsContents = print_prepared_comments(current, commentsContents, scanVideoID, list(current.otherCommentsByMatchedAuthorsDict.keys()), j, loggingEnabled, scanMode, logMode, doWritePrint, matchReason="Also By Matched Author")
   if current.duplicateCommentsDict:
     j, commentsContents = print_prepared_comments(current, commentsContents, scanVideoID, list(current.duplicateCommentsDict.keys()), j, loggingEnabled, scanMode, logMode, doWritePrint, matchReason="Duplicate")
+  if current.repostedCommentsDict:
+    j, commentsContents = print_prepared_comments(current, commentsContents, scanVideoID, list(current.repostedCommentsDict.keys()), j, loggingEnabled, scanMode, logMode, doWritePrint, matchReason="Repost")
 
   # Writes everything to the log file
   if loggingEnabled == True and doWritePrint:
@@ -50,9 +53,13 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
   spamThreadSamplesContent = ""
   duplicateValuesToWrite = ""
   duplicateValuesToPrint = ""
+  repostValuesToWrite = ""
+  repostValuesToPrint = ""
   duplicateSamplesContent = ""
+  repostSamplesContent = ""
   hasDuplicates = False
   hasSpamThreads = False
+  hasReposts = False
 
   # Decide whether to write notice for spam threads based on video title
   if current.spamThreadsDict and current.vidTitleDict:
@@ -60,8 +67,7 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
     if any(word in str(list(current.vidTitleDict.values())).lower() for word in keywords):
       spamThreadNotice = True
     else:
-      spamThreadNotice = False
-  
+      spamThreadNotice = False  
 
   def print_and_write(value, writeValues, printValues):
     if loggingEnabled == True and logMode == "rtf":
@@ -75,7 +81,7 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
   if doWritePrint:
     print(f"{F.LIGHTMAGENTA_EX}============================ Match Samples: One comment per matched-comment author ============================{S.R}")
   for value in current.matchSamplesDict.values():
-    if value['matchReason'] != "Duplicate" and value['matchReason'] != "Spam Bot Thread":
+    if value['matchReason'] != "Duplicate" and value['matchReason'] != "Spam Bot Thread" and value['matchReason'] != "Repost":
       valuesPreparedToWrite, valuesPreparedToPrint = print_and_write(value, valuesPreparedToWrite, valuesPreparedToPrint)
     # If there are duplicates, save those to print later, but get ready by calculating some duplicate info
     elif value['matchReason'] == "Duplicate":
@@ -84,6 +90,13 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
       minDupes = str(config['minimum_duplicates'])
     elif value['matchReason'] == "Spam Bot Thread":
       hasSpamThreads = True
+    elif value['matchReason'] == "Repost":
+      hasReposts = True
+      if config['fuzzy_stolen_comment_detection'] == True:
+        similarity = str(round(float(config['levenshtein_distance'])*100))+"%"
+      else:
+        similarity = "100%"
+      minLength = str(config['stolen_minimum_text_length'])      
   if doWritePrint:
     print(valuesPreparedToPrint)
 
@@ -92,15 +105,15 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
     if doWritePrint:
       print(f"{S.BRIGHT}{F.MAGENTA}============================ Match Samples: Spam Bot Threads ============================{S.R}")
       if spamThreadNotice == True:
-          print(f"{F.YELLOW}{F.BLACK}{B.YELLOW} NOTE: {S.R}{F.YELLOW} If video is about investing/crypto, inspect these extra well for false positives{S.R}")
-          print("-----------------------------------------------------------------------------------------")
+        print(f"{F.YELLOW}{F.BLACK}{B.YELLOW} NOTE: {S.R}{F.YELLOW} If video is about investing/crypto, inspect these extra well for false positives{S.R}")
+        print("-----------------------------------------------------------------------------------------")
   for value in current.matchSamplesDict.values():
     if value['matchReason'] == "Spam Bot Thread":
       spamThreadValuesPreparedToWrite, spamThreadValuesPreparedToPrint = print_and_write(value, spamThreadValuesPreparedToWrite, spamThreadValuesPreparedToPrint)
   if doWritePrint:
     print(spamThreadValuesPreparedToPrint)
 
-  # Print Duplicates Match Samples
+  # Print Duplicate Match Samples
   if hasDuplicates == True:
     if doWritePrint:
       print(f"{F.LIGHTMAGENTA_EX}------------------------- {S.BRIGHT}{F.WHITE}{B.BLUE} Non-Matched {S.R}{F.LIGHTCYAN_EX} Commenters, But Who Wrote Many Similar Comments{F.LIGHTMAGENTA_EX} -------------------------{S.R}")
@@ -110,6 +123,15 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
       duplicateValuesToWrite, duplicateValuesToPrint = print_and_write(value, duplicateValuesToWrite, duplicateValuesToPrint)
   if doWritePrint:
     print(duplicateValuesToPrint)
+
+  # Print Repost Match Samples
+  if hasReposts == True:
+    print(f"{F.LIGHTMAGENTA_EX}------------------------- {S.BRIGHT}{F.WHITE}{B.BLUE} Non-Matched {S.R}{F.LIGHTCYAN_EX} Commenters, but who stole a previous comment{F.LIGHTMAGENTA_EX} -------------------------{S.R}")
+    print(f"{F.MAGENTA}-------------------------- ( {F.LIGHTBLUE_EX}Similarity Threshold: {similarity}  |  Minimum Length: {minLength}{F.MAGENTA} ) ----------------------------{S.R}")
+  for value in current.matchSamplesDict.values():
+    if value['matchReason'] == "Repost":
+      repostValuesToWrite, repostValuesToPrint = print_and_write(value, repostValuesToWrite, repostValuesToPrint)
+  print(repostValuesToPrint)
 
   # --------------------------------------------------
 
@@ -133,6 +155,11 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
         if doWritePrint:
           write_rtf(current.logFileName, duplicateSamplesContent)
 
+      if hasReposts == True:
+        repostSamplesContent = " \n \\line\\line -------------------- Non-Matched Commenters, but who reposted a previous comment -------------------- \\line \n" 
+        repostSamplesContent += f"---------------------- ( Similarity Threshold: {similarity}  |  Minimum Length: {minLength} ) ---------------------- \\line\\line \n" + repostValuesToWrite
+        if doWritePrint:
+          write_rtf(current.logFileName, repostSamplesContent)
     elif logMode == "plaintext":
       matchSamplesContent = "==================== Match Samples: One comment per matched-comment author ====================\n" + valuesPreparedToWrite
       if doWritePrint:
@@ -151,7 +178,12 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
           write_plaintext_log(current.logFileName, duplicateSamplesContent)
 
     # Entire Contents of Log File
-    logFileContents = commentsContents + matchSamplesContent + spamThreadSamplesContent + duplicateSamplesContent
+    logFileContents = commentsContents + matchSamplesContent + spamThreadSamplesContent + duplicateSamplesContent + repostSamplesContent
+    if hasReposts == True:
+      repostSamplesContent = "\n-------------------- Non-Matched Commenters, but who stole a previous comment --------------------\n"
+      repostSamplesContent += f"---------------------- ( Similarity Threshold: {similarity}  |  Minimum Length: {minLength} ) ----------------------\n" + repostValuesToWrite
+      if doWritePrint:
+        write_plaintext_log(current.logFileName, repostSamplesContent)
   else:
     logFileContents = None
     logMode = None
@@ -173,6 +205,8 @@ def print_prepared_comments(current, commentsContents, scanVideoID, comments, j,
       reasonString = "=========================== Non-Matched, But Duplicate Comments ==========================="
     elif matchReason == "Spam Bot Thread":
       reasonString = "============================ Spam Bot Thread Top-Level Comments ==========================="
+    elif matchReason == "Repost":
+      reasonString = "======================== Non-Matched, But Stolen & Reposted Comments ======================="
     
     # -------------------- Print Section Header --------------------
     # Print top divider
@@ -201,6 +235,7 @@ def print_prepared_comments(current, commentsContents, scanVideoID, comments, j,
     # -----------------------------------------------------------------
 
   for comment in comments:
+    isRepost = False
     if matchReason == "Filter Match":
       metadata = current.matchedCommentsDict[comment]
     elif matchReason == "Duplicate":
@@ -209,6 +244,9 @@ def print_prepared_comments(current, commentsContents, scanVideoID, comments, j,
       metadata = current.otherCommentsByMatchedAuthorsDict[comment]
     elif matchReason == "Spam Bot Thread":
       metadata = current.spamThreadsDict[comment]
+    elif matchReason == "Repost":
+      metadata = current.repostedCommentsDict[comment]
+      isRepost = True
 
     # For printing and regular logging
     text = metadata['text']
@@ -217,6 +255,7 @@ def print_prepared_comments(current, commentsContents, scanVideoID, comments, j,
     comment_id_local = comment
     videoID = metadata['videoID']
     matchReason = metadata['matchReason']
+    originalCommentID = metadata['originalCommentID']
    
     # Truncates very long comments, and removes excessive multiple lines
     if len(text) > 1500:
@@ -233,12 +272,16 @@ def print_prepared_comments(current, commentsContents, scanVideoID, comments, j,
       directLink = "https://www.youtube.com/post/" + videoID + "?lc=" + comment_id_local
     else:
       directLink = "https://www.youtube.com/watch?v=" + videoID + "&lc=" + comment_id_local
+    if isRepost:
+      repostLink = "https://www.youtube.com/watch?v=" + videoID + "&lc=" + originalCommentID
 
     # Prints comment info to console
     if doWritePrint:
       print(str(j+1) + f". {F.LIGHTCYAN_EX}" + author + f"{S.R}:  {F.YELLOW}" + text + f"{S.R}")
       print("—————————————————————————————————————————————————————————————————————————————————————————————")
       print("     > Reason: " + matchReason)
+    if isRepost:
+      print("         >> Original Comment ID: " + repostLink)
     if scanVideoID is None:  # Only print video title if searching entire channel
       title = utils.get_video_title(current, videoID) # Get Video Title
       if doWritePrint:
@@ -258,6 +301,15 @@ def print_prepared_comments(current, commentsContents, scanVideoID, comments, j,
           titleInfoLine = "     > Video: " + title + "\n"
       else:
         titleInfoLine = ""
+      
+      if isRepost:
+        if logMode == "rtf":
+          originalCommentInfoLine = "         >> Original Comment ID: " + repostLink + " \\line " + "\n"
+        elif logMode == "plaintext":
+          originalCommentInfoLine = "         >> Original Comment ID: " + repostLink + "\n"
+      else:
+        originalCommentInfoLine = ""
+
 
       if logMode == "rtf":
         commentInfo = (
@@ -270,6 +322,7 @@ def print_prepared_comments(current, commentsContents, scanVideoID, comments, j,
           + "---------------------------------------------------------------------------------------------\\line " + "\n"
           # Rest of Comment Info
           + "     > Reason: " + matchReason + "\\line "+ "\n"
+          + originalCommentInfoLine
           + titleInfoLine
           + "     > Direct Link: " + directLink + " \\line "+ "\n"
           + "     > Author Channel ID: \cf6" + author_id_local + r"\cf1 \line "+ "\n"
@@ -286,6 +339,7 @@ def print_prepared_comments(current, commentsContents, scanVideoID, comments, j,
           + "---------------------------------------------------------------------------------------------\n"
           # Rest of Comment Info
           + "     > Reason: " + matchReason + "\n"
+          + originalCommentInfoLine
           + titleInfoLine
           + "     > Direct Link: " + directLink + "\n"
           + "     > Author Channel ID: " + author_id_local + "\n"
@@ -677,7 +731,11 @@ def sort_samples(current):
       newDict[item[0]] = item[1]
   for item in sortedTupleList:
     if item[1]['matchReason'] == 'Duplicate':
-      newDict[item[0]] = item[1]        
+      newDict[item[0]] = item[1]
+  for item in sortedTupleList:
+    if item[1]['matchReason'] == 'Repost':
+      newDict[item[0]] = item[1]
+  
 
   # # Assign Indexes and strings to print with index for each author
   # def assign_index(author, i):
@@ -787,6 +845,7 @@ def write_log_heading(current, logMode, filtersDict, afterExclude=False, combine
     combinedCommentsDict = dict(current.matchedCommentsDict)
     combinedCommentsDict.update(current.spamThreadsDict)
     combinedCommentsDict.update(current.duplicateCommentsDict)
+    combinedCommentsDict.update(current.repostedCommentsDict)
 
   filterMode = filtersDict['filterMode']
   inputtedSpammerChannelID = filtersDict['CustomChannelIdFilter']
@@ -834,12 +893,15 @@ def write_log_heading(current, logMode, filtersDict, afterExclude=False, combine
   write_func(current.logFileName, "Number of Matched Comments Found: " + str(len(current.matchedCommentsDict)), logMode, 2)
   write_func(current.logFileName, "Number of Spam Bot Threads Found: " + str(len(current.spamThreadsDict)), logMode, 2)
   write_func(current.logFileName, "Number of Non-Matched, but Duplicate Comments Found: " + str(len(current.duplicateCommentsDict)), logMode, 2)
+  write_func(current.logFileName, "Number of Non-Matched, but Stolen & Reposted Comments Found: " + str(len(current.repostedCommentsDict)), logMode, 2)
   
   # How to label the comment ID list
+  commentListLabel = "IDs of Matched"
   if current.duplicateCommentsDict:
-    commentListLabel = "IDs of Matched & Duplicate Comments"
-  else:
-    commentListLabel = "IDs of Matched Comments"
+    commentListLabel += " & Duplicate"
+  if current.repostedCommentsDict:
+    commentListLabel += " & Reposted"
+  commentListLabel += " Comments Found"
 
   if afterExclude == True:
     excludeString = " (Excluded Comments Removed)"

@@ -400,8 +400,10 @@ def validate_config_settings(config):
     'detect_sub_challenge_spam': (True, False),
     'detect_spam_threads': (True, False),
     'duplicate_check_modes': ('none', 'id', 'username', 'text', 'nameandtext', 'autoascii', 'autosmart', 'sensitivesmart'),
+    'stolen_comments_check_modes': ('none', 'id', 'username', 'text', 'nameandtext', 'autoascii', 'autosmart', 'sensitivesmart'),
     #'levenshtein_distance': (),
     #'minimum_duplicates': None,
+    'fuzzy_stolen_comment_detection': (True, False),
     'skip_deletion': (True, False),
     'delete_without_reviewing': (True, False),
     'enable_ban': ('ask', False),
@@ -422,7 +424,7 @@ def validate_config_settings(config):
   }
 
   # Settings that can or must contain an integer
-  integerSettings = ['max_comments', 'recent_videos_amount', 'minimum_duplicates', 'quota_limit', 'config_version']
+  integerSettings = ['max_comments', 'recent_videos_amount', 'minimum_duplicates', 'quota_limit', 'config_version', 'stolen_minimum_text_length']
 
   # Dictionary of settings requiring specific checks, and the functions to validate them
   specialCheck = {
