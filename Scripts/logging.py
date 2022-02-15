@@ -319,8 +319,8 @@ def print_prepared_comments(current, commentsContents, scanVideoID, comments, j,
       print(str(j+1) + f". {F.LIGHTCYAN_EX}" + author + f"{S.R}:  {F.YELLOW}" + text + f"{S.R}")
       print("—————————————————————————————————————————————————————————————————————————————————————————————")
       print("     > Reason: " + matchReason)
-    if isRepost:
-      print("         >> Original Comment ID: " + repostLink)
+      if isRepost:
+        print("         >> Original Comment ID: " + repostLink)
     if scanVideoID is None:  # Only print video title if searching entire channel
       title = utils.get_video_title(current, videoID) # Get Video Title
       if doWritePrint:
