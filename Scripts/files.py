@@ -166,7 +166,21 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
         isBeta = False
       elif updateReleaseChannel == "all":
         latestVersion = response.json()[0]["name"]
+        latestVersionId = response.json()[0][""]
+        # check if latest version is a beta. 
+        # if it is continue, else check for another beta with a higher version in the 3 newest releases 
         isBeta = response.json()[0]["prerelease"]
+        if (isBeta == False): 
+          for i in range(2):
+            # add a + 1 to index to not count the first release (already checked)
+            latestVersion2 = response.json()[i + 1]["name"]
+            # make sure the version is higher than the current version
+            if parse_version(latestVersion2) > parse_version(latestVersion):
+              # update original latest version to the new version
+              latestVersion = latestVersion2
+              isBeta = response.json()[i + 1]["prerelease"]
+              break
+
   except OSError as ox:
     if "WinError 10013" in str(ox):
       print(f"{B.RED}{F.WHITE}WinError 10013:{S.R} The OS blocked the connection to GitHub. Check your firewall settings.\n")
