@@ -278,6 +278,7 @@ def get_replies(current, filtersDict, miscData, config, parent_id, videoID, pare
     current.scannedRepliesCount += 1 
     print_count_stats(current, miscData, videosToScan, final=False)
   
+  # This won't exist if spam thread detection isn't enabled, because of check in get_comments function
   if parentCommentDict:
     current = check_spam_threads(current, filtersDict, miscData, config, parentCommentDict, threadDict)
 
@@ -527,8 +528,16 @@ def add_spam(current, config, miscData, currentCommentDict, videoID, matchReason
   authorChannelID = currentCommentDict['authorChannelID']
   commentTextRaw = str(currentCommentDict['commentText']) # Use str() to ensure not pointing to same place in memory
   commentText = str(currentCommentDict['commentText']).replace("\r", "")
-  originalCommentID = currentCommentDict['originalCommentID']
-  timestamp = currentCommentDict['timestamp']
+
+  if 'originalCommentID' in currentCommentDict:
+    originalCommentID = currentCommentDict['originalCommentID']
+  else:
+    originalCommentID = "Unavailable or N/A"
+  
+  if 'timestamp' in currentCommentDict:
+    timestamp = currentCommentDict['timestamp']
+  else:
+    timestamp = "Unavailable"
 
   dictToUse[commentID] = {'text':commentText, 'textUnsanitized':commentTextRaw, 'authorName':authorChannelName, 'authorID':authorChannelID, 'videoID':videoID, 'matchReason':matchReason, 'originalCommentID':originalCommentID, 'timestamp':timestamp}
   current.vidIdDict[commentID] = videoID # Probably remove this later, but still being used for now

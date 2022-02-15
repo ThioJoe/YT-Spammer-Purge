@@ -1127,9 +1127,9 @@ def main():
           operations.check_against_filter(current, filtersDict, miscData, config, currentCommentDict, videoID=communityPostID)
 
           # Scam for spam threads
-          if config['detect_spam_threads'] == True:
+          if (filtersDict['filterMode'] == "AutoSmart" or filtersDict['filterMode'] == "SensitiveSmart") and config['detect_spam_threads'] == True:
             threadDict = operations.make_community_thread_dict(key, allCommunityCommentsDict)
-            if threadDict:
+            if threadDict and len(threadDict) > 7: # Only if more than 7 replies
               parentCommentDict = dict(currentCommentDict)
               parentCommentDict['videoID'] = communityPostID
               current = operations.check_spam_threads(current, filtersDict, miscData, config, parentCommentDict, threadDict)

@@ -289,8 +289,11 @@ def print_prepared_comments(current, commentsContents, scanVideoID, comments, j,
     timestamp = metadata['timestamp']
 
     # Convert timestamp to readable format. First parses, then reconverts to new string
-    timeObject = datetime.strptime(timestamp, '%Y-%m-%dT%H:%M:%SZ')
-    dateAndTime = timeObject.strftime("%b %d, %Y @ %I:%M:%S %p")    
+    if timestamp != "Unavailable":
+      timeObject = datetime.strptime(timestamp, '%Y-%m-%dT%H:%M:%SZ')
+      dateAndTime = timeObject.strftime("%b %d, %Y @ %I:%M:%S %p")
+    else:
+      dateAndTime = "Unavailable"
    
     # Truncates very long comments, and removes excessive multiple lines
     if len(text) > 1500:
