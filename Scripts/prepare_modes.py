@@ -679,7 +679,7 @@ def delete_comment_list(config):
       print(f"{F.RED}Invalid input, try again.{S.R}")
   if removalMode == "rejected":
     banChoice = choice(F"Also {F.RED}ban{S.R} the commenters?")
-    if banChoice.lower() == "x":
+    if str(banChoice).lower() == "x":
       return "MainMenu"
 
   # Set limit based on quota

@@ -36,7 +36,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.15.2"
+version = "2.15.4"
 configVersion = 26
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
@@ -147,6 +147,7 @@ def main():
     except:
       print("\nError: Could not create folder. To update the spam lists, try creating a folder called 'SpamPurge_Resources',")
       print("       then inside that, create another folder called 'Spam_Lists'.")
+      input("Press Enter to continue...")
 
   if os.path.isdir(resourceFolder) and not os.path.isdir(spamListFolder):
     try:
@@ -169,7 +170,7 @@ def main():
 
     listVersion = files.get_list_file_version(spamList['Path'])
     spamList['Version'] = listVersion
-    if parse_version(listVersion) > parse_version(latestLocalSpamListVersion):
+    if listVersion and parse_version(listVersion) > parse_version(latestLocalSpamListVersion):
       latestLocalSpamListVersion = listVersion
 
   spamListDict['Meta']['VersionInfo']['LatestLocalVersion'] = latestLocalSpamListVersion
