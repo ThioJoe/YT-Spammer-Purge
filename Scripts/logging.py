@@ -7,6 +7,7 @@ from Scripts.utils import choice
 from unicodedata import category as unicode_category
 from datetime import datetime
 
+import re
 import rtfunicode
 import os
 import requests
@@ -147,8 +148,8 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
 
   # Print Repost Match Samples
   if hasReposts == True:
-    print(f"{F.LIGHTMAGENTA_EX}------------------------- {S.BRIGHT}{F.WHITE}{B.BLUE} Non-Matched {S.R}{F.LIGHTCYAN_EX} Commenters, but who stole a previous comment{F.LIGHTMAGENTA_EX} -------------------------{S.R}")
-    print(f"{F.MAGENTA}-------------------------- ( {F.LIGHTBLUE_EX}Similarity Threshold: {repostSimilarity}  |  Minimum Length: {minLength}{F.MAGENTA} ) ----------------------------{S.R}")
+    print(f"{F.LIGHTMAGENTA_EX}------------------------- {S.BRIGHT}{F.WHITE}{B.BLUE} Non-Matched {S.R}{F.LIGHTCYAN_EX} Commenters, But Who Reposted a Previous Comment{F.LIGHTMAGENTA_EX} -------------------------{S.R}")
+    print(f"{F.MAGENTA}---------------------------- ( {F.LIGHTBLUE_EX}Similarity Threshold: {repostSimilarity}  |  Minimum Length: {minLength}{F.MAGENTA} ) ------------------------------{S.R}")
   for value in current.matchSamplesDict.values():
     if value['matchReason'] == "Repost":
       repostValuesToWrite, repostValuesToPrint = print_and_write(value, repostValuesToWrite, repostValuesToPrint)
@@ -182,8 +183,8 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
           write_rtf(current.logFileName, duplicateSamplesContent)
 
       if hasReposts == True:
-        repostSamplesContent = " \n \\line\\line -------------------- Non-Matched Commenters, but who stole a previous comment -------------------- \\line \n" 
-        repostSamplesContent += f"---------------------- ( Similarity Threshold: {repostSimilarity}  |  Minimum Length: {minLength} ) ---------------------- \\line\\line \n" + repostValuesToWrite
+        repostSamplesContent = " \n \\line\\line -------------------- Non-Matched Commenters, But Who Reposted a Previous Comment -------------------- \\line \n" 
+        repostSamplesContent += f"------------------------ ( Similarity Threshold: {repostSimilarity}  |  Minimum Length: {minLength} ) ------------------------ \\line\\line \n" + repostValuesToWrite
         if doWritePrint:
           write_rtf(current.logFileName, repostSamplesContent)
     elif logMode == "plaintext":
@@ -210,8 +211,8 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
     # Entire Contents of Log File
     logFileContents = commentsContents + matchSamplesContent + spamThreadSamplesContent + duplicateSamplesContent + repostSamplesContent
     if hasReposts == True:
-      repostSamplesContent = "\n-------------------- Non-Matched Commenters, but who stole a previous comment --------------------\n"
-      repostSamplesContent += f"---------------------- ( Similarity Threshold: {repostSimilarity}  |  Minimum Length: {minLength} ) ----------------------\n" + repostValuesToWrite
+      repostSamplesContent = "\n-------------------- Non-Matched Commenters, But Who Reposted a Previous Comment --------------------\n"
+      repostSamplesContent += f"------------------------ ( Similarity Threshold: {repostSimilarity}  |  Minimum Length: {minLength} ) ------------------------\n" + repostValuesToWrite
       if doWritePrint:
         write_plaintext_log(current.logFileName, repostSamplesContent)
   else:
@@ -798,9 +799,8 @@ def mark_possible_false_positive(current, authorID, text, matchReason):
   if matchReason != 'Filter Match':
     current.matchSamplesDict[authorID]['possibleFalsePositive'] = False
     return current
-
-  falseList = ['bot', 'scam', 'spam']
-  if any(word in text.lower() for word in falseList):
+  falsePattern = r'\b(bots?|scams?|scammers?|spam|spammers?|fake)\b'
+  if re.search(falsePattern, text, flags=re.I):
     current.matchSamplesDict[authorID]['possibleFalsePositive'] = True
   else:
     current.matchSamplesDict[authorID]['possibleFalsePositive'] = False
@@ -944,7 +944,7 @@ def write_log_heading(current, logMode, filtersDict, afterExclude=False, combine
   write_func(current.logFileName, "Number of Matched Comments Found: " + str(len(current.matchedCommentsDict)), logMode, 2)
   write_func(current.logFileName, "Number of Spam Bot Threads Found: " + str(len(current.spamThreadsDict)), logMode, 2)
   write_func(current.logFileName, "Number of Non-Matched, but Duplicate Comments Found: " + str(len(current.duplicateCommentsDict)), logMode, 2)
-  write_func(current.logFileName, "Number of Non-Matched, but Stolen & Reposted Comments Found: " + str(len(current.repostedCommentsDict)), logMode, 2)
+  write_func(current.logFileName, "Number of Non-Matched, but Stolen / Reposted Comments Found: " + str(len(current.repostedCommentsDict)), logMode, 2)
   
   # How to label the comment ID list
   commentListLabel = "IDs of Matched"

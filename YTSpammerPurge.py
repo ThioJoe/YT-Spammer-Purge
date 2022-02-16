@@ -36,8 +36,8 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.16.0-Beta3"
-configVersion = 30
+version = "2.16.0"
+configVersion = 31
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 print("Importing Script Modules...")
 # Import other module files
@@ -241,7 +241,6 @@ def main():
   class MiscDataStore:
     resources:dict
     spamLists:dict
-    rootDomainsList:list
     totalCommentCount:int
     channelOwnerID:str
     channelOwnerName:str
@@ -249,7 +248,6 @@ def main():
   miscData = MiscDataStore(
     resources = {}, 
     spamLists = {}, 
-    rootDomainsList = [], 
     totalCommentCount = 0, 
     channelOwnerID = "", 
     channelOwnerName = "",

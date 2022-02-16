@@ -579,29 +579,20 @@ def get_all_author_comments(current, config, miscData, allCommentsDict):
 
 ############################## Check Duplicates ######################################
 def check_duplicates(current, config, miscData, allVideoCommentsDict, videoID):
-  # Get Lenvenshtein Distance Setting
-  try:
-    levenshtein = float(config['levenshtein_distance'])
-    if levenshtein < 0 or levenshtein > 1:
-      print("\nError: Levenshtein_distance config setting must be between 0 and 1. Defaulting to 0.9")
-      input("\nPress Enter to continue...")
-      levenshtein = 0.9
-  except ValueError:
-    print("\nError: Levenshtein_distance config setting must be a number between 0 and 1. Defaulting to 0.9")
-    input("\nPress Enter to continue...")
-    levenshtein = 0.9
+  domainList =  miscData.resources['rootDomainList']
 
-  # Get duplicate count setting
-  try:
-    minimum_duplicates = int(config['minimum_duplicates'])
-    if minimum_duplicates < 2:
-      minimum_duplicates = 4
-      print("\nError: minimum_duplicates config setting must be greater than 1. Defaulting to 4.")
-      input("\nPress Enter to continue...")
-  except ValueError:
+  # Get Lenvenshtein Distance Setting - Does not need to be validated here, because that happens at beginning of program
+  levenshtein = float(config['levenshtein_distance'])
+  
+  # Get duplicate count setting - Does not need to be validated as int here, because that happens at beginning of program
+  minimum_duplicates = int(config['minimum_duplicates'])
+  if minimum_duplicates < 2:
     minimum_duplicates = 4
-    print("\nError: minimum_duplicates config setting is invalid. Defaulting to 4.")
+    print("\nError: minimum_duplicates config setting must be greater than 1. Defaulting to 8.")
     input("\nPress Enter to continue...")
+  
+  # Get minimum duplicate length setting - Does not need to be validated as int here, because that happens at beginning of program
+  minimum_duplicate_length = int(config['minimum_duplicate_length'])
   
   # Calculate number of authors to check, for progress
   authorCount = len(allVideoCommentsDict)
@@ -612,24 +603,39 @@ def check_duplicates(current, config, miscData, allVideoCommentsDict, videoID):
     # Don't scan channel owner, current user, or any user in whitelist. Also don't bother if author is already in matchedCommentsDict
     if auth.CURRENTUSER.id == authorID or miscData.channelOwnerID == authorID or authorID in miscData.resources['Whitelist']['WhitelistContents'] or any(authorID == value['authorID'] for key,value in current.matchedCommentsDict.items()):
       scannedCount +=1
-      print(f" Analyzing For Duplicates: [ {scannedCount/authorCount*100:.2f}% ]   (Can be disabled & customized in config)".ljust(75, " "), end="\r")
+      print(f" Analyzing For Duplicates: [ {scannedCount/authorCount*100:.2f}% ]   (Can be Disabled & Customized With Config File)".ljust(75, " "), end="\r")
     else:
       numDupes = 0
       commentTextList = []
       matchedIndexes = []
       for commentDict in authorCommentsList:
-        commentTextList.append(commentDict['commentText'])
+        # Adding to use as lower case, because levenshtein is case sensitive. Also, root domain list is ingested as lower case, so necessary to compare
+        commentTextList.append(commentDict['commentText'].lower())
 
       # Count number of comments that are similar to at least one other comment
       if len(commentTextList) > 1:
         for i,x in enumerate(commentTextList):
-          for j in range(i+1,len(commentTextList)):
-            y = commentTextList[j]
-            if ratio(x,y) > levenshtein:
-              # List the indexes of the matched comments in the list
-              matchedIndexes.append(i)
-              matchedIndexes.append(j)
-              break
+          # Check length of comment against minimum, but override if a domain is detected
+          if len(x) >= minimum_duplicate_length or (len(x) >= 6 and any(f".{domain}" in x for domain in domainList)):
+            for j in range(i+1,len(commentTextList)):
+              y = commentTextList[j]
+              # If Levenshtein distance is 1.0, then only check if comment text is exactly the same
+              if levenshtein == 1.0 and x == y: 
+                matchedIndexes.append(i)
+                matchedIndexes.append(j)
+                break
+              # If Levenshtein distance is 0, don't check at all, just count number of comments by user
+              elif levenshtein == 0.0:
+                matchedIndexes.append(i)
+                matchedIndexes.append(j)
+                break
+              elif ratio(x,y) > levenshtein:
+                # List the indexes of the matched comments in the list
+                matchedIndexes.append(i)
+                matchedIndexes.append(j)
+                break
+          else:
+            break
         
         # Only count each comment once by counting number of unique indexes in matchedIndexes
         uniqueMatches = len(set(matchedIndexes))
@@ -639,7 +645,7 @@ def check_duplicates(current, config, miscData, allVideoCommentsDict, videoID):
         for commentDict in authorCommentsList:
           add_spam(current, config, miscData, commentDict, videoID, matchReason="Duplicate")
       scannedCount +=1
-      print(f" Analyzing For Duplicates: [ {scannedCount/authorCount*100:.2f}% ]   (Can be disabled & customized in config)".ljust(75, " "), end="\r")
+      print(f" Analyzing For Duplicates: [ {scannedCount/authorCount*100:.2f}% ]   (Can be Disabled & Customized With Config File)".ljust(75, " "), end="\r")
 
   print("".ljust(90, " ")) # Erase line
 
@@ -704,7 +710,7 @@ def check_reposts(current, config, miscData, allVideoCommentsDict, videoID):
             add_spam(current, config, miscData, x, videoID, matchReason="Repost")
             break
     scannedCount += 1
-    print(f" Analyzing For Stolen Comments: [ {scannedCount/totalComments*100:.2f}% ]   (Can be disabled & customized in config)".ljust(75, " "), end="\r")
+    print(f" Analyzing For Stolen / Reposted Comments: [ {scannedCount/totalComments*100:.2f}% ]   (Can be Disabled & Customized With Config File)".ljust(75, " "), end="\r")
 
   print("".ljust(90, " ")) # Erase line
     
