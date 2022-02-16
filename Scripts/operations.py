@@ -647,7 +647,7 @@ def check_duplicates(current, config, miscData, allVideoCommentsDict, videoID):
       scannedCount +=1
       print(f" Analyzing For Duplicates: [ {scannedCount/authorCount*100:.2f}% ]   (Can be Disabled & Customized With Config File)".ljust(75, " "), end="\r")
 
-  print("".ljust(90, " ")) # Erase line
+  print("".ljust(110, " ")) # Erase line
 
 
 ############################# Check Text Reposts #####################################
@@ -712,7 +712,7 @@ def check_reposts(current, config, miscData, allVideoCommentsDict, videoID):
     scannedCount += 1
     print(f" Analyzing For Stolen / Reposted Comments: [ {scannedCount/totalComments*100:.2f}% ]   (Can be Disabled & Customized With Config File)".ljust(75, " "), end="\r")
 
-  print("".ljust(90, " ")) # Erase line
+  print("".ljust(110, " ")) # Erase line
     
 
 ##########################################################################################
