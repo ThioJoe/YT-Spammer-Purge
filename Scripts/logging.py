@@ -7,7 +7,6 @@ from Scripts.utils import choice
 from unicodedata import category as unicode_category
 from datetime import datetime
 
-import re
 import rtfunicode
 import os
 import requests

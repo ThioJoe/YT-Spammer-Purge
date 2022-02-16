@@ -317,11 +317,6 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
     'usernameObfuBlackWords': filter.usernameObfuBlackWordsCompiledPairs
   }
 
-  basicFilterDict = {
-    'usernameRedWords': filter.usernameRedWordsCompiled,
-    'exactRedAdWords': filter.exactRedAdWords,
-  }    
-
   # General Settings
   unicodeCategoriesStrip = ["Mn", "Cc", "Cf", "Cs", "Co", "Cn", "Sk"] # Categories of unicode characters to strip during normalization
 
@@ -430,7 +425,6 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
     'rootDomainRegex': rootDomainRegex,
     'compiledRegexDict': compiledRegexDict,
     'compiledObfuRegexDict': compiledObfuRegexDict,
-    'basicFilterDict': basicFilterDict,
     'preciseRegexDict': preciseRegexDict,
     'usernameConfuseRegex': usernameConfuseRegex,
     'languages': languages,

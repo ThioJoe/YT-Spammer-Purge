@@ -1,7 +1,7 @@
 import os
 import sys
 import traceback
-import re
+import regex as re
 
 from colorama import init, Fore as F, Back as B, Style as S
 

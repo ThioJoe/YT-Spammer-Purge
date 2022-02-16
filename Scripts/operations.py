@@ -823,7 +823,6 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
       # Receive Variables
       compiledRegexDict = smartFilter['compiledRegexDict']
       compiledObfuRegexDict = smartFilter['compiledObfuRegexDict']
-      basicFilterDict = smartFilter['basicFilterDict']
       preciseRegexDict = smartFilter['preciseRegexDict']
       numberFilterSet = smartFilter['spammerNumbersSet']
       compiledNumRegex = smartFilter['compiledNumRegex']
@@ -859,9 +858,13 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
         else:
           for match in result:
             lowerChars = chars.lower()
+            # Strips off buffer characters and specified unicode categories
             for bufferChar in compiledRegexDict['bufferChars']:
               match = match.strip(bufferChar)
-            #if match.lower() != lowerWord and match.lower() != lowerWord.translate(ignoredConfusablesConverter):
+            while unicodedata.category(match[0]) in smartFilter['unicodeCategoriesStrip']:
+              match = match[1:]
+            while unicodedata.category(match[-1]) in smartFilter['unicodeCategoriesStrip']:
+              match = match[:-1]
             if any(char not in lowerChars for char in match) and any(char not in lowerChars.translate(ignoredConfusablesConverter) for char in match):
               return True
 
@@ -880,10 +883,10 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
       # ------------------------------------------------------------------------
 
       # Normalize usernames and text, remove multiple whitespace and invisible chars
-      commentText = re.sub(' +', ' ', commentText)
+      commentTextNormalized = re.sub(' +', ' ', commentText)
       # https://stackoverflow.com/a/49695605/17312053
-      commentText = "".join(k if k in bufferChars else "".join(v) for k,v in itertools.groupby(commentText, lambda c: c))
-      commentText = remove_unicode_categories(commentText)
+      commentTextNormalized = "".join(k if k in bufferChars else "".join(v) for k,v in itertools.groupby(commentText, lambda c: c))
+      commentTextNormalized = remove_unicode_categories(commentText)
 
       authorChannelName = re.sub(' +', ' ', authorChannelName)
       authorChannelName = remove_unicode_categories(authorChannelName)
@@ -915,19 +918,19 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
         add_spam(current, config, miscData, currentCommentDict, videoID)
       elif compiledRegexDict['blackAdWords'].search(authorChannelName):
         add_spam(current, config, miscData, currentCommentDict, videoID)
-      elif compiledRegexDict['textBlackWords'].search(commentText):
+      elif compiledRegexDict['textBlackWords'].search(commentTextNormalized):
         add_spam(current, config, miscData, currentCommentDict, videoID)
       elif any(findObf(expressionPair[0], expressionPair[1], commentText) for expressionPair in compiledObfuRegexDict['textObfuBlackWords']):
         add_spam(current, config, miscData, currentCommentDict, videoID)
-      elif preciseRegexDict['textExactBlackWords'].search(commentText.lower()):
+      elif preciseRegexDict['textExactBlackWords'].search(commentTextNormalized.lower()):
         add_spam(current, config, miscData, currentCommentDict, videoID)
-      elif preciseRegexDict['textUpLowBlackWords'].search(commentText) and not upLowTextSet.intersection(lowAlSet):
+      elif preciseRegexDict['textUpLowBlackWords'].search(commentTextNormalized) and not upLowTextSet.intersection(lowAlSet):
         add_spam(current, config, miscData, currentCommentDict, videoID)
       elif any(findObf(expressionPair[0], expressionPair[1], authorChannelName) for expressionPair in compiledObfuRegexDict['usernameObfuBlackWords']):  
         add_spam(current, config, miscData, currentCommentDict, videoID)
       elif spamListCombinedRegex.search(combinedString.lower()):
         add_spam(current, config, miscData, currentCommentDict, videoID)
-      elif config['detect_link_spam'] and check_if_only_link(commentText.strip()):
+      elif config['detect_link_spam'] and check_if_only_link(commentTextNormalized.strip()):
         add_spam(current, config, miscData, currentCommentDict, videoID)
       elif sensitive and re.search(smartFilter['usernameConfuseRegex'], authorChannelName):
         add_spam(current, config, miscData, currentCommentDict, videoID)
@@ -960,7 +963,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
         if yellowAdEmojiSet.intersection(combinedSet):
           yellowCount += 1
 
-        if not sensitive and any(emoji in commentText for emoji in spamGenEmojiSet):
+        if not sensitive and any(emoji in commentTextNormalized for emoji in spamGenEmojiSet):
           yellowCount += 1
 
         if not sensitive and any(emoji in authorChannelName for emoji in spamGenEmojiSet):
