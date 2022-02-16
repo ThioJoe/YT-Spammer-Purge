@@ -635,19 +635,19 @@ def main():
             return True # Return to main menu
         try:
           numVideos = int(numVideos)
-          if numVideos > 0 and numVideos <= 500:
+          if numVideos > 0 and numVideos <= 5000:
             validEntry = True
             validConfigSetting = True
           else:
-            print("Error: Entry must be from 1 to 500 (the YouTube API Limit)")
+            print("Error: Entry must be from 1 to 5000 (the YouTube API Limit)")
             validEntry = False
             validConfigSetting = False
         except ValueError:
           print(f"{F.LIGHTRED_EX}Error:{S.R} Entry must be a whole number greater than zero.")
         
-        if validEntry == True and numVideos >= 100:
+        if validEntry == True and numVideos >= 1000:
           print(f"\n{B.YELLOW}{F.BLACK} WARNING: {S.R} You have chosen to scan a large amount of videos. With the default API quota limit,")
-          print(f" every 100 videos will use up 20% of the quota {F.YELLOW}just from listing the videos alone, before any comment scanning.{S.R}")
+          print(f" every 1000 videos will use up 20% of the quota {F.YELLOW}just from listing the videos alone, before any comment scanning.{S.R}")
           print(f"        > Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
 
         if validEntry == True:

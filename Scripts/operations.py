@@ -1346,7 +1346,7 @@ def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToEx
 ################################# Get Most Recent Videos #####################################
 # Returns a list of lists
 def get_recent_videos(current, channel_id, numVideosTotal):
-  def get_block_of_videos(nextPageToken, j, k, numVideosBlock = 5):
+  def get_block_of_videos(nextPageToken, j, k, numVideosBlock = 50):
     result = auth.YOUTUBE.search().list(
       part="snippet",
       channelId=channel_id,
@@ -1401,10 +1401,10 @@ def get_recent_videos(current, channel_id, numVideosTotal):
     while nextPageToken != "End" and k < numVideosTotal and str(abortCheck) != "MainMenu":
       print("Retrieved " + str(len(recentVideos)) + "/" + str(numVideosTotal) + " videos.", end="\r")
       remainingVideos = numVideosTotal - k
-      if remainingVideos <= 5:
+      if remainingVideos <= 50:
         nextPageToken, j, k, abortCheck = get_block_of_videos(nextPageToken, j, k, numVideosBlock = remainingVideos)
       else:
-        nextPageToken, j, k, abortCheck = get_block_of_videos(nextPageToken, j, k, numVideosBlock = 5)
+        nextPageToken, j, k, abortCheck = get_block_of_videos(nextPageToken, j, k, numVideosBlock = 50)
       if str(nextPageToken[0]) == "MainMenu":
         return "MainMenu"
   print("                                          ")
