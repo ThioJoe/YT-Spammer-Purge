@@ -20,10 +20,6 @@ if test ! $(which git); then
     brew install git
 fi
 
-#Clone the repo
-git clone https://github.com/ThioJoe/YT-Spammer-Purge.git
-#Cd into it
-cd YT-Spammer-Purge
 #Install required pip modules
 pip3 install -r requirements.txt
 
