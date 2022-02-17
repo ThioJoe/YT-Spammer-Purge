@@ -1,0 +1,3 @@
+[submodule "assets/YT-Spam-Lists"]
+	path = assets/YT-Spam-Lists
+	url = https://github.com/ThioJoe/YT-Spam-Lists.git
