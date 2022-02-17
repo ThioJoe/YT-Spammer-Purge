@@ -128,12 +128,24 @@ update () {
     exit 1
 }
 
+git_missing () {
+    echo "It looks like you downloaded a .zip of YT-Spammer-Purge"
+    echo "Automated updates do not work on these versions, but you may download the latest version of YT-Spammer-Purge using this script."
+    echo "If you choose to re-download the latest verion of YT-Spammer-Purge using this script, automated updates will be re-enabled."
+    echo "The latest YT-Spammer-Purge with automated updates will be downloaded to a sub-directory of the same name."
+    echo "If you would not like to install YT-Spammer-Purge using this script, close this script within the next 15 seconds..."
+    sleep 15
+    install_MAIN
+}
+
 if ! command -v git &> /dev/null
 then
     echo "You are missing some required packages to run this script."
     install_os_requirements
     REQUIREMENTS_INSTALLED=1
 fi
+
+[[ -e YTSpammerPurge.py ]] && git_missing
 
 git remote get-url origin > /dev/null && update || install_MAIN
 # If get-url succeeds, update, else install
