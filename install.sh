@@ -113,8 +113,9 @@ update () {
 
 
     git fetch origin
-    echo "Latest version is $(git describe --abbrev=0 --tags)"
-    git checkout -m $(git describe --abbrev=0 --tags)
+    echo "Latest version is $(git describe origin --abbrev=0 --tags)"
+    echo "Updating to this version."
+    git checkout -m $(git describe origin --abbrev=0 --tags)
     sleep 1
     clear
 
