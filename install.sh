@@ -91,7 +91,8 @@ install_latest_release () {
 
 install_MAIN () {
     clear
-    echo "We will now install YT-Spammer-Purge. If this is not what you intend to do, exit within 5 seconds..."
+    echo "We will now install YT-Spammer-Purge."
+    echo "If this is not what you want to do, exit within 5 seconds..."
     sleep 5
     echo "Installing."
     # Check what OS we're running on
@@ -102,6 +103,7 @@ install_MAIN () {
     echo "--------------------------"
 
     install_latest_release
+    # install_latest_release cd's into YT-Spammer-Purge
 
     # Since we've gotten python3 installed:
 
@@ -114,12 +116,20 @@ install_MAIN () {
     exit 0
 }
 
+check_python_requirements () {
+    # This assumes we are in the YT-Spammer-Purge directory
+    echo "Checking installed requirements"
+    python3 -c "import pkg_resources; pkg_resources.require(open('requirements.txt',mode='r'))" &>/dev/null || install_python_requirements
+}
+
 update () {
+    # This assumes we are in the YT-Spammer-Purge directory
+    check_python_requirements
     clear
-    echo "We will now update YT-Spammer-Purge. If this is not what you intend to do, exit within 5 seconds..."
-    sleep 5
-    echo "Continuing."
+    echo "We will now attempt to update YT-Spammer-Purge."
+    echo "If this is not what you want to do, exit within 5 seconds..."
     echo "Current version is $(git describe --abbrev=0 --tags)"
+    sleep 5
     echo "Updating..."
 
 
@@ -138,6 +148,8 @@ update () {
 check_git_missing () {
     [[ $(git remote get-url origin) == *"YT-Spammer-Purge"* ]] && return 0
     # If this is a valid YT-Spammer-Purge install, return 0
+    # If this is a fork, with a name different than YT-Spammer-Purge, this check will fail.
+    # If you are running this on a fork, please replace every instance of 'YT-Spammer-Purge' with your fork name.
     clear
     echo "It looks like you downloaded a .zip of YT-Spammer-Purge"
     echo "Automated updates do not work on these versions, but you may download the latest version of YT-Spammer-Purge using this script."
@@ -149,7 +161,7 @@ check_git_missing () {
     exit 0
 }
 
-if ! command -v git &> /dev/null
+if ( ! command -v git &> /dev/null ) | ( ! command -v python3 &> /dev/null )
 then
     echo "You are missing some required packages to run this script."
     install_os_requirements
