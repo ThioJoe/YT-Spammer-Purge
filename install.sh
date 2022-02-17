@@ -34,12 +34,12 @@ install_python_requirements () {
 
 install_os_requirements () {
     # Check for known OS's
-    [[ -e /etc/debian_version ]] && install_debian || \
-    [[ -e /etc/fedora-release ]] && install_fedora || \
-    [[ -e  /etc/centos-release ]] && install_centos || \
-    [[ -e /etc/arch-release ]] && install_arch || \
-    printf "You are on an unknown system. You will have to install the required packages manually.\nContributions are welcome to add support for your system:\nhttps://github.com/ThioJoe/YT-Spammer-Purge" && \
-    exit 1
+    INSTALLED=0
+    [[ -e /etc/debian_version ]] && install_debian && INSTALLED=1
+    [[ -e /etc/fedora-release ]] && install_fedora && INSTALLED=1
+    [[ -e  /etc/centos-release ]] && install_centos && INSTALLED=1
+    [[ -e /etc/arch-release ]] && install_arch && INSTALLED=1
+    [[ $INSTALLED -eq 0 ]] && printf "You are on an unknown system. You will have to install the required packages manually.\nContributions are welcome to add support for your system:\nhttps://github.com/ThioJoe/YT-Spammer-Purge" && exit 1
 }
 
 install_MAIN () {
