@@ -110,7 +110,7 @@ install_MAIN () {
     # Done!
 
     printf "Dependencies and Program installed into .\YT-Spammer-Purge!\nNow follow these instructions to get a client_secrets.json file!\nhttps://github.com/ThioJoe/YT-Spammer-Purge/wiki/Instructions:-Obtaining-an-API-Key\n\nYou may run this script again inside your installation to update.\n"
-    exit 1
+    exit 0
 }
 
 update () {
@@ -131,10 +131,12 @@ update () {
     echo "--------------------------"
     echo "Updated!"
     echo "Report any bugs to TJoe.io/bug-report"
-    exit 1
+    exit 0
 }
 
-git_missing () {
+check_git_missing () {
+    [[ $(git remote get-url origin) == *"YT-Spammer-Purge"* ]] && return 0
+    # If this is a valid YT-Spammer-Purge install, return 0
     clear
     echo "It looks like you downloaded a .zip of YT-Spammer-Purge"
     echo "Automated updates do not work on these versions, but you may download the latest version of YT-Spammer-Purge using this script."
@@ -143,7 +145,7 @@ git_missing () {
     echo "If you would not like to install YT-Spammer-Purge using this script, close this script within the next 15 seconds..."
     sleep 15
     install_MAIN
-    exit 1
+    exit 0
 }
 
 if ! command -v git &> /dev/null
@@ -153,7 +155,13 @@ then
     REQUIREMENTS_INSTALLED=1
 fi
 
-[[ -e YTSpammerPurge.py ]] && ( [[ $(git remote get-url origin) == *"YT-Spammer-Purge"* ]] || git_missing )
+[[ -e YTSpammerPurge.py ]] && check_git_missing && update
+# If YTSpammerPurge.py exists in the dir, check if it is a valid YT-Spammer-Purge install, and either re-install or update
+# These will exit when they succeed
 
-[[ $(git remote get-url origin) == *"YT-Spammer-Purge"* ]] && update || install_MAIN
+install_MAIN
 # If get-url succeeds, update, else install
+# Will exit if succeed
+
+# Script should not reach this point, error if it does
+exit 1
