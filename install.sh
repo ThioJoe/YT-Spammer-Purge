@@ -87,14 +87,13 @@ install_MAIN () {
     # Check what OS we're running on
 
     # Check if we already installed the requirements -- git is needed to check for which mode to run.
-    [[$REQUIREMENTS_INSTALLED -eq 0]] && install_os_requirements
+    [[$REQUIREMENTS_INSTALLED -eq 0]] && install_os_requirements && printf "\n\n"
 
-    clear
     install_latest_release
 
     # Since we've gotten python3 installed:
 
-    clear
+    printf "\n\n"
     install_python_requirements
 
     # Done!
