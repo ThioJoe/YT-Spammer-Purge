@@ -135,6 +135,7 @@ update () {
 }
 
 git_missing () {
+    clear
     echo "It looks like you downloaded a .zip of YT-Spammer-Purge"
     echo "Automated updates do not work on these versions, but you may download the latest version of YT-Spammer-Purge using this script."
     echo "If you choose to re-download the latest verion of YT-Spammer-Purge using this script, automated updates will be re-enabled."
@@ -151,7 +152,7 @@ then
     REQUIREMENTS_INSTALLED=1
 fi
 
-[[ -e YTSpammerPurge.py ]] && { git remote get-url origin > /dev/null || git_missing }
+[[ -e YTSpammerPurge.py ]] && ( [[ $(git remote get-url origin) == *"YT-Spammer-Purge"* ]] || git_missing )
 
-git remote get-url origin > /dev/null && update || install_MAIN
+[[ $(git remote get-url origin) == *"YT-Spammer-Purge"* ]] && update || install_MAIN
 # If get-url succeeds, update, else install
