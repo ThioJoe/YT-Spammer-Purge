@@ -8,8 +8,9 @@ import Scripts.validation as validation
 import Scripts.auth as auth
 import Scripts.operations as operations
 import Scripts.files as files
+import Scripts.filter_variables as filter
 
-from confusables import confusable_regex, normalize
+from Scripts.confusablesCustom import confusable_regex, normalize
 from base64 import b85decode as b64decode
 import pathlib
 
@@ -270,9 +271,9 @@ def prepare_filter_mode_non_ascii(scanMode, config):
 
 # Auto smart mode
 def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
-  rootDomainList = miscData.rootDomainsList
+  rootDomainList = miscData.resources['rootDomainList']
   spamDomainsList = miscData.spamLists['spamDomainsList'] # List of domains from crowd sourced list
-  spamThreadsList = miscData.spamLists['spamThreadsList'] # List of filters associated with spam threads from crowd sourced list
+  #spamThreadsList = miscData.spamLists['spamThreadsList'] # List of filters associated with spam threads from crowd sourced list
   spamAccountsList = miscData.spamLists['spamAccountsList'] # List of mentioned instagram/telegram scam accounts from crowd sourced list
   utf_16 = "utf-8"
   if config['filter_mode'] == "autosmart":
@@ -295,55 +296,40 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   print("  Loading Filters  [                              ]", end="\r")
 
   # Create Variables
-  blackAdWords, redAdWords, yellowAdWords, exactRedAdWords, = [], [], [], []
-  usernameBlackWords, usernameNovidBlackWords, usernameObfuBlackWords, textExactBlackWords, textUpLowBlackWords = [], [], [], [], []
   compiledRegexDict = {
-    'usernameBlackWords': [],
-    'usernameNovidBlackWords': [],
-    'blackAdWords': [],
-    'redAdWords': [],
-    'yellowAdWords': [],
-    'exactRedAdWords': [],
-    'usernameRedWords': [],
-    'textObfuBlackWords': [],
-    'usernameObfuBlackWords': [],
-    'textExactBlackWords': [],
-    'textUpLowBlackWords': [],
+    'usernameBlackWords': filter.usernameBlackWordsCompiled,
+    'usernameNovidBlackWords': filter.usernameNovidBlackWordsCompiled,
+    'blackAdWords': filter.blackAdWordsCompiled,
+    'redAdWords': filter.redAdWordsCompiled,
+    'yellowAdWords': filter.yellowAdWordsCompiled,
+    'usernameRedWords': filter.usernameRedWordsCompiled,
+    'textBlackWords': filter.textBlackWordsCompiled,
   }
 
-  # General Spammer Criteria
-  #usernameBlackChars = ""
-  spamGenEmoji_Raw = b'@Sl-~@Sl-};+UQApOJ|0pOJ~;q_yw3kMN(AyyC2e@3@cRnVj&SlB@'
-  usernameBlackWords_Raw = [b'aA|ICWn^M`', b'aA|ICWn>^?c>', b'Z*CxTWo%_<a$#)', b'c4=WCbY*O1XL4a}', b'Z*CxIZgX^DXL4a}', b'Z*CxIX8', b'V`yb#YanfTAY*7@', b'b7f^9ZFwMLXkh', b'c4>2IbRcbcAY*7@', b'cWHEJATS_yX=D', b'cWHEJAZ~9Uc4=e', b'cWHEJZ*_DaVQzUKc4=e', b'X>N0LVP|q-Z8`', b'Z*CxIZgX^D', b'Z*CxIZgX^DAZK!6Z2', b'c4=WCX>N0LVP|q-Z2', b'b9G`gb9G_', b'b9G`MG$3<zVg', b'Z*CxMc_3qGVE']
-  usernameNovidBlackWords_Raw = [b'cWHEJATS_yX=D', b'cWHEJAZ~9Uc4=e', b'cWHEJZ*_DaVQzUKc4=e']
-  usernameObfuBlackWords_Raw = [b'c4Bp7YjX', b'b|7MPV{3B', b'a&KaFcm', b'a&KaFV{3B']
-  usernameRedWords = ["whatsapp", "telegram"]
-  textObfuBlackWords = ['telegram']
-  textExactBlackWords_Raw = [b'Z*6BRAZ2)AV{~kJAa`hCbRcOUZe?X;Wn=', b'Z*6BRAZ2)AV{~kJAa`hCbRc<ebs%nKWn^V!', b'Z*6BRAZ2)AV{~kJAa`hCbRckLZ*Xj7AZ}%4WMyO', b'ZDnU+ZaN?$Xm50MWpW|']
-  textUpLowBlackWords_Raw = [b'O<5pAPfk=tPE;UCQv', b'Ngz!@OGO}8L0KR|MO0KpQXoT5PE<usQ~', b'O<5pTNkm0YQy@W7MF']
+  preciseRegexDict = {
+    'textExactBlackWords': re.compile(filter.textExactBlackWords),
+    'textUpLowBlackWords': re.compile(filter.textUpLowBlackWords),
+    'exactRedAdWords': re.compile(filter.exactRedAdWords),
+  }
+
+  compiledObfuRegexDict = {
+    'textObfuBlackWords': filter.textObfuBlackWordsCompiledPairs,
+    'usernameObfuBlackWords': filter.usernameObfuBlackWordsCompiledPairs
+  }
 
   # General Settings
-  unicodeCategoriesStrip = ["Mn", "Cc", "Cf", "Cs", "Co", "Cn"] # Categories of unicode characters to strip during normalization
-  lowAl = b'VPa!sWoBn+X=-b1ZEkOHadLBXb#`}nd3p'
+  unicodeCategoriesStrip = ["Mn", "Cc", "Cf", "Cs", "Co", "Cn", "Sk"] # Categories of unicode characters to strip during normalization
 
   # Create General Lists
-  spamGenEmojiSet = make_char_set(b64decode(spamGenEmoji_Raw).decode(utf_16))
-  lowAlSet = make_char_set(b64decode(lowAl).decode(utf_16))
-    #usernameBlackCharsSet = make_char_set(usernameBlackChars)
-  for x in usernameBlackWords_Raw: usernameBlackWords.append(b64decode(x).decode(utf_16))
-  for x in usernameNovidBlackWords_Raw: usernameNovidBlackWords.append(b64decode(x).decode(utf_16))
-  for x in usernameObfuBlackWords_Raw: usernameObfuBlackWords.append(b64decode(x).decode(utf_16))
-  for x in textExactBlackWords_Raw: textExactBlackWords.append(b64decode(x).decode(utf_16))
-  for x in textUpLowBlackWords_Raw: textUpLowBlackWords.append(b64decode(x).decode(utf_16))
+  spamGenEmojiSet = make_char_set(filter.spamGeneralEmoji)
+  lowAlSet = make_char_set('abcdefghijklmnopqrstuvwxyz')
 
   # Type 1 Spammer Criteria
   minNumbersMatchCount = 6 # Choice of minimum number of matches from spamNums before considered spam
-  spamNums = b'@4S%jypiv`lJC5e@4S@nyp`{~mhZfm@4T4ryqWL3kng;a@4S-lyp!*|l<&Ni@4S}pyqE91nD4xq-+|(hpyH9V;*yBsleOZVw&I?E;+~4|pM-+ovAy7_sN#{K;*quDl8NGzw&I<);+}!xo{R9GgoEI*sp65M;*qxEl8WM!x8j|+;+}%yo{aFHgoNO$sp65N;*q!Fl8fS#xZ<6;;+})zo{jLIgoWafq~ejd;*yNwleyxZy5gRM;+~G;o`m9_j_{v^hT@T>;*q)Hl8xe%y5gO?;+}=#o{#XKgoomhrs9#h;*yTyle^-byyBjQ;+~N3k%YbQpM;3vf|%lwr{a;j;*yWzlf2@cz2csS;+~Q4pM;6xk*MO4yyB9O;*-7Noxb9ph~l1-@SlW=;*+Z4lfUqvgp2T>gpBZ?gn{s%gn;m!pN{aIpP2BSpQ7-cpRDkmpO5gJpPBHTpRMqnpQG@dpSJLwpOEmKpPKNUpRVwopQP}epSSRxpONsLpPTTVpRe$ppQZ4fpSbXypOWyMpPcZWpRn+qpQiAgpSkdzpOf&NpPlfXpRw?rpQrGhpStj!pOo;OpPulYpR(|spQ!MipS$p#pOx^PpP%rZpR@3tpQ-SjpS<v$pO)~QpP=xapS19upQ`YkpS|#%pO^5RpP}%bpSAFvpR4elpT6*&pT7'
-  spamPlus = b';+&e|oSEXDmBO*hmf?`8;(@y2f{NmZlj4Y!;)<2xik{-1wBo0_;-|afsDa|BgyN{8;;5tIsHEbkrQ)cj;;5(MsHozot>UPz;;6aesj=dzvf`|=@42Gyyo=$Rt>S^4;+U!8n5g2IrsA2f;+e7Ho2cTPnc|$9;+&h}oSfpEo#LFH;+&u2oS^EOn(CUH@Sl}{@Sl}|@Sl}}@Sl~2@Sl~3@Sl~4@SmQc@SmQd@SmQe@SmQf@SmQg@SmQh@SmQi'
-  spamOne = b'@4S)lou7~Jou8TTou8xdou94nou9Yjl8EAywc?$&;+}xwo{I3Fgo59J;*p@@k+c'
-  x = b64decode(spamNums).decode(utf_16)
-  y = b64decode(spamPlus).decode(utf_16)
-  z = b64decode(spamOne).decode(utf_16)
+
+  x = filter.spamNums
+  y = filter.spamPlus
+  z = filter.spamOne
 
   # Prepare Filters for Type 1 Spammers
   spammerNumbersSet = make_char_set(x)
@@ -352,31 +338,31 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   regexTest3 = f"[{y}] ?[{z}]"
   compiledNumRegex = re.compile(f"({regexTest1}|{regexTest2}|{regexTest3})")
 
-  # Type 2 Spammer Criteria
-  blackAdWords_Raw = [b'V`yb#YanfTAaHVTW@&5', b'Z*XO9AZ>XdaB^>EX>0', b'b7f^9ZFwMYa&Km7Yy', b'V`yb#YanfTAa-eFWp4', b'V`yb#YanoPZ)Rz1', b'V`yb#Yan)MWMyv', b'bYXBHZ*CxMc>', b'Z*CxMc_46UV{~<LWd']
-  redAdWords_Raw = [b'W_4q0', b'b7gn', b'WNBk-', b'WFcc~', b'W-4QA', b'W-2OUYX', b'Zgpg3', b'b1HZ', b'F*qv', b'aBp&M']
-  yellowAdWords_Raw = [b'Y;SgD', b'Vr5}<bZKUFYy', b'VsB)5', b'XK8Y5', b'O~a&QV`yb=', b'Xk}@`pJf', b'Xm4}', b'aCLKYc>']
-  exactRedAdWords_Raw = [b'EiElAEiElAEiElAEiElAEiElAEiElAEiElAEiElAEiElAEiElAEiC', b'Wq4s@bZmJbcW7aBAZZ|OWo2Y#WB']
-  redAdEmoji = b64decode(b'@Sl{P').decode(utf_16)
-  yellowAdEmoji = b64decode(b'@Sl-|@Sm8N@Sm8C@Sl>4@Sl;H@Sly0').decode(utf_16)
-  hrt = b64decode(b';+duJpOTpHpOTjFpOTmGpOTaCpOTsIpOTvJpOTyKpOT#LpQoYlpOT&MpO&QJouu%el9lkElAZ').decode(utf_16)
-
-  # Create Type 2 Lists
-  for x in blackAdWords_Raw: blackAdWords.append(b64decode(x).decode(utf_16))
-  for x in redAdWords_Raw: redAdWords.append(b64decode(x).decode(utf_16))
-  for x in yellowAdWords_Raw: yellowAdWords.append(b64decode(x).decode(utf_16))
-  for x in exactRedAdWords_Raw: exactRedAdWords.append(b64decode(x).decode(utf_16))
-  print("  Loading Filters  [===                           ]", end="\r")
-
   # Prepare Filters for Type 2 Spammers
-  redAdEmojiSet = make_char_set(redAdEmoji)
-  yellowAdEmojiSet = make_char_set(yellowAdEmoji)
-  hrtSet = make_char_set(hrt)
+  redAdEmojiSet = make_char_set(filter.redAdEmoji)
+  yellowAdEmojiSet = make_char_set(filter.yellowAdEmoji)
+  hrtSet = make_char_set(filter.hrt)
 
   # Prepare Regex to detect nothing but video link in comment
   onlyVideoLinkRegex = re.compile(r"^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$")
   compiledRegexDict['onlyVideoLinkRegex'] = onlyVideoLinkRegex
 
+  # Compile Thread Detection Regex
+  nameRegex = re.compile(rf'\b{filter.salutationRegex}\s+([a-zA-Z]+\.?)\s+([a-zA-Z]+)')
+  nakedNameRegex = re.compile(rf'\b{filter.nakedNamePreRegex}\s+([a-zA-Z]+\.?)\s+([a-zA-Z]+)')
+  cashRegex = re.compile(r"((\$|£|€)((\d*( ?k))|((\d{3,})|(\d{1,3}((,|\.)\d{3}){1,}))))|(((\d*( ?k))|(((\d{3,})|(\d{1,3}(,|\.\d{3})))))(\$|£|€| ?u\.?s\.?d\.?| ?eur| ?btc| ?u.?s.? dollar))")
+
+  threadFiltersDict = {
+    'threadWordsRegex': re.compile(filter.threadWordsRegex),
+    'threadPhrasesRegex': re.compile(filter.threadPhrasesRegex),
+    'monetWordsRegex': re.compile(filter.monetWordsRegex),
+    'salutationRegex': re.compile(r"\b" + filter.salutationRegex),
+    'nameRegex': nameRegex,
+    'nakedNameRegex': nakedNameRegex,
+    'cashRegex': cashRegex,
+  }
+
+  print("  Loading Filters  [======                        ]", end="\r")
 
   # Compile regex with upper case, otherwise many false positive character matches
   bufferChars = r"*_~|`[]()'-.•,"
@@ -385,40 +371,8 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   usernameConfuseRegex = re.compile(confusable_regex(miscData.channelOwnerName))
   m = bufferMatch
   a = addBuffers
-  for word in usernameBlackWords:
-    value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
-    compiledRegexDict['usernameBlackWords'].append([word, value])
-  for word in usernameNovidBlackWords:
-    value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
-    compiledRegexDict['usernameNovidBlackWords'].append([word, value])
-  for word in blackAdWords:
-    value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
-    compiledRegexDict['blackAdWords'].append([word, value])
-  for word in redAdWords:
-    value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
-    compiledRegexDict['redAdWords'].append([word, value])
-  for word in yellowAdWords:
-    value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
-    compiledRegexDict['yellowAdWords'].append([word, value])
-  for word in exactRedAdWords:
-    value = re.compile(confusable_regex(word.upper(), include_character_padding=False))
-    compiledRegexDict['exactRedAdWords'].append([word, value])
-  print("  Loading Filters  [=====                         ]", end="\r")
-  for word in usernameRedWords:
-    value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
-    compiledRegexDict['usernameRedWords'].append([word, value])
-  for word in textObfuBlackWords:
-    value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
-    compiledRegexDict['textObfuBlackWords'].append([word, value])
-  for word in usernameObfuBlackWords:
-    value = re.compile(confusable_regex(word.upper(), include_character_padding=True).replace(m, a))
-    compiledRegexDict['usernameObfuBlackWords'].append([word, value])
+  
 
-
-  for word in textExactBlackWords:
-    compiledRegexDict['textExactBlackWords'].append(word)
-  for word in textUpLowBlackWords:
-      compiledRegexDict['textUpLowBlackWords'].append(word)
   print("  Loading Filters  [==============                ]", end="\r")
 
   # Prepare All-domain Regex Expression
@@ -442,11 +396,10 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
     spamListExpressionsList.append(confusable_regex(domain.upper().replace(".", "⚫"), include_character_padding=False).replace("(?:⚫)", "(?:[^a-zA-Z0-9 ]{1,2})"))
   for account in spamAccountsList:
     spamListExpressionsList.append(confusable_regex(account.upper(), include_character_padding=True).replace(m, a))
-  for thread in spamThreadsList:
-    spamListExpressionsList.append(confusable_regex(thread.upper(), include_character_padding=True).replace(m, a))
+  # for thread in spamThreadsList:
+  #   spamListExpressionsList.append(confusable_regex(thread.upper(), include_character_padding=True).replace(m, a))
   print("  Loading Filters  [======================        ]", end="\r")
   spamListCombinedRegex = re.compile('|'.join(spamListExpressionsList))
-  print("  Loading Filters  [============================  ]", end="\r")
 
   # Prepare Multi Language Detection
   turkish = 'ÇçŞşĞğİ'
@@ -456,7 +409,8 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   languages = [['turkish', turkish, []], ['germanic', germanic, []], ['cyrillic', cyrillic, []], ['japanese', japanese, []]]
   for item in languages:
     item[2] = make_char_set(item[1])
-  print("  Loading Filters  [==============================]", end="\r")
+  print("  Loading Filters  [============================  ]", end="\r")
+
 
   filterSettings = {
     'spammerNumbersSet': spammerNumbersSet,
@@ -470,14 +424,18 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
     'lowAlSet': lowAlSet,
     'rootDomainRegex': rootDomainRegex,
     'compiledRegexDict': compiledRegexDict,
+    'compiledObfuRegexDict': compiledObfuRegexDict,
+    'preciseRegexDict': preciseRegexDict,
     'usernameConfuseRegex': usernameConfuseRegex,
     'languages': languages,
     'sensitive': sensitive,
     'sensitiveRootDomainRegex': sensitiveRootDomainRegex,
     'unicodeCategoriesStrip': unicodeCategoriesStrip,
     'spamListCombinedRegex': spamListCombinedRegex,
+    'threadFiltersDict': threadFiltersDict
     }
   print("                                                                 ") # Erases line that says "loading filters"
+
   return filterSettings, None
 
 
@@ -505,10 +463,15 @@ def recover_deleted_comments(config):
 def delete_comment_list(config):
   progressFileFolder = os.path.join(RESOURCES_FOLDER_NAME, "Removal_List_Progress")
   print(f"\n\n-------------------- {F.LIGHTRED_EX}Delete Using a List / Log{S.R} --------------------")
-  print("\nUse new comment list, or continue where you left off with another list?")
-  print(f"  1. Use {F.LIGHTCYAN_EX}New List{S.R}")
-  print(f"  2. {F.LIGHTMAGENTA_EX}Continue With{S.R} a List")
-  listChoice = input("\nSelection (1 or 2): ")
+  while True:
+    print("\nUse new comment list, or continue where you left off with another list?")
+    print(f"  1. Use {F.LIGHTCYAN_EX}New List{S.R}")
+    print(f"  2. {F.LIGHTMAGENTA_EX}Continue With{S.R} a List")
+    listChoice = input("\nSelection (1 or 2): ")
+    if listChoice == "1" or listChoice == "2":
+      break
+    else:
+      print(f"\n{F.LIGHTRED_EX}Invalid selection!{S.R} Please try again.")
 
   if listChoice == "1":
     continued = False
@@ -636,7 +599,7 @@ def delete_comment_list(config):
       print(f"{F.RED}Invalid input, try again.{S.R}")
   if removalMode == "rejected":
     banChoice = choice(F"Also {F.RED}ban{S.R} the commenters?")
-    if banChoice.lower() == "x":
+    if str(banChoice).lower() == "x":
       return "MainMenu"
 
   # Set limit based on quota
