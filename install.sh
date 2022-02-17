@@ -161,9 +161,9 @@ check_git_missing () {
     exit 0
 }
 
-if ( ! command -v git &> /dev/null ) | ( ! command -v python3 &> /dev/null )
+if ( ! command -v git &> /dev/null ) | ( ! command -v python3 &> /dev/null ) | ( ! python3 -c "import tkinter" &>/dev/null )
 then
-    echo "You are missing some required packages to run this script."
+    echo "You are missing some required packages."
     install_os_requirements
     REQUIREMENTS_INSTALLED=1
 fi
