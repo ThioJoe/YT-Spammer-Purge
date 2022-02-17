@@ -125,7 +125,7 @@ update () {
     git fetch origin
     echo "Latest version is $(git describe origin --abbrev=0 --tags)"
     echo "Updating to this version."
-    git checkout -q -m $(git describe origin --abbrev=0 --tags)
+    git checkout -q -m "$(git describe origin --abbrev=0 --tags)"
 
 
     echo "--------------------------"
