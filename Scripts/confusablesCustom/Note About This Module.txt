@@ -1,3 +1,0 @@
-This included modules folder is from here: https://github.com/woodgern/confusables
-
-It has been included so that I could modify the custom_confusables.txt file with additional characters.
