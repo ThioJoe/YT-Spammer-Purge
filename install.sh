@@ -36,10 +36,11 @@ install_macos() {
 }
 
 install_python_requirements () {
-    python3 -m pip install -q -r requirements.txt --user || \
-        echo "Python requirements did not install successfully" && exit 1
+    python3 -m pip install -q -r requirements.txt --user && \
+        echo "Python requirements installed." || \
+        { echo "Python requirements did not install successfully" && \
+            exit 1 }
 
-    echo "Python requirements installed."
 }
 
 install_os_requirements () {
@@ -50,7 +51,7 @@ install_os_requirements () {
     INSTALLED=0
 
     case "$(uname -s)" in
-        Darwin*) install_macos && INSTALLED=1 || echo "Install failed" && exit 1;;
+        Darwin*) install_macos && INSTALLED=1 || { echo "Install failed" && exit 1 };;
         # Mac
         #CYGWIN*) do_something;;
         # Cygwin Emulator -- Unimplemented
@@ -58,13 +59,13 @@ install_os_requirements () {
         # MINGW Emulator -- Unimplemented
     esac
 
-    [[ -e /etc/debian_version ]] && install_debian && INSTALLED=1 || echo "Install failed" && exit 1
+    [[ -e /etc/debian_version ]] && install_debian && INSTALLED=1 || { echo "Install failed" && exit 1 }
 
-    [[ -e /etc/fedora-release ]] && install_fedora && INSTALLED=1 || echo "Install failed" && exit 1
+    [[ -e /etc/fedora-release ]] && install_fedora && INSTALLED=1 || {  echo "Install failed" && exit 1 }
 
-    [[ -e  /etc/centos-release ]] && install_centos && INSTALLED=1 || echo "Install failed" && exit 1
+    [[ -e  /etc/centos-release ]] && install_centos && INSTALLED=1 || { echo "Install failed" && exit 1 }
 
-    [[ -e /etc/arch-release ]] && install_arch && INSTALLED=1 || echo "Install failed" && exit 1
+    [[ -e /etc/arch-release ]] && install_arch && INSTALLED=1 || { echo "Install failed" && exit 1 }
 
     [[ $INSTALLED -eq 0 ]] && printf "You are on an unknown system. You will have to install the required packages manually.\nContributions are welcome to add support for your system:\nhttps://github.com/ThioJoe/YT-Spammer-Purge" && exit 1
 
