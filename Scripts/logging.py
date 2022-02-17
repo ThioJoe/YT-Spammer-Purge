@@ -632,13 +632,13 @@ def get_extra_json_data(channelIDs, jsonSettingsDict):
     try:
       response = auth.YOUTUBE.channels().list(part="snippet,statistics", id=channelIdGroup, fields=fieldsToFetch).execute()
       if response['items']:
-        for j in range(len(channelIdGroup)):
+        for infoDict in response['items']:
           tempDict = {}
-          channelID = response['items'][j]['id']
-          tempDict['PublishedAt'] = response['items'][j]['snippet']['publishedAt']
-          tempDict['Statistics'] = response['items'][j]['statistics']
+          channelID = infoDict['id']
+          tempDict['PublishedAt'] = infoDict['snippet']['publishedAt']
+          tempDict['Statistics'] = infoDict['statistics']
           if getPicsBool == True:
-            picURL = response['items'][j]['snippet']['thumbnails'][resolution]['url']
+            picURL = infoDict['snippet']['thumbnails'][resolution]['url']
             pictureUrlsDict[channelID] = picURL
           jsonExtraDataDict['CommentAuthorInfo'][channelID] = tempDict
     except:
