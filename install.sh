@@ -151,7 +151,7 @@ then
     REQUIREMENTS_INSTALLED=1
 fi
 
-[[ -e YTSpammerPurge.py ]] && git remote get-url origin > /dev/null || git_missing
+[[ -e YTSpammerPurge.py ]] && { git remote get-url origin > /dev/null || git_missing }
 
 git remote get-url origin > /dev/null && update || install_MAIN
 # If get-url succeeds, update, else install
