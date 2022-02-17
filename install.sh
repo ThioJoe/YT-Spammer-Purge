@@ -36,7 +36,7 @@ install_macos() {
 }
 
 install_python_requirements () {
-    python3 -m pip install -r requirements.txt --user || \
+    python3 -m pip install -q -r requirements.txt --user || \
         echo "Python requirements did not install successfully" && exit 1
 
     echo "Python requirements installed."
