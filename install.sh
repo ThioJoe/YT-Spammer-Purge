@@ -143,6 +143,7 @@ git_missing () {
     echo "If you would not like to install YT-Spammer-Purge using this script, close this script within the next 15 seconds..."
     sleep 15
     install_MAIN
+    exit 1
 }
 
 if ! command -v git &> /dev/null
