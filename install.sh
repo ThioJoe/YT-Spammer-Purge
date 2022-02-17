@@ -23,23 +23,29 @@ install_centos () {
 
 install_arch () {
 	sudo pacman -S --needed python3 tk git
+    python3 -m ensurepip
 }
 
 install_python_requirements () {
-    python3 -m ensurepip && \
-        python3 -m pip install -r requirements.txt --user && \
-        echo "Python requirements installed" || \
-        echo "Python requirements did not install successfully"
+    python3 -m pip install -r requirements.txt --user && \
+    echo "Python requirements installed" || \
+    echo "Python requirements did not install successfully"
 }
 
 install_os_requirements () {
     # Check for known OS's
     INSTALLED=0
+
     [[ -e /etc/debian_version ]] && install_debian && INSTALLED=1
+
     [[ -e /etc/fedora-release ]] && install_fedora && INSTALLED=1
+
     [[ -e  /etc/centos-release ]] && install_centos && INSTALLED=1
+
     [[ -e /etc/arch-release ]] && install_arch && INSTALLED=1
+
     [[ $INSTALLED -eq 0 ]] && printf "You are on an unknown system. You will have to install the required packages manually.\nContributions are welcome to add support for your system:\nhttps://github.com/ThioJoe/YT-Spammer-Purge" && exit 1
+
 }
 
 install_MAIN () {
