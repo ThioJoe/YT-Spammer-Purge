@@ -5,26 +5,29 @@ clear
 
 REQUIREMENTS_INSTALLED=0
 
+install_fail () {
+    echo "Install Failed."
+    exit 1
+}
+
 install_debian () {
-    sudo apt install python3 python3-tk python3-pip git
+    sudo apt install python3 python3-tk python3-pip git || install_fail
 }
 
 install_fedora () {
-    sudo dnf install python3 python3-tkinter python3-pip git
+    sudo dnf install python3 python3-tkinter python3-pip git || install_fail
 }
 
-
 install_centos () {
-    sudo yum install -y python3
+    sudo yum install -y python3 || install_fail
     rpm -q epel-release &> /dev/null || EPEL=0
-    sudo yum install -y python3-tkinter epel-release python3-pip git
+    sudo yum install -y python3-tkinter epel-release python3-pip git || install_fail
     # Honestly not sure why it's installing epel and then uninstalling
     [[ $EPEL -eq 0 ]] && sudo yum remove -y epel-release
 }
 
 install_arch () {
-    sudo pacman -S --needed python3 tk git
-    python3 -m ensurepip
+    sudo pacman -S --needed python3 tk git && python3 -m ensurepip || install_fail
 }
 
 install_macos() {
@@ -39,12 +42,6 @@ install_python_requirements () {
     python3 -m pip install -q -r requirements.txt --user && \
         echo "Python requirements installed." || exit 1
     # Pip should give an error if it fails.
-
-}
-
-install_fail () {
-    echo "Install Failed."
-    exit 1
 }
 
 install_os_requirements () {
@@ -64,13 +61,13 @@ install_os_requirements () {
         # MINGW Emulator -- Unimplemented
     esac
 
-    [[ -e /etc/debian_version ]] && install_debian && INSTALLED=1 || install_fail
+    [[ -e /etc/debian_version ]] && install_debian && INSTALLED=1
 
-    [[ -e /etc/fedora-release ]] && install_fedora && INSTALLED=1 || install_fail
+    [[ -e /etc/fedora-release ]] && install_fedora && INSTALLED=1
 
-    [[ -e  /etc/centos-release ]] && install_centos && INSTALLED=1 || install_fail
+    [[ -e  /etc/centos-release ]] && install_centos && INSTALLED=1
 
-    [[ -e /etc/arch-release ]] && install_arch && INSTALLED=1 || install_fail
+    [[ -e /etc/arch-release ]] && install_arch && INSTALLED=1
 
     [[ $INSTALLED -eq 0 ]] && printf "You are on an unknown system. You will have to install the required packages manually.\nContributions are welcome to add support for your system:\nhttps://github.com/ThioJoe/YT-Spammer-Purge" && exit 1
 
