@@ -87,7 +87,7 @@ install_MAIN () {
     # Check what OS we're running on
 
     # Check if we already installed the requirements -- git is needed to check for which mode to run.
-    [[$REQUIREMENTS_INSTALLED -eq 0]] && install_os_requirements && printf "\n\n"
+    [[ $REQUIREMENTS_INSTALLED -eq 0 ]] && install_os_requirements && printf "\n\n"
 
     install_latest_release
 
