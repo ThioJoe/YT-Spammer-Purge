@@ -1,62 +1,62 @@
 #!/bin/bash
 
-if [[ -e /etc/debian_version ]] || [[ -e /etc/fedora-release ]] || [[ -e  /etc/centos-release ]] || [[ -e /etc/arch-release ]]; then
-	:
-else
-	echo "Looks like you aren't running this installer on a Debian, Ubuntu, Fedora, CentOS, or Arch Linux system."
+READY_TO_RUN_PIP=0
+
+debian_install () {
+    echo "YT-Spammer-Purge has a few requirements for Debian/Ubuntu-based systems."
+    sudo apt install python3 python3-tk python3-pip
+
+    READY_TO_RUN_PIP=1
+}
+
+fedora_install () {
+	sudo dnf install python3 python3-tkinter python3-pip
+    READY_TO_RUN_PIP=1
+}
+
+centos_install () {
+	sudo yum install -y python3
+	rpm -q epel-release &> /dev/null || EPEL=0
+	sudo yum install -y python3-tkinter epel-release python3-pip
+	# Honestly not sure why it's installing epel and then uninstalling
+    [[ $EPEL -eq 0 ]] && sudo yum remove -y epel-release
+    READY_TO_RUN_PIP=1
+}
+
+arch_install () {
+	sudo pacman -S --needed python3 tk
+    READY_TO_RUN_PIP=1
+}
+
+install_python_requirements () {
+    python3 -m ensurepip && \
+        python3 -m pip install -r requirements.txt --user && \
+        echo "Python requirements installed" || \
+        echo "Python requirements did not install successfully"
+}
+
+
+
+# Check what OS we're running on
+
+[[ -e /etc/debian_version ]] && debian_install || \
+    [[ -e /etc/fedora-release ]] && fedora_install || \
+    [[ -e  /etc/centos-release ]] && centos_install || \
+    [[ -e /etc/arch-release ]] && arch_install || \
+    echo "Unknown system."
+
+if [[ $READY_TO_RUN_PIP -eq 0 ]];
+then
+    echo "Looks like you aren't running this installer on a supported system."
+    echo "Contributions are welcome to add support for your system:"
+    echo "https://github.com/ThioJoe/YT-Spammer-Purge"
 	exit 1
 fi
 
+# If we've gotten python3 installed:
 
-command -v jq >/dev/null 2>&1 && { JQ=0; }
-#install python
-if ! command -v python3 &> /dev/null; then
-	if [[ -e /etc/debian_version ]]; then
-		sudo apt install python3
-	elif [[ -e /etc/fedora-release ]]; then
-		sudo dnf install python3
-	elif [[ -e /etc/centos-release ]]; then
-		sudo yum install -y python3
-	elif [[ -e /etc/arch-release ]]; then
-		sudo pacman -S python3
-	fi
-else
-	echo "Skipping installing python, as python is preinstalled."
-fi
-#install tkinter, a dependency
-#install jq, needed to get version number
-if [[ -e /etc/debian_version ]]; then
-	sudo apt install python3-tk jq python3-pip
-elif [[ -e /etc/fedora-release ]]; then
-	sudo dnf install python3-tkinter jq python3-pip
-elif [[ -e /etc/centos-release ]]; then
-	rpm -q epel-release &> /dev/null || EPEL=0 
-	sudo yum install -y python3-tkinter epel-release python3-pip
-	sudo yum install -y jq
-	[[ $EPEL -eq 0 ]] && sudo yum remove -y epel-release
-elif [[ -e /etc/arch-release ]]; then
-	sudo pacman -S --needed tk jq
-fi
+install_python_requirements
 
-TAG=$(curl https://api.github.com/repos/ThioJoe/YT-Spammer-Purge/releases/latest -s | jq .name -r)
-if  [[ $JQ -ne 0 ]]; then
-	if [[ -e /etc/debian_version ]]; then
-		sudo apt purge jq
-	elif [[ -e /etc/fedora-release ]]; then
-		sudo dnf remove jq
-	elif [[ -e /etc/centos-release ]]; then
-		sudo yum remove jq
-	elif [[ -e /etc/arch-release ]]; then
-		sudo pacman -Rs jq
-	fi
-else
-	echo "Did not uninstall jq as it was preinstalled before running this script."
-fi
+# Done!
 
-# Uncomment if running this script alone, to also install the files for Youtube-Spammer-Purge
-: 'curl https://codeload.github.com/ThioJoe/YT-Spammer-Purge/tar.gz/refs/tags/v${TAG} -o yt-spammer.tar.gz
-tar -xzf yt-spammer.tar.gz
-rm yt-spammer.tar.gz
-cd YT-Spammer-Purge-${TAG}/'
-bash -c "pip3 install -r requirements.txt --user"
 printf "Dependencies and Program installed!\nNow follow these instructions to get a client_secrets.json file!\nhttps://github.com/ThioJoe/YT-Spammer-Purge/wiki/Instructions:-Obtaining-an-API-Key\n"
