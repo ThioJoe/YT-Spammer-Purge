@@ -90,18 +90,19 @@ install_MAIN () {
     # Check what OS we're running on
 
     # Check if we already installed the requirements -- git is needed to check for which mode to run.
-    [[ $REQUIREMENTS_INSTALLED -eq 0 ]] && install_os_requirements && printf "\n\n"
+    [[ $REQUIREMENTS_INSTALLED -eq 0 ]] && install_os_requirements && echo " "
 
     install_latest_release
 
     # Since we've gotten python3 installed:
 
-    printf "\n\n"
+    echo " "
     install_python_requirements
 
     # Done!
 
     printf "Dependencies and Program installed!\nNow follow these instructions to get a client_secrets.json file!\nhttps://github.com/ThioJoe/YT-Spammer-Purge/wiki/Instructions:-Obtaining-an-API-Key\n\nYou may run this script again in the future to update."
+    echo " "
     exit 1
 }
 
@@ -120,7 +121,7 @@ update () {
     git checkout -m $(git describe origin --abbrev=0 --tags)
 
 
-    printf "\n\n"
+    echo " "
     echo "Updated!"
     echo "Report any bugs to TJoe.io/bug-report"
     exit 1
