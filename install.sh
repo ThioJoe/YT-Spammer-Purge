@@ -47,11 +47,16 @@ install_os_requirements () {
     echo "YT-Spammer-Purge has a few requirements that you will need to install."
     sleep 1
 
+    install_fail () {
+        echo "Install Failed."
+        exit 1
+    }
+
     # Check for known OS's
     INSTALLED=0
 
     case "$(uname -s)" in
-        Darwin*) install_macos && INSTALLED=1 || { echo "Install failed" && exit 1 };;
+        Darwin*) install_macos && INSTALLED=1 || install_fail;;
         # Mac
         #CYGWIN*) do_something;;
         # Cygwin Emulator -- Unimplemented
@@ -59,13 +64,13 @@ install_os_requirements () {
         # MINGW Emulator -- Unimplemented
     esac
 
-    [[ -e /etc/debian_version ]] && install_debian && INSTALLED=1 || { echo "Install failed" && exit 1 }
+    [[ -e /etc/debian_version ]] && install_debian && INSTALLED=1 || install_fail
 
-    [[ -e /etc/fedora-release ]] && install_fedora && INSTALLED=1 || {  echo "Install failed" && exit 1 }
+    [[ -e /etc/fedora-release ]] && install_fedora && INSTALLED=1 || install_fail
 
-    [[ -e  /etc/centos-release ]] && install_centos && INSTALLED=1 || { echo "Install failed" && exit 1 }
+    [[ -e  /etc/centos-release ]] && install_centos && INSTALLED=1 || install_fail
 
-    [[ -e /etc/arch-release ]] && install_arch && INSTALLED=1 || { echo "Install failed" && exit 1 }
+    [[ -e /etc/arch-release ]] && install_arch && INSTALLED=1 || install_fail
 
     [[ $INSTALLED -eq 0 ]] && printf "You are on an unknown system. You will have to install the required packages manually.\nContributions are welcome to add support for your system:\nhttps://github.com/ThioJoe/YT-Spammer-Purge" && exit 1
 
