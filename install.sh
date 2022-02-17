@@ -83,7 +83,8 @@ install_latest_release () {
     echo "We are now going to download the code for YT-Spammer-Purge."
     sleep 1
     git clone https://github.com/ThioJoe/YT-Spammer-Purge
-    cd YT-Spammer-Purge
+    cd YT-Spammer-Purge || exit 5
+    # Use non-1 exit code for debugging
     git checkout -q -m "$(git describe --abbrev=0 --tags)"
     # Go to latest release
 }
