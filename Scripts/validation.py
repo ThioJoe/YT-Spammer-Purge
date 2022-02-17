@@ -51,6 +51,7 @@ def validate_video_id(video_url_or_id, silent=False, pass_exception=False, basic
             print(f"                    Bug Report Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
             input("\nPress Enter to return to the main menu...")
             return "MainMenu", "MainMenu", "MainMenu", "MainMenu", "MainMenu"
+            
 
           return True, possibleVideoID, videoTitle, commentCount, channelID, channelTitle
 
@@ -211,7 +212,7 @@ def validate_config_settings(config):
 
   def print_int_fail(setting, value):
     print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting '{setting}': {str(value)}")
-    print("It should probably be an integer. Check the possible values listed in the config file for that setting.")
+    print("It must be a whole number greater than zero, or another possible value listed in the config for that setting.")
     print_quit_and_report()
 
   # Validation Functions
@@ -246,7 +247,7 @@ def validate_config_settings(config):
     else:
       return None
 
-  def validate_levenshtein(value):
+  def validate_levenshtein(value, *args):
     try:
       value = float(value)
       if value >= 0.0 and value <= 1.0:
@@ -260,17 +261,19 @@ def validate_config_settings(config):
       print("It must be a number from 0 to 1!")
       print_quit_and_report()
 
-  def validate_directory(path):
-    if path == 'logs':
+  def validate_directory(path, settingName):
+    if settingName == 'log_path' and path == 'logs':
+      return True
+    elif settingName == 'configs_path' and path == 'configs':
       return True
     elif os.path.isdir(path):
       return True
     else:
-      print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'log_path': {str(path)}")
+      print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting '{settingName}': {str(path)}")
       print("Make sure the folder exists!")
       print_quit_and_report()
   
-  def validate_encoding(value):
+  def validate_encoding(value, *args):
     try:
       codecs.lookup(value)
       return True
@@ -279,7 +282,7 @@ def validate_config_settings(config):
       print("Make sure the encoding is valid!")
       print_quit_and_report()
 
-  def validate_videos_to_scan(value):
+  def validate_videos_to_scan(value, *args):
     if value == 'ask':
       return True
     else:
@@ -300,7 +303,7 @@ def validate_config_settings(config):
         print("Make sure it is either a single video ID / Link, or a comma separate list of them!")
         print_quit_and_report()
 
-  def validate_channel_to_scan(value):
+  def validate_channel_to_scan(value, *args):
     if value == 'ask' or value == 'mine':
       return True
     else:
@@ -312,7 +315,7 @@ def validate_config_settings(config):
       else:
         return True
 
-  def validate_channel_ids_to_filter(value):
+  def validate_channel_ids_to_filter(value, *args):
     if value == 'ask':
       return True
     else:
@@ -329,7 +332,7 @@ def validate_config_settings(config):
           print_quit_and_report()
       return True
   
-  def validate_chars(value):
+  def validate_chars(value, *args):
     if value == 'ask':
       return True
     result = utils.make_char_set(value, stripLettersNumbers=True, stripKeyboardSpecialChars=False, stripPunctuation=True)
@@ -340,7 +343,7 @@ def validate_config_settings(config):
       print("For this mode, numbers, letters, and punctuation are removed. But there were no characters left to search!")
       print_quit_and_report()
 
-  def validate_strings(value):
+  def validate_strings(value, *args):
     if value == 'ask':
       return True
     try:
@@ -356,7 +359,7 @@ def validate_config_settings(config):
       print("Make sure it is either a single string, or a comma separate list of them!")
       print_quit_and_report()
   
-  def validate_regex_setting(value):
+  def validate_regex_setting(value, *args):
     if value == 'ask':
       return True
     isValid, expression = validate_regex(value)
@@ -373,12 +376,14 @@ def validate_config_settings(config):
   validSettingsDict = {
     'use_this_config': (True, False, 'ask'),
     'this_config_description': None,
+    #'configs_path': None
     'your_channel_id': None, # None because will be checked right away anyway
     'auto_check_update': (True, False),
     'release_channel': ('all', 'stable'),
     'skip_confirm_video': (True, False),
     'moderator_mode': (True, False),
     'auto_close': (True, False),
+    'colors_enabled': (True, False),
     'scan_mode': ('ask', 'chosenvideos', 'recentvideos', 'entirechannel', 'communitypost', 'recentcommunityposts'),
     'max_comments': ('ask'), #
     #'videos_to_scan': None,
@@ -395,8 +400,11 @@ def validate_config_settings(config):
     'detect_sub_challenge_spam': (True, False),
     'detect_spam_threads': (True, False),
     'duplicate_check_modes': ('none', 'id', 'username', 'text', 'nameandtext', 'autoascii', 'autosmart', 'sensitivesmart'),
+    'stolen_comments_check_modes': ('none', 'id', 'username', 'text', 'nameandtext', 'autoascii', 'autosmart', 'sensitivesmart'),
     #'levenshtein_distance': (),
     #'minimum_duplicates': None,
+    #'minimum_duplicate_length'
+    'fuzzy_stolen_comment_detection': (True, False),
     'skip_deletion': (True, False),
     'delete_without_reviewing': (True, False),
     'enable_ban': ('ask', False),
@@ -410,18 +418,20 @@ def validate_config_settings(config):
     'json_log': (True, False),
     #'json_encoding': None,
     'json_extra_data': (True, False),
+    'json_log_all_comments': (True, False),
     'json_profile_picture': (False, 'default', 'medium', 'high'),
     #'quota_limit': (),
     #'config_version': (),
   }
 
   # Settings that can or must contain an integer
-  integerSettings = ['max_comments', 'recent_videos_amount', 'minimum_duplicates', 'quota_limit', 'config_version']
+  integerSettings = ['max_comments', 'recent_videos_amount', 'minimum_duplicates', 'quota_limit', 'config_version', 'stolen_minimum_text_length', 'minimum_duplicate_length']
 
   # Dictionary of settings requiring specific checks, and the functions to validate them
   specialCheck = {
     'levenshtein_distance': validate_levenshtein,
     'log_path': validate_directory,
+    'configs_path': validate_directory,
     'json_encoding': validate_encoding,
     'videos_to_scan': validate_videos_to_scan,
     'channel_to_scan': validate_channel_to_scan,
@@ -431,8 +441,7 @@ def validate_config_settings(config):
     'regex_to_filter': validate_regex_setting
     }
 
-  # ADD CHECK FOR EMPTY STRING!
-
+  # Checks all settings in the config file to ensure they are valid
   for settingName, settingValue in config.items():
     if settingValue == None or settingValue == '':
       print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} The config setting '{settingName}' appears empty!")
@@ -441,18 +450,26 @@ def validate_config_settings(config):
 
     # Check integer value settings
     if settingName in integerSettings:
-      try:
-        int(settingValue)
-        continue
-      except ValueError:
-        # Check if there is another valid value besides an integer
+      if settingValue != 'ask':
+        try:
+          int(settingValue)
+        except ValueError:
+          # Check if there is another valid value besides an integer
+          if simple_settings_check(settingName, settingValue) == True:
+            continue
+          else:
+            print_int_fail(settingName, settingValue)
+        if int(settingValue) <= 0:
+          print_int_fail(settingName, settingValue)
+      else:
+        # Check if 'ask' is a valid value
         if simple_settings_check(settingName, settingValue) == True:
           continue
         else:
           print_int_fail(settingName, settingValue)
 
     elif settingName in specialCheck:
-      if specialCheck[settingName](settingValue) == True:
+      if specialCheck[settingName](settingValue, settingName) == True:
         continue
 
     # Check simple value settings
@@ -466,3 +483,17 @@ def validate_config_settings(config):
         print(f"Consider reporting it: {F.YELLOW}TJoe.io/bug-report{S.R}")
         input(f"\n It might not cause an issue, so press Enter to continue anyway...")
         continue
+  
+
+  # Checks to see if any settings are missing from the config file
+  allSettingsDict = []
+  allSettingsDict.extend(validSettingsDict.keys())
+  allSettingsDict.extend(specialCheck.keys())
+  allSettingsDict.extend(integerSettings)
+
+  for settingName in allSettingsDict:
+    if settingName not in list(config.keys()):
+      print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} The config setting '{settingName}' is missing from the config file!")
+      print(" > Did you remove it or are you using an old config file? (It should have auto-updated)")
+      print(" > You may need to delete and regenerate the config file.")
+      print_quit_and_report()
