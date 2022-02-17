@@ -33,7 +33,7 @@ install_arch () {
 install_macos() {
     echo "This script will install homebrew, if you do not wish to install homebrew, exit within 5 seconds..."
     sleep 5
-    if test ! $(which brew); then
+    if test ! "$(which brew)"; then
         #Install homebrew
         echo "Installing homebrew..."
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -84,7 +84,7 @@ install_latest_release () {
     sleep 1
     git clone https://github.com/ThioJoe/YT-Spammer-Purge
     cd YT-Spammer-Purge
-    git checkout -q -m $(git describe --abbrev=0 --tags)
+    git checkout -q -m "$(git describe --abbrev=0 --tags)"
     # Go to latest release
 }
 
