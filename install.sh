@@ -36,9 +36,10 @@ install_macos() {
 }
 
 install_python_requirements () {
-    python3 -m pip install -r requirements.txt --user && \
-    echo "Python requirements installed" || \
-    echo "Python requirements did not install successfully" && exit 1
+    python3 -m pip install -r requirements.txt --user || \
+        echo "Python requirements did not install successfully" && exit 1
+
+    echo "Python requirements installed."
 }
 
 install_os_requirements () {
@@ -79,23 +80,22 @@ install_latest_release () {
 }
 
 install_MAIN () {
+    clear
     echo "We will now install YT-Spammer-Purge. If this is not what you intend to do, exit within 5 seconds..."
     sleep 5
     echo "Installing."
-    clear
     # Check what OS we're running on
 
     # Check if we already installed the requirements -- git is needed to check for which mode to run.
     [[$REQUIREMENTS_INSTALLED -eq 0]] && install_os_requirements
-    clear
 
-    install_latest_release
     clear
+    install_latest_release
 
     # Since we've gotten python3 installed:
 
-    install_python_requirements
     clear
+    install_python_requirements
 
     # Done!
 
@@ -104,10 +104,10 @@ install_MAIN () {
 }
 
 update () {
+    clear
     echo "We will now update YT-Spammer-Purge. If this is not what you intend to do, exit within 5 seconds..."
     sleep 5
-    clear
-
+    echo "Continuing."
     echo "Current version is $(git describe --abbrev=0 --tags)"
     echo "Updating..."
 
@@ -116,9 +116,9 @@ update () {
     echo "Latest version is $(git describe origin --abbrev=0 --tags)"
     echo "Updating to this version."
     git checkout -m $(git describe origin --abbrev=0 --tags)
-    sleep 1
-    clear
 
+
+    printf "\n\n"
     echo "Updated!"
     echo "Report any bugs to TJoe.io/bug-report"
     exit 1
