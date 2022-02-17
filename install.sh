@@ -43,14 +43,16 @@ install_python_requirements () {
 
 }
 
+install_fail () {
+    # soley for install_os_requirements
+    echo "Install Failed."
+    exit 1
+}
+
 install_os_requirements () {
     echo "YT-Spammer-Purge has a few requirements that you will need to install."
     sleep 1
 
-    install_fail () {
-        echo "Install Failed."
-        exit 1
-    }
 
     # Check for known OS's
     INSTALLED=0
