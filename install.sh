@@ -34,8 +34,10 @@ install_macos() {
     echo "This script will install homebrew, if you do not wish to install homebrew, exit within 5 seconds..."
     sleep 5
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    brew install python@3.10
-    brew install git
+    # Install python3.10 & git or fail out
+    brew install python@3.10 && \
+    brew install git || \
+        install_fail
 }
 
 install_python_requirements () {
