@@ -1,31 +1,28 @@
 #!/bin/bash
 
-READY_TO_RUN_PIP=0
+clear
+# Clear screen before running any commands
 
-debian_install () {
-    echo "YT-Spammer-Purge has a few requirements for Debian/Ubuntu-based systems."
-    sudo apt install python3 python3-tk python3-pip
 
-    READY_TO_RUN_PIP=1
+install_debian () {
+    sudo apt install python3 python3-tk python3-pip git
 }
 
-fedora_install () {
-	sudo dnf install python3 python3-tkinter python3-pip
-    READY_TO_RUN_PIP=1
+install_fedora () {
+	sudo dnf install python3 python3-tkinter python3-pip git
 }
 
-centos_install () {
+
+install_centos () {
 	sudo yum install -y python3
 	rpm -q epel-release &> /dev/null || EPEL=0
-	sudo yum install -y python3-tkinter epel-release python3-pip
+	sudo yum install -y python3-tkinter epel-release python3-pip git
 	# Honestly not sure why it's installing epel and then uninstalling
     [[ $EPEL -eq 0 ]] && sudo yum remove -y epel-release
-    READY_TO_RUN_PIP=1
 }
 
-arch_install () {
-	sudo pacman -S --needed python3 tk
-    READY_TO_RUN_PIP=1
+install_arch () {
+	sudo pacman -S --needed python3 tk git
 }
 
 install_python_requirements () {
@@ -35,28 +32,42 @@ install_python_requirements () {
         echo "Python requirements did not install successfully"
 }
 
+install_os_requirements () {
+    # Check for known OS's
+    [[ -e /etc/debian_version ]] && install_debian || \
+    [[ -e /etc/fedora-release ]] && install_fedora || \
+    [[ -e  /etc/centos-release ]] && install_centos || \
+    [[ -e /etc/arch-release ]] && install_arch || \
+    printf "You are on an unknown system. You will have to install the required packages manually.\nContributions are welcome to add support for your system:\nhttps://github.com/ThioJoe/YT-Spammer-Purge" && \
+    exit 1
+}
 
+install_MAIN () {
+    clear
+    # Check what OS we're running on
+    echo "YT-Spammer-Purge has a few requirements that you will need to install."
 
-# Check what OS we're running on
+    install_os_requirements
 
-[[ -e /etc/debian_version ]] && debian_install || \
-    [[ -e /etc/fedora-release ]] && fedora_install || \
-    [[ -e  /etc/centos-release ]] && centos_install || \
-    [[ -e /etc/arch-release ]] && arch_install || \
-    echo "Unknown system."
+    # If we've gotten python3 installed:
 
-if [[ $READY_TO_RUN_PIP -eq 0 ]];
+    install_python_requirements
+
+    # Done!
+
+    printf "Dependencies and Program installed!\nNow follow these instructions to get a client_secrets.json file!\nhttps://github.com/ThioJoe/YT-Spammer-Purge/wiki/Instructions:-Obtaining-an-API-Key\n"
+}
+
+update () {
+    echo "update here"
+}
+
+if ! command -v git &> /dev/null
 then
-    echo "Looks like you aren't running this installer on a supported system."
-    echo "Contributions are welcome to add support for your system:"
-    echo "https://github.com/ThioJoe/YT-Spammer-Purge"
-	exit 1
+    echo "You are missing some required packages."
+    install_os_requirements
 fi
 
-# If we've gotten python3 installed:
+git remote get-url origin > /dev/null && update || install_MAIN
 
-install_python_requirements
 
-# Done!
-
-printf "Dependencies and Program installed!\nNow follow these instructions to get a client_secrets.json file!\nhttps://github.com/ThioJoe/YT-Spammer-Purge/wiki/Instructions:-Obtaining-an-API-Key\n"
