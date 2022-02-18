@@ -1,0 +1,42 @@
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "2.16.0rc2"
+tag_format = "v$version"
+version_files = [ "pyproject.toml", ]
+
+[tool.poetry]
+name = "YT-Spammer-Purge"
+version = "2.16.0rc2"
+description = "Allows you easily scan for and delete scam comments using several methods."
+authors = ["ThioJoe <Joe@ThioJoe.com>"]
+packages = [
+  {include="Scripts"},
+  {include="YTSpammerPurge.py"},
+]
+include = [
+  "assets/*.ini",
+  "assets/*.json",
+  "assets/*.png",
+  "assets/*.txt",
+]
+
+[tool.poetry.dependencies]
+python = ">=3.7,<4.0"
+certifi = ">=2021.10.8"
+colorama = "==0.4.4"
+google-api-python-client = "==2.33.0"
+google-auth-oauthlib = "==0.4.6"
+protobuf = "==3.19.1"
+python-levenshtein = ">=0.12.2"
+regex = ">=2022.1.18"
+rtfunicode = "==2.0"
+six = ">=1.16.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2.5"
+mkdocs-gen-files = "^0.3.4"
+mkdocs-literate-nav = "^0.4.1"
+mkdocs-macros-plugin = "^0.6.4"
+mkdocs-material = "^8.1.11"
+mkdocstrings = {extras = ["python"], version = "^0.18.0"}
+black = "^22.1.0"
