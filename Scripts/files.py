@@ -171,13 +171,14 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
         isBeta = response.json()[0]["prerelease"]
         if (isBeta == False): 
           for i in range(4):
-            # add a + 1 to index to not count the first release (already checked)
+            # add a "+ 1" to index to not count the first release (already checked)
             latestVersion2 = response.json()[i + 1]["name"]
             # make sure the version is higher than the current version
             if parse_version(latestVersion2) > parse_version(latestVersion):
               # update original latest version to the new version
               latestVersion = latestVersion2
               isBeta = response.json()[i + 1]["prerelease"]
+              # exit loop
               break
 
   except OSError as ox:
