@@ -107,6 +107,9 @@ def main():
 
   print("\nLoading YT Spammer Purge @ " + str(version) + "...")
 
+  # Authenticate with the Google API - If token expired and invalid, deletes and re-authenticates
+  YOUTUBE = auth.first_authentication()
+
            #### Prepare Resources ####
   resourceFolder = RESOURCES_FOLDER_NAME
   whitelistPathWithName = os.path.join(resourceFolder, "whitelist.txt")
@@ -280,8 +283,7 @@ def main():
 
   os.system(clear_command)
 
-  # Authenticate with the Google API - If token expired and invalid, deletes and re-authenticates
-  YOUTUBE = auth.first_authentication()
+
 
   #----------------------------------- Begin Showing Program ---------------------------------
   print(f"{F.LIGHTYELLOW_EX}\n===================== YOUTUBE SPAMMER PURGE v" + version + f" ====================={S.R}")
@@ -374,14 +376,14 @@ def main():
     if updateAvailable != False:
       updateStringLabel = "Update Available: "
       if updateAvailable == True: # Stable update available
-        updateString = f"{F.LIGHTGREEN_EX}Yes{S.R}"
+        updateString = f"{B.LIGHTGREEN_EX}{F.BLACK} Yes {S.R}"
 
       elif updateAvailable == "beta": # Beta Update Available
         if updateReleaseChannel == "stable":
           updateStringLabel = ""
           updateString = ""
         else:
-          updateString = f"{F.CYAN}Beta{S.R}"
+          updateString = f"{B.LIGHTCYAN_EX}{F.BLACK} Beta {S.R}"
       elif updateAvailable == None:
         updateString = f"{F.LIGHTRED_EX}Error{S.R}"
         print("> Note: Error during check for updates. Select 'Check For Updates' for details.")  
@@ -395,7 +397,7 @@ def main():
         updateString = ""
 
     # User selects scanning mode,  while Loop to get scanning mode, so if invalid input, it will keep asking until valid input
-    print("\n{:<59}{:<18}{:>5}".format("> At any prompt, enter 'X' to return here", updateStringLabel, updateString))
+    print("\n{:<59}{:<18}{:>7}".format("> At any prompt, enter 'X' to return here", updateStringLabel, updateString))
     print("> Enter 'Q' now to quit")
 
     print(f"\n\n-------------------------------- {F.YELLOW}Scanning Options{S.R} --------------------------------")
