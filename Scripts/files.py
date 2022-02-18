@@ -857,6 +857,13 @@ def create_config_file(updating=False, dontWarn=False, configFileName="SpamPurge
   attempts = 0
   success = False
   while success == False:
+    if dirPath and not os.path.isdir(dirPath):
+      try:
+        os.makedirs(dirPath)
+      except:
+        traceback.print_exc()
+        print(f"{B.RED}{F.WHITE}Error Code: F-3{S.R} - Problem creating 'configs' folder! Try creating the folder yourself.")
+        input("Then Press Enter to Continue...")
     try:
       attempts += 1
       with open(configFilePathWithName, "w", encoding="utf-8") as configFile:
@@ -883,7 +890,11 @@ def create_config_file(updating=False, dontWarn=False, configFileName="SpamPurge
       parser.read("SpamPurgeConfig.ini", encoding="utf-8")
       if parser.get("info", "config_version"):
         if updating == False:
-          print(f"\n{B.GREEN}{F.BLACK} SUCCESS! {S.R}  {F.YELLOW}{configFileName}{S.R} file created successfully.")
+          if dirPath:
+            dirString = f"{F.YELLOW}{str(dirPath)}{S.R}"
+          else:
+            dirString = "current"
+          print(f"\n{B.GREEN}{F.BLACK} SUCCESS! {S.R}  {F.YELLOW}{configFileName}{S.R} file created successfully in {dirString} folder.")
           print(f"\nYou can now edit the file to your liking. You can also {F.YELLOW}create additional{S.R} configs using this same menu.\n")
           input("Press Enter to return to main menu...")
           return "MainMenu"
