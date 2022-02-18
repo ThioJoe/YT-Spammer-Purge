@@ -1,0 +1,61 @@
+site_name: Youtube Spammer Purge
+site_description: Easily scan for and delete scam comments on your YouTube channel.
+site_url: https://ThioJoe.github.io/YT-Spammer-Purge
+repo_url: https://github.com/ThioJoe/YT-Spammer-Purge
+repo_name: ThioJoe/YT-Spammer-Purge
+# edit_uri: "blob/master/docs/"
+site_dir: site
+
+nav:
+- Home:
+  - Overview: index.md
+  - Credits: credits.md
+  - License: license.md
+- Wiki: wiki/
+- Code Reference: reference/
+- Development:
+  - Contributing: contributing.md
+
+theme:
+  name: material
+  features:
+  - navigation.tabs
+  palette:
+    scheme: slate
+    primary: teal
+    accent: purple
+
+extra_css:
+- css/mkdocstrings.css
+
+markdown_extensions:
+- admonition
+- pymdownx.emoji
+- pymdownx.magiclink
+- pymdownx.snippets:
+    check_paths: true
+- pymdownx.superfences
+- pymdownx.tabbed
+- pymdownx.tasklist
+- toc:
+    permalink: true
+
+plugins:
+- search
+- mkdocstrings:
+    default_handler: python
+    handlers:
+      python:
+        rendering:
+          show_if_no_docstring: true
+          separate_signature: true
+    watch:
+    - YTSpammerPurge.py
+    - Scripts
+- gen-files:
+    scripts:
+    - docs/gen_ref_nav.py
+- literate-nav:
+    nav_file: SUMMARY.md
+- macros:
+    module_name: docs/macros
