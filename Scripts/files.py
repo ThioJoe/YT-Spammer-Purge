@@ -166,7 +166,6 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
         isBeta = False
       elif updateReleaseChannel == "all":
         latestVersion = response.json()[0]["name"]
-        latestVersionId = response.json()[0]["id"]
         # check if latest version is a beta. 
         # if it is continue, else check for another beta with a higher version in the 5 newest releases 
         isBeta = response.json()[0]["prerelease"]
