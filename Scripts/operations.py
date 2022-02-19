@@ -859,14 +859,17 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
           for match in result:
             lowerChars = chars.lower()
             # Strips off buffer characters and specified unicode categories
-            for bufferChar in compiledRegexDict['bufferChars']:
-              match = match.strip(bufferChar)
+            while match[0] in compiledRegexDict['bufferChars'] or match[-1] in compiledRegexDict['bufferChars']:
+              for bufferChar in compiledRegexDict['bufferChars']:
+                match = match.strip(bufferChar)
             while unicodedata.category(match[0]) in smartFilter['unicodeCategoriesStrip']:
               match = match[1:]
             while unicodedata.category(match[-1]) in smartFilter['unicodeCategoriesStrip']:
               match = match[:-1]
             if any(char not in lowerChars for char in match) and any(char not in lowerChars.translate(ignoredConfusablesConverter) for char in match):
               return True
+            else:
+              return False
 
       def remove_unicode_categories(string):
         return "".join(char for char in string if unicodedata.category(char) not in smartFilter['unicodeCategoriesStrip'])
