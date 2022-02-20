@@ -5,6 +5,18 @@ clear
 
 REQUIREMENTS_INSTALLED=0
 
+# Credit to https://stackoverflow.com/questions/29436275/how-to-prompt-for-yes-or-no-in-bash
+# Slightly edited
+function confirm {
+    while true; do
+        read -p "$* [y/n]: " yn
+        case $yn in
+            [Yy]*) return 0  ;;
+            [Nn]*) return 1  ;;
+        esac
+    done
+}
+
 install_fail () {
     echo "Install Failed."
     exit 1
@@ -31,8 +43,9 @@ install_arch () {
 }
 
 install_macos() {
-    echo "This script will install homebrew, if you do not wish to install homebrew, exit within 5 seconds..."
-    sleep 5
+    echo "This script will install Homebrew, along with YT-Spammer-Purge's requirements."
+    echo "Continue installation?"
+    confirm && echo "Ok, installing requirements." || install_fail
     if test ! "$(which brew)"; then
         #Install homebrew
         echo "Installing homebrew..."
@@ -52,8 +65,6 @@ install_python_requirements () {
 
 install_os_requirements () {
     echo "YT-Spammer-Purge has a few requirements that you will need to install."
-    sleep 1
-
 
     # Check for known OS's
     INSTALLED=0
@@ -81,7 +92,6 @@ install_os_requirements () {
 
 install_latest_release () {
     echo "We are now going to download the code for YT-Spammer-Purge."
-    sleep 1
     git clone https://github.com/ThioJoe/YT-Spammer-Purge
     cd YT-Spammer-Purge || exit 5
     # Use non-1 exit code for debugging
@@ -92,8 +102,8 @@ install_latest_release () {
 install_MAIN () {
     clear
     echo "We will now install YT-Spammer-Purge."
-    echo "If this is not what you want to do, exit within 5 seconds..."
-    sleep 5
+    echo "Continue?"
+    confirm || install_fail
     echo "Installing."
     # Check what OS we're running on
 
@@ -127,9 +137,9 @@ update () {
     check_python_requirements
     clear
     echo "We will now attempt to update YT-Spammer-Purge."
-    echo "If this is not what you want to do, exit within 5 seconds..."
     echo "Current version is $(git describe --abbrev=0 --tags)"
-    sleep 5
+    echo "Continue?"
+    confirm || exit 1
     echo "Updating..."
 
 
@@ -155,8 +165,8 @@ check_git_missing () {
     echo "Automated updates do not work on these versions, but you may download the latest version of YT-Spammer-Purge using this script."
     echo "If you choose to re-download the latest verion of YT-Spammer-Purge using this script, automated updates will be re-enabled."
     echo "The latest YT-Spammer-Purge with automated updates will be downloaded to a sub-directory of the same name."
-    echo "If you would not like to install YT-Spammer-Purge using this script, close this script within the next 15 seconds..."
-    sleep 15
+    echo "Would you like to re-install YT-Spammer-Purge?"
+    confirm && echo "OK, installing." || exit 1
     install_MAIN
     exit 0
 }
