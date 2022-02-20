@@ -121,10 +121,10 @@ If you are not sure how to install YTSpammerPurge manually, it is probably best 
 The easiest way to install YTSpammerPurge is using the install script.
 
 ```bash
-bash <(curl -s https://raw.githubusercontent.com/EthanHindmarsh/YT-Spammer-Purge/install_script/install.sh)
+bash <(curl -s https://raw.githubusercontent.com/ThioJoe/YT-Spammer-Purge/main/install.sh)
 ```
 
-![install](https://user-images.githubusercontent.com/60006481/154855672-165565a1-50db-47d4-bf39-0fb576710f63.gif)
+<img src="https://user-images.githubusercontent.com/60006481/154855672-165565a1-50db-47d4-bf39-0fb576710f63.gif" width="250"/>
 
 See one of the following if you need further help:
 * [Linux Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/Linux-Installation-Instructions)
@@ -134,7 +134,7 @@ See one of the following if you need further help:
 
 To update YTSpammerPurge, run the `install.sh` file inside your installation.
 
-![update](https://user-images.githubusercontent.com/60006481/154855673-bf2e8fdb-eaa3-4583-a2a1-80ef4816e2bc.gif)
+<img src="https://user-images.githubusercontent.com/60006481/154855673-bf2e8fdb-eaa3-4583-a2a1-80ef4816e2bc.gif" width="250">
 
 ##### Manual Installation
 
