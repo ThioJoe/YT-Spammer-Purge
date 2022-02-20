@@ -337,6 +337,8 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   regexTest2 = f"[+] ?[{z}]"
   regexTest3 = f"[{y}] ?[{z}]"
   compiledNumRegex = re.compile(f"({regexTest1}|{regexTest2}|{regexTest3})")
+  compiledAllNumRegex = re.compile("|".join(list(filter.spamNums)))
+  phoneRegexCompiled = re.compile(filter.phoneRegex)
 
   # Prepare Filters for Type 2 Spammers
   redAdEmojiSet = make_char_set(filter.redAdEmoji)
@@ -415,7 +417,9 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   filterSettings = {
     'spammerNumbersSet': spammerNumbersSet,
     'compiledNumRegex': compiledNumRegex,
+    'compiledAllNumRegex': compiledAllNumRegex,
     'minNumbersMatchCount': minNumbersMatchCount,
+    'phoneRegexCompiled': phoneRegexCompiled,
     #'usernameBlackCharsSet': usernameBlackCharsSet,
     'spamGenEmojiSet': spamGenEmojiSet,
     'redAdEmojiSet': redAdEmojiSet,
