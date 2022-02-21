@@ -465,6 +465,7 @@ def recover_deleted_comments(config):
 
 ################################ DELETE COMMENT LIST ###########################################
 def delete_comment_list(config):
+  progressDict = dict()
   progressFileFolder = os.path.join(RESOURCES_FOLDER_NAME, "Removal_List_Progress")
   print(f"\n\n-------------------- {F.LIGHTRED_EX}Delete Using a List / Log{S.R} --------------------")
   while True:
@@ -666,11 +667,10 @@ def delete_comment_list(config):
     if continued == True:
       progressDict[sessionNum] = {'removed': previousRemovedComments.union(finalRemovedSet), 'notRemoved': remainingCommentsSet, 'failedCommentsList': failedCommentsList+previousFailedComments}
     else:
-      progressDict = dict()
       progressDict[sessionNum] = {'removed': finalRemovedSet, 'notRemoved': remainingCommentsSet, 'failedCommentsList': failedCommentsList+previousFailedComments}
 
 
-  if len(progressDict[sessionNum]['notRemoved']) == 0 and len(progressDict[sessionNum]['failedCommentsList']) == 0:
+  if not progressDict or (len(progressDict[sessionNum]['notRemoved']) == 0 and len(progressDict[sessionNum]['failedCommentsList']) == 0):
     if continued == True:
       print(f"\n{F.LIGHTGREEN_EX}Success!{S.R} All comments should be removed. {F.YELLOW}Will now remove{S.R} finished progress file. (Log file will remain)")
       files.try_remove_file(progressFileNameWithPath)

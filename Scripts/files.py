@@ -1015,7 +1015,10 @@ def parse_comment_list(config, recovery=False, removal=False, returnFileName=Fal
   if returnFileName == False:
     return resultList, None
   else:
-    return resultList, pathlib.Path(os.path.relpath(listFileName)).stem
+    if listFileName:
+      return resultList, pathlib.Path(os.path.relpath(listFileName)).stem
+    else:
+      return resultList, "Entered_List" + str(randrange(999))
 
 
 ######################################### Read & Write Dict to Pickle File #########################################
