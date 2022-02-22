@@ -827,6 +827,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
       compiledNumRegex = smartFilter['compiledNumRegex']
       compiledAllNumRegex = smartFilter['compiledAllNumRegex']
       phoneRegexCompiled = smartFilter['phoneRegexCompiled']
+      bigNumCheckRegexCompiled = smartFilter['bigNumCheckRegexCompiled']
       minNumbersMatchCount = smartFilter['minNumbersMatchCount']
       bufferChars = compiledRegexDict['bufferChars']
       #usernameBlackCharsSet = smartFilter['usernameBlackCharsSet']
@@ -850,7 +851,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
         rootDomainRegex = smartFilter['sensitiveRootDomainRegex']
 
       # Functions --------------------------------------------------------------
-      def findObf(expression, chars, stringToSearch, findall=True):
+      def findObf(expression, chars, stringToSearch, findall=True, phone=False):
         # Confusable thinks s and f look similar, have to compensate to avoid false positive
         ignoredConfusablesConverter = {ord('f'):ord('s'),ord('s'):ord('f')}
         if findall:
@@ -862,17 +863,18 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
         else:
           for match in result:
             if match != '':
-              lowerChars = chars.lower()
-              # Strips off buffer characters and specified unicode categories
-              while match[0] in compiledRegexDict['bufferChars'] or match[-1] in compiledRegexDict['bufferChars']:
-                for bufferChar in compiledRegexDict['bufferChars']:
-                  match = match.strip(bufferChar)
-              while unicodedata.category(match[0]) in smartFilter['unicodeCategoriesStrip']:
-                match = match[1:]
-              while unicodedata.category(match[-1]) in smartFilter['unicodeCategoriesStrip']:
-                match = match[:-1]
-              if any(char not in lowerChars for char in match) and any(char not in lowerChars.translate(ignoredConfusablesConverter) for char in match):
-                return True
+              if not phone or (phone and not bigNumCheckRegexCompiled.search(match)):
+                lowerChars = chars.lower()
+                # Strips off buffer characters and specified unicode categories
+                while match[0] in compiledRegexDict['bufferChars'] or match[-1] in compiledRegexDict['bufferChars']:
+                  for bufferChar in compiledRegexDict['bufferChars']:
+                    match = match.strip(bufferChar)
+                while unicodedata.category(match[0]) in smartFilter['unicodeCategoriesStrip']:
+                  match = match[1:]
+                while unicodedata.category(match[-1]) in smartFilter['unicodeCategoriesStrip']:
+                  match = match[:-1]
+                if any(char not in lowerChars for char in match) and any(char not in lowerChars.translate(ignoredConfusablesConverter) for char in match):
+                  return True
 
       def remove_unicode_categories(string):
         return "".join(char for char in string if unicodedata.category(char) not in smartFilter['unicodeCategoriesStrip'])
@@ -914,7 +916,9 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
         pass
       elif len(compiledAllNumRegex.findall(combinedString)) >= minNumbersMatchCount:
         add_spam(current, config, miscData, currentCommentDict, videoID)
-      elif findObf(phoneRegexCompiled, '0123456789+-() ', combinedString):
+      elif sensitive and findObf(phoneRegexCompiled, '0123456789+-() ', combinedString, phone=True):
+        add_spam(current, config, miscData, currentCommentDict, videoID)
+      elif not sensitive and compiledRegexDict['doubledSusWords'].search(combinedStringNormalized) and findObf(phoneRegexCompiled, '0123456789+-() ', combinedString, phone=True):
         add_spam(current, config, miscData, currentCommentDict, videoID)
       elif compiledNumRegex.search(combinedString):
         add_spam(current, config, miscData, currentCommentDict, videoID)

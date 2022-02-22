@@ -304,6 +304,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
     'yellowAdWords': filter.yellowAdWordsCompiled,
     'usernameRedWords': filter.usernameRedWordsCompiled,
     'textBlackWords': filter.textBlackWordsCompiled,
+    'doubledSusWords': filter.doubledSusWordsCompiled,
   }
 
   preciseRegexDict = {
@@ -333,12 +334,13 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
 
   # Prepare Filters for Type 1 Spammers
   spammerNumbersSet = make_char_set(x)
-  regexTest1 = f"[{y}] ?[1]"
-  regexTest2 = f"[+] ?[{z}]"
-  regexTest3 = f"[{y}] ?[{z}]"
+  regexTest1 = f"[{y}] ? ?[1]"
+  regexTest2 = f"[+] ? ?[{z}]"
+  regexTest3 = f"[{y}] ? ?[{z}]"
   compiledNumRegex = re.compile(f"({regexTest1}|{regexTest2}|{regexTest3})")
   compiledAllNumRegex = re.compile("|".join(list(filter.spamNums)))
   phoneRegexCompiled = re.compile(filter.phoneRegex)
+  bigNumCheckRegexCompiled = re.compile(filter.bigNumCheckRegex)
 
   # Prepare Filters for Type 2 Spammers
   redAdEmojiSet = make_char_set(filter.redAdEmoji)
@@ -420,6 +422,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
     'compiledAllNumRegex': compiledAllNumRegex,
     'minNumbersMatchCount': minNumbersMatchCount,
     'phoneRegexCompiled': phoneRegexCompiled,
+    'bigNumCheckRegexCompiled': bigNumCheckRegexCompiled,
     #'usernameBlackCharsSet': usernameBlackCharsSet,
     'spamGenEmojiSet': spamGenEmojiSet,
     'redAdEmojiSet': redAdEmojiSet,
