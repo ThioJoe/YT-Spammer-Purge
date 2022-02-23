@@ -4,7 +4,13 @@ clear
 # Clear screen before running any commands
 
 REQUIREMENTS_INSTALLED=0
+# Implemented in install_MAIN
 DEPS_ONLY=0
+# Implemented at bottom of file
+PDEPS_ONLY=0
+# Implemented at bottom of file
+ASSUME_YES=0
+# Implemented in confirm function
 
 print_usage() {
    # Display Usage
@@ -13,19 +19,29 @@ print_usage() {
    echo "Installer script for The YouTube Spammer Purge application."
    echo
    echo "Options:"
+   echo "    -y     Assume yes: Skip confirmation prompts."
    echo "    -d     Only install OS-Specific dependencies."
+   echo "    -c     Skip installing OS-Specific dependencies."
+   echo "           This could be useful to those who have unsupported systems"
+   echo "    -p     Only install Python dependencies"
    echo "    -h     Print this Help."
    echo
 }
 
 # Get the options
-while getopts ":hd" option; do
+while getopts ":hdcyp" option; do
 	case $option in
 		h)  # display Help
 			print_usage
 			exit;;
 		d)  # Install dependencies only
 			DEPS_ONLY=1;;
+		c)  # Skip installing dependencies
+			REQUIREMENTS_INSTALLED=1;;
+		p)  # Install Python dependencies only
+			PDEPS_ONLY=1;;
+		y)  # Assume YES
+			ASSUME_YES=1;;
 		\?) # Invalid option
 			echo "Error: Invalid option. See option -h for help."
 			exit 1 ;;
@@ -35,6 +51,7 @@ done
 # Credit to https://stackoverflow.com/questions/29436275/how-to-prompt-for-yes-or-no-in-bash
 # Slightly edited
 function confirm {
+    [[ $ASSUME_YES -eq 1 ]] && echo "Assuming YES." && return 0
     while true; do
         read -p "$* [y/n]: " yn
         case $yn in
@@ -91,7 +108,7 @@ install_python_requirements () {
 }
 
 install_os_requirements () {
-    echo "YT-Spammer-Purge has a few requirements that you will need to install."
+    echo "YT-Spammer-Purge has a few OS-Specific requirements that you will need to install."
 
     # Check for known OS's
     INSTALLED=0
@@ -113,8 +130,9 @@ install_os_requirements () {
 
     [[ -e /etc/arch-release ]] && install_arch && INSTALLED=1
 
-    [[ $INSTALLED -eq 0 ]] && printf "You are on an unknown system. You will have to install the required packages manually.\nContributions are welcome to add support for your system:\nhttps://github.com/ThioJoe/YT-Spammer-Purge" && exit 1
+    [[ $INSTALLED -eq 0 ]] && printf "You are on an unknown system. You will have to install the required packages manually.\nAfter installing your requirements, you can run install.sh -c to skip this step of the installation.\nContributions are welcome to add support for your system:\nhttps://github.com/ThioJoe/YT-Spammer-Purge" && exit 1
 
+    return 0
 }
 
 install_latest_release () {
@@ -174,7 +192,8 @@ update () {
     echo "Latest version is $(git describe origin --abbrev=0 --tags)"
     echo "Updating to this version."
     git checkout -q -m "$(git describe origin --abbrev=0 --tags)"
-
+    install_python_requirements
+    # In case requirements are updated
 
     echo "--------------------------"
     echo "Updated!"
@@ -198,6 +217,18 @@ check_git_missing () {
     exit 0
 }
 
+
+# Start running commands to choose what to do next.
+
+[[ $DEPS_ONLY -eq 1 ]] && install_os_requirements && exit 0
+
+[[ $PDEPS_ONLY -eq 1 ]] && install_python_requirements && exit 0
+
+# Check if any of these commands are missing/failing:
+# -  git
+# -  python3
+# -  python3 -c "import tkinter"
+#
 if ( ! command -v git &> /dev/null ) | ( ! command -v python3 &> /dev/null ) | ( ! python3 -c "import tkinter" &>/dev/null )
 then
     echo "You are missing some required packages."
