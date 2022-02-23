@@ -4,6 +4,33 @@ clear
 # Clear screen before running any commands
 
 REQUIREMENTS_INSTALLED=0
+DEPS_ONLY=0
+
+print_usage() {
+   # Display Usage
+   echo "Usage: $0 [-h] [-d]"
+   echo
+   echo "Installer script for The YouTube Spammer Purge application."
+   echo
+   echo "Options:"
+   echo "    -d     Only install OS-Specific dependencies."
+   echo "    -h     Print this Help."
+   echo
+}
+
+# Get the options
+while getopts ":hd" option; do
+	case $option in
+		h)  # display Help
+			print_usage
+			exit;;
+		d)  # Install dependencies only
+			DEPS_ONLY=1;;
+		\?) # Invalid option
+			echo "Error: Invalid option. See option -h for help."
+			exit 1 ;;
+	esac
+done
 
 # Credit to https://stackoverflow.com/questions/29436275/how-to-prompt-for-yes-or-no-in-bash
 # Slightly edited
