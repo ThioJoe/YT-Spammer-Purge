@@ -1,0 +1,9 @@
+name: "YouTube Spammer Purge"
+description: "Allows you to quickly purge spammer comments on YouTube using several methods."
+branding:
+  icon: "x-circle"
+  color: "red"
+  
+runs:
+  using: "docker"
+  image: "Dockerfile"
