@@ -109,14 +109,38 @@ If using the python script version (not the exe), there is a requirements.txt wi
 
 Either way, you DO need to acquire your own API credentials file to access the YouTube API - [See Instructions Here](https://github.com/ThioJoe/YT-Spammer-Purge/wiki/Instructions:-Obtaining-an-API-Key).
 
-**Operating System Specific Instructions:**
+### **Operating System Specific Instructions:**
 
+#### Windows
+
+On Windows, you may download the latest EXE file from the [Releases page](https://github.com/ThioJoe/YT-Spammer-Purge/releases), or you may install YTSpammerPurge manually.
+If you are not sure how to install YTSpammerPurge manually, it is probably best to install the EXE.
+
+#### Linux / MacOS
+
+The easiest way to install YTSpammerPurge is using the install script.
+
+```bash
+bash <(curl -s https://raw.githubusercontent.com/ThioJoe/YT-Spammer-Purge/main/install.sh)
+```
+
+<img src="https://user-images.githubusercontent.com/60006481/154855672-165565a1-50db-47d4-bf39-0fb576710f63.gif" width="500"/>
+
+See one of the following if you need further help:
 * [Linux Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/Linux-Installation-Instructions)
 * [MacOS Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/MacOS-Instructions)
 
+##### Updating
 
+To update YTSpammerPurge, run the `install.sh` file inside your installation.
 
-**Docker Instructions:**
+<img src="https://user-images.githubusercontent.com/60006481/154855673-bf2e8fdb-eaa3-4583-a2a1-80ef4816e2bc.gif" width="500"/>
+
+##### Manual Installation
+
+If your system is not yet supported by the install script, you may install YTSpammerPurge manually by following the guide [Here (Linux Setup Instructions)](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/Linux-Installation-Instructions)
+
+### **Docker Instructions:**
 
 Before running `docker-compose` you must run the `YTSpammerPurge.py` script at least once with your `client_secrets.json` file to confirm OAuth credentials and generate the config/token files.
 
