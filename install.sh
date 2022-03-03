@@ -97,6 +97,7 @@ install_macos() {
     fi
     # Install python3.10 & git or fail out
     brew install python@3.10 && \
+    brew install tcl-tk && \
     brew install git || \
         install_fail
 }
