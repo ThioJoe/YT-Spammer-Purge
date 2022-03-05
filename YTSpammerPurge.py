@@ -79,12 +79,11 @@ from googleapiclient.errors import HttpError
 
 def main():
   # Fix issue with unassigned variables
-  global S
-  global B
-  global F
+  global S, B, F
 
   # Run check on python version, must be 3.6 or higher because of f strings
   if sys.version_info[0] < 3 or sys.version_info[1] < 6:
+	if sys.version_info[0] == 2: from __future__ import print_function
     print("Error Code U-2: This program requires running python 3.6 or higher! You are running" + str(sys.version_info[0]) + "." + str(sys.version_info[1]))
     input("Press Enter to exit...")
     sys.exit()
@@ -99,6 +98,7 @@ def main():
   config: dict
   jsonData: dict
   versionInfoJson: dict
+  
 
   # Checks system platform to set correct console clear command
   # Clears console otherwise the windows terminal doesn't work with colorama for some reason  
@@ -139,23 +139,55 @@ def main():
     try:
       os.mkdir(resourceFolder)
       # Create readme
-      with open(os.path.join(resourceFolder, "_What_Is_This_Folder.txt"), "w") as f:
-        f.write("# This Resources folder is used to store resources required for the YT Spammer Purge program.\n")
-        f.write("# Note: If you had a previous spam_lists folder that was created in the same folder as \n")
-        f.write("# the .exe file, you can delete that old spam_lists folder. The resources folder is the \n")
-        f.write("# new location they will be stored.\n")
+      with open(os.path.join(resourceFolder, "_What_Is_This_Folder.md"), "w") as f:
+	f.write("# What is this folder doing here?")
+        f.write("This Resources folder is used to store resources required for the YT Spammer Purge program.\n")
+        f.write("Note: If you had a previous spam_lists folder that was created in the same folder as \n")
+        f.write("the .exe file, you can delete that old spam_lists folder. The resources folder is the \n")
+        f.write("new location they will be stored.\n")
                 
     except:
-      print("\nError: Could not create folder. To update the spam lists, try creating a folder called 'SpamPurge_Resources',")
-      print("       then inside that, create another folder called 'Spam_Lists'.")
-      input("Press Enter to continue...")
+      print("\nError: Could not create folder. To update the spam lists, we will try creating a folder called 'SpamPurge_Resources',")
+      print("       then inside that, create another folder called 'Spam_Lists'. Please do not be concerned if you see these folders.")
+      
+      input("Press Enter to continue... (or Ctrl+C to not fix)")
+	
+      print("Creating folders...")
+      md_command = "md" if platform.system() == "Windows" else "mkdir"
+      os.system(f"{md_command} SpamPurge_Resources && cd SpamPurge_Resources && {md_command} Spam_Lists")
+      print("Done! Trying again...")
+	
+       os.mkdir(resourceFolder)
+       # Create readme
+       with open(os.path.join(resourceFolder, "_What_Is_This_Folder.md"), "w") as f:
+	 f.write("# What is this folder doing here?")
+         f.write("This Resources folder is used to store resources required for the YT Spammer Purge program.\n")
+         f.write("Note: If you had a previous spam_lists folder that was created in the same folder as \n")
+         f.write("the .exe file, you can delete that old spam_lists folder. The resources folder is the \n")
+         f.write("new location they will be stored.\n")
 
   if os.path.isdir(resourceFolder) and not os.path.isdir(spamListFolder):
     try:
       os.mkdir(spamListFolder)
     except:
-      print("\nError: Could not create folder. To update the spam lists, go into the 'SpamPurge_Resources' folder,")
-      print("       then inside that, create another folder called 'Spam_Lists'.")
+      print("\nError: Could not create folder. To update the spam lists, we will try going into a folder called 'SpamPurge_Resources',")
+      print("       then inside that, we'll create another folder called 'Spam_Lists'. Please do not be concerned if you see these folders.")
+      
+      input("Press Enter to continue... (or Ctrl+C to not fix)")
+	
+      print("Creating folders...")
+      md_command = "md" if platform.system() == "Windows" else "mkdir"
+      os.system(f"cd SpamPurge_Resources && {md_command} Spam_Lists")
+      print("Done! Trying again...")
+	
+       os.mkdir(resourceFolder)
+       # Create readme
+       with open(os.path.join(resourceFolder, "_What_Is_This_Folder.md"), "w") as f:
+	 f.write("# What is this folder doing here?")
+         f.write("This Resources folder is used to store resources required for the YT Spammer Purge program.\n")
+         f.write("Note: If you had a previous spam_lists folder that was created in the same folder as \n")
+         f.write("the .exe file, you can delete that old spam_lists folder. The resources folder is the \n")
+         f.write("new location they will be stored.\n")
 
   # Prepare to check and ingest spammer list files
   # Iterate and get paths of each list
