@@ -139,7 +139,7 @@ def main():
     try:
       os.mkdir(resourceFolder)
       # Create readme
-      with open(os.path.join(resourceFolder, "_What_Is_This_Folder.md"), "w") as f:
+      with open(os.path.join(resourceFolder, "_What_Is_This_Folder.txt"), "w") as f:
 	f.write("# What is this folder doing here?")
         f.write("This Resources folder is used to store resources required for the YT Spammer Purge program.\n")
         f.write("Note: If you had a previous spam_lists folder that was created in the same folder as \n")
@@ -153,13 +153,12 @@ def main():
       input("Press Enter to continue... (or Ctrl+C to not fix)")
 	
       print("Creating folders...")
-      md_command = "md" if platform.system() == "Windows" else "mkdir"
-      os.system(f"{md_command} SpamPurge_Resources && cd SpamPurge_Resources && {md_command} Spam_Lists")
+      os.mkdir("SpamPurge_Resources/Spam_Lists")
       print("Done! Trying again...")
 	
        os.mkdir(resourceFolder)
        # Create readme
-       with open(os.path.join(resourceFolder, "_What_Is_This_Folder.md"), "w") as f:
+       with open(os.path.join(resourceFolder, "_What_Is_This_Folder.txt"), "w") as f:
 	 f.write("# What is this folder doing here?")
          f.write("This Resources folder is used to store resources required for the YT Spammer Purge program.\n")
          f.write("Note: If you had a previous spam_lists folder that was created in the same folder as \n")
@@ -176,8 +175,7 @@ def main():
       input("Press Enter to continue... (or Ctrl+C to not fix)")
 	
       print("Creating folders...")
-      md_command = "md" if platform.system() == "Windows" else "mkdir"
-      os.system(f"cd SpamPurge_Resources && {md_command} Spam_Lists")
+      os.mkdir("SpamPurge_Resources/Spam_Lists")
       print("Done! Trying again...")
 	
        os.mkdir(resourceFolder)
