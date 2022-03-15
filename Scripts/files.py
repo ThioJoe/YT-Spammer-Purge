@@ -304,7 +304,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
             print(f" > And don't forget to report any problems you encounter here: {F.YELLOW}TJoe.io/bug-report{S.R}")
           input("\nPress Enter to Exit...")
           sys.exit()
-        elif platform.system() == "Linux":
+        elif os.name == "posix":
           # Current working directory
           cwd = os.getcwd()
           # what we want the tar file to be called on the system
