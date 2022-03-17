@@ -1,11 +1,11 @@
-<h1 style="text-align:center">
+<h1 align="center">
 <img src="/assets/icon.png" alt="Icon" style="width:100px;height:100px;"/>
 <br>
 YouTube Spammer Purge
 <br>
 </h1>
 
-<div style="text-align:center">
+<div align="center">
   <a href="https://github.com/ThioJoe/YT-Spammer-Purge/issues">
     <img alt="Issue count" src="https://img.shields.io/github/issues/ThioJoe/YT-Spammer-Purge" />
   </a>
@@ -79,12 +79,12 @@ Read some additional details about 'moderator mode' on the [wiki page here](http
 
 ## Video: Project Demonstrations
 
-<p style="text-align:center">Latest Demonstration Video: https://www.youtube.com/watch?v=2tRppXW_aKo</p>
+<p align="center">Latest Demonstration Video: https://www.youtube.com/watch?v=2tRppXW_aKo</p>
 
 [![Updated Demo Video Screenshot Link](https://user-images.githubusercontent.com/12518330/147130101-ff84cd0e-c1fb-43d9-a3be-4c9d4b95d7b0.png)
 ](https://www.youtube.com/watch?v=2tRppXW_aKo)
 
-<p style="text-align:center">Original Demo for Context: https://www.youtube.com/watch?v=-vOakOgYLUI</p>
+<p align="center">Original Demo for Context: https://www.youtube.com/watch?v=-vOakOgYLUI</p>
 
 [![Demo 1 Video Screenshot Link](https://user-images.githubusercontent.com/12518330/140164510-7c886cd9-b9d4-4d6d-a466-fb58dd42ab48.jpg)](https://www.youtube.com/watch?v=-vOakOgYLUI)
 
@@ -92,16 +92,16 @@ Read some additional details about 'moderator mode' on the [wiki page here](http
 
 ## Screenshots
 
-<p style="text-align:center">Opening Menu:</p>
-<p style="text-align:center"><img width="675" alt="Opening Menu" src="https://user-images.githubusercontent.com/93459510/147557851-6d517280-6e20-4dfd-ab78-1a2357f710a7.png"></p>
-<p style="text-align:center">Filter Mode Selection:</p>
-<p style="text-align:center"><img width="675" alt="Filter Mode Selection" src="https://user-images.githubusercontent.com/93459510/147558339-28dc9fec-a51b-48be-a1bb-4f8b9e6cb3f6.png"></p>
-<p style="text-align:center">Scanning (Auto Smart Mode):</p>
-<p style="text-align:center"><img width="675" alt="Scanning" src="https://user-images.githubusercontent.com/93459510/147558617-b097e342-40bb-48df-ab59-d6a985a2322a.png"></p>
-<p style="text-align:center">Matched Comments List:</p>
-<p style="text-align:center"><img width="675" alt="Matched Comments List" src="https://user-images.githubusercontent.com/93459510/147558790-881b4871-e3de-43fe-be02-2fce6a03304d.png"></p>
-<p style="text-align:center">Match Samples and Deletion Menu:</p>
-<p style="text-align:center"><img width="738" alt="Match Samples and Deletion Menu" src="https://user-images.githubusercontent.com/93459510/147559013-7b1f59c7-4433-4b19-8e2e-7988d5d29ee5.png"></p>
+<p align="center">Opening Menu:</p>
+<p align="center"><img width="675" alt="Opening Menu" src="https://user-images.githubusercontent.com/93459510/147557851-6d517280-6e20-4dfd-ab78-1a2357f710a7.png"></p>
+<p align="center">Filter Mode Selection:</p>
+<p align="center"><img width="675" alt="Filter Mode Selection" src="https://user-images.githubusercontent.com/93459510/147558339-28dc9fec-a51b-48be-a1bb-4f8b9e6cb3f6.png"></p>
+<p align="center">Scanning (Auto Smart Mode):</p>
+<p align="center"><img width="675" alt="Scanning" src="https://user-images.githubusercontent.com/93459510/147558617-b097e342-40bb-48df-ab59-d6a985a2322a.png"></p>
+<p align="center">Matched Comments List:</p>
+<p align="center"><img width="675" alt="Matched Comments List" src="https://user-images.githubusercontent.com/93459510/147558790-881b4871-e3de-43fe-be02-2fce6a03304d.png"></p>
+<p align="center">Match Samples and Deletion Menu:</p>
+<p align="center"><img width="738" alt="Match Samples and Deletion Menu" src="https://user-images.githubusercontent.com/93459510/147559013-7b1f59c7-4433-4b19-8e2e-7988d5d29ee5.png"></p>
 
 ## Installation
 
