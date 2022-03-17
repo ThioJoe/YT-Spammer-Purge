@@ -71,7 +71,7 @@ install_debian () {
 }
 
 install_fedora () {
-    sudo dnf install python3 python3-tkinter python3-pip git || install_fail
+    sudo dnf install python3 python3-tkinter python3-pip git python3-devel || install_fail
 }
 
 install_centos () {
