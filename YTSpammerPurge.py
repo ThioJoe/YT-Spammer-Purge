@@ -56,11 +56,9 @@ from Scripts.utils import choice
 print("Importing Standard Libraries...")
 # Standard Libraries
 import time
-import ast
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from collections import namedtuple
-import platform
 import json
 from pkg_resources import parse_version
 
@@ -78,10 +76,13 @@ from googleapiclient.errors import HttpError
 
 
 def main():
-  # Fix issue with unassigned variables
   global S
   global B
   global F
+  # These variables are from shared_imports.py
+  # S - Style
+  # B - Background
+  # F - Foreground
 
   # Run check on python version, must be 3.6 or higher because of f strings
   if sys.version_info[0] < 3 or sys.version_info[1] < 6:
@@ -100,10 +101,7 @@ def main():
   jsonData: dict
   versionInfoJson: dict
 
-  # Checks system platform to set correct console clear command
-  # Clears console otherwise the windows terminal doesn't work with colorama for some reason  
-  clear_command = "cls" if platform.system() == "Windows" else "clear"
-  os.system(clear_command)
+  utils.clear_terminal()
 
   print("\nLoading YT Spammer Purge @ " + str(version) + "...")
 
@@ -181,17 +179,15 @@ def main():
     files.copy_asset_file(spamListDict['Meta']['VersionInfo']['FileName'], spamListDict['Meta']['VersionInfo']['Path'])
 
   # Get stored spam list version data from json file
-  jsonData = open(spamListDict['Meta']['VersionInfo']['Path'], 'r', encoding="utf-8")
-  versionInfoJson = str(json.load(jsonData)) # Parses json file into a string
-  versionInfo = ast.literal_eval(versionInfoJson) # Parses json string into a dictionary
+  versionInfo = json.load(open(spamListDict['Meta']['VersionInfo']['Path'], 'r', encoding="utf-8"))
   spamListDict['Meta']['VersionInfo']['LatestRelease'] = versionInfo['LatestRelease']
   spamListDict['Meta']['VersionInfo']['LastChecked'] = versionInfo['LastChecked']
 
   # Check for primary config file, load into dictionary 'config'. If no config found, loads data from default config in assets folder
-  os.system(clear_command)
+  utils.clear_terminal()
   config = files.load_config_file(configVersion)
   validation.validate_config_settings(config)
-  os.system(clear_command)
+  utils.clear_terminal()
 
   # Disable colors before they are used anywhere
   if config['colors_enabled'] == False:
@@ -281,7 +277,7 @@ def main():
   else:
     moderator_mode = False
 
-  os.system(clear_command)
+  utils.clear_terminal()
 
 
 
@@ -306,10 +302,10 @@ def main():
     print("\n    >  Currently logged in user: " + f"{F.LIGHTGREEN_EX}" + str(CURRENTUSER.name) + f"{S.R} (Channel ID: {F.LIGHTGREEN_EX}" + str(CURRENTUSER.id) + f"{S.R} )")
     if choice("       Continue as this user?", CURRENTUSER.configMatch) == True:
       confirmedCorrectLogin = True
-      os.system(clear_command)
+      utils.clear_terminal()
     else:
       auth.remove_token()
-      os.system(clear_command)
+      utils.clear_terminal()
       YOUTUBE = auth.get_authenticated_service()
 
   # Declare Classes
@@ -370,7 +366,7 @@ def main():
     loggingEnabled = False
     userNotChannelOwner = False
 
-    os.system(clear_command)
+    utils.clear_terminal()
 
     # -----------------------------------------------------------------------------------------------------------------------------
     if updateAvailable != False:
@@ -732,9 +728,7 @@ def main():
               if userNotChannelOwner == True or moderator_mode == True:
                 print(f"{F.LIGHTCYAN_EX}> Note:{S.R} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")
               userChoice = choice("Do you still want to continue?")
-              if userChoice == False:
-                validInteger == False
-              elif userChoice == None:
+              if userChoice == None:
                 return True # Return to main menu
 
           if maxScanNumber > 0:
@@ -991,7 +985,6 @@ def main():
         validConfigSetting = False
 
     ## Get filter sub-mode to decide if searching characters or string
-    validConfigSetting = None
     if config['filter_submode'] != 'ask':
       filterSubMode = config['filter_submode']
       validConfigSetting = True
@@ -1172,7 +1165,9 @@ def main():
       print("                          --- Scanning --- \n")
    
       # ----------------------------------------------------------------------------------------------------------------------
-      def scan_video(miscData, config, filtersDict, scanVideoID, videosToScan=None, currentVideoDict={}, videoTitle=None, showTitle=False, i=1):
+      def scan_video(miscData, config, filtersDict, scanVideoID, videosToScan=None, currentVideoDict=None, videoTitle=None, showTitle=False, i=1):
+        if currentVideoDict is None:
+          currentVideoDict = {}
         nextPageToken, currentVideoDict = operations.get_comments(current, filtersDict, miscData, config, currentVideoDict, scanVideoID, videosToScan=videosToScan)
         if nextPageToken == "Error":
             return "Error"

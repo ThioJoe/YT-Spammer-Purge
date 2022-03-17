@@ -15,8 +15,6 @@ from tkinter import Menu, TclError, Tk, Canvas, Entry, Text, Button, PhotoImage
 from tkinter import END
 from functools import partial
 
-
-
 OUTPUT_PATH = Path(__file__).parent
 ASSETS_PATH = OUTPUT_PATH / Path("./assets")
 
@@ -98,6 +96,9 @@ def rClickbinder(r):
 
 # Function that is called by main program that brings up window to take in user input
 def take_input_gui(mode, stripLettersNumbers=False, stripKeyboardSpecialChars=False, stripPunctuation=False):
+    global returnText
+    # Return Text could be undefined if not pre-defined somewhere.
+    returnText = []
     validModes = ["string", "chars"]
     if mode not in validModes:
         raise ValueError("Invalid mode. Possible values: 'string' or 'chars'.")
@@ -294,10 +295,10 @@ def take_input_gui(mode, stripLettersNumbers=False, stripKeyboardSpecialChars=Fa
         text="No valid terms entered!",
         fill="red",
         font=("Roboto", 12 * -1),
-        state="hidden"
+        state="disabled"
     ))
 
-    inputTextBox.bind('<Button-3>',rClicker, add='') # Binds right click menu to inputTextBox only
+    inputTextBox.bind('<Button-3>', rClicker, add='') # Binds right click menu to inputTextBox only
 
     window.resizable(False, False)
     window.mainloop()

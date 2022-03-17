@@ -10,9 +10,7 @@ import Scripts.operations as operations
 import Scripts.files as files
 import Scripts.filter_variables as filter
 
-from Scripts.confusablesCustom import confusable_regex, normalize
-from base64 import b85decode as b64decode
-import pathlib
+from Scripts.confusablesCustom import confusable_regex
 
 ##########################################################################################
 ################################## FILTERING MODES #######################################

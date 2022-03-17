@@ -3,10 +3,7 @@
 from __future__ import print_function
 from Scripts.shared_imports import *
 
-import argparse
-import io
 import json
-import os
 import sys
 import time
 
