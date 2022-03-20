@@ -2,7 +2,7 @@
 # -*- coding: UTF-8 -*-
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #######################################################################################################
-################################# YOUTUBE SPAM COMMENT DELETER ########################################
+################################# YOUTUBESPAMER PURGER ########################################
 #######################################################################################################
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 ###
@@ -20,18 +20,16 @@
 ### NOTES:    1. To use this script, you will need to obtain your own API credentials file by making
 ###				       a project via the Google Developers Console (aka 'Google Cloud Platform').
 ###              The credential file should be re-named 'client_secret.json' and be placed in the 
-###              same directory as this script.
-###				            >>> See the Readme for instructions on this.
+###              same directory as this script. See the Readme for instructions on this.
 ###
 ###           2. I suck at programming so if something doesn't work I'll try to fix it but might not
 ###              even know how, so don't expect too much.
 ###
-### Author:   ThioJoe - YouTube.com/ThioJoe
-###                     Twitter.com/ThioJoe
+### Author:   ThioJoe - YouTube.com/ThioJoe Twitter.com/ThioJoe
 ###
 ### GitHub:   https://github.com/ThioJoe/YT-Spammer-Purge/
 ###
-### License:  GPL-3.0
+### License:  GNU GPL-3.0
 ###
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
@@ -54,7 +52,7 @@ import Scripts.community_downloader as community_downloader
 from Scripts.utils import choice
 
 print("Importing Standard Libraries...")
-# Standard Libraries
+#Import Standard Libraries
 import time
 import ast
 from dataclasses import dataclass
@@ -65,7 +63,7 @@ import json
 from pkg_resources import parse_version
 
 print("Importing Third-Party Modules...")
-# Other Libraries
+# Import Other Libraries
 from googleapiclient.errors import HttpError
 
 
@@ -79,19 +77,16 @@ from googleapiclient.errors import HttpError
 
 def main():
   # Fix issue with unassigned variables
-  global S
-  global B
-  global F
+  global S, B, F
 
-  # Run check on python version, must be 3.6 or higher because of f strings
+  # Check the python version, must be 3.6 or higher because of f strings
   if sys.version_info[0] < 3 or sys.version_info[1] < 6:
     print("Error Code U-2: This program requires running python 3.6 or higher! You are running" + str(sys.version_info[0]) + "." + str(sys.version_info[1]))
     input("Press Enter to exit...")
     sys.exit()
 
   # Declare Global Variables
-  global YOUTUBE
-  global CURRENTUSER
+  global YOUTUBE, CURRENTUSER
   User = namedtuple('User', 'id name configMatch')
 
   # Some Typehints
@@ -146,16 +141,19 @@ def main():
         f.write("# new location they will be stored.\n")
                 
     except:
-      print("\nError: Could not create folder. To update the spam lists, try creating a folder called 'SpamPurge_Resources',")
-      print("       then inside that, create another folder called 'Spam_Lists'.")
-      input("Press Enter to continue...")
+      print("""
+      Error: Could not create folder. To update the spam lists, try creating a folder called 'SpamPurge_Resources',")
+      then inside that, create another folder called 'Spam_Lists'.")""")
+      input("Press Enter to continue..")
 
   if os.path.isdir(resourceFolder) and not os.path.isdir(spamListFolder):
     try:
       os.mkdir(spamListFolder)
     except:
-      print("\nError: Could not create folder. To update the spam lists, go into the 'SpamPurge_Resources' folder,")
-      print("       then inside that, create another folder called 'Spam_Lists'.")
+      print("""
+            Error: Could not create folder. To update the spam lists, go into the 'SpamPurge_Resources' folder,")
+            then inside that, create another folder called 'Spam_Lists'.
+      """)
 
   # Prepare to check and ingest spammer list files
   # Iterate and get paths of each list
@@ -286,7 +284,8 @@ def main():
 
 
   #----------------------------------- Begin Showing Program ---------------------------------
-  print(f"{F.LIGHTYELLOW_EX}\n===================== YOUTUBE SPAMMER PURGE v" + version + f" ====================={S.R}")
+  print(f"{F.LIGHTYELLOW_EX}\n===================== YOUTUBE SPAMMER PURGE v{version} ====================={S.R}")
+  
   print("=========== https://github.com/ThioJoe/YT-Spammer-Purge ===========")
   print("================= Author: ThioJoe - YouTube.com/ThioJoe ================ \n")
 
@@ -569,9 +568,10 @@ def main():
               print(f"{F.LIGHTRED_EX}NOTE: {F.YELLOW}Moderator Mode is enabled{F.LIGHTRED_EX}. You can hold comments for review when using certain modes{S.R}")
             print("Total number of comments to scan: " + str(miscData.totalCommentCount))
             if miscData.totalCommentCount >= 100000:
-              print(f"\n{B.YELLOW}{F.BLACK} WARNING: {S.R} You have chosen to scan a large amount of comments. The default API quota limit ends up")
-              print(f" around {F.YELLOW}10,000 comment deletions per day{S.R}. If you find more spam than that you will go over the limit.")
-              print(f"        > Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
+              print(f"""
+                    \n{B.YELLOW}{F.BLACK} WARNING: {S.R} You have chosen to scan a large amount of comments. The default API quota limit ends up
+                    around {F.YELLOW}10,000 comment deletions per day{S.R}. If you find more spam than that you will go over the limit.
+                    >Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}""")
               if userNotChannelOwner == False or moderator_mode == True:
                 print(f"{F.LIGHTCYAN_EX}> Note:{S.R} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")
             confirm = choice("Is this video list correct?", bypass=validConfigSetting)
