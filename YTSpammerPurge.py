@@ -151,9 +151,9 @@ def main():
       os.mkdir(spamListFolder)
     except:
       print("""
-            Error: Could not create folder. To update the spam lists, go into the 'SpamPurge_Resources' folder,")
-            then inside that, create another folder called 'Spam_Lists'.
-      """)
+Error: Could not create folder. To update the spam lists, go into the 'SpamPurge_Resources' folder,")
+then inside that, create another folder called 'Spam_Lists'.
+""")
 
   # Prepare to check and ingest spammer list files
   # Iterate and get paths of each list
