@@ -569,9 +569,9 @@ then inside that, create another folder called 'Spam_Lists'.
             print("Total number of comments to scan: " + str(miscData.totalCommentCount))
             if miscData.totalCommentCount >= 100000:
               print(f"""
-                    \n{B.YELLOW}{F.BLACK} WARNING: {S.R} You have chosen to scan a large amount of comments. The default API quota limit ends up
-                    around {F.YELLOW}10,000 comment deletions per day{S.R}. If you find more spam than that you will go over the limit.
-                    >Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}""")
+{B.YELLOW}{F.BLACK} WARNING: {S.R} You have chosen to scan a large amount of comments. The default API quota limit ends up
+around {F.YELLOW}10,000 comment deletions per day{S.R}. If you find more spam than that you will go over the limit.
+        >Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}""")
               if userNotChannelOwner == False or moderator_mode == True:
                 print(f"{F.LIGHTCYAN_EX}> Note:{S.R} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")
             confirm = choice("Is this video list correct?", bypass=validConfigSetting)
