@@ -142,8 +142,8 @@ def main():
                 
     except:
       print("""
-      Error: Could not create folder. To update the spam lists, try creating a folder called 'SpamPurge_Resources',")
-      then inside that, create another folder called 'Spam_Lists'.")""")
+Error: Could not create folder. To update the spam lists, try creating a folder called 'SpamPurge_Resources',")
+then inside that, create another folder called 'Spam_Lists'.")""")
       input("Press Enter to continue..")
 
   if os.path.isdir(resourceFolder) and not os.path.isdir(spamListFolder):
