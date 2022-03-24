@@ -1404,7 +1404,7 @@ def main():
         if current.errorOccurred == True:
           print(f"\n--- {F.WHITE}{B.RED} NOTE: {S.R} Options limited due to error during scanning ---")
         if exclude == False:
-          print(f"{F.YELLOW}How do you want to {F.BLACK}{B.YELLOW} ALL {S.R}{F.YELLOW} the listed comments above?{S.R} (Including Non-Matched Duplicates)")
+          print(f"{F.YELLOW}How do you want to handle {F.BLACK}{B.YELLOW} ALL {S.R}{F.YELLOW} the listed comments above?{S.R} (Including Non-Matched Duplicates)")
         elif exclude == True:
           print(f"{F.YELLOW}How do you want to handle the rest of the comments (not ones you {F.LIGHTGREEN_EX}excluded{F.YELLOW})?{S.R}")
         if userNotChannelOwner == True and moderator_mode == False:
