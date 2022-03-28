@@ -93,10 +93,7 @@ install_macos() {
     if test ! "$(which brew)"; then
         #Install homebrew
         echo "Installing homebrew..."
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-        if [[ $ASSUME_YES -eq 1 ]]; then
-    	    NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-        fi
+    	NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     fi
     # Install python3.10 & git or fail out
     brew install python@3.10 && \
