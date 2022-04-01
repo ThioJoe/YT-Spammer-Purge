@@ -6,12 +6,7 @@ YouTube Spammer Purge
 </h1>
 
 <div align="center">
-  <a href="https://github.com/ThioJoe/YT-Spammer-Purge/issues">
-    <img src="https://img.shields.io/github/issues/ThioJoe/YT-Spammer-Purge" />
-  </a>
-  <a href="https://github.com/ThioJoe/YT-Spammer-Purge/pulls">
-    <img src="https://img.shields.io/github/issues-pr/ThioJoe/YT-Spammer-Purge" />
-  </a>
+![YT-Spammer-Purge](https://socialify.git.ci/ThioJoe/YT-Spammer-Purge/image?description=1&font=KoHo&forks=1&issues=1&language=1&logo=https%3A%2F%2Fraw.githubusercontent.com%2FThioJoe%2FYT-Spammer-Purge%2Fmain%2Fassets%2Ficon.png&name=1&owner=1&pattern=Solid&pulls=1&stargazers=1&theme=Dark)
   <a href="https://github.com/ThioJoe/YT-Spammer-Purge/releases">
     <img src="https://img.shields.io/github/v/release/ThioJoe/YT-Spammer-Purge?include_prereleases&label=Latest%20Release" />
   </a>
