@@ -1560,7 +1560,12 @@ def main():
         logFileContents, logMode = logging.print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMode, doWritePrint=False)
 
         # Update logFile Contents after updating them
-        logInfo['logFileContents'] = logFileContents
+        logInfo = {
+          'logMode': logMode,
+          'logFileContents': logFileContents,
+          'jsonSettingsDict': jsonSettingsDict,
+          'filtersDict': filtersDict 
+          }
         logging.rewrite_log_file(current, logInfo, combinedCommentDict)
       print("Updating log file, please wait...", end="\r")
       
