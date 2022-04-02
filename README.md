@@ -88,7 +88,7 @@ Read some additional details about 'moderator mode' on the [wiki page here](http
 
 [![Demo 1 Video Screenshot Link](https://user-images.githubusercontent.com/12518330/140164510-7c886cd9-b9d4-4d6d-a466-fb58dd42ab48.jpg)](https://www.youtube.com/watch?v=-vOakOgYLUI)
 
-(Takes you to YouTube, not embedded. See timestamps in video description.)
+(Takes you to YouTube, not embedded.)
 
 ## Screenshots
 
