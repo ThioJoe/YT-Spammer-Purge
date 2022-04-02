@@ -36,7 +36,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.16.7"
+version = "2.16.8"
 configVersion = 31
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 print("Importing Script Modules...")
@@ -1063,19 +1063,18 @@ def main():
       filterSettings = modes.prepare_filter_mode_strings(scanMode, filterMode, config)
     elif filterSubMode == "regex":
       filterSettings = modes.prepare_filter_mode_regex(scanMode, filterMode, config)
-      regexPattern = filterSettings[1]
+      regexPattern = filterSettings[0]
 
     if filterSettings[0] == "MainMenu":
       return True
 
-    if filterSubMode != "regex":
-      if filterMode == "Username":
-        inputtedUsernameFilter = filterSettings[0]
-      elif filterMode == "Text":
-        inputtedCommentTextFilter = filterSettings[0]
-      elif filterMode == "NameAndText":
-        inputtedUsernameFilter = filterSettings[0]
-        inputtedCommentTextFilter = filterSettings[0]
+    if filterMode == "Username":
+      inputtedUsernameFilter = filterSettings[0]
+    elif filterMode == "Text":
+      inputtedCommentTextFilter = filterSettings[0]
+    elif filterMode == "NameAndText":
+      inputtedUsernameFilter = filterSettings[0]
+      inputtedCommentTextFilter = filterSettings[0]
 
     # Prepare scan mode info dictionary
     if videosToScan:

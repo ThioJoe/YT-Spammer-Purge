@@ -923,15 +923,28 @@ def write_log_heading(current, logMode, filtersDict, afterExclude=False, combine
   if current.scannedThingsList:
     write_func(current.logFileName, "Video(s) or Post(s) Scanned: " + ", ".join(current.scannedThingsList), logMode, 2)
 
+  # Consolidate filter settings strings/lists into one variable to use
+  filterSettingList = ['Unknown']
+  if inputtedSpammerChannelID:
+    filterSettingList = inputtedSpammerChannelID
+  elif inputtedUsernameFilter:
+    filterSettingList = inputtedUsernameFilter
+  elif inputtedCommentTextFilter:
+    filterSettingList = inputtedCommentTextFilter
+
+  # If filterSettingsList is actually a string, convert to list
+  if type(filterSettingList) == str:
+    filterSettingList = [filterSettingList]
+
   # Write Filter Settings
   if filterMode == "ID":
-    write_func(current.logFileName, "Channel IDs of spammer searched: " + ", ".join(inputtedSpammerChannelID), logMode, 2)
+    write_func(current.logFileName, "Channel IDs of spammer searched: " + ", ".join(filterSettingList), logMode, 2)
   elif filterMode == "Username":
-    write_func(current.logFileName, "Searched in Usernames: " + ", ".join(inputtedUsernameFilter), logMode, 2)
+    write_func(current.logFileName, "Searched in Usernames: " + ", ".join(filterSettingList), logMode, 2)
   elif filterMode == "Text":
-    write_func(current.logFileName, "Searched in Comment Text: " + ", ".join(inputtedCommentTextFilter), logMode, 2)
+    write_func(current.logFileName, "Searched in Comment Text: " + ", ".join(filterSettingList), logMode, 2)
   elif filterMode == "NameAndText":
-    write_func(current.logFileName, "Characters searched in Usernames and Comment Text: " + ", ".join(inputtedCommentTextFilter), logMode, 2)
+    write_func(current.logFileName, "Searched in Usernames and Comment Text: " + ", ".join(filterSettingList), logMode, 2)
   elif filterMode == "AutoASCII":
     write_func(current.logFileName, "Auto-ASCII Username Search Mode: " + str(filterSettings[1]), logMode, 2)
   elif filterMode == "AutoSmart":
