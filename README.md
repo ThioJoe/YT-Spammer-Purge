@@ -103,16 +103,45 @@ Read some additional details about 'moderator mode' on the [wiki page here][Mode
 
 ## Screenshots
 
-<p align="center">Opening Menu:</p>
-<p align="center"><img width="675" alt="Opening Menu" src="https://user-images.githubusercontent.com/93459510/147557851-6d517280-6e20-4dfd-ab78-1a2357f710a7.png"></p>
-<p align="center">Filter Mode Selection:</p>
-<p align="center"><img width="675" alt="Filter Mode Selection" src="https://user-images.githubusercontent.com/93459510/147558339-28dc9fec-a51b-48be-a1bb-4f8b9e6cb3f6.png"></p>
-<p align="center">Scanning (Auto Smart Mode):</p>
-<p align="center"><img width="675" alt="Scanning" src="https://user-images.githubusercontent.com/93459510/147558617-b097e342-40bb-48df-ab59-d6a985a2322a.png"></p>
-<p align="center">Matched Comments List:</p>
-<p align="center"><img width="675" alt="Matched Comments List" src="https://user-images.githubusercontent.com/93459510/147558790-881b4871-e3de-43fe-be02-2fce6a03304d.png"></p>
-<p align="center">Match Samples and Deletion Menu:</p>
-<p align="center"><img width="738" alt="Match Samples and Deletion Menu" src="https://user-images.githubusercontent.com/93459510/147559013-7b1f59c7-4433-4b19-8e2e-7988d5d29ee5.png"></p>
+<div align = 'center'>
+    <h2>Opening Menu</h2>
+    <br>
+    <img 
+        width = '675' 
+        alt = 'Opening Menu' 
+        src = 'https://user-images.githubusercontent.com/93459510/147557851-6d517280-6e20-4dfd-ab78-1a2357f710a7.png'>
+    <br>
+    <h2>Filter Mode Selection</h2>
+    <br>
+    <img 
+        width = '675' 
+        alt = 'Filter Mode Selection' 
+        src = 'https://user-images.githubusercontent.com/93459510/147558339-28dc9fec-a51b-48be-a1bb-4f8b9e6cb3f6.png'>
+    <br>
+    <h2>Scanning<br>(Auto Smart Mode)</h2>
+    <br>
+    <img 
+        width = '675' 
+        alt = 'Scanning (Auto Smart Mode)' 
+        src = 'https://user-images.githubusercontent.com/93459510/147558617-b097e342-40bb-48df-ab59-d6a985a2322a.png'>
+    <br>
+    <h2>Matched Comments List</h2>
+    <br>
+    <img 
+        width = '675' 
+        alt = 'Matched Comments List' 
+        src = 'https://user-images.githubusercontent.com/93459510/147558790-881b4871-e3de-43fe-be02-2fce6a03304d.png'>
+    <br>
+    <h2>Match Samples and Deletion Menu</h2>
+    <br>
+    <img 
+        width = '675' 
+        alt = 'Match Samples and Deletion Menu' 
+        src = 'https://user-images.githubusercontent.com/93459510/147559013-7b1f59c7-4433-4b19-8e2e-7988d5d29ee5.png'>
+    <br>
+</div>
+
+<br>
 
 ## Installation
 
@@ -135,7 +164,10 @@ The easiest way to install YTSpammerPurge is using the install script.
 bash <(curl -s https://raw.githubusercontent.com/ThioJoe/YT-Spammer-Purge/main/install.sh)
 ```
 
-<img src="https://user-images.githubusercontent.com/60006481/154855672-165565a1-50db-47d4-bf39-0fb576710f63.gif" width="500"/>
+<img 
+    width = '500'
+    src = 'https://user-images.githubusercontent.com/60006481/154855672-165565a1-50db-47d4-bf39-0fb576710f63.gif'
+/>
 
 See one of the following if you need further help:
 * [Linux Setup Instructions][Instructions Linux]
@@ -145,7 +177,10 @@ See one of the following if you need further help:
 
 To update YTSpammerPurge, run the `install.sh` file inside your installation.
 
-<img src="https://user-images.githubusercontent.com/60006481/154855673-bf2e8fdb-eaa3-4583-a2a1-80ef4816e2bc.gif" width="500"/>
+<img 
+    width = '500'
+    src = 'https://user-images.githubusercontent.com/60006481/154855673-bf2e8fdb-eaa3-4583-a2a1-80ef4816e2bc.gif' 
+/>
 
 ##### Manual Installation
 
