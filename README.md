@@ -1,27 +1,39 @@
-<h1 align="center">
-<img src="/assets/icon.png" alt="Icon" width="100" height="100" </img>
-<br>
-YouTube Spammer Purge
-<br>
+
+<!---------------------------------[ Header ]---------------------------------->
+
+<h1 align = 'center'>
+    <img 
+        src = '/assets/icon.png' 
+        height = '100' 
+        width = '100' 
+        alt = 'Icon' 
+    />
+    <br>
+    YouTube Spammer Purge
+    <br>
 </h1>
 
-<div align="center">
-  <a href="https://github.com/ThioJoe/YT-Spammer-Purge/issues">
-    <img src="https://img.shields.io/github/issues/ThioJoe/YT-Spammer-Purge" />
-  </a>
-  <a href="https://github.com/ThioJoe/YT-Spammer-Purge/pulls">
-    <img src="https://img.shields.io/github/issues-pr/ThioJoe/YT-Spammer-Purge" />
-  </a>
-  <a href="https://github.com/ThioJoe/YT-Spammer-Purge/releases">
-    <img src="https://img.shields.io/github/v/release/ThioJoe/YT-Spammer-Purge?include_prereleases&label=Latest%20Release" />
-  </a>
-  <a href="https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/codeql-analysis.yml">
-    <img src="https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/codeql-analysis.yml/badge.svg" />
-  </a>
-  <a href="https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/docker-build.yml">
-    <img src="https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/docker-build.yml/badge.svg" />
-  </a>
+<!---------------------------------[ Badges ]---------------------------------->
+
+<div align = 'center'>
+    <a href = 'https://github.com/ThioJoe/YT-Spammer-Purge/issues'>
+        <img src = 'https://img.shields.io/github/issues/ThioJoe/YT-Spammer-Purge'/>
+    </a>
+    <a href = 'https://github.com/ThioJoe/YT-Spammer-Purge/pulls'>
+        <img src = 'https://img.shields.io/github/issues-pr/ThioJoe/YT-Spammer-Purge'/>
+    </a>
+    <a href = 'https://github.com/ThioJoe/YT-Spammer-Purge/releases'>
+        <img src = 'https://img.shields.io/github/v/release/ThioJoe/YT-Spammer-Purge?include_prereleases&label=Latest%20Release'/>
+    </a>
+    <a href = 'https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/codeql-analysis.yml'>
+        <img src = 'https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/codeql-analysis.yml/badge.svg'/>
+    </a>
+    <a href = 'https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/docker-build.yml'>
+        <img src = 'https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/docker-build.yml/badge.svg'/>
+    </a>
 </div>
+
+<br>
 
 **What Is This?** - Allows you to filter and search for spammer comments on your channel and other's channel(s) in many different ways AND delete/report them all at once (see features below).
 
