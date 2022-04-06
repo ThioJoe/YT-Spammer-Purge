@@ -1369,12 +1369,12 @@ def get_recent_videos(current, channel_id, numVideosTotal):
       channelId=channel_id).execute()
     
     #get the "uploads" playlist
-    playlistId = response['items'][0]['contentDetails']['relatedPlaylists']['uploads']
+    uploadplaylistId = channel['items'][0]['contentDetails']['relatedPlaylists']['uploads']
     
     #fetch videos in the playlist
     result = auth.YOUTUBE.playlistItems().list(
       part="snippet",
-      playlistId=playlistId,
+      playlistId=uploadplaylistId,
       pageToken=nextPageToken,
       maxResults=numVideosBlock,
       ).execute()
