@@ -1380,7 +1380,6 @@ def get_recent_videos(current, channel_id, numVideosTotal):
       ).execute()
 
     for item in result['items']:
-      print(item)
       videoID = str(item['snippet']['resourceId']['videoId'])
       videoTitle = str(item['snippet']['title']).replace("&quot;", "\"").replace("&#39;", "'")
       commentCount = validation.validate_video_id(videoID, pass_exception = True)[3]
