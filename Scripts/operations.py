@@ -1363,13 +1363,19 @@ def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToEx
 # Returns a list of lists
 def get_recent_videos(current, channel_id, numVideosTotal):
   def get_block_of_videos(nextPageToken, j, k, numVideosBlock = 50):
-    result = auth.YOUTUBE.search().list(
+    #fetch the channel resource
+    channel = auth.YOUTUBE.channels().list(
+      part="contentDetails",
+      channelId=channel_id).execute()
+    
+    #get the "uploads" playlist
+    playlistId = response['items'][0]['contentDetails']['relatedPlaylists']['uploads']
+    
+    #fetch videos in the playlist
+    result = auth.YOUTUBE.playlistItems().list(
       part="snippet",
-      channelId=channel_id,
-      type='video',
-      order='date',
+      playlistId=playlistId,
       pageToken=nextPageToken,
-      #fields='nextPageToken,items/id/videoId,items/snippet/title',
       maxResults=numVideosBlock,
       ).execute()
 
