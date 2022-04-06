@@ -1366,7 +1366,7 @@ def get_recent_videos(current, channel_id, numVideosTotal):
     #fetch the channel resource
     channel = auth.YOUTUBE.channels().list(
       part="contentDetails",
-      channelId=channel_id).execute()
+      id=channel_id).execute()
     
     #get the "uploads" playlist
     uploadplaylistId = channel['items'][0]['contentDetails']['relatedPlaylists']['uploads']
@@ -1380,7 +1380,8 @@ def get_recent_videos(current, channel_id, numVideosTotal):
       ).execute()
 
     for item in result['items']:
-      videoID = str(item['id']['videoId'])
+      print(item)
+      videoID = str(item['snippet']['resourceId']['videoId'])
       videoTitle = str(item['snippet']['title']).replace("&quot;", "\"").replace("&#39;", "'")
       commentCount = validation.validate_video_id(videoID, pass_exception = True)[3]
       #Skips over video if comment count is zero, or comments disabled / is live stream
