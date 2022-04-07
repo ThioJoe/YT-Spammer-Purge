@@ -6,6 +6,7 @@ YouTube Spammer Purge
 </h1>
 
 <div align="center">
+  <img src="https://github-size-badge.herokuapp.com/ThioJoe/YT-Spammer-Purge.svg" />
   <a href="https://github.com/ThioJoe/YT-Spammer-Purge/issues">
     <img src="https://img.shields.io/github/issues/ThioJoe/YT-Spammer-Purge" />
   </a>
