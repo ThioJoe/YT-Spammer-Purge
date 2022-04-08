@@ -410,7 +410,7 @@ def validate_config_settings(config):
     'enable_ban': ('ask', False),
     'remove_all_author_comments': ('ask', True, False),
     'removal_type': ('rejected', 'heldforreview', 'reportspam'),
-    'whitelist_excluded': ('ask', True, False),
+    'allowlist_excluded': ('ask', True, False),
     'check_deletion_success':(True, False),
     'enable_logging': ('ask', True, False),
     #'log_path': None,

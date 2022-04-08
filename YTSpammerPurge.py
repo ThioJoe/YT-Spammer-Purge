@@ -112,6 +112,7 @@ def main():
 
            #### Prepare Resources ####
   resourceFolder = RESOURCES_FOLDER_NAME
+  allowlistPathWithName = os.path.join(resourceFolder, "allowlist.txt")
   whitelistPathWithName = os.path.join(resourceFolder, "whitelist.txt")
   spamListFolder = os.path.join(resourceFolder, "Spam_Lists")
   spamListDict = {
@@ -127,9 +128,13 @@ def main():
       }
   }
   resourcesDict = {
+    'Allowlist': {
+      'PathWithName': allowlistPathWithName,
+      'FileName': "allowlist.txt",
+    },
     'Whitelist': {
       'PathWithName': whitelistPathWithName,
-      'FileName': "whitelist.txt",
+      'FileName': "whitelist.txt"
     }
   }
 
@@ -249,13 +254,13 @@ def main():
     channelOwnerName:str
 
   miscData = MiscDataStore(
-    resources = {}, 
-    spamLists = {}, 
-    totalCommentCount = 0, 
-    channelOwnerID = "", 
+    resources = {},
+    spamLists = {},
+    totalCommentCount = 0,
+    channelOwnerID = "",
     channelOwnerName = "",
     )
-    
+
   miscData.resources = resourcesDict
   rootDomainListAssetFile = "rootZoneDomainList.txt"
   rootDomainList = files.ingest_asset_file(rootDomainListAssetFile)
@@ -263,18 +268,26 @@ def main():
   miscData.spamLists['spamDomainsList'] = spamListDict['Lists']['Domains']['FilterContents']
   miscData.spamLists['spamAccountsList'] = spamListDict['Lists']['Accounts']['FilterContents']
   miscData.spamLists['spamThreadsList'] = spamListDict['Lists']['Threads']['FilterContents']
-  
 
-  # Create Whitelist if it doesn't exist, 
-  if not os.path.exists(whitelistPathWithName):
-    with open(whitelistPathWithName, "a") as f:
-      f.write("# Commenters whose channel IDs are in this list will always be ignored. You can add or remove IDs (one per line) from this list as you wish.\n")
-      f.write("# Channel IDs for a channel can be found in the URL after clicking a channel's name while on the watch page or where they've left a comment.\n")
-      f.write("# - Channels that were 'excluded' will also appear in this list.\n")
-      f.write("# - Lines beginning with a '#' are comments and aren't read by the program. (But do not put a '#' on the same line as actual data)\n\n")
-    miscData.resources['Whitelist']['WhitelistContents'] = []
-  else:
-    miscData.resources['Whitelist']['WhitelistContents'] = files.ingest_list_file(whitelistPathWithName, keepCase=True)
+  # Create Allowlist if it doesn't exist
+  should_ingest = True
+  if not os.path.exists(allowlistPathWithName):
+    # Rename a possible existing whitelist.txt file
+    if os.path.exists(whitelistPathWithName):
+      print(f"\nRenaming '{whitelistPathWithName}' to '{allowlistPathWithName}'")
+      os.rename(whitelistPathWithName, allowlistPathWithName)
+    else:
+      with open(allowlistPathWithName, "a") as f:
+        f.write("# Commenters whose channel IDs are in this list will always be ignored. You can add or remove IDs (one per line) from this list as you wish.\n")
+        f.write("# Channel IDs for a channel can be found in the URL after clicking a channel's name while on the watch page or where they've left a comment.\n")
+        f.write("# - Channels that were 'excluded' will also appear in this list.\n")
+        f.write("# - Lines beginning with a '#' are comments and aren't read by the program. (But do not put a '#' on the same line as actual data)\n\n")
+      should_ingest = False
+    miscData.resources['Allowlist']['AllowlistContents'] = []
+
+  # Read in an existing allowlist
+  if should_ingest:
+    miscData.resources['Allowlist']['AllowlistContents'] = files.ingest_list_file(allowlistPathWithName, keepCase=True)
 
   if config:
     moderator_mode = config['moderator_mode']
@@ -1469,14 +1482,14 @@ def main():
               'logMode': logMode,
               'logFileContents': logFileContents,
               'jsonSettingsDict': jsonSettingsDict,
-              'filtersDict': filtersDict 
+              'filtersDict': filtersDict
               }
           else:
             logInfo = None
 
           # This is very messy for now, will later consolidate the parameters
           current, excludedCommentsDict, authorsToExcludeSet, commentIDExcludeSet, rtfFormattedExcludes, plaintextFormattedExcludes = operations.exclude_authors(current, config, miscData, excludedCommentsDict, authorsToExcludeSet, commentIDExcludeSet, excludeDisplayString, inputtedString=confirmDelete, logInfo=logInfo, only=onlyBool)
-          miscData.resources['Whitelist']['WhitelistContents'] = files.ingest_list_file(whitelistPathWithName, keepCase=True)
+          miscData.resources['Allowlist']['AllowlistContents'] = files.ingest_list_file(allowlistPathWithName, keepCase=True)
           exclude = True
 
           # Check that remaining comments list to remove is not empty

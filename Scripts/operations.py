@@ -582,25 +582,25 @@ def check_duplicates(current, config, miscData, allVideoCommentsDict, videoID):
 
   # Get Lenvenshtein Distance Setting - Does not need to be validated here, because that happens at beginning of program
   levenshtein = float(config['levenshtein_distance'])
-  
+
   # Get duplicate count setting - Does not need to be validated as int here, because that happens at beginning of program
   minimum_duplicates = int(config['minimum_duplicates'])
   if minimum_duplicates < 2:
     minimum_duplicates = 4
     print("\nError: minimum_duplicates config setting must be greater than 1. Defaulting to 8.")
     input("\nPress Enter to continue...")
-  
+
   # Get minimum duplicate length setting - Does not need to be validated as int here, because that happens at beginning of program
   minimum_duplicate_length = int(config['minimum_duplicate_length'])
-  
+
   # Calculate number of authors to check, for progress
   authorCount = len(allVideoCommentsDict)
   scannedCount = 0
 
   # Run the actual duplicate checking
   for authorID, authorCommentsList in allVideoCommentsDict.items():
-    # Don't scan channel owner, current user, or any user in whitelist. Also don't bother if author is already in matchedCommentsDict
-    if auth.CURRENTUSER.id == authorID or miscData.channelOwnerID == authorID or authorID in miscData.resources['Whitelist']['WhitelistContents'] or any(authorID == value['authorID'] for key,value in current.matchedCommentsDict.items()):
+    # Don't scan channel owner, current user, or any user in allowlist. Also don't bother if author is already in matchedCommentsDict
+    if auth.CURRENTUSER.id == authorID or miscData.channelOwnerID == authorID or authorID in miscData.resources['Allowlist']['AllowlistContents'] or any(authorID == value['authorID'] for key,value in current.matchedCommentsDict.items()):
       scannedCount +=1
       print(f" Analyzing For Duplicates: [ {scannedCount/authorCount*100:.2f}% ]   (Can be Disabled & Customized With Config File)".ljust(75, " "), end="\r")
     else:
@@ -697,7 +697,7 @@ def check_reposts(current, config, miscData, allVideoCommentsDict, videoID):
   for i,x in enumerate(flatCommentList[1:], start=1): # x is comment dictionary. Enumerate starting with second comment (1:), because nothing came before it. Use start=1 so i-1 refers to correct index in flatCommentList
     scrutinizedText = x['commentText']
     scrutinizedAuthorID = x['authorChannelID']
-    if scrutinizedAuthorID == auth.CURRENTUSER.id or scrutinizedAuthorID == miscData.channelOwnerID or scrutinizedAuthorID == miscData.resources['Whitelist']['WhitelistContents']:
+    if scrutinizedAuthorID == auth.CURRENTUSER.id or scrutinizedAuthorID == miscData.channelOwnerID or scrutinizedAuthorID == miscData.resources['Allowlist']['AllowlistContents']:
       pass
     else:
       for j in range(0,i-1): # Only need to check against comments that came before it, so have index less than current
@@ -737,8 +737,8 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
   #   commentText = input("Comment Text: ")
   #   authorChannelID = "x"
   
-  # Do not even check comment if: Author is Current User, Author is Channel Owner, or Author is in whitelist
-  if auth.CURRENTUSER.id != authorChannelID and miscData.channelOwnerID != authorChannelID and authorChannelID not in miscData.resources['Whitelist']['WhitelistContents']:
+  # Do not even check comment if: Author is Current User, Author is Channel Owner, or Author is in allowlist
+  if auth.CURRENTUSER.id != authorChannelID and miscData.channelOwnerID != authorChannelID and authorChannelID not in miscData.resources['Allowlist']['AllowlistContents']:
     if "@" in commentText:
       # Logic to avoid false positives from replies to spammers
       if allThreadAuthorNames and (filtersDict['filterMode'] == "AutoSmart" or filtersDict['filterMode'] == "NameAndText"):
@@ -1337,25 +1337,25 @@ def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToEx
   print(f"\n{F.CYAN}All {len(excludedCommentsDict)} comments{S.R} from the {F.CYAN}following users{S.R} are now {F.LIGHTGREEN_EX}excluded{S.R} from deletion:")
   print(displayString)
 
-  if config['whitelist_excluded'] == 'ask':
-    print(f"\nAdd these {F.LIGHTGREEN_EX}excluded{S.R} users to the {F.LIGHTGREEN_EX}whitelist{S.R} for future scans?")
-    addWhitelist = choice("Whitelist Users?")
-  elif config['whitelist_excluded'] == True:
-    addWhitelist = True
-  elif config['whitelist_excluded'] == False:
-    addWhitelist = False
+  if config['allowlist_excluded'] == 'ask':
+    print(f"\nAdd these {F.LIGHTGREEN_EX}excluded{S.R} users to the {F.LIGHTGREEN_EX}allowlist{S.R} for future scans?")
+    addAllowlist = choice("Allowlist Users?")
+  elif config['allowlist_excluded'] == True:
+    addAllowlist = True
+  elif config['allowlist_excluded'] == False:
+    addAllowlist = False
 
-  if addWhitelist == True:
-    with open(miscData.resources['Whitelist']['PathWithName'], "a+", encoding="utf-8") as f:
+  if addAllowlist == True:
+    with open(miscData.resources['Allowlist']['PathWithName'], "a+", encoding="utf-8") as f:
       f.seek(0)
-      currentWhitelist = f.read()
+      currentAllowlist = f.read()
       for author in authorsToExcludeSet:
-        if not author in currentWhitelist:
+        if not author in currentAllowlist:
           f.write(f"\n# [Excluded]  Channel Name: {current.matchSamplesDict[author]['authorName']}  |  Channel ID: " + "\n")
           f.write(f"{author}\n")
-  
+
   input("\nPress Enter to decide what to do with the rest...")
-  
+
   return current, excludedCommentsDict, authorsToExcludeSet, commentIDExcludeSet, rtfFormattedExcludes, plaintextFormattedExcludes # May use excludedCommentsDict later for printing them to log file
 
 
