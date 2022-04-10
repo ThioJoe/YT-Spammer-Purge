@@ -1363,18 +1363,24 @@ def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToEx
 # Returns a list of lists
 def get_recent_videos(current, channel_id, numVideosTotal):
   def get_block_of_videos(nextPageToken, j, k, numVideosBlock = 50):
-    result = auth.YOUTUBE.search().list(
+    #fetch the channel resource
+    channel = auth.YOUTUBE.channels().list(
+      part="contentDetails",
+      id=channel_id).execute()
+    
+    #get the "uploads" playlist
+    uploadplaylistId = channel['items'][0]['contentDetails']['relatedPlaylists']['uploads']
+    
+    #fetch videos in the playlist
+    result = auth.YOUTUBE.playlistItems().list(
       part="snippet",
-      channelId=channel_id,
-      type='video',
-      order='date',
+      playlistId=uploadplaylistId,
       pageToken=nextPageToken,
-      #fields='nextPageToken,items/id/videoId,items/snippet/title',
       maxResults=numVideosBlock,
       ).execute()
 
     for item in result['items']:
-      videoID = str(item['id']['videoId'])
+      videoID = str(item['snippet']['resourceId']['videoId'])
       videoTitle = str(item['snippet']['title']).replace("&quot;", "\"").replace("&#39;", "'")
       commentCount = validation.validate_video_id(videoID, pass_exception = True)[3]
       #Skips over video if comment count is zero, or comments disabled / is live stream
