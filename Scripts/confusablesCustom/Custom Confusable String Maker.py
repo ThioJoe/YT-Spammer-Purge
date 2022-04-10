@@ -1,7 +1,7 @@
 #-*- coding: UTF-8 -*-
 
 # Script Purpose: Automatically generates additional entries for 'custom_confusables.txt', for confusable character combinations that are not included by default. 
-#                 Remember: After adding all the characters you want, you must then still run parse.py to generate the new 'confusable_mapping.json file'
+#                 Remember: After adding all the characters you want, you must then still run parse.py to generate the new 'confusable_mapping.json' file
 
 # ------------------------------------ Only Change This Section ------------------------------------
 
