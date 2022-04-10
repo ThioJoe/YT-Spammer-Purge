@@ -1,5 +1,5 @@
 <h1 align="center">
-<img src="/assets/icon.png" alt="Icon" style="width:100px;height:100px;"/>
+<img src="/assets/icon.png" alt="Icon" width="100" height="100" </img>
 <br>
 YouTube Spammer Purge
 <br>
@@ -7,30 +7,30 @@ YouTube Spammer Purge
 
 <div align="center">
   <a href="https://github.com/ThioJoe/YT-Spammer-Purge/issues">
-    <img alt="Issue count" src="https://img.shields.io/github/issues/ThioJoe/YT-Spammer-Purge" />
+    <img src="https://img.shields.io/github/issues/ThioJoe/YT-Spammer-Purge" />
   </a>
   <a href="https://github.com/ThioJoe/YT-Spammer-Purge/pulls">
-    <img alt="Pull Request count" src="https://img.shields.io/github/issues-pr/ThioJoe/YT-Spammer-Purge" />
+    <img src="https://img.shields.io/github/issues-pr/ThioJoe/YT-Spammer-Purge" />
   </a>
   <a href="https://github.com/ThioJoe/YT-Spammer-Purge/releases">
-    <img alt="Current release version" src="https://img.shields.io/github/v/release/ThioJoe/YT-Spammer-Purge?include_prereleases&label=Latest%20Release" />
+    <img src="https://img.shields.io/github/v/release/ThioJoe/YT-Spammer-Purge?include_prereleases&label=Latest%20Release" />
   </a>
   <a href="https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/codeql-analysis.yml">
-    <img alt="Code Quality status" src="https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/codeql-analysis.yml/badge.svg" />
+    <img src="https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/codeql-analysis.yml/badge.svg" />
   </a>
   <a href="https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/docker-build.yml">
-    <img alt="Build status" src="https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/docker-build.yml/badge.svg" />
+    <img src="https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/docker-build.yml/badge.svg" />
   </a>
 </div>
 
-**What Is This?** - Allows you to filter and search for spammer comments on your channel and other's channel(s) in many ways AND delete/report them all at once (see features below).
+**What Is This?** - Allows you to filter and search for spammer comments on your channel and other's channel(s) in many different ways AND delete/report them all at once (see features below).
 
-**How to Download:** 
-* Windows: Click the "[Releases](https://github.com/ThioJoe/YouTube-Spammer-Purge/releases)" link on the right, then on the latest release, under 'Assets' click to download "YTSpammerPurge.exe". (You might have to click "Assets" to view the files for the release)
-* [Linux Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/Linux-Installation-Instructions)
-* [MacOS Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/MacOS-Instructions)
+**How to Download:** Click the "[Releases](https://github.com/ThioJoe/YouTube-Spammer-Purge/releases)" link on the right, then on the latest release, under 'Assets' click to download "YTSpammerPurge.exe". (You might have to click "Assets" to view the files for the release)
+> * [Linux Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/Linux-Installation-Instructions)
+> * [MacOS Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/MacOS-Instructions)
+> * (Windows installation not necessary if using exe file. But see how to set up required API key [on this page](https://github.com/ThioJoe/YT-Spammer-Purge/wiki/Instructions:-Obtaining-an-API-Key))
 
-### **Detailed Info & Documentation →** Visit the wiki [(Click Here)](https://github.com/ThioJoe/YT-Spammer-Purge/wiki) for more detailed write-ups on the program
+### **Detailed Info & Documentation →** Visit the wiki [(Click Here)](https://github.com/ThioJoe/YT-Spammer-Purge/wiki) for more detailed writeups on the program
 
 ## Features
 
@@ -57,15 +57,15 @@ YouTube Spammer Purge
 
 ## Purpose
 
-Recently, there has been a massive infestation of spam on YouTube where fake impersonator accounts leave spam/scam replies to hundreds of users on a creator's videos. For some godforsaken reason, YouTube offers no way to delete all comments by a specific user at once, meaning you must delete them BY HAND.
+Recently, there has been a massive infestation of spam on YouTube where fake impersonator accounts leave spam/scam replies to hundreds of users on a creator's videos. For some god-forsaken reason, YouTube offers no way to delete all comments by a specific user at once, meaning you must delete them one by one BY HAND.
 
-YouTube offers a functionality to ban a user, but it does NOT delete previous comments. Therefore, I created this script to allow you to instantly purge their spam replies, and since then it has evolved into a fully featured spam scanner as well. **IT DOES NOT PREVENT SPAMMERS - It only makes it easier to delete them when they show up!** YouTube still must implement better native tools for dealing with spammers.
+YouTube offers a functionality to ban a user, but it does NOT delete previous comments. Therefore I created this script to allow you to instantly purge their spam replies, and since then it has evolved into a fully featured spam scanner as well. **IT DOES NOT PREVENT SPAMMERS - It only makes it easier to delete them when they show up!** YouTube still must implement better native tools for dealing with spammers.
 
 ## 🤔 Pro-Tip If This Seems Sketchy: Limiting The App's Access 🤔
 
 If you feel sketched out about giving the app the required high level permissions to your channel (very understandable), you could instead use the app in 'moderator mode' (set in the config file). First, some context: When you grant access to another channel to be a moderator for your channel, they are able to mark comments for 'held for review', and this permission works through the API as well. 
 
-_Therefore,_ what you could do is create an _blank dummy-google-account_ with nothing on it except an empty new channel. Then you can grant _that_ channel permission to be a moderator, and use the app through _the dummy moderator account_. **This way, you know that the app will never have the ability to do more than mark comments as held for review** (which the app supports) on your main channel, and have no other access to your account's data. You just won't be able to ban the spammers through this app directly, but you can still remove/hide their comments instead of deleting them. Just make sure to create the Google Cloud API project on the dummy account instead.
+_Therefore,_ what you could do is create an _blank dummy-google-account_ with nothing on it except a empty new channel. Then you can grant _that_ channel permission to be a moderator, and use the app through _the dummy moderator account_. **This way, you know that the app will never have the ability to do more than mark comments as held for review** (which the app supports) on your main channel, and have no other access to your account's data. You just won't be able to ban the spammers through this app directly, but you can still remove/hide their comments instead of deleting them. Just make sure to create the google cloud API project on the dummy account instead.
 
 Read some additional details about 'moderator mode' on the [wiki page here](https://github.com/ThioJoe/YT-Spammer-Purge/wiki/Moderator-Mode-&-Limiting-Permissions).
 
@@ -75,7 +75,7 @@ Read some additional details about 'moderator mode' on the [wiki page here](http
 
 2. **IF IT FREEZES** while scanning, it is probably because you clicked within the command prompt window and entered "selection mode" which pauses everything. **To unfreeze it, simply right click within the window, or press the Escape key.**
 
-3. I'm a total amateur, so if something doesn't work I'll try to fix it but might not even know how, so don't expect too much. Therefore, **I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.** I tested it on my own and implemented some failsafes as best as I could, but there could always be some kind of unexpected bug. You should inspect the code yourself.
+3. I'm a total amateur, so if something doesn't work I'll try to fix it but might not even know how, so don't expect too much. Therefore **I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.** I tested it on my own and implemented some failsafes as best as I could, but there could always be some kind of unexpected bug. You should inspect the code yourself.
 
 ## Video: Project Demonstrations
 
@@ -118,31 +118,27 @@ If you are not sure how to install YTSpammerPurge manually, it is probably best 
 
 #### Linux / MacOS
 
-##### Automatic Installation
-The easiest way to install YTSpammerPurge is using the `install.sh` script.
+The easiest way to install YTSpammerPurge is using the install script.
 
 ```bash
 bash <(curl -s https://raw.githubusercontent.com/ThioJoe/YT-Spammer-Purge/main/install.sh)
 ```
 
-<img align="center" alt="Installation Script Install Preview" src="https://user-images.githubusercontent.com/60006481/154855672-165565a1-50db-47d4-bf39-0fb576710f63.gif" width="500"/>
+<img src="https://user-images.githubusercontent.com/60006481/154855672-165565a1-50db-47d4-bf39-0fb576710f63.gif" width="500"/>
+
+See one of the following if you need further help:
+* [Linux Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/Linux-Installation-Instructions)
+* [MacOS Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/MacOS-Instructions)
 
 ##### Updating
 
-Updating using YTSpammerPurge.py is currently not supported.
-To update YTSpammerPurge, run the `install.sh` file inside your installation, or update manually.
+To update YTSpammerPurge, run the `install.sh` file inside your installation.
 
-<img align="center" alt="Installation Script Updating Preview" src="https://user-images.githubusercontent.com/60006481/154855673-bf2e8fdb-eaa3-4583-a2a1-80ef4816e2bc.gif" width="500"/>
+<img src="https://user-images.githubusercontent.com/60006481/154855673-bf2e8fdb-eaa3-4583-a2a1-80ef4816e2bc.gif" width="500"/>
 
 ##### Manual Installation
 
-If your system is not yet supported by the `install.sh` script, you may install YTSpammerPurge manually by following the guide [Here (Linux Setup Instructions)](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/Linux-Installation-Instructions)
-
-##### See also:
-
-More detailed guides for installation can be found here:
-* [Linux Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/Linux-Installation-Instructions)
-* [MacOS Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/MacOS-Instructions)
+If your system is not yet supported by the install script, you may install YTSpammerPurge manually by following the guide [Here (Linux Setup Instructions)](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/Linux-Installation-Instructions)
 
 ### **Docker Instructions:**
 
@@ -158,6 +154,6 @@ To build your own version you can run this command: `docker-compose -f docker-co
 
 
 ## Instructions - Obtaining YouTube API Key
-To use this script, you will need an "Oauth2" credential to access the scanning and deletion functions via YouTube's Data API. Otherwise, this script won't work at all. 
+To use this script, you will need an "Oauth2" credential to access the scanning and deletion functions via YouTube's Data API. Otherwise this script won't work at all. 
 * #### Instructions can be found on this page: [Instructions: Obtaining an API Key](https://github.com/ThioJoe/YT-Spammer-Purge/wiki/Instructions:-Obtaining-an-API-Key)
 * #### **Or, follow a video WalkThrough Here: <https://www.youtube.com/watch?v=c6ebWvay8dE>**  
