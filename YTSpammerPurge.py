@@ -60,7 +60,6 @@ import ast
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from collections import namedtuple
-import platform
 import json
 from pkg_resources import parse_version
 
@@ -102,7 +101,7 @@ def main():
 
   # Checks system platform to set correct console clear command
   # Clears console otherwise the windows terminal doesn't work with colorama for some reason  
-  clear_command = "cls" if platform.system() == "Windows" else "clear"
+  clear_command = "cls" if (os.name == 'nt') else "clear"
   os.system(clear_command)
 
   print("\nLoading YT Spammer Purge @ " + str(version) + "...")
