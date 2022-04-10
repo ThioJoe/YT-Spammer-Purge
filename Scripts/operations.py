@@ -12,7 +12,7 @@ import unicodedata
 import time
 import itertools
 from datetime import datetime
-from Levenshtein import ratio
+from rapidfuzz import fuzz
 from googleapiclient.errors import HttpError
 
 ##########################################################################################
@@ -628,7 +628,7 @@ def check_duplicates(current, config, miscData, allVideoCommentsDict, videoID):
                 matchedIndexes.append(i)
                 matchedIndexes.append(j)
                 break
-              elif ratio(x,y) > levenshtein:
+              elif fuzz.ratio(x,y) / 100 > levenshtein:
                 # List the indexes of the matched comments in the list
                 matchedIndexes.append(i)
                 matchedIndexes.append(j)
@@ -703,7 +703,7 @@ def check_reposts(current, config, miscData, allVideoCommentsDict, videoID):
       for j in range(0,i-1): # Only need to check against comments that came before it, so have index less than current
         olderCommentText = flatCommentList[j]['commentText']
         if len(scrutinizedText) >= minLength and flatCommentList[j]['authorChannelID'] != scrutinizedAuthorID and x['commentID'] not in current.matchedCommentsDict and x['commentID'] not in current.duplicateCommentsDict:
-          if (not fuzzy and scrutinizedText == olderCommentText) or (fuzzy and ratio(scrutinizedText, olderCommentText) > levenshtein):
+          if (not fuzzy and scrutinizedText == olderCommentText) or (fuzzy and fuzz.ratio(scrutinizedText, olderCommentText) / 100 > levenshtein):
             # List the indexes of the matched comments in the list
             x['originalCommentID'] = flatCommentList[j]['commentID']
             add_spam(current, config, miscData, x, videoID, matchReason="Repost")
