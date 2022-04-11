@@ -1362,15 +1362,8 @@ def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToEx
 ################################# Get Most Recent Videos #####################################
 # Returns a list of lists
 def get_recent_videos(current, channel_id, numVideosTotal):
+  uploadplaylistId = utils.get_uploads_playlist_id(channel_id) # Getting uploads ID in here.
   def get_block_of_videos(nextPageToken, j, k, numVideosBlock = 50):
-    #fetch the channel resource
-    channel = auth.YOUTUBE.channels().list(
-      part="contentDetails",
-      id=channel_id).execute()
-    
-    #get the "uploads" playlist
-    uploadplaylistId = channel['items'][0]['contentDetails']['relatedPlaylists']['uploads']
-    
     #fetch videos in the playlist
     result = auth.YOUTUBE.playlistItems().list(
       part="snippet",
@@ -1381,7 +1374,7 @@ def get_recent_videos(current, channel_id, numVideosTotal):
 
     for item in result['items']:
       videoID = str(item['snippet']['resourceId']['videoId'])
-      videoTitle = str(item['snippet']['title']).replace("&quot;", "\"").replace("&#39;", "'")
+      videoTitle = str(item['snippet']['title']) # Video title been HTML unescaped. So no need to replace.
       commentCount = validation.validate_video_id(videoID, pass_exception = True)[3]
       #Skips over video if comment count is zero, or comments disabled / is live stream
       if str(commentCount) == '0':

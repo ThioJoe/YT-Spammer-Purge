@@ -213,3 +213,15 @@ def print_error_title_fetch():
   print(f"  > You won't be able to delete/hide any comments like usual, but you can {F.LIGHTMAGENTA_EX}exclude users before saving the log file{S.R}")
   print(f"  > Then, you can {F.LIGHTGREEN_EX}delete the comments later{S.R} using the {F.YELLOW}mode that removes comments using a pre-existing log file{S.R}")
   input("\n Press Enter to continue...")
+
+
+# Fetch the uploads playlist ID for the channel
+# By DinhHuy2010 at GitHub
+
+def get_uploads_playlist_id(channel_id):
+  try:
+    channel = auth.YOUTUBE.channels.list(part="contentDetails", id=channel_id).execute()
+    uploadplaylistId = channel["items"][0]["contentDetails"]["relatedPlaylists"]["uploads"]
+  except HttpError:
+    uploadplaylistId = "[Unavailable]" # If raise HttpError, set to [Unavailable]
+  return uploadplaylistId
