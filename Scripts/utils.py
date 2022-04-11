@@ -216,7 +216,6 @@ def print_error_title_fetch():
 
 
 # Fetch the uploads playlist ID for the channel
-# By DinhHuy2010 at GitHub
 
 def get_uploads_playlist_id(channel_id):
   try:
