@@ -27,7 +27,7 @@
 ###
 ### Author:   ThioJoe - YouTube.com/ThioJoe Twitter.com/ThioJoe
 ###
-### GitHub:   https://github.com/ThioJoe/YT-Spammer-Purge/
+### GitHub:   https://github.com/ThioJoe/YT-Spammer-Purge
 ###
 ### License:  GNU GPL-3.0
 ###
