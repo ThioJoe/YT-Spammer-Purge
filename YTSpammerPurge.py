@@ -10,7 +10,7 @@
 ###
 ### Purpose:  Recently, there has been a massive infestation of spam on YouTube where fake impersonator
 ###           accounts leave spam/scam replies to hundreds of users on a creator's videos.
-###           
+###
 ###           For some god-forsaken reason, YouTube offers no way to delete all comments by a specific
 ###           user at once, meaning you must delete them one by one BY HAND.
 ###
@@ -19,7 +19,7 @@
 ###
 ### NOTES:    1. To use this script, you will need to obtain your own API credentials file by making
 ###				       a project via the Google Developers Console (aka 'Google Cloud Platform').
-###              The credential file should be re-named 'client_secret.json' and be placed in the 
+###              The credential file should be re-named 'client_secret.json' and be placed in the
 ###              same directory as this script.
 ###				            >>> See the Readme for instructions on this.
 ###
@@ -59,7 +59,7 @@ import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from collections import namedtuple
-import json
+import json, ast
 from pkg_resources import parse_version
 
 print("Importing Third-Party Modules...")
@@ -142,7 +142,7 @@ def main():
         f.write("# Note: If you had a previous spam_lists folder that was created in the same folder as \n")
         f.write("# the .exe file, you can delete that old spam_lists folder. The resources folder is the \n")
         f.write("# new location they will be stored.\n")
-                
+
     except:
       print("\nError: Could not create folder. To update the spam lists, try creating a folder called 'SpamPurge_Resources',")
       print("       then inside that, create another folder called 'Spam_Lists'.")
@@ -179,7 +179,9 @@ def main():
     files.copy_asset_file(spamListDict['Meta']['VersionInfo']['FileName'], spamListDict['Meta']['VersionInfo']['Path'])
 
   # Get stored spam list version data from json file
-  versionInfo = json.load(open(spamListDict['Meta']['VersionInfo']['Path'], 'r', encoding="utf-8"))
+  jsonData = open(spamListDict['Meta']['VersionInfo']['Path'], 'r', encoding="utf-8")
+  versionInfoJson = str(json.load(jsonData)) # Parses json file into a string
+  versionInfo = ast.literal_eval(versionInfoJson) # Parses json string into a dictionary
   spamListDict['Meta']['VersionInfo']['LatestRelease'] = versionInfo['LatestRelease']
   spamListDict['Meta']['VersionInfo']['LastChecked'] = versionInfo['LastChecked']
 
@@ -218,9 +220,9 @@ def main():
     try:
       updateAvailable = files.check_for_update(version, updateReleaseChannel, silentCheck=True, )
     except Exception as e:
-      print(f"{F.LIGHTRED_EX}Error Code U-3 occurred while checking for updates. (Checking can be disabled using the config file setting) Continuing...{S.R}\n")      
+      print(f"{F.LIGHTRED_EX}Error Code U-3 occurred while checking for updates. (Checking can be disabled using the config file setting) Continuing...{S.R}\n")
       updateAvailable = None
-    
+
     # Check if today or tomorrow's date is later than the last update date (add day to account for time zones)
     if datetime.today()+timedelta(days=1) >= datetime.strptime(spamListDict['Meta']['VersionInfo']['LatestLocalVersion'], '%Y.%m.%d'):
       # Only check for updates until the next day
@@ -230,10 +232,10 @@ def main():
   else:
     updateAvailable = False
 
-  # In all scenarios, load spam lists into memory  
+  # In all scenarios, load spam lists into memory
   for x, spamList in spamListDict['Lists'].items():
     spamList['FilterContents'] = files.ingest_list_file(spamList['Path'], keepCase=False)
-  
+
   ####### Load Other Data into MiscData #######
   print("\nLoading other assets..\n")
   @dataclass
@@ -245,13 +247,13 @@ def main():
     channelOwnerName:str
 
   miscData = MiscDataStore(
-    resources = {}, 
-    spamLists = {}, 
-    totalCommentCount = 0, 
-    channelOwnerID = "", 
+    resources = {},
+    spamLists = {},
+    totalCommentCount = 0,
+    channelOwnerID = "",
     channelOwnerName = "",
     )
-    
+
   miscData.resources = resourcesDict
   rootDomainListAssetFile = "rootZoneDomainList.txt"
   rootDomainList = files.ingest_asset_file(rootDomainListAssetFile)
@@ -259,9 +261,9 @@ def main():
   miscData.spamLists['spamDomainsList'] = spamListDict['Lists']['Domains']['FilterContents']
   miscData.spamLists['spamAccountsList'] = spamListDict['Lists']['Accounts']['FilterContents']
   miscData.spamLists['spamThreadsList'] = spamListDict['Lists']['Threads']['FilterContents']
-  
 
-  # Create Whitelist if it doesn't exist, 
+
+  # Create Whitelist if it doesn't exist,
   if not os.path.exists(whitelistPathWithName):
     with open(whitelistPathWithName, "a") as f:
       f.write("# Commenters whose channel IDs are in this list will always be ignored. You can add or remove IDs (one per line) from this list as you wish.\n")
@@ -346,13 +348,13 @@ def main():
       scannedThingsList=[],
       spamThreadsDict = {},
       allScannedCommentsDict={},
-      vidIdDict={}, 
-      vidTitleDict={}, 
-      matchSamplesDict={}, 
+      vidIdDict={},
+      vidTitleDict={},
+      matchSamplesDict={},
       authorMatchCountDict={},
-      scannedRepliesCount=0, 
+      scannedRepliesCount=0,
       scannedCommentsCount=0,
-      logTime = timestamp, 
+      logTime = timestamp,
       logFileName = None,
       errorOccurred = False,
       )
@@ -382,7 +384,7 @@ def main():
           updateString = f"{B.LIGHTCYAN_EX}{F.BLACK} Beta {S.R}"
       elif updateAvailable == None:
         updateString = f"{F.LIGHTRED_EX}Error{S.R}"
-        print("> Note: Error during check for updates. Select 'Check For Updates' for details.")  
+        print("> Note: Error during check for updates. Select 'Check For Updates' for details.")
 
     else:
       if config['auto_check_update'] == False:
@@ -407,7 +409,7 @@ def main():
     print(f"      7. Remove comments using a {F.LIGHTRED_EX}pre-existing list{S.R} or log file")
     print(f"      8. Recover deleted comments using log file")
     print(f"      9. Check & Download {F.LIGHTCYAN_EX}Updates{S.R}\n")
-    
+
 
 
     # Make sure input is valid, if not ask again
@@ -438,7 +440,7 @@ def main():
         elif scanMode == "6":
           scanMode = "makeConfig"
         elif scanMode == "7" or scanMode == "commentlist":
-          scanMode = "commentList"          
+          scanMode = "commentList"
         elif scanMode == "8":
           scanMode = "recoverMode"
         elif scanMode == "9":
@@ -450,7 +452,7 @@ def main():
 # ================================================================================= CHOSEN VIDEOS ======================================================================================================
 
     # If chooses to scan single video - Validate Video ID, get title, and confirm with user
-    if scanMode == "chosenVideos":  
+    if scanMode == "chosenVideos":
       # While loop to get video ID and if invalid ask again
       confirm:bool = False
       validConfigSetting = True
@@ -511,7 +513,7 @@ def main():
             print(f"\nInvalid Video: {enteredVideosList[i]}  |  Video ID = {videoListResult[1]}")
             validConfigSetting = False
             break
-          
+
           # Check each video against first to ensure all on same channel
           if allVideosMatchBool == True:
             misMatchVidIndex = 0
@@ -531,8 +533,8 @@ def main():
             validConfigSetting = False
             allVideosMatchBool = False
 
-        # If videos not from same channel, skip and re-prompt    
-        if allVideosMatchBool == True:       
+        # If videos not from same channel, skip and re-prompt
+        if allVideosMatchBool == True:
           # Print video titles, if there are many, ask user to see all if more than 5
           i = 0
           print(f"\n{F.BLUE}Chosen Videos:{S.R}")
@@ -548,13 +550,13 @@ def main():
                   return True # Return to main menu
             print(f" {i}. {video['videoTitle']}")
           print("")
-          
+
           if CURRENTUSER.id != videosToScan[0]['channelOwnerID']:
             userNotChannelOwner = True
 
           miscData.channelOwnerID = videosToScan[0]['channelOwnerID']
           miscData.channelOwnerName = videosToScan[0]['channelOwnerName']
-          
+
           # Ask if correct videos, or skip if config
           if config['skip_confirm_video'] == True:
             confirm = True
@@ -580,7 +582,7 @@ def main():
       confirm = False
       validEntry = False
       validChannel = False
-      
+
       while validChannel == False:
         # Get and verify config setting for channel ID
         if config['channel_to_scan'] != 'ask':
@@ -612,7 +614,7 @@ def main():
         userNotChannelOwner = True
 
       print(f"\nChosen Channel: {F.LIGHTCYAN_EX}{channelTitle}{S.R}")
-      
+
       # Get number of recent videos to scan, either from config or user input, and validate
       while validEntry == False or confirm == False:
         videosToScan=[]
@@ -642,7 +644,7 @@ def main():
             validConfigSetting = False
         except ValueError:
           print(f"{F.LIGHTRED_EX}Error:{S.R} Entry must be a whole number greater than zero.")
-        
+
         if validEntry == True and numVideos >= 1000:
           print(f"\n{B.YELLOW}{F.BLACK} WARNING: {S.R} You have chosen to scan a large amount of videos. With the default API quota limit,")
           print(f" every 1000 videos will use up 20% of the quota {F.YELLOW}just from listing the videos alone, before any comment scanning.{S.R}")
@@ -677,9 +679,9 @@ def main():
                 remainingCount = str(len(videosToScan) - 10)
                 userChoice = choice(f"There are {remainingCount} more recent videos, do you want to see the rest?")
                 if userChoice == False:
-                  break 
+                  break
                 elif userChoice == None:
-                  return True # Return to main menu         
+                  return True # Return to main menu
             print(f"  {i+1}. {videosToScan[i]['videoTitle']}")
 
           if config['skip_confirm_video'] == True and validConfigSetting == True:
@@ -766,11 +768,11 @@ def main():
         else:
           print("Problem interpreting the post information, please check the link or ID.")
       miscData.channelOwnerID = postOwnerID
-      miscData.channelOwnerName = postOwnerUsername 
+      miscData.channelOwnerName = postOwnerUsername
 
       # Checking config for max comments in config
       if config['max_comments'] != 'ask':
-        validInteger = False 
+        validInteger = False
         try:
           maxScanNumber = int(config['max_comments'])
           if maxScanNumber > 0:
@@ -801,11 +803,11 @@ def main():
     elif scanMode == 'recentCommunityPosts':
       print(f"\nNOTES: This mode is {F.YELLOW}experimental{S.R}, and not as polished as other features. Expect some janky-ness.")
       print("   > It is also much slower to retrieve comments, because it does not use the API")
-        
+
       confirm = False
       validEntry = False
       validChannel = False
-      
+
       while validChannel == False:
         # Get and verify config setting for channel ID
         if config['channel_to_scan'] != 'ask':
@@ -838,7 +840,7 @@ def main():
 
       # Get and print community posts
       recentPostsListofDicts = community_downloader.fetch_recent_community_posts(channelID)
-      
+
       print("\n------------------------------------------------------------")
       print(f"Retrieved {F.YELLOW}{len(recentPostsListofDicts)} recent posts{S.R} from {F.LIGHTCYAN_EX}{channelTitle}{S.R}")
       print(f"\n  Post Content Samples:")
@@ -933,7 +935,7 @@ def main():
     print(f"~~~~~~~~~~~ Choose how to identify spammers ~~~~~~~~~~~")
     print("-------------------------------------------------------")
     print(f"{S.BRIGHT} 1. {S.R}{F.BLACK}{B.LIGHTGREEN_EX}(RECOMMENDED):{S.R} {S.BRIGHT}{autoSmartColor}Auto-Smart Mode{F.R}: Automatically detects multiple spammer techniques{S.R}")
-    print(f"{S.BRIGHT} 2. {sensitiveColor}Sensitive-Smart Mode{F.R}: Much more likely to catch all spammers, but with significantly more false positives{S.R}")  
+    print(f"{S.BRIGHT} 2. {sensitiveColor}Sensitive-Smart Mode{F.R}: Much more likely to catch all spammers, but with significantly more false positives{S.R}")
     print(f"{a1}{styleID} 3. Enter Spammer's {IDColor}channel ID(s) or link(s){F.R}{S.R}")
     print(f"{a2}{styleOther} 4. Scan {usernameColor}usernames{F.R} for criteria you choose{S.R}")
     print(f"{a2}{styleOther} 5. Scan {textColor}comment text{F.R} for criteria you choose{S.R}")
@@ -957,7 +959,7 @@ def main():
         filterChoice = config['filter_mode']
       else:
         filterChoice = input("\nChoice (1-7): ")
-      
+
       if str(filterChoice).lower() == "x":
         return True # Return to main menu
 
@@ -1081,7 +1083,7 @@ def main():
       current.scannedThingsList = []
 
     ##################### START SCANNING #####################
-    filtersDict = { 
+    filtersDict = {
       'filterSettings': filterSettings,
       'filterMode': filterMode,
       'filterSubMode': filterSubMode,
@@ -1103,9 +1105,9 @@ def main():
         # Analyze and store comments
         for key, value in allCommunityCommentsDict.items():
           currentCommentDict = {
-            'authorChannelID':value['authorChannelID'], 
-            'parentAuthorChannelID':None, 
-            'authorChannelName':value['authorName'], 
+            'authorChannelID':value['authorChannelID'],
+            'parentAuthorChannelID':None,
+            'authorChannelName':value['authorName'],
             'commentText':value['commentText'],
             'commentID':key,
             #'originalCommentID': None
@@ -1133,7 +1135,7 @@ def main():
           progressStats = f"[ {str(scannedCount)} / {str(retrievedCount)} ]".ljust(15, " ") + f" ({percent:.2f}%)"
           print(f'  {progressStats}  -  Analyzing Comments For Spam ', end='\r')
         print("                                                                                        ")
-        
+
         dupeCheckModes = utils.string_to_list(config['duplicate_check_modes'])
         if filtersDict['filterMode'].lower() in dupeCheckModes:
           operations.check_duplicates(current, config, miscData, authorKeyAllCommentsDict, communityPostID)
@@ -1141,7 +1143,7 @@ def main():
         # if filtersDict['filterMode'].lower() in repostCheckModes:
         #   operations.check_reposts(current, config, miscData, allCommunityCommentsDict, communityPostID)
           print("                                                                                                                       ")
-          
+
       if scanMode == "communityPost":
         scan_community_post(current, config, communityPostID, maxScanNumber)
 
@@ -1163,7 +1165,7 @@ def main():
       print("\n------------------------------------------------------------------------------")
       print("(Note: If the program appears to freeze, try right clicking within the window)\n")
       print("                          --- Scanning --- \n")
-   
+
       # ----------------------------------------------------------------------------------------------------------------------
       def scan_video(miscData, config, filtersDict, scanVideoID, videosToScan=None, currentVideoDict=None, videoTitle=None, showTitle=False, i=1):
         if currentVideoDict is None:
@@ -1171,7 +1173,7 @@ def main():
         nextPageToken, currentVideoDict = operations.get_comments(current, filtersDict, miscData, config, currentVideoDict, scanVideoID, videosToScan=videosToScan)
         if nextPageToken == "Error":
             return "Error"
-            
+
         if showTitle == True and len(videosToScan) > 0:
           # Prints video title, progress count, adds enough spaces to cover up previous stat print line
           offset = 95 - len(videoTitle)
@@ -1364,7 +1366,7 @@ def main():
         confirmDelete = None
         deletionEnabled = "Allowed"
     else:
-      # Catch Invalid value    
+      # Catch Invalid value
       print("Error C-7: Invalid value for 'delete_without_reviewing' in config file. Must be 'True' or 'False':  " + config['delete_without_reviewing'])
       input("\nPress Enter to exit...")
       sys.exit()
@@ -1426,7 +1428,7 @@ def main():
           if (userNotChannelOwner == False or moderator_mode == True) and current.errorOccurred == False:
             print(f" > To {F.LIGHTRED_EX}move rest of comments above to 'Held For Review' in YT Studio{S.R}: Type '{F.LIGHTRED_EX}HOLD{S.R}', then hit Enter.")
 
-        # Report & None    
+        # Report & None
         if current.errorOccurred == False:
           print(f" > To {F.LIGHTCYAN_EX}report the comments for spam{S.R}, type '{F.LIGHTCYAN_EX}REPORT{S.R}'.")
         if loggingEnabled:
@@ -1451,7 +1453,7 @@ def main():
 
         elif confirmDelete.lower() == "report":
           deletionEnabled = True
-          deletionMode = "reportSpam" 
+          deletionMode = "reportSpam"
 
         elif "exclude" in confirmDelete.lower() or "only" in confirmDelete.lower():
           if "exclude" in confirmDelete.lower():
@@ -1465,7 +1467,7 @@ def main():
               'logMode': logMode,
               'logFileContents': logFileContents,
               'jsonSettingsDict': jsonSettingsDict,
-              'filtersDict': filtersDict 
+              'filtersDict': filtersDict
               }
           else:
             logInfo = None
@@ -1559,7 +1561,7 @@ def main():
         logInfo['logFileContents'] = logFileContents
         logging.rewrite_log_file(current, logInfo, combinedCommentDict)
       print("Updating log file, please wait...", end="\r")
-      
+
       # Appends the excluded comment info to the log file that was just re-written
       if exclude == True:
         if logInfo['logMode'] == "rtf":
@@ -1733,4 +1735,3 @@ if __name__ == "__main__":
     input("\n Press Enter to Exit...")
   else:
     print("\nFinished Executing.")
-	
