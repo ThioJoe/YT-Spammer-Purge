@@ -18,6 +18,7 @@
 - change 2
 
 ### Why is this change needed?
+<!-- How will this change benefit YT-Spammer-Purge? --> 
 It's needed because...
 
 ### Additional Info
