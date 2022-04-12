@@ -2,13 +2,23 @@ import json
 from unicodedata import normalize
 import string
 import os
-from config import CUSTOM_CONFUSABLE_PATH, CONFUSABLES_PATH, CONFUSABLE_MAPPING_PATH, MAX_SIMILARITY_DEPTH
+from config import (
+    CUSTOM_CONFUSABLE_PATH,
+    CONFUSABLES_PATH,
+    CONFUSABLE_MAPPING_PATH,
+    MAX_SIMILARITY_DEPTH,
+)
+
 
 def _asciify(char):
-    return normalize('NFD',char).encode('ascii', 'ignore').decode('ascii')
+    return normalize("NFD", char).encode("ascii", "ignore").decode("ascii")
+
 
 def _get_accented_characters(char):
-    return [u for u in (chr(i) for i in range(137928)) if u != char and _asciify(u) == char]
+    return [
+        u for u in (chr(i) for i in range(137928)) if u != char and _asciify(u) == char
+    ]
+
 
 def _get_confusable_chars(character, unicode_confusable_map, depth):
     mapped_chars = unicode_confusable_map[character]
@@ -16,19 +26,32 @@ def _get_confusable_chars(character, unicode_confusable_map, depth):
     group = set([character])
     if depth <= MAX_SIMILARITY_DEPTH:
         for mapped_char in mapped_chars:
-            group.update(_get_confusable_chars(mapped_char, unicode_confusable_map, depth + 1))
+            group.update(
+                _get_confusable_chars(mapped_char, unicode_confusable_map, depth + 1)
+            )
     return group
+
 
 def parse_new_mapping_file():
     unicode_confusable_map = {}
 
-    with open(os.path.join(os.path.dirname(__file__), CONFUSABLES_PATH), "r", encoding = 'utf-8') as unicode_mappings:
-        with open(os.path.join(os.path.dirname(__file__), CUSTOM_CONFUSABLE_PATH), "r", encoding = 'utf-8') as custom_mappings:
+    with open(
+        os.path.join(os.path.dirname(__file__), CONFUSABLES_PATH), "r", encoding="utf-8"
+    ) as unicode_mappings:
+        with open(
+            os.path.join(os.path.dirname(__file__), CUSTOM_CONFUSABLE_PATH),
+            "r",
+            encoding="utf-8",
+        ) as custom_mappings:
             mappings = unicode_mappings.readlines()
             mappings.extend(custom_mappings)
 
             for mapping_line in mappings:
-                if not mapping_line.strip() or mapping_line[0] == '#' or mapping_line[1] == '#':
+                if (
+                    not mapping_line.strip()
+                    or mapping_line[0] == "#"
+                    or mapping_line[1] == "#"
+                ):
                     continue
 
                 mapping = mapping_line.split(";")[:2]
@@ -90,8 +113,11 @@ def parse_new_mapping_file():
 
         CONFUSABLE_MAP[character] = list(char_group)
 
-    mapping_file = open(os.path.join(os.path.dirname(__file__), CONFUSABLE_MAPPING_PATH), "w")
+    mapping_file = open(
+        os.path.join(os.path.dirname(__file__), CONFUSABLE_MAPPING_PATH), "w"
+    )
     mapping_file.write(json.dumps(CONFUSABLE_MAP))
     mapping_file.close()
+
 
 parse_new_mapping_file()

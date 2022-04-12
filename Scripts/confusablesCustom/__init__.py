@@ -8,7 +8,9 @@ from .utils import is_ascii
 
 
 # read confusable mappings from file, build 2-way map of the pairs
-with open(os.path.join(os.path.dirname(__file__), CONFUSABLE_MAPPING_PATH), "r") as mappings:
+with open(
+    os.path.join(os.path.dirname(__file__), CONFUSABLE_MAPPING_PATH), "r"
+) as mappings:
     CONFUSABLE_MAP = json.loads(mappings.readline())
 
 
@@ -34,6 +36,7 @@ def is_confusable(str1, str2):
             str2 = str2[length2:]
     return str1 == str2
 
+
 def confusable_characters(char):
     mapped_chars = CONFUSABLE_MAP.get(char)
     if mapped_chars:
@@ -42,14 +45,16 @@ def confusable_characters(char):
         return [char]
     return None
 
+
 def confusable_regex(string, include_character_padding=False):
-    space_regex = "[\*_~|`\-\.]*" if include_character_padding else ''
+    space_regex = "[\*_~|`\-\.]*" if include_character_padding else ""
     regex = space_regex
     for char in string:
         escaped_chars = [re.escape(c) for c in confusable_characters(char)]
         regex += "(?:" + "|".join(escaped_chars) + ")" + space_regex
 
     return regex
+
 
 def normalize(string, prioritize_alpha=False):
     normal_forms = set([""])
@@ -59,13 +64,23 @@ def normalize(string, prioritize_alpha=False):
         if not is_ascii(char) or not char.isalpha():
             for confusable in confusable_chars:
                 if prioritize_alpha:
-                    if ((char.isalpha() and confusable.isalpha() and is_ascii(confusable)) or (not char.isalpha() and is_ascii(confusable))) and confusable not in NON_NORMAL_ASCII_CHARS:
+                    if (
+                        (
+                            char.isalpha()
+                            and confusable.isalpha()
+                            and is_ascii(confusable)
+                        )
+                        or (not char.isalpha() and is_ascii(confusable))
+                    ) and confusable not in NON_NORMAL_ASCII_CHARS:
                         normal = confusable
                         if len(confusable) > 1:
                             normal = normalize(confusable)[0]
                         normalized_chars.append(normal)
                 else:
-                    if is_ascii(confusable) and confusable not in NON_NORMAL_ASCII_CHARS:
+                    if (
+                        is_ascii(confusable)
+                        and confusable not in NON_NORMAL_ASCII_CHARS
+                    ):
                         normal = confusable
                         if len(confusable) > 1:
                             normal = normalize(confusable)[0]
@@ -75,5 +90,7 @@ def normalize(string, prioritize_alpha=False):
 
         if len(normalized_chars) == 0:
             normalized_chars = [char]
-        normal_forms = set([x[0]+x[1].lower() for x in list(product(normal_forms, normalized_chars))])
+        normal_forms = set(
+            [x[0] + x[1].lower() for x in list(product(normal_forms, normalized_chars))]
+        )
     return sorted(list(normal_forms))
