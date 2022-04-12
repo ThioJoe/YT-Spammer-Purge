@@ -2,7 +2,7 @@
 <!-- Please delete options that are not relevant. -->
 
 - Fixes #<!--issue-no-->
-- Issue/Addition to code, goes here.
+- Addition to code.
 
 #### Type of change
 
