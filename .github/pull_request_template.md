@@ -1,7 +1,7 @@
 ### Related Issue/Addition to code
 <!-- Please delete options that are not relevant. -->
 
-- Fixes #
+- Fixes #<!--issue-no-->
 - Issue/Addition to code, goes here.
 
 #### Type of change
