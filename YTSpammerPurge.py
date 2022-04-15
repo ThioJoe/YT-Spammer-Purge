@@ -52,7 +52,7 @@ import Scripts.community_downloader as community_downloader
 from Scripts.utils import choice
 
 print("Importing Standard Libraries...")
-#Import Standard Libraries
+# Import Standard Libraries
 import time
 import ast
 from dataclasses import dataclass
