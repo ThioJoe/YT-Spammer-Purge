@@ -27,7 +27,11 @@ def parse_new_mapping_file():
             mappings = unicode_mappings.readlines()
             mappings.extend(custom_mappings)
 
+            numOfMappings = len(mappings)
+            i = 0
             for mapping_line in mappings:
+                i = i+1
+                print(f"{i}/{numOfMappings} Mappings Checked", end = "\r")
                 if not mapping_line.strip() or mapping_line[0] == '#' or mapping_line[1] == '#':
                     continue
 
@@ -64,6 +68,7 @@ def parse_new_mapping_file():
                             unicode_confusable_map[case_change].add(str2)
                         else:
                             unicode_confusable_map[case_change] = set([str2])
+            print("                                                                 ")
 
     for char in string.ascii_lowercase:
         accented = _get_accented_characters(char)
@@ -85,10 +90,14 @@ def parse_new_mapping_file():
 
     CONFUSABLE_MAP = {}
     characters_to_map = list(unicode_confusable_map.keys())
-    for character in list(unicode_confusable_map.keys()):
+    numOfCharsToMap = len(characters_to_map)
+    charMapProgress = 0
+    for character in characters_to_map:
+        charMapProgress = charMapProgress +1
+        print(f"{charMapProgress}/{numOfCharsToMap} Characters Processed", end = "\r")
         char_group = _get_confusable_chars(character, unicode_confusable_map, 0)
-
         CONFUSABLE_MAP[character] = list(char_group)
+    print("                                                                 ")    
 
     mapping_file = open(os.path.join(os.path.dirname(__file__), CONFUSABLE_MAPPING_PATH), "w")
     mapping_file.write(json.dumps(CONFUSABLE_MAP))

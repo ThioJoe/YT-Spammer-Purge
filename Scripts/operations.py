@@ -304,6 +304,8 @@ def check_spam_threads(current, filtersDict, miscData, config, parentCommentDict
     add_spam(current, config, miscData, parentCommentDict, parentCommentDict['videoID'], matchReason="Spam Bot Thread")
     return current
   # Preliminary Analysis
+  if not threadDict:
+    return current
   matchCount = threadWordsRegex.findall(parentCommentDict['commentText'].lower())
   if matchCount:
       preliminaryCount += len(matchCount)
