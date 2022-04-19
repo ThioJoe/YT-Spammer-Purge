@@ -5,7 +5,6 @@ from Scripts.shared_imports import *
 import Scripts.utils as utils
 import Scripts.auth as auth
 import Scripts.validation as validation
-import Scripts.logging as logging
 from Scripts.utils import choice
 
 import unicodedata
