@@ -63,6 +63,7 @@ from collections import namedtuple
 import platform
 import json
 from pkg_resources import parse_version
+from requests import get
 
 print("Importing Third-Party Modules...")
 # Other Libraries
@@ -76,7 +77,18 @@ from googleapiclient.errors import HttpError
 ##########################################################################################
 ##########################################################################################
 
+from requests import get
+latestversion = get('https://github.com/ThioJoe/YT-Spammer-Purge/raw/main/version.txt').text
+version = "2.16.9"
+ print("Checking for updates")
 
+if (latestversion.strip() == version):
+    print("You are in the latest version")
+
+
+else:
+    print("This version is outdated please go to https://github.com/ThioJoe/YT-Spammer-Purge to get the latest version")
+    
 def main():
   # Fix issue with unassigned variables
   global S
