@@ -478,8 +478,8 @@ def main():
             print(f"\nEnter a list of {F.YELLOW}Video Links{S.R} or {F.YELLOW}Video IDs{S.R} to scan, separated by commas.")
             print(" > Note: All videos must be from the same channel.")
             enteredVideosList = utils.string_to_list(input("\nEnter here: "))
-            if str(enteredVideosList).lower() == "['x']":
-              return True # Return to main menu
+            if len(enteredVideosList) == 1 and str(enteredVideosList[0]).lower() == "x":
+              return True
             validConfigSetting = False
             if len(enteredVideosList) == 0:
               listNotEmpty = False
@@ -493,32 +493,34 @@ def main():
           videoListResult = [] # True/False, video ID, videoTitle, commentCount, channelID, channelTitle
           for i in range(len(enteredVideosList)):
             videoListResult.append([])
-            videosToScan.append({})
             videoListResult[i] = validation.validate_video_id(enteredVideosList[i]) # Sends link or video ID for isolation and validation
             if videoListResult[i][0] == False:
+              print(f"\nInvalid Video: {enteredVideosList[i]}")
               validVideoIDs = False
               confirm = False
               break
-
         for i in range(len(videoListResult)): # Change this
           if videoListResult[i][0] == True:
-            videosToScan[i]['videoID'] = str(videoListResult[i][1])
-            videosToScan[i]['videoTitle'] = str(videoListResult[i][2])
-            videosToScan[i]['commentCount'] = int(videoListResult[i][3])
-            videosToScan[i]['channelOwnerID'] = str(videoListResult[i][4])
-            videosToScan[i]['channelOwnerName'] = str(videoListResult[i][5])
+            videoDict = {
+              "videoID": str(videoListResult[i][1]),
+              "videoTitle": str(videoListResult[i][2]),
+              "commentCount": int(videoListResult[i][3]),
+              "channelOwnerID": str(videoListResult[i][4]),
+              "channelOwnerName": str(videoListResult[i][5])
+            }
+            if videoDict not in videosToScan:
+              videosToScan.append(videoDict)
             miscData.totalCommentCount += int(videoListResult[i][3])
-            if str(videoListResult[i][1]) not in current.vidTitleDict:
-              current.vidTitleDict[videoListResult[i][1]] = str(videoListResult[i][2])
+            if str(videoDict["videoID"]) not in current.vidTitleDict:
+              current.vidTitleDict[videoDict["videoID"]] = str(videoDict["videoTitle"])
           else:
             print(f"\nInvalid Video: {enteredVideosList[i]}  |  Video ID = {videoListResult[1]}")
             validConfigSetting = False
             break
-          
           # Check each video against first to ensure all on same channel
           if allVideosMatchBool == True:
             misMatchVidIndex = 0
-          if videosToScan[0]['channelOwnerID'] != videosToScan[i]['channelOwnerID']:
+          if videosToScan[0]['channelOwnerID'] != videoDict['channelOwnerID']:
             misMatchVidIndex += 1
             if allVideosMatchBool == True:
               print(f"\n {F.LIGHTRED_EX}ERROR: Videos scanned together all must be from the same channel.{S.R}")
@@ -674,7 +676,7 @@ def main():
           if len(videosToScan) < numVideos:
             print(f"\n{F.YELLOW} WARNING:{S.R} Only {len(videosToScan)} videos found. Videos may be skipped if there are no comments.")
           print("\nRecent Videos To Be Scanned:")
-          for i in range(len(videosToScan)):
+          for i, video in enumerate(videosToScan):
             if config['skip_confirm_video'] == False:
               if i == 10 and len(videosToScan) > 11:
                 remainingCount = str(len(videosToScan) - 10)
@@ -683,7 +685,7 @@ def main():
                   break 
                 elif userChoice == None:
                   return True # Return to main menu         
-            print(f"  {i+1}. {videosToScan[i]['videoTitle']}")
+            print(f"  {i+1}. {video['videoTitle']}")
 
           if config['skip_confirm_video'] == True and validConfigSetting == True:
             confirm = True
@@ -847,9 +849,9 @@ def main():
       print("\n------------------------------------------------------------")
       print(f"Retrieved {F.YELLOW}{len(recentPostsListofDicts)} recent posts{S.R} from {F.LIGHTCYAN_EX}{channelTitle}{S.R}")
       print(f"\n  Post Content Samples:")
-      for i in range(len(recentPostsListofDicts)):
+      for i, post in enumerate(recentPostsListofDicts):
         # recentPostsListofDicts = {post id : post text} - Below prints sample of post text
-        print(f"    {i+1}.".ljust(9, " ") + f"{list(recentPostsListofDicts[i].values())[0][0:50]}")
+        print(f"    {i+1}.".ljust(9, " ") + f"{list(post.values())[0][0:50]}")
 
       if userNotChannelOwner == True:
               print(f"\n > {F.LIGHTRED_EX}Warning:{S.R} You are scanning someone elses post. {F.LIGHTRED_EX}'Not Your Channel Mode'{S.R} Enabled.")
