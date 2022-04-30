@@ -34,7 +34,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "1.3.3"
+version = "1.3.4"
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 import os
@@ -574,7 +574,7 @@ if __name__ == "__main__":
   print("      1. Scan Single Video")
   print("      2. Scan Entire Channel")
 
-  validMode = False
+  validMode = True
   while validMode == False:
     mode = str(input("Choice: "))
     # If chooses to scan single video - Validate Video ID, get title, and confirm with user - otherwise exits
