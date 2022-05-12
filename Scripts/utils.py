@@ -215,6 +215,7 @@ def print_error_title_fetch():
   input("\n Press Enter to continue...")
 
 
+
 # Fetch the uploads playlist ID for the channel
 
 def get_uploads_playlist_id(channel_id):
@@ -224,3 +225,16 @@ def get_uploads_playlist_id(channel_id):
   except HttpError:
     uploadplaylistId = "[Unavailable]" # If raise HttpError, set to [Unavailable]
   return uploadplaylistId
+
+def clear_terminal() -> None:
+  if sys.stdout.isatty(): # if in a terminal
+    if sys.platform.startswith("win"):
+      # For windows, use cls
+      os.system("cls")
+    else:
+      # For MacOS / Linux, this should clear the screen
+      sys.stdout.write("\033[2J\033[1;1H")
+  # Do nothing if not a terminal
+  return
+  # Not 100% sure if there are any cases where sys.stdout.isatty can raise an exception
+

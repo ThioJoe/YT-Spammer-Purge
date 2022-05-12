@@ -5,7 +5,6 @@ from Scripts.shared_imports import *
 import Scripts.utils as utils
 import Scripts.auth as auth
 import Scripts.validation as validation
-import Scripts.logging as logging
 from Scripts.utils import choice
 
 import unicodedata
@@ -305,6 +304,8 @@ def check_spam_threads(current, filtersDict, miscData, config, parentCommentDict
     add_spam(current, config, miscData, parentCommentDict, parentCommentDict['videoID'], matchReason="Spam Bot Thread")
     return current
   # Preliminary Analysis
+  if not threadDict:
+    return current
   matchCount = threadWordsRegex.findall(parentCommentDict['commentText'].lower())
   if matchCount:
       preliminaryCount += len(matchCount)

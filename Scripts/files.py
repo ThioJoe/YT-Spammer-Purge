@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-from copy import copy
 import platform
 import tarfile
 from Scripts.shared_imports import *
 from Scripts.utils import choice
 
-from datetime import datetime, date, timedelta
+from datetime import datetime
 from configparser import ConfigParser
 from pkg_resources import parse_version
 from random import randrange
@@ -189,7 +188,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
     return None
   except Exception as e:
     if silentCheck == False:
-      print(e + "\n")
+      print(str(e) + "\n")
       print(f"{B.RED}{F.WHITE}Error [Code U-1]:{S.R} Problem while checking for updates. See above error for more details.\n")
       print("If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
     elif silentCheck == True:
@@ -410,7 +409,7 @@ def getRemoteFile(url, stream, silent=False, headers=None):
 
   except Exception as e:
     if silent == False:
-      print(e + "\n")
+      print(str(e) + "\n")
       print(f"{B.RED}{F.WHITE} Error {S.R} While Fetching Remote File or Resource: " + url)
       print("See above messages for details.\n")
       print("If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
