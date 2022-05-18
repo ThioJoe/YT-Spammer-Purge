@@ -1,4 +1,3 @@
-
 <!---------------------------------[ Header ]---------------------------------->
 
 <h1 align = 'center'>
@@ -35,14 +34,27 @@
 
 <br>
 
-**What Is This?** - Allows you to filter and search for spammer comments on your channel and other's channel(s) in many different ways AND delete/report them all at once (see features below).
+<div align=center>
+Allows you to filter and search for spammer comments on your channel and other's channel(s) in many different ways AND delete/report them all at once (see features below).
+</div>
 
-**How to Download:** Click the "[Releases]" link on the right, then on the latest release, under 'Assets' click to download "YTSpammerPurge.exe". (You might have to click "Assets" to view the files for the release)
-> * [Linux Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/Linux-Installation-Instructions)
-> * [MacOS Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/MacOS-Instructions)
-> * (Windows installation not necessary if using exe file. But see how to set up required API key [on this page](https://github.com/ThioJoe/YT-Spammer-Purge/wiki/Instructions:-Obtaining-an-API-Key))
 
-### **Detailed Info & Documentation →** Visit the wiki [(Click Here)][Wiki] for more detailed writeups on the program
+
+**Table Of Contents**
+
+- [Features](#features)
+- [Purpose](#purpose)
+- [🤔 Pro-Tip If This Seems Sketchy: Limiting The App's Access 🤔](#-pro-tip-if-this-seems-sketchy-limiting-the-apps-access-)
+- [**USAGE NOTES**](#usage-notes)
+- [Installation](#installation)
+  - [**Docker Instructions:**](#docker-instructions)
+  - [Manual Installation](#manual-installation)
+    - [Updating](#updating)
+- [Instructions - Obtaining YouTube API Key](#instructions---obtaining-youtube-api-key)
+- [Video: Project Demonstrations](#video-project-demonstrations)
+- [Screenshots](#screenshots)
+
+
 
 ## Features
 
@@ -67,6 +79,7 @@
 * Displays "match samples" after printing comments list to easily spot false positives
 * Ability to exclude selected authors before deletion / reporting
 
+
 ## Purpose
 
 Recently, there has been a massive infestation of spam on YouTube where fake impersonator accounts leave spam/scam replies to hundreds of users on a creator's videos. YouTube has fortunately now made it so the "Hide User From Channel" button instantly removes all of that user's comments, but there are sometimes many different spammers, and it can be difficult to find them all.
@@ -77,17 +90,62 @@ Therefore I created this script to allow you to easily scan for and purge these 
 
 If you feel sketched out about giving the app the required high level permissions to your channel (very understandable), you could instead use the app in 'moderator mode' (set in the config file). First, some context: When you grant access to another channel to be a moderator for your channel, they are able to mark comments for 'held for review', and this permission works through the API as well. 
 
-_Therefore,_ what you could do is create an _blank dummy-google-account_ with nothing on it except a empty new channel. Then you can grant _that_ channel permission to be a moderator, and use the app through _the dummy moderator account_. **This way, you know that the app will never have the ability to do more than mark comments as held for review** (which the app supports) on your main channel, and have no other access to your account's data. You just won't be able to ban the spammers through this app directly, but you can still remove/hide their comments instead of deleting them. Just make sure to create the google cloud API project on the dummy account instead.
+Therefore, what you could do is create an _blank dummy-google-account_ with nothing on it except a empty new channel. Then you can grant that channel permission to be a moderator, and use the app through _the dummy moderator account_. **This way, you know that the app will never have the ability to do more than mark comments as held for review** (which the app supports) on your main channel, and have no other access to your account's data. You just won't be able to ban the spammers through this app directly, but you can still remove/hide their comments instead of deleting them. Just make sure to create the google cloud API project on the dummy account instead.
 
 Read some additional details about 'moderator mode' on the [wiki page here][Moderator Mode].
 
-## Usage Notes -READ THIS
+## **USAGE NOTES**
 
-1. To use this script, you will need to obtain your own API credentials file by making a project via the Google Developers Console (aka 'Google Cloud Platform'). The credential file should be re-named `client_secret.json` and be placed in the same directory as this script. [See Instructions Here][API Key].
+1. **IF IT FREEZES** while scanning, it is probably because you clicked within the command prompt window and entered "selection mode" which pauses everything. **To unfreeze it, simply right click within the window, or press the Escape key.**
 
-2. **IF IT FREEZES** while scanning, it is probably because you clicked within the command prompt window and entered "selection mode" which pauses everything. **To unfreeze it, simply right click within the window, or press the Escape key.**
+2. I'm a total amateur, so if something doesn't work I'll try to fix it but might not even know how, so don't expect too much. Therefore **I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.** I tested it on my own and implemented some failsafes as best as I could, but there could always be some kind of unexpected bug. You should inspect the code yourself.
 
-3. I'm a total amateur, so if something doesn't work I'll try to fix it but might not even know how, so don't expect too much. Therefore **I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.** I tested it on my own and implemented some failsafes as best as I could, but there could always be some kind of unexpected bug. You should inspect the code yourself.
+## Installation
+
+For windows, the best way to install is to download the latest EXE file from the [Releases page][Releases]. 
+
+For Mac/Linux the easiest way is to install from the install script
+
+```bash
+bash <(curl -s https://raw.githubusercontent.com/ThioJoe/YT-Spammer-Purge/main/install.sh)
+```
+
+Either way, you DO need to acquire your own API credentials file to access the YouTube API - [See Instructions Here][API Key].
+
+See one of the following if you need further help:
+* [Linux Setup Instructions][Instructions Linux]
+* [MacOS Setup Instructions][Instructions MacOS]
+
+### **Docker Instructions:**
+
+Before running `docker-compose` you must run the `YTSpammerPurge.py` script at least once with your `client_secrets.json` file to confirm OAuth credentials and generate the config/token files.
+
+The generated config files, token, and Spam Purge Resources will all be bound to the docker container via volumes.
+
+Once you generated the token and config files you are ready to run the docker image.
+
+
+Now you can run `docker-compose up` to start the container, or use the image to run on a Kubernetes cluster for example.
+To build your own version you can run this command: `docker-compose -f docker-compose.yml -f docker-compose.override.yml up --build`
+
+### Manual Installation
+
+See one of the following for help:
+* [Linux Setup Instructions][Instructions Linux]
+* [MacOS Setup Instructions][Instructions MacOS]
+
+#### Updating
+
+If you have the exe installed you will need to redownload the entire exe.
+
+If you installed from source, run the `install.sh` file inside your installation to update
+
+
+## Instructions - Obtaining YouTube API Key
+To use this script, you will need an "Oauth2" credential to access the scanning and deletion functions via YouTube's Data API. Otherwise this script won't work at all. 
+* #### Instructions can be found on this page: [Instructions: Obtaining an API Key][API Key]
+* #### **Or, follow a video WalkThrough Here: <https://www.youtube.com/watch?v=c6ebWvay8dE>**  
+
 
 ## Video: Project Demonstrations
 
@@ -142,67 +200,6 @@ Read some additional details about 'moderator mode' on the [wiki page here][Mode
 </div>
 
 <br>
-
-## Installation
-
-If using the python script version (not the exe), there is a requirements.txt with necessary modules. Created with Python 3.9.7
-
-Either way, you DO need to acquire your own API credentials file to access the YouTube API - [See Instructions Here][API Key].
-
-### **Operating System Specific Instructions:**
-
-#### Windows
-
-On Windows, you may download the latest EXE file from the [Releases page][Releases], or you may install YTSpammerPurge manually.
-If you are not sure how to install YTSpammerPurge manually, it is probably best to install the EXE.
-
-#### Linux / MacOS
-
-The easiest way to install YTSpammerPurge is using the install script.
-
-```bash
-bash <(curl -s https://raw.githubusercontent.com/ThioJoe/YT-Spammer-Purge/main/install.sh)
-```
-
-<img 
-    width = '500'
-    src = 'https://user-images.githubusercontent.com/60006481/154855672-165565a1-50db-47d4-bf39-0fb576710f63.gif'
-/>
-
-See one of the following if you need further help:
-* [Linux Setup Instructions][Instructions Linux]
-* [MacOS Setup Instructions][Instructions MacOS]
-
-##### Updating
-
-To update YTSpammerPurge, run the `install.sh` file inside your installation.
-
-<img 
-    width = '500'
-    src = 'https://user-images.githubusercontent.com/60006481/154855673-bf2e8fdb-eaa3-4583-a2a1-80ef4816e2bc.gif' 
-/>
-
-##### Manual Installation
-
-If your system is not yet supported by the install script, you may install YTSpammerPurge manually by following the guide [Here (Linux Setup Instructions)][Instructions Linux]
-
-### **Docker Instructions:**
-
-Before running `docker-compose` you must run the `YTSpammerPurge.py` script at least once with your `client_secrets.json` file to confirm OAuth credentials and generate the config/token files.
-
-The generated config files, token, and Spam Purge Resources will all be bound to the docker container via volumes.
-
-Once you generated the token and config files you are ready to run the docker image.
-
-
-Now you can run `docker-compose up` to start the container, or use the image to run on a Kubernetes cluster for example.
-To build your own version you can run this command: `docker-compose -f docker-compose.yml -f docker-compose.override.yml up --build`
-
-
-## Instructions - Obtaining YouTube API Key
-To use this script, you will need an "Oauth2" credential to access the scanning and deletion functions via YouTube's Data API. Otherwise this script won't work at all. 
-* #### Instructions can be found on this page: [Instructions: Obtaining an API Key][API Key]
-* #### **Or, follow a video WalkThrough Here: <https://www.youtube.com/watch?v=c6ebWvay8dE>**  
 
 
 <!----------------------------------------------------------------------------->
