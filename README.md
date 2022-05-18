@@ -136,7 +136,7 @@ See one of the following for help:
 
 #### Updating
 
-If you have the exe installed you will need to redownload the entire exe.
+If you have the exe installed you will need to download the entire exe again.
 
 If you installed from source, run the `install.sh` file inside your installation to update
 
