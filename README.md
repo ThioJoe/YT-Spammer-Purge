@@ -109,35 +109,35 @@ Read some additional details about 'moderator mode' on the [wiki page here][Mode
     <img 
         width = '675' 
         alt = 'Opening Menu' 
-        src = 'https://user-images.githubusercontent.com/93459510/147557851-6d517280-6e20-4dfd-ab78-1a2357f710a7.png'>
+        src = 'https://user-images.githubusercontent.com/93459510/174273252-5b5c0d03-db79-4e17-a8b6-77cd9a329ac4.png'>
     <br>
     <h2>Filter Mode Selection</h2>
     <br>
     <img 
         width = '675' 
         alt = 'Filter Mode Selection' 
-        src = 'https://user-images.githubusercontent.com/93459510/147558339-28dc9fec-a51b-48be-a1bb-4f8b9e6cb3f6.png'>
+        src = 'https://user-images.githubusercontent.com/93459510/174273476-5af0a1ad-9ca1-4fea-976d-e731ce336922.png'>
     <br>
     <h2>Scanning<br>(Auto Smart Mode)</h2>
     <br>
     <img 
         width = '675' 
         alt = 'Scanning (Auto Smart Mode)' 
-        src = 'https://user-images.githubusercontent.com/93459510/147558617-b097e342-40bb-48df-ab59-d6a985a2322a.png'>
+        src = 'https://user-images.githubusercontent.com/93459510/174273577-38e51d30-f313-4053-ba31-bb2724770dda.png'>
     <br>
     <h2>Matched Comments List</h2>
     <br>
     <img 
         width = '675' 
         alt = 'Matched Comments List' 
-        src = 'https://user-images.githubusercontent.com/93459510/147558790-881b4871-e3de-43fe-be02-2fce6a03304d.png'>
+        src = 'https://user-images.githubusercontent.com/93459510/174273656-0fb22382-ec88-4e63-88f3-e4a93ac1f1ad.png'>
     <br>
     <h2>Match Samples and Deletion Menu</h2>
     <br>
     <img 
         width = '675' 
         alt = 'Match Samples and Deletion Menu' 
-        src = 'https://user-images.githubusercontent.com/93459510/147559013-7b1f59c7-4433-4b19-8e2e-7988d5d29ee5.png'>
+        src = 'https://user-images.githubusercontent.com/93459510/174273744-3d5a174a-904a-493e-af37-bcca44c57820.png'>
     <br>
 </div>
 
