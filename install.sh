@@ -72,7 +72,7 @@ install_fail () {
 }
 
 install_debian () {
-    sudo apt install python3 python3-dev python3-tk python3-pip git || install_fail
+    sudo apt-get install python3 python3-dev python3-tk python3-pip git || install_fail
 }
 
 install_fedora () {
