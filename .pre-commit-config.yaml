@@ -1,16 +1,22 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
+exclude: Scripts/confusablesCustom/
+
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.1.0
+  rev: v4.3.0
   hooks:
   - id: check-added-large-files
   - id: check-toml
   - id: check-yaml
   - id: end-of-file-fixer
+  - id: fix-byte-order-marker
+  - id: mixed-line-ending
+  - id: requirements-txt-fixer
   - id: trailing-whitespace
+    args: [--markdown-linebreak-ext=md]
 - repo: https://github.com/psf/black
-  rev: 22.1.0
+  rev: 22.6.0
   hooks:
   - id: black
 # TODO: Remove comments when type-hinting is implemented
@@ -29,13 +35,13 @@ repos:
 #    language: system
 #    types: [python]
 - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
-  rev: v2.2.0
+  rev: v2.4.0
   hooks:
   - id: pretty-format-toml
     args: [--autofix]
   - id: pretty-format-yaml
     args: [--autofix]
-    exclude: .copier-answers.yml
+    exclude: .github/workflows/codeql-analysis.yml
     # based on
     # https://gitlab.com/smop/pre-commit-hooks/-/blob/master/.pre-commit-hooks.yaml
 # TODO: Remove comments when/if poetry is implemented

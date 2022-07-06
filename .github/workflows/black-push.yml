@@ -17,8 +17,8 @@ jobs:
         if: failure()
         run: |
           black .
-          git config --global user.name EthanHindmarsh
-          git config --global user.email 'ethan@ethan.lol'
+          git config --global user.name Github-Actions
+          git config --global user.email 'github-actions@users.noreply.github.com'
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$GITHUB_REPOSITORY
           git commit -am "fixup! Format Python code with psf/black push"
           git push  # --force origin HEAD:$GITHUB_REF
