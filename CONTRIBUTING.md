@@ -19,8 +19,9 @@ Every little bit helps, and credit will always be given.
 ## Setting up your Environment
 
 - Fork the repository [(How?)](https://docs.github.com/en/get-started/quickstart/fork-a-repo)
-- Download your fork to your computer, either:
+- Download your fork to your computer, either by:
 - - Clone your repository using the `git` CLI. [(How?)](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository)
+or by
 - - Download as a ZIP and extract [(How?)](https://www.cloudsavvyit.com/p/uploads/2021/11/e8bb2301.png)
 - Optional: Setup a virtual environment [(How?)](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/#creating-a-virtual-environment)
 
