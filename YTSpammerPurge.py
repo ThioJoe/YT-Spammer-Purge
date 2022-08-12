@@ -86,7 +86,7 @@ def main():
   # Run check on python version, must be 3.6 or higher because of f strings
   if sys.version_info[0] < 3 or sys.version_info[1] < 6:
     print("Error Code U-2: This program requires running python 3.6 or higher! You are running" + str(sys.version_info[0]) + "." + str(sys.version_info[1]))
-    input("Press Enter to exit...")
+    input("Press Enter to Exit...")
     sys.exit()
 
   # Declare Global Variables
@@ -148,7 +148,7 @@ def main():
     except:
       print("\nError: Could not create folder. To update the spam lists, try creating a folder called 'SpamPurge_Resources',")
       print("       then inside that, create another folder called 'Spam_Lists'.")
-      input("Press Enter to continue...")
+      input("Press Enter to Continue...")
 
   if os.path.isdir(resourceFolder) and not os.path.isdir(spamListFolder):
     try:
@@ -210,12 +210,12 @@ def main():
     else:
       print("Invalid value for 'release_channel' in config file. Must be 'All' or 'Stable'")
       print("Defaulting to 'All'")
-      input("Press Enter to continue...")
+      input("Press Enter to Continue...")
       updateReleaseChannel = "all"
   except KeyError:
     print("\nYour version of the config file does not specify a release channel. Defaulting to 'All'")
     print(f"{F.YELLOW}Re-create your config{S.R} to get the latest version.")
-    input("\nPress Enter to continue...")
+    input("\nPress Enter to Continue...")
     updateReleaseChannel = "all"
 
   if config['auto_check_update'] == True:
@@ -630,7 +630,7 @@ def main():
             print("Invalid number entered in config file for recent_videos_amount")
             numVideos = None
         else:
-          print(f"\nEnter the {F.YELLOW}number most recent videos{S.R} to scan back-to-back:")
+          print(f"\nEnter the {F.YELLOW}number of most recent videos{S.R} to scan back-to-back:")
           numVideos = input("\nNumber of Recent Videos: ")
           print("")
           if str(numVideos).lower() == "x":
@@ -765,7 +765,7 @@ def main():
           print("\nCommunity Post By: " + postOwnerUsername)
           if postOwnerID != CURRENTUSER.id:
             userNotChannelOwner = True
-            print(f"\n{F.YELLOW}Warning:{S.R} You are scanning someone elses post. '{F.LIGHTRED_EX}Not Your Channel Mode{S.R}' Enabled.")
+            print(f"\n{F.YELLOW}Warning:{S.R} You are scanning someone else's post. '{F.LIGHTRED_EX}Not Your Channel Mode{S.R}' Enabled.")
           confirm = choice("Continue?")
           if confirm == None:
             return True # Return to main menu
@@ -787,7 +787,7 @@ def main():
           pass
 
         if validInteger == False:
-          print("\nInvalid max_comments setting in config! Number must a whole number be greater than zero.")
+          print("\nInvalid max_comments setting in config! Number must be a whole number greater than zero.")
         while validInteger == False:
           maxScanInput = input(f"\nEnter the maximum {F.YELLOW}number of comments{S.R} to scan: ")
           if str(maxScanInput).lower() == "x":
@@ -797,7 +797,7 @@ def main():
             if maxScanNumber > 0:
               validInteger = True # If it gets here, it's an integer, otherwise goes to exception
             else:
-              print("\nInvalid Input! Number must a whole number be greater than zero.")
+              print("\nInvalid Input! Number must be a whole number greater than zero.")
           except:
             print("\nInvalid Input! - Must be a whole number greater than zero.")
 
@@ -853,7 +853,7 @@ def main():
         print(f"    {i+1}.".ljust(9, " ") + f"{list(recentPostsListofDicts[i].values())[0][0:50]}")
 
       if userNotChannelOwner == True:
-              print(f"\n > {F.LIGHTRED_EX}Warning:{S.R} You are scanning someone elses post. {F.LIGHTRED_EX}'Not Your Channel Mode'{S.R} Enabled.")
+              print(f"\n > {F.LIGHTRED_EX}Warning:{S.R} You are scanning someone else's post. {F.LIGHTRED_EX}'Not Your Channel Mode'{S.R} Enabled.")
 
       print(f"\n{F.YELLOW}How many{S.R} of the most recent posts do you want to scan?")
 
@@ -1306,7 +1306,7 @@ def main():
       confirmDelete = False
       deletionEnabled = False
       print(f"{F.LIGHTRED_EX}Error:{S.R}To prevent abuse, even in moderator mode, you can only use filter modes: Auto Smart, Sensitive Smart, and ID")
-      response = input("Press Enter to continue, or type 'x' to return to Main Menu...")
+      response = input("Press Enter to Continue, or type 'x' to return to Main Menu...")
       if response.lower() == 'x':
         return True
 
@@ -1318,7 +1318,7 @@ def main():
     elif config['skip_deletion'] != False:
       print("Error Code C-3: Invalid value for 'skip_deletion' in config file. Must be 'True' or 'False'. Current Value:  " + str(config['skip_deletion']))
       print(f"Defaulting to '{F.YELLOW}False{S.R}'")
-      input("\nPress Enter to continue...")
+      input("\nPress Enter to Continue...")
 
     ### ----------------------------------------------------------------
 
@@ -1334,7 +1334,7 @@ def main():
         deletionMode = "rejected"
       else:
         print("Error Code C-4: Invalid value for 'removal_type' in config file. Must be 'heldforreview', 'rejected', or 'reportSpam':  " + config['removal_type'])
-        input("\nPress Enter to exit...")
+        input("\nPress Enter to Exit...")
         sys.exit()
 
     # User wants to automatically delete with no user intervention
@@ -1357,26 +1357,26 @@ def main():
           print("Error Code C-5: 'delete_without_reviewing' is set to 'True' in config file. So only filter mode 'AutoSmart' allowed..\n")
           print("Next time use one of those filter modes, or set 'delete_without_reviewing' to 'False'.")
           print("    > For this run, you will be asked to confirm removal of spam comments.")
-          input("\nPress Enter to continue...")
+          input("\nPress Enter to Continue...")
           confirmDelete = None
           deletionEnabled = "Allowed"
       else:
         print("Error Code C-6: 'delete_without_reviewing' is set to 'True' in config file. So 'removal_type' must be either 'heldForReview' or 'reportSpam'.\n")
         print("Next time, either set one of those removal types, or set 'delete_without_reviewing' to 'False'.")
         print("    > For this run, you will be asked to confirm removal of spam comments.")
-        input("\nPress Enter to continue...")
+        input("\nPress Enter to Continue...")
         confirmDelete = None
         deletionEnabled = "Allowed"
     else:
       # Catch Invalid value    
       print("Error C-7: Invalid value for 'delete_without_reviewing' in config file. Must be 'True' or 'False':  " + config['delete_without_reviewing'])
-      input("\nPress Enter to exit...")
+      input("\nPress Enter to Exit...")
       sys.exit()
 
     # Check if deletion is enabled, otherwise block and quit
     if returnToMenu == False and deletionEnabled != "Allowed" and deletionEnabled != True:
         print("\nThe deletion functionality was not enabled. Cannot delete or report comments.")
-        print("Possible Cause: You're scanning someone elses video with a non-supported filter mode.\n")
+        print("Possible Cause: You're scanning someone else's video with a non-supported filter mode.\n")
         print(f"If you think this is a bug, you may report it on this project's GitHub page: {F.YELLOW}TJoe.io/bug-report{S.R}")
         if config['auto_close'] == True:
           print("\nAuto-close enabled in config. Exiting in 5 seconds...")
@@ -1519,10 +1519,10 @@ def main():
             pass
           elif config['enable_ban'] == True:
             print("Error Code C-8: 'enable_ban' is set to 'True' in config file. Only possible config options are 'ask' or 'False' when using config.\n")
-            input("Press Enter to continue...")
+            input("Press Enter to Continue...")
           else:
             print("Error Code C-9: 'enable_ban' is set to an invalid value in config file. Only possible config options are 'ask' or 'False' when using config.\n")
-            input("Press Enter to continue...")
+            input("Press Enter to Continue...")
         elif deletionMode == "rejected":
           print("\nAlso ban the spammer(s)?")
           banChoice = choice(f"{F.YELLOW}Ban{S.R} the spammer(s) ?")
@@ -1610,7 +1610,7 @@ def main():
         time.sleep(5)
         sys.exit()
       else:
-        input(f"\nProgram {F.LIGHTGREEN_EX}Complete{S.R}. Press Enter to to return to main menu...")
+        input(f"\nProgram {F.LIGHTGREEN_EX}Complete{S.R}. Press Enter to return to main menu...")
         return True
     elif current.errorOccurred == True:
       if config['auto_close'] == True:
@@ -1629,9 +1629,9 @@ def main():
         sys.exit()
       else:
         if confirmDelete != None and str(confirmDelete.lower()) == "none":
-          input(f"\nDeletion {F.LIGHTCYAN_EX}Declined{S.R}. Press Enter to to return to main menu...")
+          input(f"\nDeletion {F.LIGHTCYAN_EX}Declined{S.R}. Press Enter to return to main menu...")
         else:
-          input(f"\nDeletion {F.LIGHTRED_EX}Cancelled{S.R}. Press Enter to to return to main menu...")
+          input(f"\nDeletion {F.LIGHTRED_EX}Cancelled{S.R}. Press Enter to return to main menu...")
         return True
     else:
       if config['auto_close'] == True:
@@ -1639,7 +1639,7 @@ def main():
         time.sleep(5)
         sys.exit()
       else:
-        input(f"\nDeletion {F.LIGHTRED_EX}Cancelled{S.R}. Press Enter to to return to main menu...")
+        input(f"\nDeletion {F.LIGHTRED_EX}Cancelled{S.R}. Press Enter to return to main menu...")
         return True
   # -------------------------------------------------------------------------------------------------------------------------------------------------
   # ------------------------------------------------END PRIMARY INSTANCE-----------------------------------------------------------------------------
@@ -1719,14 +1719,14 @@ if __name__ == "__main__":
       print(f"{F.LIGHTYELLOW_EX}If that doesn't work{S.R}, consider posting a {F.LIGHTYELLOW_EX}bug report{S.R} on the GitHub issues page, and include the above error info.")
     else:
       print(f"{F.RED}Unknown Error - Code: X-4{S.R} occurred. This is {F.YELLOW}probably my fault{S.R},")
-      print(f"please a {F.LIGHTYELLOW_EX}bug report{S.R} on the GitHub issues page, and include the above error info.")
+      print(f"please post a {F.LIGHTYELLOW_EX}bug report{S.R} on the GitHub issues page, and include the above error info.")
     print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
     input("\n Press Enter to Exit...")
   except TypeError:
     traceback.print_exc()
     print("------------------------------------------------")
     print(f"{F.RED}Unknown Error - Code: X-5{S.R} occurred. This is {F.YELLOW}probably my fault{S.R},")
-    print(f"please a {F.LIGHTYELLOW_EX}bug report{S.R} on the GitHub issues page, and include the above error info.")
+    print(f"please post a {F.LIGHTYELLOW_EX}bug report{S.R} on the GitHub issues page, and include the above error info.")
     print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
     input("\n Press Enter to Exit...")
   except KeyboardInterrupt:

@@ -297,7 +297,7 @@ def print_prepared_comments(current, commentsContents, scanVideoID, comments, j,
    
     # Truncates very long comments, and removes excessive multiple lines
     if len(text) > 1500:
-      text = text[0:1500] + "[Comment Truncated by YT SPammer Purge]"
+      text = text[0:1500] + "[Comment Truncated by YT Spammer Purge]"
     if text.count("\n") > 0:
       text = text.replace("\n", " ")
 
@@ -643,7 +643,7 @@ def get_extra_json_data(channelIDs, jsonSettingsDict):
           jsonExtraDataDict['CommentAuthorInfo'][channelID] = tempDict
     except:
       traceback.print_exc()
-      print("Error occurred when fetching extra json data.")
+      print("Error occurred when fetching extra JSON data.")
       return False
 
   # Get Extra Info About Commenters
@@ -844,7 +844,7 @@ def prepare_logFile_settings(current, config, miscData, jsonSettingsDict, filter
       jsonLogging = False
     else:
       print("Invalid value for 'json_log' in config file:  " + config['json_log'])
-      print("Defaulting to False (no json log file will be created)")
+      print("Defaulting to False (no JSON log file will be created)")
       jsonLogging = False
 
     if config['json_extra_data'] == True:
@@ -859,7 +859,7 @@ def prepare_logFile_settings(current, config, miscData, jsonSettingsDict, filter
       jsonSettingsDict['json_profile_picture'] = False
 
   except KeyError:
-    print("Problem getting json settings, is your config file correct?")
+    print("Problem getting JSON settings, is your config file correct?")
 
   # Set where to put log files
   defaultLogPath = "logs"
@@ -1000,4 +1000,3 @@ def rewrite_log_file(current, logInfo, combinedCommentsDict=None):
     write_rtf(current.logFileName, logFileContents)
   elif logMode == "plaintext":
     write_plaintext_log(current.logFileName, logFileContents)
-

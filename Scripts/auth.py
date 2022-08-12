@@ -87,7 +87,7 @@ def first_authentication():
   except JSONDecodeError as jx:
     print(f"{F.WHITE}{B.RED} [!!!] Error: {S.R}" + str(jx))
     print(f"\nDid you make the client_secrets.json file yourself by {F.LIGHTRED_EX}copying and pasting into it{S.R}, instead of {F.LIGHTGREEN_EX}downloading it{S.R}?")
-    print(f"You need to {F.YELLOW}download the json file directly from the google cloud dashboard{S.R} as shown in the instructions.")
+    print(f"You need to {F.YELLOW}download the json file directly from the Google Cloud dashboard{S.R} as shown in the instructions.")
     print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
     input("Press Enter to Exit...")
     sys.exit()
@@ -102,7 +102,7 @@ def first_authentication():
       print("----------------")
       print(f"{F.RED}[!!!] Error: {S.R}" + str(e))
       print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
-      input(f"\nError Code A-1: {F.RED}Something went wrong during authentication.{S.R} {F.YELLOW}Try deleting the token.pickle file.{S.R} \nPress Enter to exit...")
+      input(f"\nError Code A-1: {F.RED}Something went wrong during authentication.{S.R} {F.YELLOW}Try deleting the token.pickle file.{S.R} \nPress Enter to Exit...")
       sys.exit()
   return YOUTUBE
 
@@ -131,7 +131,7 @@ def get_current_user(config):
     print(f"{F.YELLOW}Error Getting Current User{S.R}: The YouTube API responded, but did not provide a Channel ID.")
     print(f"{F.CYAN}Known Possible Causes:{S.R}")
     print("> The client_secrets file does not match user authorized with token.pickle file.")
-    print("> You are logging in with a Google account that does not have a YouTube channel created yet.")
+    print("> You are logging in with a Google Account that does not have a YouTube channel created yet.")
     print("> When choosing the account to log into, you selected the option showing the Google Account's email address, which might not have a channel attached to it.")
     input("\nPress Enter to try logging in again...")
     os.remove(TOKEN_FILE_NAME)

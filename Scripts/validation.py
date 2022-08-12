@@ -290,7 +290,7 @@ def validate_config_settings(config):
         videoList = utils.string_to_list(value)
       except:
         print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'videos_to_scan': {str(value)}")
-        print("Make sure it is either a single video ID / Link, or a comma separate list of them!")
+        print("Make sure it is either a single video ID / Link, or a comma separated list of them!")
         print_quit_and_report()
       if len(videoList) > 0:
         for video in videoList:
@@ -300,7 +300,7 @@ def validate_config_settings(config):
         return True
       else:
         print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'videos_to_scan' (it may be empty!): {str(value)}")
-        print("Make sure it is either a single video ID / Link, or a comma separate list of them!")
+        print("Make sure it is either a single video ID / Link, or a comma separated list of them!")
         print_quit_and_report()
 
   def validate_channel_to_scan(value, *args):
@@ -323,12 +323,12 @@ def validate_config_settings(config):
         channelList = utils.string_to_list(value)
       except:
         print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'channel_ids_to_filter': {str(value)}")
-        print("Make sure it is either a single channel ID / Link, or a comma separate list of them!")
+        print("Make sure it is either a single channel ID / Link, or a comma separated list of them!")
         print_quit_and_report()
       for channel in channelList:
         if len(channel) != 24 or channel[0:2] != "UC":
           print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} There appears to be an invalid channel ID in setting 'channel_ids_to_filter': {str(value)}")
-          print("A channel ID must be 24 charactres long and begin with 'UC'!")
+          print("A channel ID must be 24 characters long and begin with 'UC'!")
           print_quit_and_report()
       return True
   
@@ -352,11 +352,11 @@ def validate_config_settings(config):
         return True
       else:
         print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'strings_to_filter': {str(value)}")
-        print("The list appears empty! Make sure it is either a single string, or a comma separate list of them!")
+        print("The list appears empty! Make sure it is either a single string, or a comma separated list of them!")
         print_quit_and_report()
     except:
       print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'strings_to_filter': {str(value)}")
-      print("Make sure it is either a single string, or a comma separate list of them!")
+      print("Make sure it is either a single string, or a comma separated list of them!")
       print_quit_and_report()
   
   def validate_regex_setting(value, *args):
@@ -367,7 +367,7 @@ def validate_config_settings(config):
       return True
     else:
       print(f"\n{B.RED}{F.WHITE} ERROR! {S.R}The config setting 'regex_to_filter' does not appear to be valid: {str(value)}")
-      print("Make sure it is a valid regular expresion! Example:  [^\x00-\xFF]")
+      print("Make sure it is a valid regular expression! Example:  [^\x00-\xFF]")
       print("You can test them out on websites like regex101.com")
       print_quit_and_report()
             
@@ -481,7 +481,7 @@ def validate_config_settings(config):
         print(f"\n{B.RED}{F.WHITE} WARNING! {S.R} An unknown setting was found:  '{settingName}': {str(settingValue)}")
         print(f"If you didn't add or change this setting in the config file, a validation check was probably forgotten to be created!")
         print(f"Consider reporting it: {F.YELLOW}TJoe.io/bug-report{S.R}")
-        input(f"\n It might not cause an issue, so press Enter to continue anyway...")
+        input(f"\n It might not cause an issue, so press Enter to Continue anyway...")
         continue
   
 
