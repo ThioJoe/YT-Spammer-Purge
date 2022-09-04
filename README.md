@@ -89,6 +89,15 @@ Read some additional details about 'moderator mode' on the [wiki page here][Mode
 
 3. I'm a total amateur, so if something doesn't work I'll try to fix it but might not even know how, so don't expect too much. Therefore **I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.** I tested it on my own and implemented some failsafes as best as I could, but there could always be some kind of unexpected bug. You should inspect the code yourself.
 
+
+## Tips for Creators
+
+### What Other Precuations You Should Follow To Keep Your Channel Spam-Safe
+
+As mentioned above, this program **DOES NOT PREVENT SPAMMERS**, these are a few tips you can follow to make your channel less likely to get spam, and with these methods alongside the program, there will be MUCH less spam:
+
+- [Disable Links In YouTube Comments](https://www.youtube.com/watch?v=TpT7AAd9rG0)
+
 ## Video: Project Demonstrations
 
 <p align="center">Latest Demonstration Video: https://www.youtube.com/watch?v=2tRppXW_aKo</p>
