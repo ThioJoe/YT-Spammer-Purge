@@ -8,9 +8,10 @@ import Scripts.validation as validation
 import Scripts.auth as auth
 import Scripts.operations as operations
 import Scripts.files as files
-import Scripts.filter_variables as filter
+import SpamPurge_Resources.Filters.filter_variables as filter
 
 from Scripts.confusablesCustom import confusable_regex
+
 
 ##########################################################################################
 ################################## FILTERING MODES #######################################

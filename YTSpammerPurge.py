@@ -36,7 +36,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.17.0-Dev1"
+version = "2.17.0-Dev2"
 configVersion = 31
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 print("Importing Script Modules...")
@@ -48,7 +48,6 @@ import Scripts.utils as utils
 import Scripts.files as files
 import Scripts.logging as logging
 import Scripts.operations as operations
-import Scripts.prepare_modes as modes
 from Scripts.community_downloader import main as get_community_comments #Args = post's ID, comment limit
 import Scripts.community_downloader as community_downloader
 from Scripts.utils import choice
@@ -112,6 +111,8 @@ def main():
   resourceFolder = RESOURCES_FOLDER_NAME
   whitelistPathWithName = os.path.join(resourceFolder, "whitelist.txt")
   spamListFolder = os.path.join(resourceFolder, "Spam_Lists")
+  filtersFolder = os.path.join(resourceFolder, "Filters")
+  filterFileName = "filter_variables.py"
   spamListDict = {
       'Lists': {
         'Domains':  {'FileName': "SpamDomainsList.txt"},
@@ -121,9 +122,17 @@ def main():
       'Meta': {
         'VersionInfo': {'FileName': "SpamVersionInfo.json"},
         'SpamListFolder': spamListFolder
-        #'LatestLocalVersion': {}
+        #'LatestLocalVersion': {} # Gets added later during check, this line here for reference
       }
   }
+  filterListDict = {
+    'Files': {
+      'FilterVariables': {'FileName': filterFileName}
+    },
+    'ResourcePath': filtersFolder
+    #'LocalVersion': {} # Gets added later during check, this line here for reference
+  }
+
   resourcesDict = {
     'Whitelist': {
       'PathWithName': whitelistPathWithName,
@@ -132,7 +141,7 @@ def main():
   }
 
   print("Checking for updates to program and spam lists...")
-  # Check if resources and spam list folders exist, and create them
+  # Check if resources, spam list, and filters folders exist, and create them
   if not os.path.isdir(resourceFolder):
     try:
       os.mkdir(resourceFolder)
@@ -155,10 +164,19 @@ def main():
       print("\nError: Could not create folder. To update the spam lists, go into the 'SpamPurge_Resources' folder,")
       print("       then inside that, create another folder called 'Spam_Lists'.")
 
+  if os.path.isdir(resourceFolder) and not os.path.isdir(filtersFolder):
+      try:
+        os.mkdir(filtersFolder)
+      except:
+        print("\nError: Could not create folder. To update the spam lists, go into the 'SpamPurge_Resources' folder,")
+        print("       then inside that, create another folder called 'Filters'.")
+
   # Prepare to check and ingest spammer list files
-  # Iterate and get paths of each list
+  # Iterate and get paths of each list. Also gets path of filter_variables.py
+  # This for loops might not actually do anything?
   for x,spamList in spamListDict['Lists'].items():
     spamList['Path'] = os.path.join(spamListFolder, spamList['FileName'])
+
   spamListDict['Meta']['VersionInfo']['Path'] = os.path.join(spamListFolder, spamListDict['Meta']['VersionInfo']['FileName']) # Path to version included in packaged assets folder
 
   # Check if each spam list exists, if not copy from assets, then get local version number, calculate latest version number
@@ -178,12 +196,21 @@ def main():
   if not os.path.exists(spamListDict['Meta']['VersionInfo']['Path']):
     files.copy_asset_file(spamListDict['Meta']['VersionInfo']['FileName'], spamListDict['Meta']['VersionInfo']['Path'])
 
+  # Check if filter_variables.py is in Spampurge_Resources, if not copy from temp folder or scripts, depending if using pyinstaller
+  filterFilePath = os.path.join(filtersFolder, filterFileName)
+  if not os.path.exists(filterFilePath):
+    files.copy_scripts_file(filterFileName, filterFilePath)
+
   # Get stored spam list version data from json file
   jsonData = open(spamListDict['Meta']['VersionInfo']['Path'], 'r', encoding="utf-8")
   versionInfoJson = str(json.load(jsonData)) # Parses json file into a string
   versionInfo = ast.literal_eval(versionInfoJson) # Parses json string into a dictionary
   spamListDict['Meta']['VersionInfo']['LatestRelease'] = versionInfo['LatestRelease']
   spamListDict['Meta']['VersionInfo']['LastChecked'] = versionInfo['LastChecked']
+
+  # Get current version of filter_variables.py that is in the SpamPurge_Resources/Filters folder
+  filterVersion = files.get_current_filter_version(filterListDict)
+  filterListDict['LocalVersion'] = filterVersion
 
   # Check for primary config file, load into dictionary 'config'. If no config found, loads data from default config in assets folder
   utils.clear_terminal()
@@ -223,11 +250,13 @@ def main():
       print(f"{F.LIGHTRED_EX}Error Code U-3 occurred while checking for updates. (Checking can be disabled using the config file setting) Continuing...{S.R}\n")
       updateAvailable = None
 
-    # Check if today or tomorrow's date is later than the last update date (add day to account for time zones)
-    if datetime.today()+timedelta(days=1) >= datetime.strptime(spamListDict['Meta']['VersionInfo']['LatestLocalVersion'], '%Y.%m.%d'):
-      # Only check for updates until the next day
-      if datetime.today() > datetime.strptime(spamListDict['Meta']['VersionInfo']['LastChecked'], '%Y.%m.%d.%H.%M')+timedelta(days=1):
-        spamListDict = files.check_lists_update(spamListDict, silentCheck=True)
+    # Only check for updates once a day, compare current date to last checked date
+    if datetime.today() > datetime.strptime(spamListDict['Meta']['VersionInfo']['LastChecked'], '%Y.%m.%d.%H.%M')+timedelta(days=1):
+      # Check for update to filter variables file
+      files.check_for_filter_update(filterListDict, silentCheck=True)
+      # Check spam lists if today or tomorrow's date is later than the last update date (add day to account for time zones)
+      if datetime.today()+timedelta(days=1) >= datetime.strptime(spamListDict['Meta']['VersionInfo']['LatestLocalVersion'], '%Y.%m.%d'):
+        spamListDict = files.check_lists_update(spamListDict, silentCheck=True)        
 
   else:
     updateAvailable = False
@@ -235,6 +264,10 @@ def main():
   # In all scenarios, load spam lists into memory
   for x, spamList in spamListDict['Lists'].items():
     spamList['FilterContents'] = files.ingest_list_file(spamList['Path'], keepCase=False)
+
+  # In all scenarios, load filter variables into memory. Must import prepare_modes after filter_variables has been updated and placed in SpamPurge_Resources
+  print("Loading filter file...\n")
+  import Scripts.prepare_modes as modes
 
   ####### Load Other Data into MiscData #######
   print("\nLoading other assets..\n")

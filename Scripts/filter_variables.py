@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
+#version=[2022.3.31]
 
 import regex as re
 
