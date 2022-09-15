@@ -589,7 +589,7 @@ def check_duplicates(current, config, miscData, allVideoCommentsDict, videoID):
   if minimum_duplicates < 2:
     minimum_duplicates = 4
     print("\nError: minimum_duplicates config setting must be greater than 1. Defaulting to 8.")
-    input("\nPress Enter to continue...")
+    input("\nPress Enter to Continue...")
   
   # Get minimum duplicate length setting - Does not need to be validated as int here, because that happens at beginning of program
   minimum_duplicate_length = int(config['minimum_duplicate_length'])
@@ -658,11 +658,11 @@ def check_reposts(current, config, miscData, allVideoCommentsDict, videoID):
       levenshtein = float(config['levenshtein_distance'])
       if levenshtein < 0 or levenshtein > 1:
         print("\nError: Levenshtein_distance config setting must be between 0 and 1. Defaulting to 0.9")
-        input("\nPress Enter to continue...")
+        input("\nPress Enter to Continue...")
         levenshtein = 0.9
     except ValueError:
       print("\nError: Levenshtein_distance config setting must be a number between 0 and 1. Defaulting to 0.9")
-      input("\nPress Enter to continue...")
+      input("\nPress Enter to Continue...")
       levenshtein = 0.9
     fuzzy = True
   else:
@@ -674,11 +674,11 @@ def check_reposts(current, config, miscData, allVideoCommentsDict, videoID):
     if minLength < 1:
       minLength = 25
       print("\nError: stolen_minimum_text_length config setting must be greater than 0. Defaulting to 25.")
-      input("\nPress Enter to continue...")
+      input("\nPress Enter to Continue...")
   except ValueError:
     minLength = 25
     print("\nError: stolen_minimum_text_length config setting is invalid. Defaulting to 25.")
-    input("\nPress Enter to continue...")
+    input("\nPress Enter to Continue...")
 
   flatCommentList = []
 
@@ -1079,7 +1079,7 @@ def delete_found_comments(commentsList, banChoice, deletionMode, recoveryMode=Fa
     if deletionMode == "reportSpam":
       result = auth.YOUTUBE.comments().markAsSpam(id=commentIDs).execute()
       if len(result) > 0:
-        print("\nSomething may gone wrong when reporting the comments.")
+        print("\nSomething may have gone wrong when reporting the comments.")
         failedComments += commentIDs
     elif deletionMode == "heldForReview" or deletionMode == "rejected" or deletionMode == "published":
       try:
@@ -1155,7 +1155,7 @@ def check_deleted_comments(commentInput):
     print(" Preparing to check deletion status...", end="\r")
     time.sleep(1)
     print("                                                      ")
-    print("    (Note: You can disable deletion success checking in the config file, to save time and API quota)\n")
+    print("    (Note: You can disable deletion success checking in the config file to save time and API quota)\n")
     for commentID in commentList:
       try:
         results = auth.YOUTUBE.comments().list(
@@ -1245,7 +1245,7 @@ def check_recovered_comments(commentsList):
 
   elif i > 0:
     print("\n\nWarning: " + str(i) + " comments may have not been restored. See above list.")
-    print("Use the links to the comments from the log file you used, to verify if they are back or not.")
+    print("Use the links to the comments from the log file you used to verify if they are back or not.")
 
   input("\nRecovery process finished. Press Enter to return to main menu...")
   return True

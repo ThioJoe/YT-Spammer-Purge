@@ -200,7 +200,7 @@ def prepare_filter_mode_ID(scanMode, config):
     if config['channel_ids_to_filter'] != "ask":
       pass
     else:
-      input("\nPress Enter to continue...")
+      input("\nPress Enter to Continue...")
 
   return inputtedSpammerChannelID, None
 
@@ -538,7 +538,7 @@ def delete_comment_list(config):
 
 
     while valid == False:
-      input(F"\nNext, follow the process by loading {F.YELLOW}the same comment list/log you used before{S.R}. Press Enter to continue...")
+      input(F"\nNext, follow the process by loading {F.YELLOW}the same comment list/log you used before{S.R}. Press Enter to Continue...")
       removalList, listFileNameBase = files.parse_comment_list(config, removal=True, returnFileName=True)
       if removalList == "MainMenu":
         return "MainMenu"
@@ -574,7 +574,7 @@ def delete_comment_list(config):
 
     print(f"\n {F.LIGHTCYAN_EX}----------------------- Loaded Saved Comment List Status -----------------------{S.R}")
     print(f" {F.LIGHTGREEN_EX}{prevRemovedNum} removed{S.R}  |  {F.YELLOW}{prevNotRemovedNum} not removed yet{S.R}  |  {F.LIGHTRED_EX}{prevFailedNum} failed to be removed{S.R}")
-    input("\n Press Enter to continue...")
+    input("\n Press Enter to Continue...")
 
     # Set removal list based on previous save
     removalList = list(remainingCommentsSet)
@@ -656,7 +656,7 @@ def delete_comment_list(config):
   ### Handle Results ###
   if len(failedCommentsList) > 0:
     print(f"\n{F.LIGHTRED_EX}Warning!{S.R} {len(failedCommentsList)} comments apparently failed to be removed. They'll be saved to be tried later.")
-    input("\nPress Enter to continue...")
+    input("\nPress Enter to Continue...")
     failedCommentsSet = set(failedCommentsList)
   else:
     failedCommentsSet = set()
