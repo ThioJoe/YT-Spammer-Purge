@@ -148,16 +148,16 @@ def get_comments(current, filtersDict, miscData, config, allVideoCommentsDict, s
       print_count_stats(current, miscData, videosToScan, final=False)  # Updates displayed stats if no replies
 
   # Runs after all comments scanned
-  if RetrievedNextPageToken == "End" and allVideoCommentsDict:
+  if RetrievedNextPageToken == "End" and allVideoCommentsDict and scanVideoID is not None:
     dupeCheckModes = utils.string_to_list(config['duplicate_check_modes'])
     if filtersDict['filterMode'].lower() in dupeCheckModes:
       print(" Analyzing For Duplicates                                                                                        ", end="\r")
-      check_duplicates(current, config, miscData, allVideoCommentsDict, videoID)
+      check_duplicates(current, config, miscData, allVideoCommentsDict, scanVideoID)
       print("                                                                                                                       ")
     repostCheckModes = utils.string_to_list(config['stolen_comments_check_modes'])
     if filtersDict['filterMode'].lower() in repostCheckModes:
       print(" Analyzing For Reposts                                                                                           ", end="\r")
-      check_reposts(current, config, miscData, allVideoCommentsDict, videoID)
+      check_reposts(current, config, miscData, allVideoCommentsDict, scanVideoID)
       print("                                                                                                                       ")
 
   current.allScannedCommentsDict.update(allVideoCommentsDict)
