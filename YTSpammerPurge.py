@@ -36,8 +36,8 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.17.0-Dev2"
-configVersion = 31
+version = "2.17.0-Beta1"
+configVersion = 32
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 print("Importing Script Modules...")
 # Import other module files
@@ -430,6 +430,7 @@ def main():
     # User selects scanning mode,  while Loop to get scanning mode, so if invalid input, it will keep asking until valid input
     print("\n{:<59}{:<18}{:>7}".format("> At any prompt, enter 'X' to return here", updateStringLabel, updateString))
     print("> Enter 'Q' now to quit")
+    print(f"{F.LIGHTYELLOW_EX}NOTE: This beta version uses a new method for checking updates. It is possible it will not work properly, so you should periodically check for new versions on the GitHub page yourself until the stable release.{S.R}")
 
     print(f"\n\n-------------------------------- {F.YELLOW}Scanning Options{S.R} --------------------------------")
     print(f"      1. Scan {F.LIGHTCYAN_EX}specific videos{S.R}")

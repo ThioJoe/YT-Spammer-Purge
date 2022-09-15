@@ -840,6 +840,9 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
       languages = smartFilter['languages']
       sensitive =  smartFilter['sensitive']
       rootDomainRegex = smartFilter['rootDomainRegex']
+      accompanyingLinkSpamDict = smartFilter['accompanyingLinkSpamDict']
+      comboDict = smartFilter['comboDict']
+
       # Spam Lists
       spamListCombinedRegex = smartFilter['spamListCombinedRegex']
 
@@ -888,6 +891,27 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
           return True
         else:
           return False
+
+      def find_accompanying_link_spam(string):
+        linkResult = re.search(accompanyingLinkSpamDict['videoLinkRegex'], string)
+        if not linkResult:
+          return False
+        else:
+          phrasesList = accompanyingLinkSpamDict['accompanyingLinkSpamPhrasesList']
+          notSpecialChars = accompanyingLinkSpamDict['notSpecial']
+          nonLinkString = string.replace(linkResult.group(0), '')
+          for char in notSpecialChars:
+            nonLinkString = nonLinkString.replace(char, '').replace('\n', '')
+          if any(phrase.lower().replace(' ', '') == nonLinkString for phrase in phrasesList):
+            return True
+          else:
+            return False
+
+      def multiVarDetect(text, username):
+        multiUsernameAllList = comboDict['multiUsernameAllList']
+        for checkList in multiUsernameAllList:
+          if all(word in username for word in checkList):
+            return True
 
       # ------------------------------------------------------------------------
 
@@ -945,6 +969,10 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
       elif spamListCombinedRegex.search(combinedStringNormalized.lower()):
         add_spam(current, config, miscData, currentCommentDict, videoID)
       elif config['detect_link_spam'] and check_if_only_link(commentTextNormalized.strip()):
+        add_spam(current, config, miscData, currentCommentDict, videoID)
+      elif find_accompanying_link_spam(commentTextNormalized.lower()):
+        add_spam(current, config, miscData, currentCommentDict, videoID)
+      elif multiVarDetect(commentTextNormalized.lower(), authorChannelName.lower()):
         add_spam(current, config, miscData, currentCommentDict, videoID)
       elif sensitive and re.search(smartFilter['usernameConfuseRegex'], authorChannelName):
         add_spam(current, config, miscData, currentCommentDict, videoID)
