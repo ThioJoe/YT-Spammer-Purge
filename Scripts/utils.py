@@ -213,3 +213,15 @@ def print_error_title_fetch():
   print(f"  > You won't be able to delete/hide any comments like usual, but you can {F.LIGHTMAGENTA_EX}exclude users before saving the log file{S.R}")
   print(f"  > Then, you can {F.LIGHTGREEN_EX}delete the comments later{S.R} using the {F.YELLOW}mode that removes comments using a pre-existing log file{S.R}")
   input("\n Press Enter to Continue...")
+
+def clear_terminal() -> None:
+  if sys.stdout.isatty(): # if in a terminal
+    if sys.platform.startswith("win"):
+      # For windows, use cls
+      os.system("cls")
+    else:
+      # For MacOS / Linux, this should clear the screen
+      sys.stdout.write("\033[2J\033[1;1H")
+  # Do nothing if not a terminal
+  return
+  # Not 100% sure if there are any cases where sys.stdout.isatty can raise an exception

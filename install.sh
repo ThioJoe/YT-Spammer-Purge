@@ -14,7 +14,7 @@ ASSUME_YES=0
 
 print_usage() {
    # Display Usage
-   echo "Usage: $0 [-h] [-d]"
+   echo "Usage: $0 [-y] [-d] [-c] [-p] [-h]"
    echo
    echo "Installer script for The YouTube Spammer Purge application."
    echo
@@ -50,14 +50,19 @@ done
 
 # Credit to https://stackoverflow.com/questions/29436275/how-to-prompt-for-yes-or-no-in-bash
 # Slightly edited
-function confirm {
+confirm() {
     [[ $ASSUME_YES -eq 1 ]] && echo "Assuming YES." && return 0
     while true; do
-        read -p "$* [y/n]: " yn
-        case $yn in
-            [Yy]*) return 0  ;;
-            [Nn]*) return 1  ;;
-        esac
+        read -r -p "$* [y/n]: " yn
+
+        if [[ "$yn" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
+            return 0
+        fi
+
+        if [[ "$yn" =~ ^([nN][oO]|[nN])+$ ]]; then
+            return 1
+        fi
+
     done
 }
 
@@ -67,7 +72,7 @@ install_fail () {
 }
 
 install_debian () {
-    sudo apt install python3 python3-dev python3-tk python3-pip git || install_fail
+    sudo apt-get install python3 python3-dev python3-tk python3-pip git || install_fail
 }
 
 install_fedora () {

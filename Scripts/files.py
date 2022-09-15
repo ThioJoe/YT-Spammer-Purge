@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-from copy import copy
 import platform
 import tarfile
 from Scripts.shared_imports import *
 from Scripts.utils import choice
 
-from datetime import datetime, date, timedelta
+from datetime import datetime
 from configparser import ConfigParser
 from pkg_resources import parse_version
 from random import randrange
@@ -16,11 +15,13 @@ from itertools import islice
 import io
 import json
 import requests
+import urllib3
 import zipfile
 import time
 import hashlib
 import pathlib
 import pickle
+
 
 ########################### Check Lists Updates ###########################
 def check_lists_update(spamListDict, silentCheck = False):
@@ -39,7 +40,7 @@ def check_lists_update(spamListDict, silentCheck = False):
       json.dump(newJsonContents, file, indent=4)
 
   if silentCheck == False:
-    print("\nChecking for updates to spam lists...")
+    print("\nChecking for updates to spam lists...\n")
 
   if os.path.isdir(SpamListFolder):
     pass
@@ -124,12 +125,86 @@ def check_lists_update(spamListDict, silentCheck = False):
 
     elif total_size_in_bytes != 0 and os.stat(downloadFilePath).st_size != total_size_in_bytes:
       os.remove(downloadFilePath)
-      print(f" > {F.RED} File did not fully download. Please try again later.\n")
+      print(f" > {F.RED} File did not fully download. Please try again later.{S.R}\n")
       return spamListDict
   else:
     update_last_checked()
     return spamListDict
 
+
+############################# Check For Updated Filter Variables File ##############################
+
+def get_current_filter_version(filterListDict):
+  filterFileName = filterListDict['Files']['FilterVariables']['FileName']
+  filterFilePath = os.path.join(filterListDict['ResourcePath'], filterFileName)
+
+  # First look if spampurge resources is there with filter_variables.py already
+  if os.path.isfile(filterFilePath):
+    currentFilterVersion = get_list_file_version(filterFilePath)
+    return currentFilterVersion
+  else:
+    currentFilterVersion = None
+
+
+# Goes and checks if there is a new version of filter_variables.py in the GitHub Repo
+def check_for_filter_update(filterListDict, silentCheck = False):
+  latestFilterURL = "https://raw.githubusercontent.com/ThioJoe/YT-Spammer-Purge/main/Scripts/filter_variables.py"
+  filterFileName = filterListDict['Files']['FilterVariables']['FileName']
+  filterFilePath = os.path.join(filterListDict['ResourcePath'], filterFileName)
+  localVersion = filterListDict['LocalVersion']
+
+  try:
+    # Does a partial fetch of the filter_variables.py file in the GitHub repo, using the Range header to only get first 100 bytes of the file
+    http = urllib3.PoolManager()
+    filePartialData = http.request('GET', latestFilterURL, headers={'Range':'bytes=0-100'}) # Fetches only the first 100 bytes, just to get the version number
+
+    # Use regex to find Version number from http response data. The regex expression searches for text between a set of [] brackets
+    matchBetweenBrackets = '(?<=\[)(.*?)(?=\])'
+    matchItem = re.search(matchBetweenBrackets, filePartialData.data.decode('utf-8'))
+    if matchItem:
+      latestFilterVersion = str(matchItem.group(0))
+    else:
+      return False
+      
+  except OSError as ox:
+    if silentCheck == True:
+      return False
+    else:
+      if "WinError 10013" in str(ox):
+        print(f"{B.RED}{F.WHITE}WinError 10013:{S.R} The OS blocked the connection to GitHub. Check your firewall settings.\n")
+        return False
+  except:
+    if silentCheck == True:
+      return False
+    else:
+      print("Error: Could not get latest release info from GitHub. Please try again later.")
+      return False
+
+  if parse_version(localVersion) <= parse_version(latestFilterVersion):
+    print("\n>  A new filter variables update is available. Downloading...")
+    # Create backup of old filter_variables.py file, append version number to filename
+    backupFilePath = os.path.join(filterListDict['ResourcePath'], f"filter_variables.py.{localVersion}")
+    try:
+      copyfile(filterFilePath, os.path.abspath(backupFilePath))
+      print(f"\nOld filter file backed up to {backupFilePath}\n")
+    except:
+      print(f" > {F.RED}Error:{S.R} Could not create backup of filter_variables.py file. Please check permissions and try again. Or just rename the file manually.")
+      input("\nPress Enter to Continue With Current Filter Version...")
+      return False
+    
+    filedownload = getRemoteFile(latestFilterURL, stream=True)
+    block_size =  1048576 #1 MiB in bytes
+
+    try:
+      with open(filterFilePath, 'wb') as file:
+        for data in filedownload.iter_content(block_size):
+          file.write(data)
+      print(f"{F.LIGHTGREEN_EX}Filter variables file updated.{S.R}\n")
+      return True
+
+    except:
+      print(f" > {F.RED} File failed to download. Please try again later.{S.R}\n")
+      return False
 
 ############################# Check For App Update ##############################
 def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
@@ -166,7 +241,21 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
         isBeta = False
       elif updateReleaseChannel == "all":
         latestVersion = response.json()[0]["name"]
+        # check if latest version is a beta. 
+        # if it is continue, else check for another beta with a higher version in the 5 newest releases 
         isBeta = response.json()[0]["prerelease"]
+        if (isBeta == False): 
+          for i in range(4):
+            # add a "+ 1" to index to not count the first release (already checked)
+            latestVersion2 = response.json()[i + 1]["name"]
+            # make sure the version is higher than the current version
+            if parse_version(latestVersion2) > parse_version(latestVersion):
+              # update original latest version to the new version
+              latestVersion = latestVersion2
+              isBeta = response.json()[i + 1]["prerelease"]
+              # exit loop
+              break
+
   except OSError as ox:
     if "WinError 10013" in str(ox):
       print(f"{B.RED}{F.WHITE}WinError 10013:{S.R} The OS blocked the connection to GitHub. Check your firewall settings.\n")
@@ -175,7 +264,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
     return None
   except Exception as e:
     if silentCheck == False:
-      print(e + "\n")
+      print(str(e) + "\n")
       print(f"{B.RED}{F.WHITE}Error [Code U-1]:{S.R} Problem while checking for updates. See above error for more details.\n")
       print("If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
     elif silentCheck == True:
@@ -304,7 +393,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
             print(f" > And don't forget to report any problems you encounter here: {F.YELLOW}TJoe.io/bug-report{S.R}")
           input("\nPress Enter to Exit...")
           sys.exit()
-        elif platform.system() == "Linux":
+        elif os.name == "posix":
           # Current working directory
           cwd = os.getcwd()
           # what we want the tar file to be called on the system
@@ -396,7 +485,7 @@ def getRemoteFile(url, stream, silent=False, headers=None):
 
   except Exception as e:
     if silent == False:
-      print(e + "\n")
+      print(str(e) + "\n")
       print(f"{B.RED}{F.WHITE} Error {S.R} While Fetching Remote File or Resource: " + url)
       print("See above messages for details.\n")
       print("If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
@@ -732,6 +821,13 @@ def copy_asset_file(fileName, destination):
       return os.path.join(sys._MEIPASS, relative_path)
     return os.path.join(os.path.abspath("assets"), relative_path) # If running as script, specifies resource folder as /assets
   copyfile(assetFilesPath(fileName), os.path.abspath(destination))
+
+def copy_scripts_file(fileName, destination):
+  def assetFilesPath(relative_path):
+    if hasattr(sys, '_MEIPASS'): # If running as a pyinstaller bundle
+      return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath("Scripts"), relative_path) # If running as script, specifies resource folder as /assets
+  copyfile(assetFilesPath(fileName), os.path.abspath(destination))  
 
 def ingest_list_file(relativeFilePath, keepCase = True):
   if os.path.exists(relativeFilePath):

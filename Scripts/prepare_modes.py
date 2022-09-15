@@ -8,11 +8,10 @@ import Scripts.validation as validation
 import Scripts.auth as auth
 import Scripts.operations as operations
 import Scripts.files as files
-import Scripts.filter_variables as filter
+import SpamPurge_Resources.Filters.filter_variables as filter
 
-from Scripts.confusablesCustom import confusable_regex, normalize
-from base64 import b85decode as b64decode
-import pathlib
+from Scripts.confusablesCustom import confusable_regex
+
 
 ##########################################################################################
 ################################## FILTERING MODES #######################################
@@ -366,6 +365,12 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
     'cashRegex': cashRegex,
   }
 
+  accompanyingLinkSpamDict = {
+    'accompanyingLinkSpamPhrasesList': filter.accompanyingLinkSpamPhrasesList,
+    'notSpecial': filter.notSpecial,
+    'videoLinkRegex': re.compile(r"((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?"),
+  }
+
   print("  Loading Filters  [======                        ]", end="\r")
 
   # Compile regex with upper case, otherwise many false positive character matches
@@ -439,7 +444,9 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
     'sensitiveRootDomainRegex': sensitiveRootDomainRegex,
     'unicodeCategoriesStrip': unicodeCategoriesStrip,
     'spamListCombinedRegex': spamListCombinedRegex,
-    'threadFiltersDict': threadFiltersDict
+    'threadFiltersDict': threadFiltersDict,
+    'accompanyingLinkSpamDict': accompanyingLinkSpamDict,
+    'comboDict': filter.comboDict
     }
   print("                                                                 ") # Erases line that says "loading filters"
 
@@ -459,7 +466,7 @@ def recover_deleted_comments(config):
   print(f"> This is {F.YELLOW}only possible if you have stored the comment IDs{S.R} of the deleted comments, \n   such as {F.YELLOW}having kept the log file{S.R} of that session.")
   print("> If you don't have the comment IDs you can't recover the comments, and there is no way to find them. \n")
 
-  recoveryList = files.parse_comment_list(config, recovery=True)
+  recoveryList, listFileName = files.parse_comment_list(config, recovery=True)
   if recoveryList == "MainMenu":
     return "MainMenu"
 

@@ -4,7 +4,6 @@ from Scripts.shared_imports import *
 import Scripts.validation as validation
 
 # Google Authentication Modules
-from googleapiclient.errors import HttpError
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.oauth2.credentials import Credentials
@@ -12,9 +11,6 @@ from google.auth.transport.requests import Request
 from json import JSONDecodeError
 
 TOKEN_FILE_NAME = 'token.pickle'
-
-global CURRENTUSER
-global YOUTUBE
 
 YOUTUBE = None
 CURRENTUSER = None

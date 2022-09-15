@@ -5,14 +5,13 @@ from Scripts.shared_imports import *
 import Scripts.utils as utils
 import Scripts.auth as auth
 import Scripts.validation as validation
-import Scripts.logging as logging
 from Scripts.utils import choice
 
 import unicodedata
 import time
 import itertools
 from datetime import datetime
-from Levenshtein import ratio
+from rapidfuzz import fuzz
 from googleapiclient.errors import HttpError
 
 ##########################################################################################
@@ -148,16 +147,16 @@ def get_comments(current, filtersDict, miscData, config, allVideoCommentsDict, s
       print_count_stats(current, miscData, videosToScan, final=False)  # Updates displayed stats if no replies
 
   # Runs after all comments scanned
-  if RetrievedNextPageToken == "End" and allVideoCommentsDict:
+  if RetrievedNextPageToken == "End" and allVideoCommentsDict and scanVideoID is not None:
     dupeCheckModes = utils.string_to_list(config['duplicate_check_modes'])
     if filtersDict['filterMode'].lower() in dupeCheckModes:
       print(" Analyzing For Duplicates                                                                                        ", end="\r")
-      check_duplicates(current, config, miscData, allVideoCommentsDict, videoID)
+      check_duplicates(current, config, miscData, allVideoCommentsDict, scanVideoID)
       print("                                                                                                                       ")
     repostCheckModes = utils.string_to_list(config['stolen_comments_check_modes'])
     if filtersDict['filterMode'].lower() in repostCheckModes:
       print(" Analyzing For Reposts                                                                                           ", end="\r")
-      check_reposts(current, config, miscData, allVideoCommentsDict, videoID)
+      check_reposts(current, config, miscData, allVideoCommentsDict, scanVideoID)
       print("                                                                                                                       ")
 
   current.allScannedCommentsDict.update(allVideoCommentsDict)
@@ -630,7 +629,7 @@ def check_duplicates(current, config, miscData, allVideoCommentsDict, videoID):
                 matchedIndexes.append(i)
                 matchedIndexes.append(j)
                 break
-              elif ratio(x,y) > levenshtein:
+              elif fuzz.ratio(x,y) / 100 > levenshtein:
                 # List the indexes of the matched comments in the list
                 matchedIndexes.append(i)
                 matchedIndexes.append(j)
@@ -705,7 +704,7 @@ def check_reposts(current, config, miscData, allVideoCommentsDict, videoID):
       for j in range(0,i-1): # Only need to check against comments that came before it, so have index less than current
         olderCommentText = flatCommentList[j]['commentText']
         if len(scrutinizedText) >= minLength and flatCommentList[j]['authorChannelID'] != scrutinizedAuthorID and x['commentID'] not in current.matchedCommentsDict and x['commentID'] not in current.duplicateCommentsDict:
-          if (not fuzzy and scrutinizedText == olderCommentText) or (fuzzy and ratio(scrutinizedText, olderCommentText) > levenshtein):
+          if (not fuzzy and scrutinizedText == olderCommentText) or (fuzzy and fuzz.ratio(scrutinizedText, olderCommentText) / 100 > levenshtein):
             # List the indexes of the matched comments in the list
             x['originalCommentID'] = flatCommentList[j]['commentID']
             add_spam(current, config, miscData, x, videoID, matchReason="Repost")
@@ -841,6 +840,9 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
       languages = smartFilter['languages']
       sensitive =  smartFilter['sensitive']
       rootDomainRegex = smartFilter['rootDomainRegex']
+      accompanyingLinkSpamDict = smartFilter['accompanyingLinkSpamDict']
+      comboDict = smartFilter['comboDict']
+
       # Spam Lists
       spamListCombinedRegex = smartFilter['spamListCombinedRegex']
 
@@ -889,6 +891,27 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
           return True
         else:
           return False
+
+      def find_accompanying_link_spam(string):
+        linkResult = re.search(accompanyingLinkSpamDict['videoLinkRegex'], string)
+        if not linkResult:
+          return False
+        else:
+          phrasesList = accompanyingLinkSpamDict['accompanyingLinkSpamPhrasesList']
+          notSpecialChars = accompanyingLinkSpamDict['notSpecial']
+          nonLinkString = string.replace(linkResult.group(0), '')
+          for char in notSpecialChars:
+            nonLinkString = nonLinkString.replace(char, '').replace('\n', '')
+          if any(phrase.lower().replace(' ', '') == nonLinkString for phrase in phrasesList):
+            return True
+          else:
+            return False
+
+      def multiVarDetect(text, username):
+        multiUsernameAllList = comboDict['multiUsernameAllList']
+        for checkList in multiUsernameAllList:
+          if all(word in username for word in checkList):
+            return True
 
       # ------------------------------------------------------------------------
 
@@ -946,6 +969,10 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
       elif spamListCombinedRegex.search(combinedStringNormalized.lower()):
         add_spam(current, config, miscData, currentCommentDict, videoID)
       elif config['detect_link_spam'] and check_if_only_link(commentTextNormalized.strip()):
+        add_spam(current, config, miscData, currentCommentDict, videoID)
+      elif find_accompanying_link_spam(commentTextNormalized.lower()):
+        add_spam(current, config, miscData, currentCommentDict, videoID)
+      elif multiVarDetect(commentTextNormalized.lower(), authorChannelName.lower()):
         add_spam(current, config, miscData, currentCommentDict, videoID)
       elif sensitive and re.search(smartFilter['usernameConfuseRegex'], authorChannelName):
         add_spam(current, config, miscData, currentCommentDict, videoID)
@@ -1365,18 +1392,24 @@ def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToEx
 # Returns a list of lists
 def get_recent_videos(current, channel_id, numVideosTotal):
   def get_block_of_videos(nextPageToken, j, k, numVideosBlock = 50):
-    result = auth.YOUTUBE.search().list(
+    #fetch the channel resource
+    channel = auth.YOUTUBE.channels().list(
+      part="contentDetails",
+      id=channel_id).execute()
+    
+    #get the "uploads" playlist
+    uploadplaylistId = channel['items'][0]['contentDetails']['relatedPlaylists']['uploads']
+    
+    #fetch videos in the playlist
+    result = auth.YOUTUBE.playlistItems().list(
       part="snippet",
-      channelId=channel_id,
-      type='video',
-      order='date',
+      playlistId=uploadplaylistId,
       pageToken=nextPageToken,
-      #fields='nextPageToken,items/id/videoId,items/snippet/title',
       maxResults=numVideosBlock,
       ).execute()
 
     for item in result['items']:
-      videoID = str(item['id']['videoId'])
+      videoID = str(item['snippet']['resourceId']['videoId'])
       videoTitle = str(item['snippet']['title']).replace("&quot;", "\"").replace("&#39;", "'")
       commentCount = validation.validate_video_id(videoID, pass_exception = True)[3]
       #Skips over video if comment count is zero, or comments disabled / is live stream
