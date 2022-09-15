@@ -466,7 +466,7 @@ def recover_deleted_comments(config):
   print(f"> This is {F.YELLOW}only possible if you have stored the comment IDs{S.R} of the deleted comments, \n   such as {F.YELLOW}having kept the log file{S.R} of that session.")
   print("> If you don't have the comment IDs you can't recover the comments, and there is no way to find them. \n")
 
-  recoveryList = files.parse_comment_list(config, recovery=True)
+  recoveryList, listFileName = files.parse_comment_list(config, recovery=True)
   if recoveryList == "MainMenu":
     return "MainMenu"
 
