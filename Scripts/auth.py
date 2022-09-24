@@ -155,13 +155,13 @@ def get_current_user(config):
       pass
   except ChannelIDError:
     traceback.print_exc()
-    print("\nError: Still unable to get channel info. Big Bruh Moment. Try deleting token.pickle. The info above might help if you want to report a bug.")
+    print("\nError: Still unable to get channel info. Try deleting token.pickle. The info above might help if you want to report a bug.")
     print("Note: A channel ID was retrieved but is invalid: " + str(channelID))
     input("\nPress Enter to Exit...")
     sys.exit()
   except KeyError:
     traceback.print_exc()
-    print("\nError: Still unable to get channel info. Big Bruh Moment. Try deleting token.pickle. The info above might help if you want to report a bug.")
+    print("\nError: Still unable to get channel info. Try deleting token.pickle. The info above might help if you want to report a bug.")
     input("\nPress Enter to Exit...")
     sys.exit()
   

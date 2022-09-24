@@ -606,7 +606,7 @@ def delete_comment_list(config):
     else:
       print(f"{F.RED}Invalid input, try again.{S.R}")
   if removalMode == "rejected":
-    banChoice = choice(F"Also {F.RED}ban{S.R} the commenters?")
+    banChoice = choice(F"Also {F.RED}ban{S.R} the commenter?")
     if str(banChoice).lower() == "x":
       return "MainMenu"
 
