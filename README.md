@@ -40,7 +40,7 @@
 **How to Download:** Click the "[Releases]" link on the right, then on the latest release, under 'Assets' click to download "YTSpammerPurge.exe". (You might have to click "Assets" to view the files for the release)
 > * [Linux Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/Linux-Installation-Instructions)
 > * [MacOS Setup Instructions](https://github.com/ThioJoe/YouTube-Spammer-Purge/wiki/MacOS-Instructions)
-> * (Windows installation not necessary if using exe file. But see how to set up required API key [on this page](https://github.com/ThioJoe/YT-Spammer-Purge/wiki/Instructions:-Obtaining-an-API-Key))
+> * (Windows installation is not necessary if using an exe file. But see how to set up the required API key [on this page](https://github.com/ThioJoe/YT-Spammer-Purge/wiki/Instructions:-Obtaining-an-API-Key))
 
 ### **Detailed Info & Documentation →** Visit the wiki [(Click Here)][Wiki] for more detailed writeups on the program
 
@@ -50,7 +50,7 @@
   * **Auto-Smart Mode (Recommended)**: Automatically detects multiple spammer techniques
   * **Sensitive-Smart Mode**: More likely to catch elusive spammers, but with more false positives
   * **Scan by Channel ID**: Enter a known spammer's channel link or ID directly
-  * **Scan Usernames** for: Individual special characters, individual strings, or using a custom Regex expression
+  * **Scan Usernames**: Individual special characters, individual strings, or using a custom Regex expression
   * **Scan Comment Text**: (Same 3 options as above)
   * **Scan Usernames and Comment Text** simultaneously: (Same 3 options as above)
   * **ASCII Mode**: Scan Usernames for non-ASCII special characters (three different sensitivities)
@@ -61,11 +61,11 @@
   * *Experimental*: Scan a **community post**
 * Automatic deletion of all found comments (after confirmation), as well as the option to ban them
 * Options to instead Report spam comments or 'Hold For Review'
-* Ability to create config file to skip pre-set options
+* Ability to create a config file to skip pre-set options
 * Rich text log files
 * 'Recovery Mode' option to re-instate previously deleted comments
 * Displays "match samples" after printing comments list to easily spot false positives
-* Ability to exclude selected authors before deletion / reporting
+* Ability to exclude selected authors before deletion/reporting
 
 ## Purpose
 
@@ -75,9 +75,9 @@ Therefore I created this script to allow you to easily scan for and purge these 
 
 ## 🤔 Pro-Tip If This Seems Sketchy: Limiting The App's Access 🤔
 
-If you feel sketched out about giving the app the required high level permissions to your channel (very understandable), you could instead use the app in 'moderator mode' (set in the config file). First, some context: When you grant access to another channel to be a moderator for your channel, they are able to mark comments for 'held for review', and this permission works through the API as well. 
+If you feel sketched out about giving the app the required high level permissions to your channel (very understandable), you could instead use the app in 'moderator mode' (set in the config file). First, some context: When you grant access to another channel to be a moderator for your channel, they are able to mark comments as 'held for review', and this permission works through the API as well. 
 
-_Therefore,_ what you could do is create an _blank dummy-google-account_ with nothing on it except a empty new channel. Then you can grant _that_ channel permission to be a moderator, and use the app through _the dummy moderator account_. **This way, you know that the app will never have the ability to do more than mark comments as held for review** (which the app supports) on your main channel, and have no other access to your account's data. You just won't be able to ban the spammers through this app directly, but you can still remove/hide their comments instead of deleting them. Just make sure to create the google cloud API project on the dummy account instead.
+_Therefore,_ what you could do is create a _blank dummy-google-account_ with nothing on it except an empty new channel. Then you can grant _that_ channel permission to be a moderator, and use the app through _the dummy moderator account_. **This way, you know that the app will never have the ability to do more than mark comments as held for review** (which the app supports) on your main channel, and have no other access to your account's data. You just won't be able to ban the spammers through this app directly, but you can still remove/hide their comments instead of deleting them. Just make sure to create the google cloud API project on the dummy account instead.
 
 Read some additional details about 'moderator mode' on the [wiki page here][Moderator Mode].
 
@@ -85,7 +85,7 @@ Read some additional details about 'moderator mode' on the [wiki page here][Mode
 
 1. To use this script, you will need to obtain your own API credentials file by making a project via the Google Developers Console (aka 'Google Cloud Platform'). The credential file should be re-named `client_secret.json` and be placed in the same directory as this script. [See Instructions Here][API Key].
 
-2. **IF IT FREEZES** while scanning, it is probably because you clicked within the command prompt window and entered "selection mode" which pauses everything. **To unfreeze it, simply right click within the window, or press the Escape key.**
+2. **IF IT FREEZES** while scanning, it is probably because you clicked within the command prompt window and entered "selection mode" which pauses everything. **To unfreeze it, simply-right click within the window, or press the Escape key.**
 
 3. I'm a total amateur, so if something doesn't work I'll try to fix it but might not even know how, so don't expect too much. Therefore **I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.** I tested it on my own and implemented some failsafes as best as I could, but there could always be some kind of unexpected bug. You should inspect the code yourself.
 
@@ -99,7 +99,7 @@ Read some additional details about 'moderator mode' on the [wiki page here][Mode
 
 [![Demo 1 Thumbnail]][Demo 1]
 
-(Takes you to YouTube, not embedded. See timestamps in video description.)
+(Takes you to YouTube, not embedded. See timestamps in the video description.)
 
 ## Screenshots
 
@@ -195,12 +195,12 @@ The generated config files, token, and Spam Purge Resources will all be bound to
 Once you generated the token and config files you are ready to run the docker image.
 
 
-Now you can run `docker-compose up` to start the container, or use the image to run on a Kubernetes cluster for example.
+Now you can run `docker-compose up` to start the container or use the image to run on a Kubernetes cluster for example.
 To build your own version you can run this command: `docker-compose -f docker-compose.yml -f docker-compose.override.yml up --build`
 
 
 ## Instructions - Obtaining YouTube API Key
-To use this script, you will need an "Oauth2" credential to access the scanning and deletion functions via YouTube's Data API. Otherwise this script won't work at all. 
+To use this script, you will need an "Oauth2" credential to access the scanning and deletion functions via YouTube's Data API. Otherwise, this script won't work at all. 
 * #### Instructions can be found on this page: [Instructions: Obtaining an API Key][API Key]
 * #### **Or, follow a video WalkThrough Here: <https://www.youtube.com/watch?v=c6ebWvay8dE>**  
 
