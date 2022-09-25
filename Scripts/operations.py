@@ -589,7 +589,7 @@ def check_duplicates(current, config, miscData, allVideoCommentsDict, videoID):
   if minimum_duplicates < 2:
     minimum_duplicates = 4
     print("\nError: minimum_duplicates config setting must be greater than 1. Defaulting to 8.")
-    input("\nPress Enter to Continue...")
+    input(f"\nPress {F.YELLOW}Enter{S.R} to Continue...")
   
   # Get minimum duplicate length setting - Does not need to be validated as int here, because that happens at beginning of program
   minimum_duplicate_length = int(config['minimum_duplicate_length'])
@@ -658,11 +658,11 @@ def check_reposts(current, config, miscData, allVideoCommentsDict, videoID):
       levenshtein = float(config['levenshtein_distance'])
       if levenshtein < 0 or levenshtein > 1:
         print("\nError: Levenshtein_distance config setting must be between 0 and 1. Defaulting to 0.9")
-        input("\nPress Enter to Continue...")
+        input(f"\nPress {F.YELLOW}Enter{S.R} to Continue...")
         levenshtein = 0.9
     except ValueError:
       print("\nError: Levenshtein_distance config setting must be a number between 0 and 1. Defaulting to 0.9")
-      input("\nPress Enter to Continue...")
+      input(f"\nPress {F.YELLOW}Enter{S.R} to Continue...")
       levenshtein = 0.9
     fuzzy = True
   else:
@@ -674,11 +674,11 @@ def check_reposts(current, config, miscData, allVideoCommentsDict, videoID):
     if minLength < 1:
       minLength = 25
       print("\nError: stolen_minimum_text_length config setting must be greater than 0. Defaulting to 25.")
-      input("\nPress Enter to Continue...")
+      input(f"\nPress {F.YELLOW}Enter{S.R} to Continue...")
   except ValueError:
     minLength = 25
     print("\nError: stolen_minimum_text_length config setting is invalid. Defaulting to 25.")
-    input("\nPress Enter to Continue...")
+    input(f"\nPress {F.YELLOW}Enter{S.R} to Continue...")
 
   flatCommentList = []
 
@@ -1093,7 +1093,7 @@ def delete_found_comments(commentsList, banChoice, deletionMode, recoveryMode=Fa
     else:
       print("Invalid deletion mode. This is definitely a bug, please report it here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
       print("Deletion Mode Is: " + deletionMode)
-      input("Press Enter to Exit...")
+      input(f"Press {F.YELLOW}Enter{S.R} to Exit...")
       sys.exit()
     return failedComments
 
@@ -1247,7 +1247,7 @@ def check_recovered_comments(commentsList):
     print("\n\nWarning: " + str(i) + " comments may have not been restored. See above list.")
     print("Use the links to the comments from the log file you used to verify if they are back or not.")
 
-  input("\nRecovery process finished. Press Enter to return to main menu...")
+  input(f"\nRecovery process finished. Press {F.YELLOW}Enter{S.R} to return to main menu...")
   return True
 
 # Removes comments by user-selected authors from list of comments to delete
@@ -1355,7 +1355,7 @@ def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToEx
       print(f"{F.LIGHTRED_EX}FATAL ERROR{S.R}: Something went wrong while trying to exclude comments. No comments have been deleted.")
       print(f"You should {F.YELLOW}DEFINITELY{S.R} report this bug here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
       print("Provide the error code: X-1")
-      input("Press Enter to Exit...")
+      input(f"Press {F.YELLOW}Enter{S.R} to Exit...")
       sys.exit()
 
   # Get author names and IDs from dictionary, and display them
@@ -1383,7 +1383,7 @@ def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToEx
           f.write(f"\n# [Excluded]  Channel Name: {current.matchSamplesDict[author]['authorName']}  |  Channel ID: " + "\n")
           f.write(f"{author}\n")
   
-  input("\nPress Enter to decide what to do with the rest...")
+  input(f"\nPress {F.YELLOW}Enter{S.R} to decide what to do with the rest...")
   
   return current, excludedCommentsDict, authorsToExcludeSet, commentIDExcludeSet, rtfFormattedExcludes, plaintextFormattedExcludes # May use excludedCommentsDict later for printing them to log file
 

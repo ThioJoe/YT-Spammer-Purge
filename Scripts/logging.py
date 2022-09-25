@@ -446,7 +446,7 @@ def write_rtf(fileName, newText=None, firstWrite=False, fullWrite=False):
       except PermissionError:
         if attempts < 3:
           print(f"\n{F.YELLOW}\nERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{fileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
-          input("\n Press Enter to Try Again...")
+          input(f"\n Press {F.YELLOW}Enter{S.R} to Try Again...")
         else:
           print(f"{F.LIGHTRED_EX}\nERROR! Still cannot write to {F.LIGHTCYAN_EX}{fileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Writing Log?{S.R} (N)")
           if choice("Choice") == False:
@@ -478,7 +478,7 @@ def write_rtf(fileName, newText=None, firstWrite=False, fullWrite=False):
       except PermissionError:
         if attempts < 3:
           print(f"\n{F.YELLOW}\nERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{fileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
-          input("\n Press Enter to Try Again...")
+          input(f"\n Press {F.YELLOW}Enter{S.R} to Try Again...")
         else:
           print(f"{F.LIGHTRED_EX}\nERROR! Still cannot write to {F.LIGHTCYAN_EX}{fileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Writing Log?{S.R} (N)")
           if choice("Choice") == False:
@@ -514,7 +514,7 @@ def write_plaintext_log(fileName, newText=None, firstWrite=False, fullWrite=Fals
       except PermissionError:
         if attempts < 3:
           print(f"\n{F.YELLOW}\nERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{fileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
-          input("\n Press Enter to Try Again...")
+          input(f"\n Press {F.YELLOW}Enter{S.R} to Try Again...")
         else:
           print(f"{F.LIGHTRED_EX}\nERROR! Still cannot write to {F.LIGHTCYAN_EX}{fileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Writing Log?{S.R} (N)")
           if choice("Choice") == False:
@@ -532,7 +532,7 @@ def write_plaintext_log(fileName, newText=None, firstWrite=False, fullWrite=Fals
       except PermissionError:
         if attempts < 3:
           print(f"\n{F.YELLOW}\nERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{fileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
-          input("\n Press Enter to Try Again...")
+          input(f"\n Press {F.YELLOW}Enter{S.R} to Try Again...")
         else:
           print(f"{F.LIGHTRED_EX}\nERROR! Still cannot write to {F.LIGHTCYAN_EX}{fileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Writing Log?{S.R} (N)")
           if choice("Choice") == False:
@@ -590,7 +590,7 @@ def write_json_log(current, config, jsonSettingsDict, commentsDict, jsonDataDict
     except PermissionError:
       if attempts < 3:
         print(f"\n{F.YELLOW}\nERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{fileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
-        input("\n Press Enter to Try Again...")
+        input(f"\n Press {F.YELLOW}Enter{S.R} to Try Again...")
       else:
         print(f"{F.LIGHTRED_EX}\nERROR! Still cannot write to {F.LIGHTCYAN_EX}{fileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Writing Log?{S.R} (N)")
         if choice("Choice") == False:
@@ -716,7 +716,7 @@ def download_profile_pictures(pictureUrlsDict, jsonSettingsDict):
     except PermissionError:
       if attempts < 3:
         print(f"\n{F.YELLOW}\nERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{fileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
-        input("\n Press Enter to Try Again...")
+        input(f"\n Press {F.YELLOW}Enter{S.R} to Try Again...")
       else:
         print(f"{F.LIGHTRED_EX}\nERROR! Still cannot write to {F.LIGHTCYAN_EX}{fileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Downloading Profile Pictures?{S.R} (N)")
         if choice("Choice") == False:

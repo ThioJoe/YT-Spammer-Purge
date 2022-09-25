@@ -49,7 +49,7 @@ def validate_video_id(video_url_or_id, silent=False, pass_exception=False, basic
             print(f"\n{B.RED}{F.WHITE} ERROR: {S.R} {F.RED}Unable to get comment count for video: {S.R} {possibleVideoID}  |  {videoTitle}")
             print(f"\n{F.YELLOW}Are comments disabled on this video?{S.R} If not, please report the bug and include the error info above.")
             print(f"                    Bug Report Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
-            input("\nPress Enter to return to the main menu...")
+            input(f"\nPress {F.YELLOW}Enter{S.R} to return to the main menu...")
             return "MainMenu", "MainMenu", "MainMenu", "MainMenu", "MainMenu"
             
 
@@ -207,7 +207,7 @@ def validate_config_settings(config):
   # Helper Functions
   def print_quit_and_report():
     print(f"\nIf you think this is a bug or can't figure it out, report it on the GitHub page:  {F.YELLOW}TJoe.io/bug-report{S.R}")
-    input("\nPress Enter to exit...")
+    input(f"\nPress {F.YELLOW}Enter{S.R} to exit...")
     sys.exit()
 
   def print_int_fail(setting, value):
@@ -481,7 +481,7 @@ def validate_config_settings(config):
         print(f"\n{B.RED}{F.WHITE} WARNING! {S.R} An unknown setting was found:  '{settingName}': {str(settingValue)}")
         print(f"If you didn't add or change this setting in the config file, a validation check was probably forgotten to be created!")
         print(f"Consider reporting it: {F.YELLOW}TJoe.io/bug-report{S.R}")
-        input(f"\n It might not cause an issue, so press Enter to Continue anyway...")
+        input(f"\n It might not cause an issue, so press {F.YELLOW}Enter{S.R} to Continue anyway...")
         continue
   
 

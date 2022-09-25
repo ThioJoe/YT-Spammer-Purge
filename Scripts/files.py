@@ -116,7 +116,7 @@ def check_lists_update(spamListDict, silentCheck = False):
             traceback.print_exc()
             print(f"\n> {F.RED}Error:{S.R} The zip file containing the spam lists was downloaded, but there was a problem extracting the files because of a permission error. ")
             print(f"This can happen if an antivirus takes a while to scan the file. You may need to manually extract the zip file.")
-            input("\nPress Enter to Continue anyway...")
+            input(f"\nPress {F.YELLOW}Enter{S.R} to Continue anyway...")
             break
         # THIS MEANS SUCCESS, the zip file was deleted after extracting, so returns
         except FileNotFoundError:
@@ -189,7 +189,7 @@ def check_for_filter_update(filterListDict, silentCheck = False):
       print(f"\nOld filter file backed up to {backupFilePath}\n")
     except:
       print(f" > {F.RED}Error:{S.R} Could not create backup of filter_variables.py file. Please check permissions and try again. Or just rename the file manually.")
-      input("\nPress Enter to Continue With Current Filter Version...")
+      input(f"\nPress {F.YELLOW}Enter{S.R} to Continue With Current Filter Version...")
       return False
     
     filedownload = getRemoteFile(latestFilterURL, stream=True)
@@ -317,7 +317,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
             print(f"{F.YELLOW}Warning!{S.R} Multiple exe files found in release. You must be updating from the future when that was not anticipated.")
             print("You should instead manually download the latest version from: https://github.com/ThioJoe/YT-Spammer-Purge/releases")
             print("You can try continuing anyway, but it might not be successful, or might download the wrong exe file.")
-            input("\nPress Enter to Continue...")
+            input(f"\nPress {F.YELLOW}Enter{S.R} to Continue...")
           elif j == 0: # No exe file in release
             print(f"{F.LIGHTRED_EX}Warning!{S.R} No exe file found in release. You'll have to manually download the latest version from:")
             print("https://github.com/ThioJoe/YT-Spammer-Purge/releases")
@@ -325,12 +325,12 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
           if k == 0: # No hash file in release
             print(f"{F.YELLOW}Warning!{S.R} No verification sha256 hash found in release. If download fails, you can manually download latest version here:")
             print("https://github.com/ThioJoe/YT-Spammer-Purge/releases")
-            input("\nPress Enter to try to Continue...")
+            input(f"\nPress {F.YELLOW}Enter{S.R} to try to Continue...")
             ignoreHash = True
           elif k>0 and k!=j:
             print(f"{F.YELLOW}Warning!{S.R} Too many or too few sha256 files found in release. If download fails, you should manually download latest version here:")
             print("https://github.com/ThioJoe/YT-Spammer-Purge/releases")
-            input("\nPress Enter to try to Continue...")
+            input(f"\nPress {F.YELLOW}Enter{S.R} to try to Continue...")
 
 
           # Get and Set Download Info
@@ -349,7 +349,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
                 traceback.print_exc()
                 print(f"\n{F.LIGHTRED_EX}Error F-6:{S.R} Problem deleting existing file! Check if it's gone, or delete it yourself, then try again.")
                 print("The info above may help if it's a bug, which you can report here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
-                input("Press Enter to Exit...")
+                input(f"Press {F.YELLOW}Enter{S.R} to Exit...")
                 sys.exit()
             elif confirm == False or confirm == None:
               return False
@@ -391,7 +391,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
           else:
             print(f"\n{F.LIGHTYELLOW_EX}NOTE:{S.R} Because this is a {F.CYAN}beta release{S.R}, you should keep the old version around in case you encounter any issues")
             print(f" > And don't forget to report any problems you encounter here: {F.YELLOW}TJoe.io/bug-report{S.R}")
-          input("\nPress Enter to Exit...")
+          input(f"\nPress {F.YELLOW}Enter{S.R} to Exit...")
           sys.exit()
         elif os.name == "posix":
           # Current working directory
@@ -415,7 +415,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
           else:
             print("Downloading of new version failed!")
             print(f"\n> {F.RED}Error: {S.R}GitHub returned a non 200 status code while trying to download newer version.\nStatus returned: {r.status_code}")
-            input("Press Enter to Exit...")
+            input(f"Press {F.YELLOW}Enter{S.R} to Exit...")
             sys.exit()
           
           # Extract the tar file and delete it
@@ -432,7 +432,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
             print(f"\n{F.RED}Aborting Update!{S.R}")
             print("\n> Cleaning up...")
             rmtree(stagingFolder)
-            input("\nPress Enter to Exit...")
+            input(f"\nPress {F.YELLOW}Enter{S.R} to Exit...")
             sys.exit()
           else:
             extraFolderPath = f"{cwd}/{stagingFolder}/{extraFolderPath[0]}"
@@ -448,7 +448,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
           rmtree(stagingFolder)
           print(f"\n> Update completed: {currentVersion} ==> {F.GREEN}{latestVersion}{S.R}")
           print("> Restart the script to apply the update.")
-          input("\nPress Enter to Exit...")
+          input(f"\nPress {F.YELLOW}Enter{S.R} to Exit...")
           sys.exit()
 
         else:
@@ -525,7 +525,7 @@ def load_config_file(configVersion=None, forceDefault=False, skipConfigChoice=Fa
     traceback.print_exc()
     print(f"{B.RED}{F.WHITE}Error Code: F-4{S.R} - Config file found, but there was a problem loading it! The info above may help if it's a bug.")
     print("\nYou can manually delete SpamPurgeConfig.ini and use the program to create a new default config.")
-    input("Press Enter to Exit...")
+    input(f"Press {F.YELLOW}Enter{S.R} to Exit...")
     sys.exit()
 
   # Sanitize config Data by removing quotes
@@ -572,7 +572,7 @@ def load_config_file(configVersion=None, forceDefault=False, skipConfigChoice=Fa
         
     else:
       print("Error C-1: Invalid value in config file for setting 'use_this_config' - Must be 'True', 'False', or 'Ask'")
-      input("Press Enter to Exit...")
+      input(f"Press {F.YELLOW}Enter{S.R} to Exit...")
       sys.exit()
 
   return configDict
@@ -592,7 +592,7 @@ def check_update_config_file(newVersion, existingConfig, configFileNameWithPath)
   if configOutOfDate == True:
     print(f"\n{F.YELLOW} WARNING! {S.R} Your config file is {F.YELLOW}out of date{S.R}. ")
     print(f"  > Program will {F.LIGHTGREEN_EX}update your config{S.R} now, {F.LIGHTGREEN_EX}back up the old file{S.R}, and {F.LIGHTGREEN_EX}copy your settings over{S.R})")
-    input("\nPress Enter to update config file...")
+    input(f"\nPress {F.YELLOW}Enter{S.R} to update config file...")
   else:
     return existingConfig
     
@@ -663,7 +663,7 @@ def check_update_config_file(newVersion, existingConfig, configFileNameWithPath)
       except PermissionError:
         if attempts < 3:
           print(f"\n{F.YELLOW}\nERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{os.path.relpath(configFileNameWithPath)}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
-          input("\n Press Enter to Try Again...")
+          input(f"\n Press {F.YELLOW}Enter{S.R} to Try Again...")
         else:
           print(f"{F.LIGHTRED_EX}\nERROR! Still cannot write to {F.LIGHTCYAN_EX}{os.path.relpath(configFileNameWithPath)}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Updating Config (May Cause Errors)?{S.R} (N)")
           if choice("Choice:") == False:
@@ -674,7 +674,7 @@ def check_update_config_file(newVersion, existingConfig, configFileNameWithPath)
     traceback.print_exc()
     print("--------------------------------------------------------------------------------")
     print("Something went wrong when copying your config settings. You'll have to manually copy them from backup.")
-    input("\nPress Enter to Exit...")
+    input(f"\nPress {F.YELLOW}Enter{S.R} to Exit...")
     sys.exit()
   
 ############################# Get List of Files Matching Regex ##############################
@@ -722,7 +722,7 @@ def list_config_files(configDict=None, configPath=None):
               traceback.print_exc()
               print("--------------------------------------------------------------------------------")
               print("Something went wrong when getting list of config files. Check your regex.")
-              input("\nPress Enter to Exit...")
+              input(f"\nPress {F.YELLOW}Enter{S.R} to Exit...")
               sys.exit()
 
     return fileList
@@ -911,7 +911,7 @@ def create_config_file(updating=False, dontWarn=False, configFileName="SpamPurge
           traceback.print_exc()
           print("Error Code F-1: Problem deleting existing file! Check if it's gone. The info above may help if it's a bug.")
           print("If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
-          input("Press Enter to Exit...")
+          input(f"Press {F.YELLOW}Enter{S.R} to Exit...")
           sys.exit()
 
       elif userChoice == "2":
@@ -927,7 +927,7 @@ def create_config_file(updating=False, dontWarn=False, configFileName="SpamPurge
   except:
     traceback.print_exc()
     print(f"{B.RED}{F.WHITE}Error Code: F-2{S.R} - Problem reading default config file! The info above may help if it's a bug.")
-    input("Press Enter to Exit...")
+    input(f"Press {F.YELLOW}Enter{S.R} to Exit...")
     sys.exit()
 
   # Create config file
@@ -945,7 +945,7 @@ def create_config_file(updating=False, dontWarn=False, configFileName="SpamPurge
       except:
         traceback.print_exc()
         print(f"{B.RED}{F.WHITE}Error Code: F-3{S.R} - Problem creating 'configs' folder! Try creating the folder yourself.")
-        input("Then Press Enter to Continue...")
+        input(f"Then Press {F.YELLOW}Enter{S.R} to Continue...")
     try:
       attempts += 1
       with open(configFilePathWithName, "w", encoding="utf-8") as configFile:
@@ -955,7 +955,7 @@ def create_config_file(updating=False, dontWarn=False, configFileName="SpamPurge
     except PermissionError:
       if attempts < 3:
         print(f"\n{F.YELLOW}\nERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{configFileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
-        input("\n Press Enter to Try Again...")
+        input(f"\n Press {F.YELLOW}Enter{S.R} to Try Again...")
       else:
         print(f"{F.LIGHTRED_EX}\nERROR! Still cannot write to {F.LIGHTCYAN_EX}{configFileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Abandon Writing Config?{S.R} (N)")
         if choice("Choice:") == False:
@@ -963,7 +963,7 @@ def create_config_file(updating=False, dontWarn=False, configFileName="SpamPurge
     except:
       traceback.print_exc()
       print(f"{B.RED}{F.WHITE}Error Code: F-3{S.R} Problem creating config file! The info above may help if it's a bug.")
-      input("Press Enter to Exit...")
+      input(f"Press {F.YELLOW}Enter{S.R} to Exit...")
       sys.exit()
 
   if os.path.exists(configFilePathWithName):
@@ -978,18 +978,18 @@ def create_config_file(updating=False, dontWarn=False, configFileName="SpamPurge
             dirString = "current"
           print(f"\n{B.GREEN}{F.BLACK} SUCCESS! {S.R}  {F.YELLOW}{configFileName}{S.R} file created successfully in {dirString} folder.")
           print(f"\nYou can now edit the file to your liking. You can also {F.YELLOW}create additional{S.R} configs using this same menu.\n")
-          input("Press Enter to return to main menu...")
+          input(f"Press {F.YELLOW}Enter{S.R} to return to main menu...")
           return "MainMenu"
         else:
           return True
       else:
         print("Something might have gone wrong. Check if SpamPurgeConfig.ini file exists and has contents.")
-        input("Press Enter to Exit...")
+        input(f"Press {F.YELLOW}Enter{S.R} to Exit...")
         sys.exit()
     except:
       traceback.print_exc()
       print("Something went wrong when checking the created file. Check if SpamPurgeConfig.ini exists and has text. The info above may help if it's a bug.")
-      input("Press Enter to Exit...")
+      input(f"Press {F.YELLOW}Enter{S.R} to Exit...")
       sys.exit()
 
 
@@ -1082,7 +1082,7 @@ def parse_comment_list(config, recovery=False, removal=False, returnFileName=Fal
 
   if len(resultList) == 0:
     print(f"\n{F.RED}Error Code R-1:{S.R} No comment IDs detected, try entering them manually and make sure they are formatted correctly.")
-    input("\nPress Enter to return to main menu...")
+    input(f"\nPress {F.YELLOW}Enter{S.R} to return to main menu...")
     return "MainMenu", None
 
   # Check for valid comment IDs
@@ -1101,13 +1101,13 @@ def parse_comment_list(config, recovery=False, removal=False, returnFileName=Fal
 
   if notValidCount == 0:
     print(f"\n{F.GREEN}Loaded all {str(validCount)} comment IDs successfully!{S.R}")
-    input(f"\nPress Enter to begin {actionNoun}... ")
+    input(f"\nPress {F.YELLOW}Enter{S.R} to begin {actionNoun}... ")
   elif validCount > 0 and notValidCount > 0:
     print(f"{F.RED}Warning!{S.R} {str(validCount)} valid comment IDs loaded successfully, but {str(notValidCount)} may be invalid. See them above.")
-    input(f"\nPress Enter to try {actionNoun} anyway...\n")
+    input(f"\nPress {F.YELLOW}Enter{S.R} to try {actionNoun} anyway...\n")
   elif validCount == 0 and notValidCount > 0:
     print(f"\n{F.RED}Warning!{S.R} All loaded comment IDs appear to be invalid. See them above.")
-    input(f"Press Enter to try {actionNoun} anyway...\n")
+    input(f"Press {F.YELLOW}Enter{S.R} to try {actionNoun} anyway...\n")
   if returnFileName == False:
     return resultList, None
   else:
@@ -1132,7 +1132,7 @@ def write_dict_pickle_file(dictToWrite, fileName, relativeFolderPath=RESOURCES_F
         success = True
       except:
         print(f"Error: Could not create folder. Try creating the folder {relativeFolderPath} to continue.")
-        input("Press Enter to try again...")
+        input(f"Press {F.YELLOW}Enter{S.R} to try again...")
 
   if os.path.exists(fileNameWithPath):
     if forceOverwrite == False:
@@ -1159,7 +1159,7 @@ def write_dict_pickle_file(dictToWrite, fileName, relativeFolderPath=RESOURCES_F
       traceback.print_exc()
       print("--------------------------------------------------------------------------------")
       print("Something went wrong when writing your pickle file. Did you open it or something?")
-      input(f"\nPress Enter to try loading file again: {fileNameWithPath}")
+      input(f"\nPress {F.YELLOW}Enter{S.R} to try loading file again: {fileNameWithPath}")
   return True
 
 
@@ -1182,13 +1182,13 @@ def read_dict_pickle_file(fileNameNoPath, relativeFolderPath=RESOURCES_FOLDER_NA
           traceback.print_exc()
           print("--------------------------------------------------------------------------------")
           print("Something went wrong when reading your pickle file. Is it in use? Try closing it.")
-          input(f"\nPress Enter to try loading file again: {fileNameWithPath}")
+          input(f"\nPress {F.YELLOW}Enter{S.R} to try loading file again: {fileNameWithPath}")
           failedAttemptCount += 1
       return False
 
     else:
       print(f"\nFile '{fileNameNoPath}' not found! Try entering the name manually.")
-      input(f"\nPress Enter to try loading file again: {fileNameWithPath}")
+      input(f"\nPress {F.YELLOW}Enter{S.R} to try loading file again: {fileNameWithPath}")
       failedAttemptCount += 1
 
   return False
@@ -1202,10 +1202,10 @@ def try_remove_file(fileNameWithPath):
       return True
     except:
       print(f"\n{F.RED}\nERROR:{S.R} Could not remove file: '{fileNameWithPath}'. Is it open? If so, try closing it.")
-      input("\nPress Enter to try again...")
+      input(f"\nPress {F.YELLOW}Enter{S.R} to try again...")
       attempts += 1
   print(f"\n{F.RED}\nERROR:{S.R} The File '{fileNameWithPath}' still could not be removed. You may have to delete it yourself.")
-  input("\nPress Enter to Continue...")
+  input(f"\nPress {F.YELLOW}Enter{S.R} to Continue...")
   return False
 
 

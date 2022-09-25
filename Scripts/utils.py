@@ -204,7 +204,7 @@ def print_break_finished(scanMode):
   print(f"  > Then, you can {F.LIGHTGREEN_EX}delete the comments later{S.R} using the {F.YELLOW}mode that removes comments using a pre-existing list{S.R}")
   if scanMode == "entireChannel":
     print(f"{F.RED}NOTE: {S.R} Because of the scanning mode (entire channel) the log will be missing the video IDs and video names.")
-  input("\n Press Enter to Continue...")
+  input(f"\n Press {F.YELLOW}Enter{S.R} to Continue...")
 
 def print_error_title_fetch():
   print("--------------------------------------------------------------------------------------------------------------------------")
@@ -212,7 +212,7 @@ def print_error_title_fetch():
   print(f"Program will {F.LIGHTGREEN_EX}attempt to continue{S.R}, but the {F.YELLOW}video title may not be available{S.R} in the log file.")
   print(f"  > You won't be able to delete/hide any comments like usual, but you can {F.LIGHTMAGENTA_EX}exclude users before saving the log file{S.R}")
   print(f"  > Then, you can {F.LIGHTGREEN_EX}delete the comments later{S.R} using the {F.YELLOW}mode that removes comments using a pre-existing log file{S.R}")
-  input("\n Press Enter to Continue...")
+  input(f"\n Press {F.YELLOW}Enter{S.R} to Continue...")
 
 def clear_terminal() -> None:
   if sys.stdout.isatty(): # if in a terminal

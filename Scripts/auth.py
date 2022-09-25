@@ -51,7 +51,7 @@ def get_authenticated_service():
       print(f" ----- Did you create a {F.YELLOW}Google Cloud Platform Project{S.R} to access the API? ----- ")
       print(f"  > For instructions on how to get an API key, visit: {F.YELLOW}TJoe.io/api-setup{S.R}")
       print(f"\n  > (Non-shortened Link: https://github.com/ThioJoe/YT-Spammer-Purge/wiki/Instructions:-Obtaining-an-API-Key)")
-      input("\nPress Enter to Exit...")
+      input(f"\nPress {F.YELLOW}Enter{S.R} to Exit...")
       sys.exit()
 
   creds = None
@@ -85,7 +85,7 @@ def first_authentication():
     print(f"\nDid you make the client_secrets.json file yourself by {F.LIGHTRED_EX}copying and pasting into it{S.R}, instead of {F.LIGHTGREEN_EX}downloading it{S.R}?")
     print(f"You need to {F.YELLOW}download the json file directly from the Google Cloud dashboard{S.R} as shown in the instructions.")
     print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
-    input("Press Enter to Exit...")
+    input(f"Press {F.YELLOW}Enter{S.R} to Exit...")
     sys.exit()
   except Exception as e:
     if "invalid_grant" in str(e):
@@ -129,7 +129,7 @@ def get_current_user(config):
     print("> The client_secrets file does not match user authorized with token.pickle file.")
     print("> You are logging in with a Google Account that does not have a YouTube channel created yet.")
     print("> When choosing the account to log into, you selected the option showing the Google Account's email address, which might not have a channel attached to it.")
-    input("\nPress Enter to try logging in again...")
+    input(f"\nPress {F.YELLOW}Enter{S.R} to try logging in again...")
     os.remove(TOKEN_FILE_NAME)
 
     global YOUTUBE
@@ -147,18 +147,18 @@ def get_current_user(config):
       print("Error Getting Current User: Channel ID was found, but channel title was not retrieved. If this occurs again, try deleting 'token.pickle' file and re-running. If that doesn't work, consider filing a bug report on the GitHub project 'issues' page.")
       print("> NOTE: The program may still work - You can try continuing. Just check the channel ID is correct: " + str(channelID))
       channelTitle = ""
-      input("Press Enter to Continue...")
+      input(f"Press {F.YELLOW}Enter{S.R} to Continue...")
       pass
   except ChannelIDError:
     traceback.print_exc()
     print("\nError: Still unable to get channel info. Try deleting token.pickle. The info above might help if you want to report a bug.")
     print("Note: A channel ID was retrieved but is invalid: " + str(channelID))
-    input("\nPress Enter to Exit...")
+    input(f"\nPress {F.YELLOW}Enter{S.R} to Exit...")
     sys.exit()
   except KeyError:
     traceback.print_exc()
     print("\nError: Still unable to get channel info. Try deleting token.pickle. The info above might help if you want to report a bug.")
-    input("\nPress Enter to Exit...")
+    input(f"\nPress {F.YELLOW}Enter{S.R} to Exit...")
     sys.exit()
   
   if config == None:
@@ -170,11 +170,11 @@ def get_current_user(config):
       configMatch = True
     else:
       print("Error: The channel ID in the config file appears to be valid, but does not match the channel ID of the currently logged in user.")
-      input("Please check the config file. Press Enter to Exit...")
+      input(f"Please check the config file. Press {F.YELLOW}Enter{S.R} to Exit...")
       sys.exit()
   else:
     print("Error: The channel ID in the config file appears to be invalid.")
-    input("Please check the config file. Press Enter to Exit...")
+    input(f"Please check the config file. Press {F.YELLOW}Enter{S.R} to Exit...")
     sys.exit()
 
   return channelID, channelTitle, configMatch  
