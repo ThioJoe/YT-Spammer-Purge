@@ -927,7 +927,7 @@ def main():
       input("\nPress Enter to return to main menu...")
       return True
 
-    # Recove deleted comments mode
+    # Recover deleted comments mode
     elif scanMode == "recoverMode":
       result = modes.recover_deleted_comments(config)
 
@@ -1729,7 +1729,7 @@ if __name__ == "__main__":
     print("------------------------------------------------")
     print("Error Message: " + str(ux))
     if "referenced before assignment" in str(ux):
-      print(f"\n{F.LIGHTRED_EX}Error - Code: X-2{S.R} occurred. This is almost definitely {F.YELLOW}my fault and requires patching{S.R} (big bruh moment)")
+      print(f"\n{F.LIGHTRED_EX}Error - Code: X-2{S.R} occurred. This is almost definitely {F.YELLOW}my fault and requires patching{S.R}")
       print(f"Please post a bug report on the GitHub issues page, and include the above error info.")
       print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
       print("    (In the mean time, try using a previous release of the program.)")
