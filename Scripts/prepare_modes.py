@@ -281,7 +281,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
     if sensitive:
       print(f"\n----------------------------------------------- {F.YELLOW}Sensitive-Smart Mode{S.R} -----------------------------------------------")
     else: # if not sensitive	    else: # if not sensitive
-      print("\n----------------------------------------------- Auto-Smart Mode -----------------------------------------------")	      print(f"\n----------------------------------------------- {F.YELLOW}Auto-Smart Mode{S.R} -----------------------------------------------")
+      print(f"\n----------------------------------------------- {F.YELLOW}Auto-Smart Mode{S.R} -----------------------------------------------")
     print(f"~~~ This mode is a {F.LIGHTCYAN_EX}spammer's worst nightmare{S.R}. It automatically scans for multiple spammer techniques ~~~\n")
     print(" > Extremely low (near 0%) false positives")
     print(" > Detects whatsapp scammers and '18+ spam' bots")
