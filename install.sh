@@ -62,7 +62,7 @@ function confirm {
 }
 
 install_fail () {
-    echo "Install Failed."
+    echo "The installation has failed due to an unknown problem."
     exit 1
 }
 
@@ -92,7 +92,7 @@ install_macos() {
     confirm && echo "Ok, installing requirements." || install_fail
     if test ! "$(which brew)"; then
         #Install homebrew
-        echo "Installing homebrew..."
+        echo "Installing Homebrew..."
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     fi
     # Install python3.10 & git or fail out
@@ -105,7 +105,7 @@ install_macos() {
 
 install_python_requirements () {
     python3 -m pip install -q -r requirements.txt --user && \
-        echo "Python requirements installed." || exit 1
+        echo "Requirements for Python installed." || exit 1
     # Pip should give an error if it fails.
 }
 
@@ -138,7 +138,7 @@ install_os_requirements () {
 }
 
 install_latest_release () {
-    echo "We are now going to download the code for YT-Spammer-Purge."
+    echo "Downloading YT Spammer Purge..."
     git clone https://github.com/ThioJoe/YT-Spammer-Purge
     cd YT-Spammer-Purge || exit 5
     # Use non-1 exit code for debugging
@@ -148,10 +148,10 @@ install_latest_release () {
 
 install_MAIN () {
     clear
-    echo "We will now install YT-Spammer-Purge."
+    echo "We will now install YT Spammer Purge"
     echo "Continue?"
     confirm || install_fail
-    echo "Installing."
+    echo "Installing YT Spammer Purge..."
     # Check what OS we're running on
 
     # Check if we already installed the requirements -- git is needed to check for which mode to run.
@@ -169,7 +169,7 @@ install_MAIN () {
 
     # Done!
 
-    printf "Dependencies and Program installed into .\YT-Spammer-Purge!\nNow follow these instructions to get a client_secrets.json file!\nhttps://github.com/ThioJoe/YT-Spammer-Purge/wiki/Instructions:-Obtaining-an-API-Key\n\nYou may run this script again inside your installation to update.\n"
+    printf "YT Spammer Purge has been installed succsesfully! Its in .\YT-Spammer-Purge.\nNow follow these instructions to get a client_secrets.json file!\nhttps://github.com/ThioJoe/YT-Spammer-Purge/wiki/Instructions:-Obtaining-an-API-Key\n\nYou may run this script again inside your installation to update.\n"
     exit 0
 }
 
@@ -183,7 +183,7 @@ update () {
     # This assumes we are in the YT-Spammer-Purge directory
     check_python_requirements
     clear
-    echo "We will now attempt to update YT-Spammer-Purge."
+    echo "Will now check for updates."
     echo "Current version is $(git describe --abbrev=0 --tags)"
     echo "Continue?"
     confirm || exit 1
@@ -198,7 +198,7 @@ update () {
     # In case requirements are updated
 
     echo "--------------------------"
-    echo "Updated!"
+    echo "Updated sucsessfuly!"
     echo "Report any bugs to TJoe.io/bug-report"
     exit 0
 }
