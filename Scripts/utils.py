@@ -69,7 +69,7 @@ def make_char_set(stringInput, stripLettersNumbers=False, stripKeyboardSpecialCh
     # Adds characters to dictionary to use with translate to remove these characters
     for c in charsToStrip:
       translateDict[ord(c)] = None
-    translateDict[ord("\ufe0f")] = None # Strips invisible varation selector for emojis
+    translateDict[ord("\ufe0f")] = None # Strips invisible variation selector for emojis
     
     # Removes charsToStrip from string
     stringInput = stringInput.translate(translateDict)

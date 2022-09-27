@@ -1071,7 +1071,7 @@ def parse_comment_list(config, recovery=False, removal=False, returnFileName=Fal
   # Parse data into list
   if manuallyEnter == False and '[' in data and ']' in data:
     matchBetweenBrackets = '(?<=\[)(.*?)(?=\])' # Matches text between first set of two square brackets
-    #matchIncludeBracktes = '\[(.*?)\]' # Matches between square brackets, including brackets
+    #matchIncludeBrackets = '\[(.*?)\]' # Matches between square brackets, including brackets
     resultList = str(re.search(matchBetweenBrackets, data).group(0))
   else: resultList = data
   resultList = resultList.replace("\'", "")

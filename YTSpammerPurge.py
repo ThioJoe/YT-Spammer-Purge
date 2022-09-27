@@ -335,16 +335,13 @@ def main():
     CURRENTUSER = User(id=userInfo[0], name=userInfo[1], configMatch=userInfo[2]) # Returns [channelID, channelTitle, configmatch]
     auth.CURRENTUSER = CURRENTUSER
     print("\n    >  Currently logged in user: " + f"{F.LIGHTGREEN_EX}" + str(CURRENTUSER.name) + f"{S.R} (Channel ID: {F.LIGHTGREEN_EX}" + str(CURRENTUSER.id) + f"{S.R} )")
-    confirmUser = input(f"       Continue as this user? ({F.LIGHTCYAN_EX}y{S.R}/{F.LIGHTRED_EX}n{S.R}): ").lower()
-    if confirmUser == "y":
+    if choice("       Continue as this user?", CURRENTUSER.configMatch) == True:
       confirmedCorrectLogin = True
       utils.clear_terminal()
-    elif confirmUser == "n":
+    else:
       auth.remove_token()
       utils.clear_terminal()
       YOUTUBE = auth.get_authenticated_service()
-    else:
-        print("\nInvalid Input. Enter Y or N") 
 
   # Declare Classes
   @dataclass

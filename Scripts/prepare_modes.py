@@ -524,7 +524,7 @@ def delete_comment_list(config):
           elif saveChoice.lower() == "x":
             return "MainMenu"
           else:
-            print(f"\n{F.RED}Invalid Selectionp{S.R}. Please try again.")
+            print(f"\n{F.RED}Invalid Selection{S.R}. Please try again.")
       progressFileName = saveChoice
       progressFileNameWithPath = os.path.join(progressFileFolder, progressFileName)
       progressDict = files.read_dict_pickle_file(progressFileName, progressFileFolder)
