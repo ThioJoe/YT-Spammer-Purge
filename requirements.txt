@@ -1,6 +1,6 @@
-google_api_python_client==2.41.0
-google_auth_oauthlib==0.5.1
-protobuf==3.19.4
+google_api_python_client>=2.41.0
+google_auth_oauthlib>=0.5.1
+protobuf>=3.19.5
 colorama==0.4.4
 rtfunicode==2.0
 certifi>=2021.10.8

@@ -1413,8 +1413,11 @@ def get_recent_videos(current, channel_id, numVideosTotal):
       videoTitle = str(item['snippet']['title']).replace("&quot;", "\"").replace("&#39;", "'")
       commentCount = validation.validate_video_id(videoID, pass_exception = True)[3]
       #Skips over video if comment count is zero, or comments disabled / is live stream
-      if str(commentCount) == '0':
-        print(f"{B.YELLOW}{F.BLACK} Skipping {S.R} {F.LIGHTRED_EX}Video with no comments:{S.R} " + str(item['snippet']['title']))
+      if str(commentCount) == '0' or commentCount == None:
+        if str(commentCount) == '0':
+          print(f"{B.YELLOW}{F.BLACK} Skipping {S.R} {F.LIGHTRED_EX}Video with no comments:{S.R} " + str(item['snippet']['title']))
+        if commentCount == None:
+          print(f"{B.YELLOW}{F.BLACK} Skipping {S.R} {F.LIGHTRED_EX}Invalid Video, or video may have comments disabled:{S.R} " + str(item['snippet']['title']))
         k+=1
         continue
       
