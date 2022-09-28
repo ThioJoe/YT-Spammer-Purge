@@ -198,7 +198,7 @@ update () {
     # In case requirements are updated
 
     echo "--------------------------"
-    echo "Updated sucsessfuly!"
+    echo "Updated successfully!"
     echo "Report any bugs to TJoe.io/bug-report"
     exit 0
 }
