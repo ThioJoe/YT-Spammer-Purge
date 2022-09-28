@@ -105,7 +105,7 @@ install_macos() {
 
 install_python_requirements () {
     python3 -m pip install -q -r requirements.txt --user && \
-        echo "Requirements for Python installed." || exit 1
+        echo "Requirements for Python are installed." || exit 1
     # Pip should give an error if it fails.
 }
 
