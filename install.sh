@@ -169,7 +169,7 @@ install_MAIN () {
 
     # Done!
 
-    printf "YT Spammer Purge has been installed succsesfully! Its in .\YT-Spammer-Purge.\nNow follow these instructions to get a client_secrets.json file!\nhttps://github.com/ThioJoe/YT-Spammer-Purge/wiki/Instructions:-Obtaining-an-API-Key\n\nYou may run this script again inside your installation to update.\n"
+    printf "YT Spammer Purge has been installed successfully! It's in .\YT-Spammer-Purge.\nNow follow these instructions to get a client_secrets.json file!\nhttps://github.com/ThioJoe/YT-Spammer-Purge/wiki/Instructions:-Obtaining-an-API-Key\n\nYou may run this script again inside your installation to update.\n"
     exit 0
 }
 
