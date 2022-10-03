@@ -60,7 +60,6 @@ import ast
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from collections import namedtuple
-import platform
 import json
 from pkg_resources import parse_version
 
@@ -100,10 +99,7 @@ def main():
   jsonData: dict
   versionInfoJson: dict
 
-  # Checks system platform to set correct console clear command
-  # Clears console otherwise the windows terminal doesn't work with colorama for some reason  
-  clear_command = "cls" if platform.system() == "Windows" else "clear"
-  os.system(clear_command)
+  
 
   print("\nLoading YT Spammer Purge @ " + str(version) + "...")
 
@@ -188,10 +184,10 @@ def main():
   spamListDict['Meta']['VersionInfo']['LastChecked'] = versionInfo['LastChecked']
 
   # Check for primary config file, load into dictionary 'config'. If no config found, loads data from default config in assets folder
-  os.system(clear_command)
+  utils.console_cleanup()
   config = files.load_config_file(configVersion)
   validation.validate_config_settings(config)
-  os.system(clear_command)
+  utils.console_cleanup()
 
   # Disable colors before they are used anywhere
   if config['colors_enabled'] == False:
@@ -281,7 +277,7 @@ def main():
   else:
     moderator_mode = False
 
-  os.system(clear_command)
+  utils.console_cleanup()
 
 
 
@@ -306,10 +302,10 @@ def main():
     print("\n    >  Currently logged in user: " + f"{F.LIGHTGREEN_EX}" + str(CURRENTUSER.name) + f"{S.R} (Channel ID: {F.LIGHTGREEN_EX}" + str(CURRENTUSER.id) + f"{S.R} )")
     if choice("       Continue as this user?", CURRENTUSER.configMatch) == True:
       confirmedCorrectLogin = True
-      os.system(clear_command)
+      utils.console_cleanup()
     else:
       auth.remove_token()
-      os.system(clear_command)
+      utils.console_cleanup()
       YOUTUBE = auth.get_authenticated_service()
 
   # Declare Classes
@@ -370,7 +366,7 @@ def main():
     loggingEnabled = False
     userNotChannelOwner = False
 
-    os.system(clear_command)
+    utils.console_cleanup()
 
     # -----------------------------------------------------------------------------------------------------------------------------
     if updateAvailable != False:

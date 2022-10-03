@@ -4,6 +4,7 @@ from Scripts.shared_imports import *
 import Scripts.validation as validation
 import Scripts.auth as auth
 from googleapiclient.errors import HttpError
+import platform
 
 ##########################################################################################
 ############################## UTILITY FUNCTIONS #########################################
@@ -213,3 +214,12 @@ def print_error_title_fetch():
   print(f"  > You won't be able to delete/hide any comments like usual, but you can {F.LIGHTMAGENTA_EX}exclude users before saving the log file{S.R}")
   print(f"  > Then, you can {F.LIGHTGREEN_EX}delete the comments later{S.R} using the {F.YELLOW}mode that removes comments using a pre-existing log file{S.R}")
   input("\n Press Enter to continue...")
+
+############################### CONSOLE CLEANING UP #################################
+
+def console_cleanup():
+  # Checks system platform to set correct console clear command
+  # Clears console otherwise the windows terminal doesn't work with colorama for some reason  
+  clear_command = "cls" if platform.system() == "Windows" else "clear"
+  os.system(clear_command)
+
