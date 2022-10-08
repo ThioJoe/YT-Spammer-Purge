@@ -3,13 +3,11 @@ import sys
 import traceback
 import regex as re
 
-from colorama import init, Fore as F, Back as B, Style as S
+from colorama import init, Fore as FOREGROUND_TEXT_COLOR, Back as BACKGROUND_TEXT_COLOR, Style as TEXT_STYLE
 
-S.R = S.RESET_ALL
-F.R = F.RESET
-B.R = B.RESET
+
 
 # Global Hardcoded Constants
 RESOURCES_FOLDER_NAME = "SpamPurge_Resources"
 
-__all__ = ['os', 'sys', 're', 'traceback', 'F', 'B', 'S', 'init', 'RESOURCES_FOLDER_NAME']
+__all__ = ['os', 'sys', 're', 'traceback', 'FOREGROUND_TEXT_COLOR', 'BACKGROUND_TEXT_COLOR', 'TEXT_STYLE', 'init', 'RESOURCES_FOLDER_NAME']

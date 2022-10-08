@@ -124,7 +124,7 @@ def process_spammer_ids(rawString):
   for i in range(len(inputList)):
     valid, IDList[i], channelTitle = validation.validate_channel_id(inputList[i])
     if valid == False:
-      print(f"{B.RED}{F.BLACK}Invalid{S.R} Channel ID or Link: " + str(inputList[i]) + "\n")
+      print(f"{BACKGROUND_TEXT_COLOR.RED}{FOREGROUND_TEXT_COLOR.BLACK}Invalid{TEXT_STYLE.RESET_ALL} Channel ID or Link: " + str(inputList[i]) + "\n")
       return False, None
   
   return True, IDList  
@@ -156,7 +156,7 @@ def choice(message="", bypass=False):
   # While loop until valid input
   valid = False
   while valid == False:
-    response = input("\n" + message + f" ({F.LIGHTCYAN_EX}y{S.R}/{F.LIGHTRED_EX}n{S.R}): ").strip()
+    response = input("\n" + message + f" ({FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}y{TEXT_STYLE.RESET_ALL}/{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}n{TEXT_STYLE.RESET_ALL}): ").strip()
     if response == "Y" or response == "y":
       return True
     elif response == "N" or response == "n":
@@ -172,21 +172,21 @@ def choice(message="", bypass=False):
 def print_exception_reason(reason):
   print("    Reason: " + str(reason))
   if reason == "processingFailure":
-    print(f"\n {F.LIGHTRED_EX}[!!] Processing Error{S.R} - Sometimes this error fixes itself. Try just running the program again. !!")
+    print(f"\n {FOREGROUND_TEXT_COLOR.LIGHTRED_EX}[!!] Processing Error{TEXT_STYLE.RESET_ALL} - Sometimes this error fixes itself. Try just running the program again. !!")
     print("This issue is often on YouTube's side, so if it keeps happening try again later.")
     print("(This also occurs if you try deleting comments on someone elses video, which is not possible.)")
   elif reason == "commentsDisabled":
-    print(f"\n{F.LIGHTRED_EX}[!] Error:{S.R} Comments are disabled on this video. This error can also occur if scanning a live stream.")
+    print(f"\n{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}[!] Error:{TEXT_STYLE.RESET_ALL} Comments are disabled on this video. This error can also occur if scanning a live stream.")
   elif reason == "quotaExceeded":
-    print(f"\n{F.LIGHTRED_EX}Error:{S.R} You have exceeded the YouTube API quota. To do more scanning you must wait until the quota resets.")
+    print(f"\n{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}Error:{TEXT_STYLE.RESET_ALL} You have exceeded the YouTube API quota. To do more scanning you must wait until the quota resets.")
     print(" > There is a daily limit of 10,000 units/day, which works out to around reporting 10,000 comments/day.")
     print(" > You can check your quota by searching 'quota' in the google cloud console.")
-    print(f"{F.YELLOW}Solutions: Either wait until tomorrow, or create additional projects in the cloud console.{S.R}")
-    print(f"  > Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
+    print(f"{FOREGROUND_TEXT_COLOR.YELLOW}Solutions: Either wait until tomorrow, or create additional projects in the cloud console.{TEXT_STYLE.RESET_ALL}")
+    print(f"  > Read more about the quota limits for this app here: {FOREGROUND_TEXT_COLOR.YELLOW}TJoe.io/api-limit-info{TEXT_STYLE.RESET_ALL}")
 
 def print_http_error_during_scan(hx):
   print("------------------------------------------------")
-  print(f"{B.RED}{F.WHITE} ERROR! {S.R}  Error Message: " + str(hx))
+  print(f"{BACKGROUND_TEXT_COLOR.RED}{FOREGROUND_TEXT_COLOR.WHITE} ERROR! {TEXT_STYLE.RESET_ALL}  Error Message: " + str(hx))
   if hx.status_code:
     print("Status Code: " + str(hx.status_code))
     if hx.error_details[0]["reason"]: # If error reason is available, print it
@@ -195,24 +195,24 @@ def print_http_error_during_scan(hx):
 
 def print_exception_during_scan(ex):
   print("------------------------------------------------")
-  print(f"{B.RED}{F.WHITE} ERROR! {S.R}  Error Message: " + str(ex))
+  print(f"{BACKGROUND_TEXT_COLOR.RED}{FOREGROUND_TEXT_COLOR.WHITE} ERROR! {TEXT_STYLE.RESET_ALL}  Error Message: " + str(ex))
 
 def print_break_finished(scanMode):
   print("------------------------------------------------")
-  print(f"\n{F.LIGHTRED_EX}[!] Fatal Error Occurred During Scan! {F.BLACK}{B.LIGHTRED_EX} Read the important info below! {S.R}")
-  print(f"\nProgram must skip the rest of the scan. {F.LIGHTGREEN_EX}Comments already scanned can still be used to create a log file (if you choose){S.R}")
-  print(f"  > You won't be able to delete/hide any comments like usual, but you can {F.LIGHTMAGENTA_EX}exclude users before saving the log file{S.R}")
-  print(f"  > Then, you can {F.LIGHTGREEN_EX}delete the comments later{S.R} using the {F.YELLOW}mode that removes comments using a pre-existing list{S.R}")
+  print(f"\n{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}[!] Fatal Error Occurred During Scan! {FOREGROUND_TEXT_COLOR.BLACK}{BACKGROUND_TEXT_COLOR.LIGHTRED_EX} Read the important info below! {TEXT_STYLE.RESET_ALL}")
+  print(f"\nProgram must skip the rest of the scan. {FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}Comments already scanned can still be used to create a log file (if you choose){TEXT_STYLE.RESET_ALL}")
+  print(f"  > You won't be able to delete/hide any comments like usual, but you can {FOREGROUND_TEXT_COLOR.LIGHTMAGENTA_EX}exclude users before saving the log file{TEXT_STYLE.RESET_ALL}")
+  print(f"  > Then, you can {FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}delete the comments later{TEXT_STYLE.RESET_ALL} using the {FOREGROUND_TEXT_COLOR.YELLOW}mode that removes comments using a pre-existing list{TEXT_STYLE.RESET_ALL}")
   if scanMode == "entireChannel":
-    print(f"{F.RED}NOTE: {S.R} Because of the scanning mode (entire channel) the log will be missing the video IDs and video names.")
+    print(f"{FOREGROUND_TEXT_COLOR.RED}NOTE: {TEXT_STYLE.RESET_ALL} Because of the scanning mode (entire channel) the log will be missing the video IDs and video names.")
   input("\n Press Enter to continue...")
 
 def print_error_title_fetch():
   print("--------------------------------------------------------------------------------------------------------------------------")
-  print(f"\n{F.BLACK}{B.RED} ERROR OCCURRED {S.R} While Fetching Video Title... {F.BLACK}{B.LIGHTRED_EX} READ THE INFO BELOW {S.R}")
-  print(f"Program will {F.LIGHTGREEN_EX}attempt to continue{S.R}, but the {F.YELLOW}video title may not be available{S.R} in the log file.")
-  print(f"  > You won't be able to delete/hide any comments like usual, but you can {F.LIGHTMAGENTA_EX}exclude users before saving the log file{S.R}")
-  print(f"  > Then, you can {F.LIGHTGREEN_EX}delete the comments later{S.R} using the {F.YELLOW}mode that removes comments using a pre-existing log file{S.R}")
+  print(f"\n{FOREGROUND_TEXT_COLOR.BLACK}{BACKGROUND_TEXT_COLOR.RED} ERROR OCCURRED {TEXT_STYLE.RESET_ALL} While Fetching Video Title... {FOREGROUND_TEXT_COLOR.BLACK}{BACKGROUND_TEXT_COLOR.LIGHTRED_EX} READ THE INFO BELOW {TEXT_STYLE.RESET_ALL}")
+  print(f"Program will {FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}attempt to continue{TEXT_STYLE.RESET_ALL}, but the {FOREGROUND_TEXT_COLOR.YELLOW}video title may not be available{TEXT_STYLE.RESET_ALL} in the log file.")
+  print(f"  > You won't be able to delete/hide any comments like usual, but you can {FOREGROUND_TEXT_COLOR.LIGHTMAGENTA_EX}exclude users before saving the log file{TEXT_STYLE.RESET_ALL}")
+  print(f"  > Then, you can {FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}delete the comments later{TEXT_STYLE.RESET_ALL} using the {FOREGROUND_TEXT_COLOR.YELLOW}mode that removes comments using a pre-existing log file{TEXT_STYLE.RESET_ALL}")
   input("\n Press Enter to continue...")
 
 ############################### CONSOLE CLEANING UP #################################

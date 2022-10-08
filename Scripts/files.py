@@ -54,14 +54,14 @@ def check_lists_update(spamListDict, silentCheck = False):
     if response.status_code != 200:
       if response.status_code == 403:
         if silentCheck == False:
-          print(f"\n{B.RED}{F.WHITE}Error [U-4L]:{S.R} Got an 403 (ratelimit_reached) when attempting to check for spam list update.")
-          print(f"This means you have been {F.YELLOW}rate limited by github.com{S.R}. Please try again in a while.\n")
+          print(f"\n{BACKGROUND_TEXT_COLOR.RED}{FOREGROUND_TEXT_COLOR.WHITE}Error [U-4L]:{TEXT_STYLE.RESET_ALL} Got an 403 (ratelimit_reached) when attempting to check for spam list update.")
+          print(f"This means you have been {FOREGROUND_TEXT_COLOR.YELLOW}rate limited by github.com{TEXT_STYLE.RESET_ALL}. Please try again in a while.\n")
           return False
         else:
           return spamListDict
       else:
         if silentCheck == False:
-          print(f"{B.RED}{F.WHITE}Error [U-3L]:{S.R} Got non 200 status code (got: {response.status_code}) when attempting to check for spam list update.\n")
+          print(f"{BACKGROUND_TEXT_COLOR.RED}{FOREGROUND_TEXT_COLOR.WHITE}Error [U-3L]:{TEXT_STYLE.RESET_ALL} Got non 200 status code (got: {response.status_code}) when attempting to check for spam list update.\n")
           print(f"If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
           if silentCheck == False:
             return False
@@ -73,7 +73,7 @@ def check_lists_update(spamListDict, silentCheck = False):
       return spamListDict
     else:
       if "WinError 10013" in str(ox):
-        print(f"{B.RED}{F.WHITE}WinError 10013:{S.R} The OS blocked the connection to GitHub. Check your firewall settings.\n")
+        print(f"{BACKGROUND_TEXT_COLOR.RED}{FOREGROUND_TEXT_COLOR.WHITE}WinError 10013:{TEXT_STYLE.RESET_ALL} The OS blocked the connection to GitHub. Check your firewall settings.\n")
         return False
   except:
     if silentCheck == True:
@@ -113,7 +113,7 @@ def check_lists_update(spamListDict, silentCheck = False):
             continue
           else:
             traceback.print_exc()
-            print(f"\n> {F.RED}Error:{S.R} The zip file containing the spam lists was downloaded, but there was a problem extracting the files because of a permission error. ")
+            print(f"\n> {FOREGROUND_TEXT_COLOR.RED}Error:{TEXT_STYLE.RESET_ALL} The zip file containing the spam lists was downloaded, but there was a problem extracting the files because of a permission error. ")
             print(f"This can happen if an antivirus takes a while to scan the file. You may need to manually extract the zip file.")
             input("\nPress enter to Continue anyway...")
             break
@@ -124,7 +124,7 @@ def check_lists_update(spamListDict, silentCheck = False):
 
     elif total_size_in_bytes != 0 and os.stat(downloadFilePath).st_size != total_size_in_bytes:
       os.remove(downloadFilePath)
-      print(f" > {F.RED} File did not fully download. Please try again later.\n")
+      print(f" > {FOREGROUND_TEXT_COLOR.RED} File did not fully download. Please try again later.\n")
       return spamListDict
   else:
     update_last_checked()
@@ -145,18 +145,18 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
     if response.status_code != 200:
       if response.status_code == 403:
         if silentCheck == False:
-          print(f"\n{B.RED}{F.WHITE}Error [U-4]:{S.R} Got an 403 (ratelimit_reached) when attempting to check for update.")
-          print(f"This means you have been {F.YELLOW}rate limited by github.com{S.R}. Please try again in a while.\n")
+          print(f"\n{BACKGROUND_TEXT_COLOR.RED}{FOREGROUND_TEXT_COLOR.WHITE}Error [U-4]:{TEXT_STYLE.RESET_ALL} Got an 403 (ratelimit_reached) when attempting to check for update.")
+          print(f"This means you have been {FOREGROUND_TEXT_COLOR.YELLOW}rate limited by github.com{TEXT_STYLE.RESET_ALL}. Please try again in a while.\n")
         else:
-          print(f"\n{B.RED}{F.WHITE}Error [U-4]:{S.R} Got an 403 (ratelimit_reached) when attempting to check for update.")
+          print(f"\n{BACKGROUND_TEXT_COLOR.RED}{FOREGROUND_TEXT_COLOR.WHITE}Error [U-4]:{TEXT_STYLE.RESET_ALL} Got an 403 (ratelimit_reached) when attempting to check for update.")
         return None
 
       else:
         if silentCheck == False:
-          print(f"{B.RED}{F.WHITE}Error [U-3]:{S.R} Got non 200 status code (got: {response.status_code}) when attempting to check for update.\n")
+          print(f"{BACKGROUND_TEXT_COLOR.RED}{FOREGROUND_TEXT_COLOR.WHITE}Error [U-3]:{TEXT_STYLE.RESET_ALL} Got non 200 status code (got: {response.status_code}) when attempting to check for update.\n")
           print(f"If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
         else:
-          print(f"{B.RED}{F.WHITE}Error [U-3]:{S.R} Got non 200 status code (got: {response.status_code}) when attempting to check for update.\n")
+          print(f"{BACKGROUND_TEXT_COLOR.RED}{FOREGROUND_TEXT_COLOR.WHITE}Error [U-3]:{TEXT_STYLE.RESET_ALL} Got non 200 status code (got: {response.status_code}) when attempting to check for update.\n")
         return None
 
     else:
@@ -169,17 +169,17 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
         isBeta = response.json()[0]["prerelease"]
   except OSError as ox:
     if "WinError 10013" in str(ox):
-      print(f"{B.RED}{F.WHITE}WinError 10013:{S.R} The OS blocked the connection to GitHub. Check your firewall settings.\n")
+      print(f"{BACKGROUND_TEXT_COLOR.RED}{FOREGROUND_TEXT_COLOR.WHITE}WinError 10013:{TEXT_STYLE.RESET_ALL} The OS blocked the connection to GitHub. Check your firewall settings.\n")
     else:
-      print(f"{B.RED}{F.WHITE}Unknown OSError{S.R} Error occurred while checking for updates\n")
+      print(f"{BACKGROUND_TEXT_COLOR.RED}{FOREGROUND_TEXT_COLOR.WHITE}Unknown OSError{TEXT_STYLE.RESET_ALL} Error occurred while checking for updates\n")
     return None
   except Exception as e:
     if silentCheck == False:
       print(e + "\n")
-      print(f"{B.RED}{F.WHITE}Error [Code U-1]:{S.R} Problem while checking for updates. See above error for more details.\n")
+      print(f"{BACKGROUND_TEXT_COLOR.RED}{FOREGROUND_TEXT_COLOR.WHITE}Error [Code U-1]:{TEXT_STYLE.RESET_ALL} Problem while checking for updates. See above error for more details.\n")
       print("If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
     elif silentCheck == True:
-      print(f"{B.RED}{F.WHITE}Error [Code U-1]:{S.R} Unknown problem while checking for updates. See above error for more details.\n")
+      print(f"{BACKGROUND_TEXT_COLOR.RED}{FOREGROUND_TEXT_COLOR.WHITE}Error [Code U-1]:{TEXT_STYLE.RESET_ALL} Unknown problem while checking for updates. See above error for more details.\n")
     return None
 
   if parse_version(latestVersion) > parse_version(currentVersion):
@@ -191,18 +191,18 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
     if silentCheck == False:
       print("------------------------------------------------------------------------------------------")
       if isBeta == True:
-        print(f" {F.YELLOW}A new {F.LIGHTGREEN_EX}beta{F.YELLOW} version{S.R} is available! Visit {F.YELLOW}TJoe.io/latest{S.R} to see what's new.")
+        print(f" {FOREGROUND_TEXT_COLOR.YELLOW}A new {FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}beta{FOREGROUND_TEXT_COLOR.YELLOW} version{TEXT_STYLE.RESET_ALL} is available! Visit {FOREGROUND_TEXT_COLOR.YELLOW}TJoe.io/latest{TEXT_STYLE.RESET_ALL} to see what's new.")
       else:
-        print(f" A {F.LIGHTGREEN_EX}new version{S.R} is available! Visit {F.YELLOW}TJoe.io/latest{S.R} to see what's new.")
+        print(f" A {FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}new version{TEXT_STYLE.RESET_ALL} is available! Visit {FOREGROUND_TEXT_COLOR.YELLOW}TJoe.io/latest{TEXT_STYLE.RESET_ALL} to see what's new.")
       print(f"   > Current Version: {currentVersion}")
-      print(f"   > Latest Version: {F.LIGHTGREEN_EX}{latestVersion}{S.R}")
+      print(f"   > Latest Version: {FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}{latestVersion}{TEXT_STYLE.RESET_ALL}")
       if isBeta == True:
         print("(To stop receiving beta releases, change the 'release_channel' setting in the config file)")
       print("------------------------------------------------------------------------------------------")
       userChoice = choice("Update Now?")
       if userChoice == True:
         if sys.platform == 'win32' or sys.platform == 'win64':
-          print(f"\n> {F.LIGHTCYAN_EX} Downloading Latest Version...{S.R}")
+          print(f"\n> {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX} Downloading Latest Version...{TEXT_STYLE.RESET_ALL}")
           if updateReleaseChannel == "stable":
             jsondata = json.dumps(response.json()["assets"])
           elif updateReleaseChannel == "all":
@@ -225,21 +225,21 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
           ignoreHash = False
           # Validate Retrieved Info    
           if j > 1: # More than one exe file in release
-            print(f"{F.YELLOW}Warning!{S.R} Multiple exe files found in release. You must be updating from the future when that was not anticipated.")
+            print(f"{FOREGROUND_TEXT_COLOR.YELLOW}Warning!{TEXT_STYLE.RESET_ALL} Multiple exe files found in release. You must be updating from the future when that was not anticipated.")
             print("You should instead manually download the latest version from: https://github.com/ThioJoe/YT-Spammer-Purge/releases")
             print("You can try continuing anyway, but it might not be successful, or might download the wrong exe file.")
             input("\nPress enter to continue...")
           elif j == 0: # No exe file in release
-            print(f"{F.LIGHTRED_EX}Warning!{S.R} No exe file found in release. You'll have to manually download the latest version from:")
+            print(f"{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}Warning!{TEXT_STYLE.RESET_ALL} No exe file found in release. You'll have to manually download the latest version from:")
             print("https://github.com/ThioJoe/YT-Spammer-Purge/releases")
             return False
           if k == 0: # No hash file in release
-            print(f"{F.YELLOW}Warning!{S.R} No verification sha256 hash found in release. If download fails, you can manually download latest version here:")
+            print(f"{FOREGROUND_TEXT_COLOR.YELLOW}Warning!{TEXT_STYLE.RESET_ALL} No verification sha256 hash found in release. If download fails, you can manually download latest version here:")
             print("https://github.com/ThioJoe/YT-Spammer-Purge/releases")
             input("\nPress Enter to try to continue...")
             ignoreHash = True
           elif k>0 and k!=j:
-            print(f"{F.YELLOW}Warning!{S.R} Too many or too few sha256 files found in release. If download fails, you should manually download latest version here:")
+            print(f"{FOREGROUND_TEXT_COLOR.YELLOW}Warning!{TEXT_STYLE.RESET_ALL} Too many or too few sha256 files found in release. If download fails, you should manually download latest version here:")
             print("https://github.com/ThioJoe/YT-Spammer-Purge/releases")
             input("\nPress Enter to try to continue...")
 
@@ -251,14 +251,14 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
 
           # Check if file exists already, ask to overwrite if it does
           if os.path.exists(downloadFileName):
-            print(f"\n{B.RED}{F.WHITE} WARNING! {S.R} '{F.YELLOW}{downloadFileName}{S.R}' file already exists. This would overwrite the existing file.")
+            print(f"\n{BACKGROUND_TEXT_COLOR.RED}{FOREGROUND_TEXT_COLOR.WHITE} WARNING! {TEXT_STYLE.RESET_ALL} '{FOREGROUND_TEXT_COLOR.YELLOW}{downloadFileName}{TEXT_STYLE.RESET_ALL}' file already exists. This would overwrite the existing file.")
             confirm = choice("Overwrite this existing file?")
             if confirm == True:
               try:
                 os.remove(downloadFileName)
               except:
                 traceback.print_exc()
-                print(f"\n{F.LIGHTRED_EX}Error F-6:{S.R} Problem deleting existing existing file! Check if it's gone, or delete it yourself, then try again.")
+                print(f"\n{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}Error F-6:{TEXT_STYLE.RESET_ALL} Problem deleting existing existing file! Check if it's gone, or delete it yourself, then try again.")
                 print("The info above may help if it's a bug, which you can report here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
                 input("Press enter to Exit...")
                 sys.exit()
@@ -270,16 +270,16 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
             numProgressBars = 30
             for data in filedownload.iter_content(block_size):
               progress = os.stat(downloadFileName).st_size/total_size_in_bytes * numProgressBars
-              print(f"{F.LIGHTGREEN_EX}<[{F.LIGHTCYAN_EX}" + '='*round(progress) + ' '*(numProgressBars-round(progress)) + f"{F.LIGHTGREEN_EX}]>{S.R}\r", end="") #Print Progress bar
+              print(f"{FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}<[{FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}" + '='*round(progress) + ' '*(numProgressBars-round(progress)) + f"{FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}]>{TEXT_STYLE.RESET_ALL}\r", end="") #Print Progress bar
               file.write(data)
-          print(f"\n>  {F.LIGHTCYAN_EX}Verifying Download Integrity...{S.R}                       ")
+          print(f"\n>  {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}Verifying Download Integrity...{TEXT_STYLE.RESET_ALL}                       ")
 
           # Verify Download Size
           if os.stat(downloadFileName).st_size == total_size_in_bytes:
             pass
           elif total_size_in_bytes != 0 and os.stat(downloadFileName).st_size != total_size_in_bytes:
             os.remove(downloadFileName)
-            print(f"\n> {F.RED} File did not fully download. Please try again later.")
+            print(f"\n> {FOREGROUND_TEXT_COLOR.RED} File did not fully download. Please try again later.")
             return False
           elif total_size_in_bytes == 0:
             print("Something is wrong with the download on the remote end. You should manually download latest version here:")
@@ -291,17 +291,17 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
               pass
             else:
               os.remove(downloadFileName)
-              print(f"\n> {F.RED} Hash did not match. Please try again later.")
+              print(f"\n> {FOREGROUND_TEXT_COLOR.RED} Hash did not match. Please try again later.")
               print("Or download the latest version manually from here: https://github.com/ThioJoe/YT-Spammer-Purge/releases")
               return False
 
           # Print Success
-          print(f"\n >  Download Completed: {F.LIGHTGREEN_EX}{downloadFileName}{S.R}")
+          print(f"\n >  Download Completed: {FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}{downloadFileName}{TEXT_STYLE.RESET_ALL}")
           if isBeta == False:
             print("\nYou can now delete the old version. (Or keep it around in case you encounter any issues with the new version)")
           else:
-            print(f"\n{F.LIGHTYELLOW_EX}NOTE:{S.R} Because this is a {F.CYAN}beta release{S.R}, you should keep the old version around in case you encounter any issues")
-            print(f" > And don't forget to report any problems you encounter here: {F.YELLOW}TJoe.io/bug-report{S.R}")
+            print(f"\n{FOREGROUND_TEXT_COLOR.LIGHTYELLOW_EX}NOTE:{TEXT_STYLE.RESET_ALL} Because this is a {FOREGROUND_TEXT_COLOR.CYAN}beta release{TEXT_STYLE.RESET_ALL}, you should keep the old version around in case you encounter any issues")
+            print(f" > And don't forget to report any problems you encounter here: {FOREGROUND_TEXT_COLOR.YELLOW}TJoe.io/bug-report{TEXT_STYLE.RESET_ALL}")
           input("\nPress Enter to Exit...")
           sys.exit()
         elif platform.system() == "Linux":
@@ -314,7 +314,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
           stagingFolder = "temp"
 
           # Fetch the latest update
-          print(f"\n> Downloading version: {F.GREEN}{latestVersion}{S.R}")
+          print(f"\n> Downloading version: {FOREGROUND_TEXT_COLOR.GREEN}{latestVersion}{TEXT_STYLE.RESET_ALL}")
 
           url = f'https://codeload.github.com/ThioJoe/YT-Spammer-Purge/tar.gz/refs/tags/v{latestVersion}'
           r = requests.get(url, stream=True)
@@ -325,7 +325,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
                   file.write(chunk)
           else:
             print("Downloading of new version failed!")
-            print(f"\n> {F.RED}Error: {S.R}GitHub returned a non 200 status code while trying to download newer version.\nStatus returned: {r.status_code}")
+            print(f"\n> {FOREGROUND_TEXT_COLOR.RED}Error: {TEXT_STYLE.RESET_ALL}GitHub returned a non 200 status code while trying to download newer version.\nStatus returned: {r.status_code}")
             input("Press Enter to Exit...")
             sys.exit()
           
@@ -339,8 +339,8 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
           extraFolderPath = os.listdir(f"./{stagingFolder}")
           # If there happens to be more then one folder
           if(len(extraFolderPath) != 1):
-            print(f"\n> {F.RED} Error:{S.R} more then one folder in {stagingFolder}! Please make a bug report.")
-            print(f"\n{F.RED}Aborting Update!{S.R}")
+            print(f"\n> {FOREGROUND_TEXT_COLOR.RED} Error:{TEXT_STYLE.RESET_ALL} more then one folder in {stagingFolder}! Please make a bug report.")
+            print(f"\n{FOREGROUND_TEXT_COLOR.RED}Aborting Update!{TEXT_STYLE.RESET_ALL}")
             print("\n> Cleaning up...")
             rmtree(stagingFolder)
             input("\nPress Enter to Exit...")
@@ -357,13 +357,13 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
                 move(f"{extraFolderPath}/{file_name}", f"{cwd}/{file_name}")
 
           rmtree(stagingFolder)
-          print(f"\n> Update completed: {currentVersion} ==> {F.GREEN}{latestVersion}{S.R}")
+          print(f"\n> Update completed: {currentVersion} ==> {FOREGROUND_TEXT_COLOR.GREEN}{latestVersion}{TEXT_STYLE.RESET_ALL}")
           print("> Restart the script to apply the update.")
           input("\nPress Enter to Exit...")
           sys.exit()
 
         else:
-          print(f"> {F.RED} Error:{S.R} You are using an unsupported OS for the autoupdater (macos). \n This updater only supports Windows and Linux (right now). Feel free to get the files from github: https://github.com/ThioJoe/YT-Spammer-Purge")
+          print(f"> {FOREGROUND_TEXT_COLOR.RED} Error:{TEXT_STYLE.RESET_ALL} You are using an unsupported OS for the autoupdater (macos). \n This updater only supports Windows and Linux (right now). Feel free to get the files from github: https://github.com/ThioJoe/YT-Spammer-Purge")
           return False
       elif userChoice == "False" or userChoice == None:
         return False
@@ -372,7 +372,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
 
   elif parse_version(latestVersion) == parse_version(currentVersion):
     if silentCheck == False:
-      print(f"\nYou have the {F.LIGHTGREEN_EX}latest{S.R} version: {F.LIGHTGREEN_EX}" + currentVersion)
+      print(f"\nYou have the {FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}latest{TEXT_STYLE.RESET_ALL} version: {FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}" + currentVersion)
     return False
   else:
     if silentCheck == False:
@@ -397,7 +397,7 @@ def getRemoteFile(url, stream, silent=False, headers=None):
   except Exception as e:
     if silent == False:
       print(e + "\n")
-      print(f"{B.RED}{F.WHITE} Error {S.R} While Fetching Remote File or Resource: " + url)
+      print(f"{BACKGROUND_TEXT_COLOR.RED}{FOREGROUND_TEXT_COLOR.WHITE} Error {TEXT_STYLE.RESET_ALL} While Fetching Remote File or Resource: " + url)
       print("See above messages for details.\n")
       print("If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
     return None
@@ -434,7 +434,7 @@ def load_config_file(configVersion=None, forceDefault=False, skipConfigChoice=Fa
       configFile.close()
   except:
     traceback.print_exc()
-    print(f"{B.RED}{F.WHITE}Error Code: F-4{S.R} - Config file found, but there was a problem loading it! The info above may help if it's a bug.")
+    print(f"{BACKGROUND_TEXT_COLOR.RED}{FOREGROUND_TEXT_COLOR.WHITE}Error Code: F-4{TEXT_STYLE.RESET_ALL} - Config file found, but there was a problem loading it! The info above may help if it's a bug.")
     print("\nYou can manually delete SpamPurgeConfig.ini and use the program to create a new default config.")
     input("Press enter to Exit...")
     sys.exit()
@@ -501,8 +501,8 @@ def check_update_config_file(newVersion, existingConfig, configFileNameWithPath)
     configOutOfDate = True
 
   if configOutOfDate == True:
-    print(f"\n{F.YELLOW} WARNING! {S.R} Your config file is {F.YELLOW}out of date{S.R}. ")
-    print(f"  > Program will {F.LIGHTGREEN_EX}update your config{S.R} now, {F.LIGHTGREEN_EX}back up the old file{S.R}, and {F.LIGHTGREEN_EX}copy your settings over{S.R})")
+    print(f"\n{FOREGROUND_TEXT_COLOR.YELLOW} WARNING! {TEXT_STYLE.RESET_ALL} Your config file is {FOREGROUND_TEXT_COLOR.YELLOW}out of date{TEXT_STYLE.RESET_ALL}. ")
+    print(f"  > Program will {FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}update your config{TEXT_STYLE.RESET_ALL} now, {FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}back up the old file{TEXT_STYLE.RESET_ALL}, and {FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}copy your settings over{TEXT_STYLE.RESET_ALL})")
     input("\nPress Enter to update config file...")
   else:
     return existingConfig
@@ -533,10 +533,10 @@ def check_update_config_file(newVersion, existingConfig, configFileNameWithPath)
   # Attempt to copy backup to backup folder, otherwise just rename
   try:
     copyfile(configFileNameWithPath, os.path.abspath(backupNameAndPath))
-    print(f"\nOld config file renamed to {F.CYAN}{backupConfigFileName}{S.R} and placed in {F.CYAN}{backupDestinationFolder}{S.R}")
+    print(f"\nOld config file renamed to {FOREGROUND_TEXT_COLOR.CYAN}{backupConfigFileName}{TEXT_STYLE.RESET_ALL} and placed in {FOREGROUND_TEXT_COLOR.CYAN}{backupDestinationFolder}{TEXT_STYLE.RESET_ALL}")
   except:
     os.rename(configFileNameWithPath, backupConfigFileName)
-    print(f"\nOld config file renamed to {F.CYAN}{backupConfigFileName}{S.R}. Note: Backup file could not be moved to backup folder, so it was just renamed.")
+    print(f"\nOld config file renamed to {FOREGROUND_TEXT_COLOR.CYAN}{backupConfigFileName}{TEXT_STYLE.RESET_ALL}. Note: Backup file could not be moved to backup folder, so it was just renamed.")
 
   # Creates new config file from default
   create_config_file(updating=True, configFileName=configFileNameWithPath)
@@ -573,10 +573,10 @@ def check_update_config_file(newVersion, existingConfig, configFileNameWithPath)
         success = True
       except PermissionError:
         if attempts < 3:
-          print(f"\n{F.YELLOW}\nERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{os.path.relpath(configFileNameWithPath)}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
+          print(f"\n{FOREGROUND_TEXT_COLOR.YELLOW}\nERROR!{TEXT_STYLE.RESET_ALL} Cannot write to {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}{os.path.relpath(configFileNameWithPath)}{TEXT_STYLE.RESET_ALL}. Is it open? Try {FOREGROUND_TEXT_COLOR.YELLOW}closing the file{TEXT_STYLE.RESET_ALL} before continuing.")
           input("\n Press Enter to Try Again...")
         else:
-          print(f"{F.LIGHTRED_EX}\nERROR! Still cannot write to {F.LIGHTCYAN_EX}{os.path.relpath(configFileNameWithPath)}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Updating Config (May Cause Errors)?{S.R} (N)")
+          print(f"{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}\nERROR! Still cannot write to {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}{os.path.relpath(configFileNameWithPath)}{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}. {FOREGROUND_TEXT_COLOR.YELLOW}Try again?{TEXT_STYLE.RESET_ALL} (Y) or {FOREGROUND_TEXT_COLOR.YELLOW}Skip Updating Config (May Cause Errors)?{TEXT_STYLE.RESET_ALL} (N)")
           if choice("Choice:") == False:
             break 
 
@@ -662,7 +662,7 @@ def choose_config_file(configDict, newestConfigVersion, configPathWithName):
   configFileList, configPath = list_config_files(configDict, configPath)
   # If only one config file exists, prompt to use
   if not configFileList or len(configFileList) == 0:
-    if choice(f"\nFound {F.YELLOW}config file{S.R}, use those settings?") == False:
+    if choice(f"\nFound {FOREGROUND_TEXT_COLOR.YELLOW}config file{TEXT_STYLE.RESET_ALL}, use those settings?") == False:
       return load_config_file(forceDefault=True)
     else:
       return configDict
@@ -679,10 +679,10 @@ def choose_config_file(configDict, newestConfigVersion, configPathWithName):
     configChoiceDict = {}
     print(f"\n=================== Found Multiple Config Files ===================")
     if mainConfigPathWithName:
-      print(f"\n{F.YELLOW}------------- Use primary config file or another one? -------------{S.R}")
-      print(F"    {F.LIGHTCYAN_EX}Y:{S.R} Use primary config file")
-      print(F"    {F.LIGHTCYAN_EX}N:{S.R} Use default settings, don't load any config")
-      print(f"\n{F.YELLOW}------------------ Other Available Config Files -------------------{S.R}")
+      print(f"\n{FOREGROUND_TEXT_COLOR.YELLOW}------------- Use primary config file or another one? -------------{TEXT_STYLE.RESET_ALL}")
+      print(f"    {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}Y:{TEXT_STYLE.RESET_ALL} Use primary config file")
+      print(f"    {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}N:{TEXT_STYLE.RESET_ALL} Use default settings, don't load any config")
+      print(f"\n{FOREGROUND_TEXT_COLOR.YELLOW}------------------ Other Available Config Files -------------------{TEXT_STYLE.RESET_ALL}")
     else:
       print("\n Available Config Files:")
     # Print Available Configs, and add to dictionary  
@@ -690,7 +690,7 @@ def choose_config_file(configDict, newestConfigVersion, configPathWithName):
       configNum = re.search(configNumExpression, file.lower()).group(0)
       configDescription = load_config_file(configFileName=os.path.abspath(os.path.join(configPath, file)), skipConfigChoice=True, configFolder=configPath)['this_config_description']
       configChoiceDict[configNum] = file
-      print(f"    {F.LIGHTCYAN_EX}{configNum}:{S.R} {configDescription}")
+      print(f"    {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}{configNum}:{TEXT_STYLE.RESET_ALL} {configDescription}")
     
     valid = False
     while valid == False:
@@ -700,7 +700,7 @@ def choose_config_file(configDict, newestConfigVersion, configPathWithName):
       elif configChoice.lower() == "n":
         return load_config_file(forceDefault=True)
       elif configChoice.lower() == "" or configChoice.lower() not in configChoiceDict.keys():
-        print(f"\n{F.YELLOW} Invalid Choice! Please enter a valid choice.{S.R}")
+        print(f"\n{FOREGROUND_TEXT_COLOR.YELLOW} Invalid Choice! Please enter a valid choice.{TEXT_STYLE.RESET_ALL}")
       else:
         # Load an available config, update it, then return it
         configChoiceFileNameWithPath = os.path.abspath(os.path.join(configPath, configChoiceDict[configChoice]))
@@ -798,10 +798,10 @@ def create_config_file(updating=False, dontWarn=False, configFileName="SpamPurge
         dirPath = configDict['configs_path']
 
       print("-------------------------------------------------------------------------------------")
-      print(f"\nConfig File {F.YELLOW}{configFileName}{S.R} already exists. You can {F.LIGHTCYAN_EX}reset it to default{S.R}, or {F.LIGHTCYAN_EX}create another secondary config{S.R}.")
+      print(f"\nConfig File {FOREGROUND_TEXT_COLOR.YELLOW}{configFileName}{TEXT_STYLE.RESET_ALL} already exists. You can {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}reset it to default{TEXT_STYLE.RESET_ALL}, or {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}create another secondary config{TEXT_STYLE.RESET_ALL}.")
       print("\nWhat do you want to do?")
-      print(f"    1: {F.LIGHTRED_EX}Reset{S.R} main config ({F.LIGHTRED_EX}{configFileName}{S.R}) to fresh default config")
-      print(f"    2: {F.YELLOW}Create{S.R} another secondary config file (SpamPurgeConfig{F.YELLOW}{newConfigNum}{S.R}.ini)")
+      print(f"    1: {FOREGROUND_TEXT_COLOR.LIGHTRED_EX}Reset{TEXT_STYLE.RESET_ALL} main config ({FOREGROUND_TEXT_COLOR.LIGHTRED_EX}{configFileName}{TEXT_STYLE.RESET_ALL}) to fresh default config")
+      print(f"    2: {FOREGROUND_TEXT_COLOR.YELLOW}Create{TEXT_STYLE.RESET_ALL} another secondary config file (SpamPurgeConfig{FOREGROUND_TEXT_COLOR.YELLOW}{newConfigNum}{TEXT_STYLE.RESET_ALL}.ini)")
       userChoice = input("\n Choose (1/2): ")
     
       if userChoice.lower() == "x":
@@ -820,7 +820,7 @@ def create_config_file(updating=False, dontWarn=False, configFileName="SpamPurge
 
       elif userChoice == "2":
         configFileName = f"SpamPurgeConfig{newConfigNum}.ini"
-        input(f"\nPress Enter to create additional config file: {F.YELLOW}{configFileName}{S.R}")
+        input(f"\nPress Enter to create additional config file: {FOREGROUND_TEXT_COLOR.YELLOW}{configFileName}{TEXT_STYLE.RESET_ALL}")
 
   # Creates fresh new config file
   # Get default config file contents
@@ -830,7 +830,7 @@ def create_config_file(updating=False, dontWarn=False, configFileName="SpamPurge
     defaultConfigFile.close()
   except:
     traceback.print_exc()
-    print(f"{B.RED}{F.WHITE}Error Code: F-2{S.R} - Problem reading default config file! The info above may help if it's a bug.")
+    print(f"{BACKGROUND_TEXT_COLOR.RED}{FOREGROUND_TEXT_COLOR.WHITE}Error Code: F-2{TEXT_STYLE.RESET_ALL} - Problem reading default config file! The info above may help if it's a bug.")
     input("Press enter to Exit...")
     sys.exit()
 
@@ -848,7 +848,7 @@ def create_config_file(updating=False, dontWarn=False, configFileName="SpamPurge
         os.makedirs(dirPath)
       except:
         traceback.print_exc()
-        print(f"{B.RED}{F.WHITE}Error Code: F-3{S.R} - Problem creating 'configs' folder! Try creating the folder yourself.")
+        print(f"{BACKGROUND_TEXT_COLOR.RED}{FOREGROUND_TEXT_COLOR.WHITE}Error Code: F-3{TEXT_STYLE.RESET_ALL} - Problem creating 'configs' folder! Try creating the folder yourself.")
         input("Then Press Enter to Continue...")
     try:
       attempts += 1
@@ -858,15 +858,15 @@ def create_config_file(updating=False, dontWarn=False, configFileName="SpamPurge
       success = True
     except PermissionError:
       if attempts < 3:
-        print(f"\n{F.YELLOW}\nERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{configFileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
+        print(f"\n{FOREGROUND_TEXT_COLOR.YELLOW}\nERROR!{TEXT_STYLE.RESET_ALL} Cannot write to {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}{configFileName}{TEXT_STYLE.RESET_ALL}. Is it open? Try {FOREGROUND_TEXT_COLOR.YELLOW}closing the file{TEXT_STYLE.RESET_ALL} before continuing.")
         input("\n Press Enter to Try Again...")
       else:
-        print(f"{F.LIGHTRED_EX}\nERROR! Still cannot write to {F.LIGHTCYAN_EX}{configFileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Abandon Writing Config?{S.R} (N)")
+        print(f"{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}\nERROR! Still cannot write to {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}{configFileName}{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}. {FOREGROUND_TEXT_COLOR.YELLOW}Try again?{TEXT_STYLE.RESET_ALL} (Y) or {FOREGROUND_TEXT_COLOR.YELLOW}Abandon Writing Config?{TEXT_STYLE.RESET_ALL} (N)")
         if choice("Choice:") == False:
           break 
     except:
       traceback.print_exc()
-      print(f"{B.RED}{F.WHITE}Error Code: F-3{S.R} Problem creating config file! The info above may help if it's a bug.")
+      print(f"{BACKGROUND_TEXT_COLOR.RED}{FOREGROUND_TEXT_COLOR.WHITE}Error Code: F-3{TEXT_STYLE.RESET_ALL} Problem creating config file! The info above may help if it's a bug.")
       input("Press enter to Exit...")
       sys.exit()
 
@@ -877,11 +877,11 @@ def create_config_file(updating=False, dontWarn=False, configFileName="SpamPurge
       if parser.get("info", "config_version"):
         if updating == False:
           if dirPath:
-            dirString = f"{F.YELLOW}{str(dirPath)}{S.R}"
+            dirString = f"{FOREGROUND_TEXT_COLOR.YELLOW}{str(dirPath)}{TEXT_STYLE.RESET_ALL}"
           else:
             dirString = "current"
-          print(f"\n{B.GREEN}{F.BLACK} SUCCESS! {S.R}  {F.YELLOW}{configFileName}{S.R} file created successfully in {dirString} folder.")
-          print(f"\nYou can now edit the file to your liking. You can also {F.YELLOW}create additional{S.R} configs using this same menu.\n")
+          print(f"\n{BACKGROUND_TEXT_COLOR.GREEN}{FOREGROUND_TEXT_COLOR.BLACK} SUCCESS! {TEXT_STYLE.RESET_ALL}  {FOREGROUND_TEXT_COLOR.YELLOW}{configFileName}{TEXT_STYLE.RESET_ALL} file created successfully in {dirString} folder.")
+          print(f"\nYou can now edit the file to your liking. You can also {FOREGROUND_TEXT_COLOR.YELLOW}create additional{TEXT_STYLE.RESET_ALL} configs using this same menu.\n")
           input("Press Enter to return to main menu...")
           return "MainMenu"
         else:
@@ -915,9 +915,9 @@ def parse_comment_list(config, recovery=False, removal=False, returnFileName=Fal
   manuallyEnter = False
   while validFile == False and manuallyEnter == False:
     print("--------------------------------------------------------------------------------")
-    print(f"\nEnter the {F.YELLOW}name of the log file{S.R} with the comments to {actionVerb} (you can rename it to something easier like \'log.rtf\')")
-    print(f"     > {F.BLACK}{B.LIGHTGREEN_EX} TIP: {S.R} You can just drag the file into this window instead of typing it")
-    print(F"{F.YELLOW}Or:{S.R} Just hit Enter to manually paste in the list of IDs next)")
+    print(f"\nEnter the {FOREGROUND_TEXT_COLOR.YELLOW}name of the log file{TEXT_STYLE.RESET_ALL} with the comments to {actionVerb} (you can rename it to something easier like \'log.rtf\')")
+    print(f"     > {FOREGROUND_TEXT_COLOR.BLACK}{BACKGROUND_TEXT_COLOR.LIGHTGREEN_EX} TIP: {TEXT_STYLE.RESET_ALL} You can just drag the file into this window instead of typing it")
+    print(f"{FOREGROUND_TEXT_COLOR.YELLOW}Or:{TEXT_STYLE.RESET_ALL} Just hit Enter to manually paste in the list of IDs next)")
     listFileName = input("\nLog File Name (Example: \"log.rtf\" or \"log\"):  ")
     if str(listFileName).lower() == "x":
       return "MainMenu", None
@@ -948,10 +948,10 @@ def parse_comment_list(config, recovery=False, removal=False, returnFileName=Fal
           listFile.close()
           validFile = True
         except:
-          print(f"{F.RED}Error Code F-5:{S.R} Log File was found but there was a problem reading it.")
+          print(f"{FOREGROUND_TEXT_COLOR.RED}Error Code F-5:{TEXT_STYLE.RESET_ALL} Log File was found but there was a problem reading it.")
       else:
-        print(f"\n{F.LIGHTRED_EX}Error: File not found.{S.R} Make sure it is in the same folder as the program.\n")
-        print(f"Enter '{F.YELLOW}Y{S.R}' to try again, or '{F.YELLOW}N{S.R}' to manually paste in the comment IDs.")
+        print(f"\n{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}Error: File not found.{TEXT_STYLE.RESET_ALL} Make sure it is in the same folder as the program.\n")
+        print(f"Enter '{FOREGROUND_TEXT_COLOR.YELLOW}Y{TEXT_STYLE.RESET_ALL}' to try again, or '{FOREGROUND_TEXT_COLOR.YELLOW}N{TEXT_STYLE.RESET_ALL}' to manually paste in the comment IDs.")
         userChoice = choice("Try entering file name again?")
         if userChoice == True:
           pass
@@ -964,8 +964,8 @@ def parse_comment_list(config, recovery=False, removal=False, returnFileName=Fal
 
   if manuallyEnter == True:
     print("\n\n--- Manual Comment ID Entry Instructions ---")
-    print(f"1. {F.YELLOW}Open the log file{S.R} and look for where it shows the list of {F.YELLOW}\"IDs of Matched Comments\".{S.R}")
-    print(f"2. {F.YELLOW}Copy that list{S.R}, and {F.YELLOW}paste it below{S.R} (In windows console try pasting by right clicking).")
+    print(f"1. {FOREGROUND_TEXT_COLOR.YELLOW}Open the log file{TEXT_STYLE.RESET_ALL} and look for where it shows the list of {FOREGROUND_TEXT_COLOR.YELLOW}\"IDs of Matched Comments\".{TEXT_STYLE.RESET_ALL}")
+    print(f"2. {FOREGROUND_TEXT_COLOR.YELLOW}Copy that list{TEXT_STYLE.RESET_ALL}, and {FOREGROUND_TEXT_COLOR.YELLOW}paste it below{TEXT_STYLE.RESET_ALL} (In windows console try pasting by right clicking).")
     print("3. If not using a log file, instead enter the ID list in this format: FirstID, SecondID, ThirdID, ... \n")
     data = str(input("Paste the list here, then hit Enter: "))
     if str(data).lower() == "x":
@@ -985,7 +985,7 @@ def parse_comment_list(config, recovery=False, removal=False, returnFileName=Fal
   resultList = resultList.split(",")
 
   if len(resultList) == 0:
-    print(f"\n{F.RED}Error Code R-1:{S.R} No comment IDs detected, try entering them manually and make sure they are formatted correctly.")
+    print(f"\n{FOREGROUND_TEXT_COLOR.RED}Error Code R-1:{TEXT_STYLE.RESET_ALL} No comment IDs detected, try entering them manually and make sure they are formatted correctly.")
     input("\nPress Enter to return to main menu...")
     return "MainMenu", None
 
@@ -1001,16 +1001,16 @@ def parse_comment_list(config, recovery=False, removal=False, returnFileName=Fal
       notValidList.append(id)
 
   if notValidCount > 0:
-    print(f"{F.YELLOW}Possibly Invalid Comment IDs:{S.R} " + str(notValidList)+ "\n")
+    print(f"{FOREGROUND_TEXT_COLOR.YELLOW}Possibly Invalid Comment IDs:{TEXT_STYLE.RESET_ALL} " + str(notValidList)+ "\n")
 
   if notValidCount == 0:
-    print(f"\n{F.GREEN}Loaded all {str(validCount)} comment IDs successfully!{S.R}")
+    print(f"\n{FOREGROUND_TEXT_COLOR.GREEN}Loaded all {str(validCount)} comment IDs successfully!{TEXT_STYLE.RESET_ALL}")
     input(f"\nPress Enter to begin {actionNoun}... ")
   elif validCount > 0 and notValidCount > 0:
-    print(f"{F.RED}Warning!{S.R} {str(validCount)} valid comment IDs loaded successfully, but {str(notValidCount)} may be invalid. See them above.")
+    print(f"{FOREGROUND_TEXT_COLOR.RED}Warning!{TEXT_STYLE.RESET_ALL} {str(validCount)} valid comment IDs loaded successfully, but {str(notValidCount)} may be invalid. See them above.")
     input(f"\nPress Enter to try {actionNoun} anyway...\n")
   elif validCount == 0 and notValidCount > 0:
-    print(f"\n{F.RED}Warning!{S.R} All loaded comment IDs appear to be invalid. See them above.")
+    print(f"\n{FOREGROUND_TEXT_COLOR.RED}Warning!{TEXT_STYLE.RESET_ALL} All loaded comment IDs appear to be invalid. See them above.")
     input(f"Press Enter to try {actionNoun} anyway...\n")
   if returnFileName == False:
     return resultList, None
@@ -1105,10 +1105,10 @@ def try_remove_file(fileNameWithPath):
       os.remove(fileNameWithPath)
       return True
     except:
-      print(f"\n{F.RED}\nERROR:{S.R} Could not remove file: '{fileNameWithPath}'. Is it open? If so, try closing it.")
+      print(f"\n{FOREGROUND_TEXT_COLOR.RED}\nERROR:{TEXT_STYLE.RESET_ALL} Could not remove file: '{fileNameWithPath}'. Is it open? If so, try closing it.")
       input("\nPress Enter to try again...")
       attempts += 1
-  print(f"\n{F.RED}\nERROR:{S.R} The File '{fileNameWithPath}' still could not be removed. You may have to delete it yourself.")
+  print(f"\n{FOREGROUND_TEXT_COLOR.RED}\nERROR:{TEXT_STYLE.RESET_ALL} The File '{fileNameWithPath}' still could not be removed. You may have to delete it yourself.")
   input("\nPress Enter to continue...")
   return False
 

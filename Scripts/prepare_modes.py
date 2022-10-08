@@ -31,10 +31,10 @@ def prepare_filter_mode_chars(scanMode, filterMode, config):
     print("Characters to filter obtained from config file.")
     pass
   else:
-    print(f"\nNext, you will input {F.YELLOW}ONLY{S.R} any special characters / emojis you want to search for in all {whatToScanMsg}. Do not include commas or spaces!")
+    print(f"\nNext, you will input {FOREGROUND_TEXT_COLOR.YELLOW}ONLY{TEXT_STYLE.RESET_ALL} any special characters / emojis you want to search for in all {whatToScanMsg}. Do not include commas or spaces!")
     print("          Note: Letters, numbers, and basic punctuation will not be included for safety purposes, even if you enter them.")
     print("          Example: 👋🔥✔️✨")
-    input(f"\nPress {F.LIGHTGREEN_EX}Enter{S.R} to open the {F.LIGHTGREEN_EX}text entry window{S.R}...")
+    input(f"\nPress {FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}Enter{TEXT_STYLE.RESET_ALL} to open the {FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}text entry window{TEXT_STYLE.RESET_ALL}...")
     print("-------------------------------------------")
 
   confirm = False
@@ -45,7 +45,7 @@ def prepare_filter_mode_chars(scanMode, filterMode, config):
       bypass = True
     else:
       bypass = False
-      print(f"\nWaiting for input Window. Press {F.MAGENTA}'Execute'{S.R} after entering valid characters to continue...", end="\r")
+      print(f"\nWaiting for input Window. Press {FOREGROUND_TEXT_COLOR.MAGENTA}'Execute'{TEXT_STYLE.RESET_ALL} after entering valid characters to continue...", end="\r")
       try:
         # Takes in user input of characters, returns 'set' of characters stripped of specified characters
         inputChars = take_input_gui(mode="chars", stripLettersNumbers=True, stripKeyboardSpecialChars=False, stripPunctuation=True)
@@ -56,7 +56,7 @@ def prepare_filter_mode_chars(scanMode, filterMode, config):
         input("Press Enter to exit...")
         sys.exit()
 
-    print(f"     {whatToScanMsg} will be scanned for {F.MAGENTA}ANY{S.R} of the characters you entered in the previous window.")
+    print(f"     {whatToScanMsg} will be scanned for {FOREGROUND_TEXT_COLOR.MAGENTA}ANY{TEXT_STYLE.RESET_ALL} of the characters you entered in the previous window.")
     userChoice = choice("Begin Scanning? ", bypass)
     if userChoice == True:
       confirm = True
@@ -81,7 +81,7 @@ def prepare_filter_mode_strings(scanMode, filterMode, config):
     print("Strings to filter obtained from config file.")
     pass
   else:
-    print(f"\nPaste or type in a list of any {F.YELLOW}comma separated strings{S.R} you want to search for in {whatToScanMsg}. (Not case sensitive)")
+    print(f"\nPaste or type in a list of any {FOREGROUND_TEXT_COLOR.YELLOW}comma separated strings{TEXT_STYLE.RESET_ALL} you want to search for in {whatToScanMsg}. (Not case sensitive)")
     print("   >Note: If the text you paste includes special characters or emojis, they might not display correctly here, but it WILL still search them fine.")
     print("          Example Input: whatsapp, whatever multiple words, investment")
 
@@ -108,7 +108,7 @@ def prepare_filter_mode_strings(scanMode, filterMode, config):
       if config['strings_to_filter'] != "ask":
         pass
       else:
-        print(f"     {whatToScanMsg} will be scanned for {F.MAGENTA}ANY{S.R} of the following strings:")
+        print(f"     {whatToScanMsg} will be scanned for {FOREGROUND_TEXT_COLOR.MAGENTA}ANY{TEXT_STYLE.RESET_ALL} of the following strings:")
         print(filterStringList)
       userChoice = choice("Begin scanning? ", bypass)
       if userChoice == True:
@@ -133,7 +133,7 @@ def prepare_filter_mode_regex(scanMode, filterMode, config):
     print("Regex expression obtained from config file.")
     validConfigSetting = True
   else:
-    print(f"Enter any {F.YELLOW}regex expression{S.R} to search within {whatToScanMsg}.")
+    print(f"Enter any {FOREGROUND_TEXT_COLOR.YELLOW}regex expression{TEXT_STYLE.RESET_ALL} to search within {whatToScanMsg}.")
     print(r"          Example Input:  [^\x00-\xFF]")
     validConfigSetting = False
   validExpression = False
@@ -153,7 +153,7 @@ def prepare_filter_mode_regex(scanMode, filterMode, config):
 
     if validExpression == True:
       processedExpression = validationResults[1]
-      print(f"     The expression appears to be {F.GREEN}valid{S.R}!")
+      print(f"     The expression appears to be {FOREGROUND_TEXT_COLOR.GREEN}valid{TEXT_STYLE.RESET_ALL}!")
 
       if validExpression == True:
         userChoice = choice("Begin scanning? ", bypass)
@@ -165,7 +165,7 @@ def prepare_filter_mode_regex(scanMode, filterMode, config):
         elif userChoice == None:
           return "MainMenu", None
     else:
-      print(f"     {F.RED}Error{S.R}: The expression appears to be {F.RED}invalid{S.R}!")
+      print(f"     {FOREGROUND_TEXT_COLOR.RED}Error{TEXT_STYLE.RESET_ALL}: The expression appears to be {FOREGROUND_TEXT_COLOR.RED}invalid{TEXT_STYLE.RESET_ALL}!")
       validConfigSetting = False
 
   return processedExpression, None
@@ -181,7 +181,7 @@ def prepare_filter_mode_ID(scanMode, config):
       bypass = True
     else:
       bypass = False
-      inputtedSpammerChannelID = input(f"Enter the {F.LIGHTRED_EX} Channel link(s) or ID(s){S.R} of the spammer (comma separated): ")
+      inputtedSpammerChannelID = input(f"Enter the {FOREGROUND_TEXT_COLOR.LIGHTRED_EX} Channel link(s) or ID(s){TEXT_STYLE.RESET_ALL} of the spammer (comma separated): ")
       if str(inputtedSpammerChannelID).lower() == "x":
         return "MainMenu", None
 
@@ -195,8 +195,8 @@ def prepare_filter_mode_ID(scanMode, config):
   # Check if spammer ID and user's channel ID are the same, and warn
   # If using channel-wide scanning mode, program will just ignore those comments
   if any(auth.CURRENTUSER.id == i for i in inputtedSpammerChannelID):
-    print(f"{B.RED}{F.WHITE} WARNING: {S.R} - You entered your own channel ID!")
-    print(f"For safety purposes, this program always {F.YELLOW}ignores{S.R} your own comments.")
+    print(f"{BACKGROUND_TEXT_COLOR.RED}{FOREGROUND_TEXT_COLOR.WHITE} WARNING: {TEXT_STYLE.RESET_ALL} - You entered your own channel ID!")
+    print(f"For safety purposes, this program always {FOREGROUND_TEXT_COLOR.YELLOW}ignores{TEXT_STYLE.RESET_ALL} your own comments.")
 
     if config['channel_ids_to_filter'] != "ask":
       pass
@@ -211,9 +211,9 @@ def prepare_filter_mode_non_ascii(scanMode, config):
   print("\n-------------------------------------------------- ASCII Mode--------------------------------------------------")
   print("~~~ This mode automatically searches for usernames that contain special characters (aka not letters/numbers) ~~~\n")
   print("Choose the sensitivity level of the filter. You will be shown examples after you choose.")
-  print(f"   1. Allow {F.LIGHTMAGENTA_EX}Standard + Extended ASCII{S.R}:    Filter rare unicode & Emojis only")
-  print(f"   2. Allow {F.LIGHTMAGENTA_EX}Standard ASCII only{S.R}:  Also filter semi-common foreign characters")
-  print(f"   3. {F.LIGHTRED_EX}NUKE Mode (┘°□°)┘≈ ┴──┴ :    Allow ONLY numbers, letters, and spaces{S.R}")
+  print(f"   1. Allow {FOREGROUND_TEXT_COLOR.LIGHTMAGENTA_EX}Standard + Extended ASCII{TEXT_STYLE.RESET_ALL}:    Filter rare unicode & Emojis only")
+  print(f"   2. Allow {FOREGROUND_TEXT_COLOR.LIGHTMAGENTA_EX}Standard ASCII only{TEXT_STYLE.RESET_ALL}:  Also filter semi-common foreign characters")
+  print(f"   3. {FOREGROUND_TEXT_COLOR.LIGHTRED_EX}NUKE Mode (┘°□°)┘≈ ┴──┴ :    Allow ONLY numbers, letters, and spaces{TEXT_STYLE.RESET_ALL}")
   print("")
 
   # Get user input for mode selection,
@@ -229,7 +229,7 @@ def prepare_filter_mode_non_ascii(scanMode, config):
       if str(selection).lower() == "x":
         return "MainMenu", None
     if selection == "1":
-      print(f"Searches for {F.YELLOW}usernames with emojis, unicode symbols, and rare foreign characters{S.R} such as: ✔️ ☝️ 🡆 ▲ π Ɲ Œ")
+      print(f"Searches for {FOREGROUND_TEXT_COLOR.YELLOW}usernames with emojis, unicode symbols, and rare foreign characters{TEXT_STYLE.RESET_ALL} such as: ✔️ ☝️ 🡆 ▲ π Ɲ Œ")
       userChoice = choice("Choose this mode?", bypass)
       if userChoice == True:
         regexPattern = r"[^\x00-\xFF]"
@@ -237,7 +237,7 @@ def prepare_filter_mode_non_ascii(scanMode, config):
       elif userChoice == None:
         return "MainMenu", None
     elif selection == "2":
-      print(f"Searches for {F.YELLOW}usernames with anything EXCEPT{S.R} the following: {F.YELLOW}Letters, numbers, punctuation, and common special characters{S.R} you can type with your keyboard like: % * & () + ")
+      print(f"Searches for {FOREGROUND_TEXT_COLOR.YELLOW}usernames with anything EXCEPT{TEXT_STYLE.RESET_ALL} the following: {FOREGROUND_TEXT_COLOR.YELLOW}Letters, numbers, punctuation, and common special characters{TEXT_STYLE.RESET_ALL} you can type with your keyboard like: % * & () + ")
       userChoice = choice("Choose this mode?", bypass)
       if userChoice == True:
         regexPattern = r"[^\x00-\x7F]"
@@ -245,7 +245,7 @@ def prepare_filter_mode_non_ascii(scanMode, config):
       elif userChoice == None:
         return "MainMenu", None
     elif selection == "3":
-      print(f"Searches for {F.YELLOW}usernames with anything EXCEPT letters, numbers, and spaces{S.R} - {B.RED}{F.WHITE} EXTREMELY LIKELY to cause collateral damage!{S.R} Recommended to just use to manually gather list of spammer IDs, then use a different mode to delete.")
+      print(f"Searches for {FOREGROUND_TEXT_COLOR.YELLOW}usernames with anything EXCEPT letters, numbers, and spaces{TEXT_STYLE.RESET_ALL} - {BACKGROUND_TEXT_COLOR.RED}{FOREGROUND_TEXT_COLOR.WHITE} EXTREMELY LIKELY to cause collateral damage!{TEXT_STYLE.RESET_ALL} Recommended to just use to manually gather list of spammer IDs, then use a different mode to delete.")
       userChoice = choice("Choose this mode?", bypass)
       if userChoice == True:
         regexPattern = r"[^a-zA-Z0-9 ]"
@@ -283,14 +283,14 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
       print("\n----------------------------------------------- Sensitive-Smart Mode -----------------------------------------------")
     else: # if not sensitive
       print("\n----------------------------------------------- Auto-Smart Mode -----------------------------------------------")
-    print(f"~~~ This mode is a {F.LIGHTCYAN_EX}spammer's worst nightmare{S.R}. It automatically scans for multiple spammer techniques ~~~\n")
+    print(f"~~~ This mode is a {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}spammer's worst nightmare{TEXT_STYLE.RESET_ALL}. It automatically scans for multiple spammer techniques ~~~\n")
     print(" > Extremely low (near 0%) false positives")
     print(" > Detects whatsapp scammers and '18+ spam' bots")
     print(" > Easily cuts through look-alike characters and obfuscations, including impersonating usernames")
     if sensitive == False:
-      print(f" > {F.LIGHTRED_EX}NOTE:{S.R} This mode prioritizes a {F.LIGHTGREEN_EX}VERY low false positive rate{S.R}, at the cost of occasionally missing some spammers.\n")
+      print(f" > {FOREGROUND_TEXT_COLOR.LIGHTRED_EX}NOTE:{TEXT_STYLE.RESET_ALL} This mode prioritizes a {FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}VERY low false positive rate{TEXT_STYLE.RESET_ALL}, at the cost of occasionally missing some spammers.\n")
     elif sensitive == True:
-      print(f" > {F.LIGHTRED_EX}NOTE:{S.R} In sensitive mode, {F.LIGHTRED_EX}expect more false positives{S.R}. Recommended to run this AFTER regular Auto Smart Mode.\n")
+      print(f" > {FOREGROUND_TEXT_COLOR.LIGHTRED_EX}NOTE:{TEXT_STYLE.RESET_ALL} In sensitive mode, {FOREGROUND_TEXT_COLOR.LIGHTRED_EX}expect more false positives{TEXT_STYLE.RESET_ALL}. Recommended to run this AFTER regular Auto Smart Mode.\n")
     input("Press Enter to Begin Scanning...")
     print ("\033[A                                     \033[A") # Erases previous line
   print("  Loading Filters  [                              ]", end="\r")
@@ -454,9 +454,9 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
 
 ################################ RECOVERY MODE ###########################################
 def recover_deleted_comments(config):
-  print(f"\n\n-------------------- {F.LIGHTGREEN_EX}Comment Recovery Mode{S.R} --------------------\n")
+  print(f"\n\n-------------------- {FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}Comment Recovery Mode{TEXT_STYLE.RESET_ALL} --------------------\n")
   print("> Believe it or not, the YouTube API actually allows you to re-instate \"deleted\" comments.")
-  print(f"> This is {F.YELLOW}only possible if you have stored the comment IDs{S.R} of the deleted comments, \n   such as {F.YELLOW}having kept the log file{S.R} of that session.")
+  print(f"> This is {FOREGROUND_TEXT_COLOR.YELLOW}only possible if you have stored the comment IDs{TEXT_STYLE.RESET_ALL} of the deleted comments, \n   such as {FOREGROUND_TEXT_COLOR.YELLOW}having kept the log file{TEXT_STYLE.RESET_ALL} of that session.")
   print("> If you don't have the comment IDs you can't recover the comments, and there is no way to find them. \n")
 
   recoveryList, listFileName = files.parse_comment_list(config, recovery=True)
@@ -470,16 +470,16 @@ def recover_deleted_comments(config):
 def delete_comment_list(config):
   progressDict = dict()
   progressFileFolder = os.path.join(RESOURCES_FOLDER_NAME, "Removal_List_Progress")
-  print(f"\n\n-------------------- {F.LIGHTRED_EX}Delete Using a List / Log{S.R} --------------------")
+  print(f"\n\n-------------------- {FOREGROUND_TEXT_COLOR.LIGHTRED_EX}Delete Using a List / Log{TEXT_STYLE.RESET_ALL} --------------------")
   while True:
     print("\nUse new comment list, or continue where you left off with another list?")
-    print(f"  1. Use {F.LIGHTCYAN_EX}New List{S.R}")
-    print(f"  2. {F.LIGHTMAGENTA_EX}Continue With{S.R} a List")
+    print(f"  1. Use {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}New List{TEXT_STYLE.RESET_ALL}")
+    print(f"  2. {FOREGROUND_TEXT_COLOR.LIGHTMAGENTA_EX}Continue With{TEXT_STYLE.RESET_ALL} a List")
     listChoice = input("\nSelection (1 or 2): ")
     if listChoice == "1" or listChoice == "2":
       break
     else:
-      print(f"\n{F.LIGHTRED_EX}Invalid selection!{S.R} Please try again.")
+      print(f"\n{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}Invalid selection!{TEXT_STYLE.RESET_ALL} Please try again.")
 
   if listChoice == "1":
     continued = False
@@ -503,7 +503,7 @@ def delete_comment_list(config):
     if len(existingSavesList) > 0:
       if len(existingSavesList) == 1:
         saveChoice = existingSavesList[0]
-        print(f"\n{F.LIGHTGREEN_EX}Using existing save: {S.R}{saveChoice}")
+        print(f"\n{FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}Using existing save: {TEXT_STYLE.RESET_ALL}{saveChoice}")
       elif len(existingSavesList) > 1:
         print("\nWhich save file would you like to use?")
         for i, save in enumerate(existingSavesList):
@@ -517,7 +517,7 @@ def delete_comment_list(config):
           elif saveChoice.lower() == "x":
             return "MainMenu"
           else:
-            print(f"\n{F.RED}Invalid Selectionp{S.R}. Please try again.")
+            print(f"\n{FOREGROUND_TEXT_COLOR.RED}Invalid Selectionp{TEXT_STYLE.RESET_ALL}. Please try again.")
       progressFileName = saveChoice
       progressFileNameWithPath = os.path.join(progressFileFolder, progressFileName)
       progressDict = files.read_dict_pickle_file(progressFileName, progressFileFolder)
@@ -525,13 +525,13 @@ def delete_comment_list(config):
       removalList = "Loaded"
 
     else:
-      print(f"\n{F.RED}No previous saves found!{S.R}")
+      print(f"\n{FOREGROUND_TEXT_COLOR.RED}No previous saves found!{TEXT_STYLE.RESET_ALL}")
       input("\nPress Enter to return to Main Menu...")
       return "MainMenu"
 
 
     while valid == False:
-      input(F"\nNext, follow the process by loading {F.YELLOW}the same comment list/log you used before{S.R}. Press Enter to continue...")
+      input(f"\nNext, follow the process by loading {FOREGROUND_TEXT_COLOR.YELLOW}the same comment list/log you used before{TEXT_STYLE.RESET_ALL}. Press Enter to continue...")
       removalList, listFileNameBase = files.parse_comment_list(config, removal=True, returnFileName=True)
       if removalList == "MainMenu":
         return "MainMenu"
@@ -544,7 +544,7 @@ def delete_comment_list(config):
         progressDict = files.read_dict_pickle_file(progressFileName, progressFileFolder)
         valid = True
       else:
-        print(f"\n{F.LIGHTRED_EX}Error:{S.R} No progress file found for that log file. Try again.")
+        print(f"\n{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}Error:{TEXT_STYLE.RESET_ALL} No progress file found for that log file. Try again.")
 
     # Get data from list
     lastSessionNum = int(len(progressDict))
@@ -556,8 +556,8 @@ def delete_comment_list(config):
     if removalList == "Loaded" or (len(remainingCommentsSet) + len(previousRemovedComments) + len(previousFailedComments)) == len(removalList):
       pass
     else:
-      print(f"{F.LIGHTRED_EX}Error:{S.R} The length of the comment list you loaded doesn't match the comment list you saved last time.")
-      if choice(f"{F.YELLOW}Continue anyway?{S.R} (Will use previous save and ignore the file you just loaded)") != True:
+      print(f"{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}Error:{TEXT_STYLE.RESET_ALL} The length of the comment list you loaded doesn't match the comment list you saved last time.")
+      if choice(f"{FOREGROUND_TEXT_COLOR.YELLOW}Continue anyway?{TEXT_STYLE.RESET_ALL} (Will use previous save and ignore the file you just loaded)") != True:
         return "MainMenu"
 
     # Display status of loaded file
@@ -565,27 +565,27 @@ def delete_comment_list(config):
     prevNotRemovedNum = len(remainingCommentsSet)
     prevFailedNum = len(previousFailedComments)
 
-    print(f"\n {F.LIGHTCYAN_EX}----------------------- Loaded Saved Comment List Status -----------------------{S.R}")
-    print(f" {F.LIGHTGREEN_EX}{prevRemovedNum} removed{S.R}  |  {F.YELLOW}{prevNotRemovedNum} not removed yet{S.R}  |  {F.LIGHTRED_EX}{prevFailedNum} failed to be removed{S.R}")
+    print(f"\n {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}----------------------- Loaded Saved Comment List Status -----------------------{TEXT_STYLE.RESET_ALL}")
+    print(f" {FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}{prevRemovedNum} removed{TEXT_STYLE.RESET_ALL}  |  {FOREGROUND_TEXT_COLOR.YELLOW}{prevNotRemovedNum} not removed yet{TEXT_STYLE.RESET_ALL}  |  {FOREGROUND_TEXT_COLOR.LIGHTRED_EX}{prevFailedNum} failed to be removed{TEXT_STYLE.RESET_ALL}")
     input("\n Press Enter to continue...")
 
     # Set removal list based on previous save
     removalList = list(remainingCommentsSet)
     if len(previousFailedComments)>0:
-      print(f"{F.LIGHTRED_EX}NOTE:{S.R} During previous sessions, {F.LIGHTRED_EX}{len(previousFailedComments)} comments{S.R} failed to be deleted.")
-      failChoice = choice(f"\n{F.YELLOW}Add these back into the list{S.R} to try again? (Otherwise will skip them for later) ")
+      print(f"{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}NOTE:{TEXT_STYLE.RESET_ALL} During previous sessions, {FOREGROUND_TEXT_COLOR.LIGHTRED_EX}{len(previousFailedComments)} comments{TEXT_STYLE.RESET_ALL} failed to be deleted.")
+      failChoice = choice(f"\n{FOREGROUND_TEXT_COLOR.YELLOW}Add these back into the list{TEXT_STYLE.RESET_ALL} to try again? (Otherwise will skip them for later) ")
       if failChoice == True:
         removalList = removalList + list(previousFailedComments)
         previousFailedComments = list()
       else:
         removalList = list(remainingCommentsSet)
 
-    print(f"\n Loaded {F.YELLOW}{len(removalList)} Remaining Comments{S.R}")
+    print(f"\n Loaded {FOREGROUND_TEXT_COLOR.YELLOW}{len(removalList)} Remaining Comments{TEXT_STYLE.RESET_ALL}")
 
   # --- Begin removal process using list ------
   print("\nWhat do you want to do with the comments in the list?")
-  print(f"1. {F.LIGHTRED_EX}Delete{S.R} them")
-  print(f"2. {F.LIGHTMAGENTA_EX}Hide{S.R} them for review")
+  print(f"1. {FOREGROUND_TEXT_COLOR.LIGHTRED_EX}Delete{TEXT_STYLE.RESET_ALL} them")
+  print(f"2. {FOREGROUND_TEXT_COLOR.LIGHTMAGENTA_EX}Hide{TEXT_STYLE.RESET_ALL} them for review")
 
   validInput = False
   while validInput == False:
@@ -604,9 +604,9 @@ def delete_comment_list(config):
     elif userChoice.lower() == "x":
       return "MainMenu"
     else:
-      print(f"{F.RED}Invalid input, try again.{S.R}")
+      print(f"{FOREGROUND_TEXT_COLOR.RED}Invalid input, try again.{TEXT_STYLE.RESET_ALL}")
   if removalMode == "rejected":
-    banChoice = choice(F"Also {F.RED}ban{S.R} the commenters?")
+    banChoice = choice(f"Also {FOREGROUND_TEXT_COLOR.RED}ban{TEXT_STYLE.RESET_ALL} the commenters?")
     if str(banChoice).lower() == "x":
       return "MainMenu"
 
@@ -615,7 +615,7 @@ def delete_comment_list(config):
 
   validInput = False
   while validInput == False:
-    print(f"\n{F.YELLOW}How many comments{S.R} (out of {len(removalList)}) do you want to remove this session? (Input '0' or 'all' to do them all)")
+    print(f"\n{FOREGROUND_TEXT_COLOR.YELLOW}How many comments{TEXT_STYLE.RESET_ALL} (out of {len(removalList)}) do you want to remove this session? (Input '0' or 'all' to do them all)")
     countChoice = input(f"\nNumber of comments (1-{str(quotaLimit)}): ")
     if countChoice.lower() == "all" or countChoice == "0":
         countChoice = len(removalList)
@@ -624,11 +624,11 @@ def delete_comment_list(config):
         if countChoice > 0 and countChoice <= quotaLimit:
           validInput = True
         elif countChoice >= quotaLimit:
-          print(f"\n{F.LIGHTRED_EX}Error:{S.R} {countChoice} is too many comments, you'll run out of API Quota. Read Here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
+          print(f"\n{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}Error:{TEXT_STYLE.RESET_ALL} {countChoice} is too many comments, you'll run out of API Quota. Read Here: {FOREGROUND_TEXT_COLOR.YELLOW}TJoe.io/api-limit-info{TEXT_STYLE.RESET_ALL}")
         else:
           print(f"Invalid input, must be 'all' or a whole number from 1 to {str(quotaLimit)}.")
     except:
-      print(f"{F.RED}Invalid input, must be a whole number.{S.R} Try again.")
+      print(f"{FOREGROUND_TEXT_COLOR.RED}Invalid input, must be a whole number.{TEXT_STYLE.RESET_ALL} Try again.")
 
   # Extract selected amount of comment IDs from list
   if countChoice >= len(removalList):
@@ -643,12 +643,12 @@ def delete_comment_list(config):
     selectedRemovalList = removalList
     notRemovedList = list()
 
-  input(f"\nPress {F.YELLOW}Enter{S.R} to Begin Removal...")
+  input(f"\nPress {FOREGROUND_TEXT_COLOR.YELLOW}Enter{TEXT_STYLE.RESET_ALL} to Begin Removal...")
   failedCommentsList = operations.delete_found_comments(commentsList=selectedRemovalList, banChoice=banChoice, deletionMode=removalMode)
 
   ### Handle Results ###
   if len(failedCommentsList) > 0:
-    print(f"\n{F.LIGHTRED_EX}Warning!{S.R} {len(failedCommentsList)} comments apparently failed to be removed. They'll be saved to be tried later.")
+    print(f"\n{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}Warning!{TEXT_STYLE.RESET_ALL} {len(failedCommentsList)} comments apparently failed to be removed. They'll be saved to be tried later.")
     input("\nPress Enter to continue...")
     failedCommentsSet = set(failedCommentsList)
   else:
@@ -675,10 +675,10 @@ def delete_comment_list(config):
 
   if not progressDict or (len(progressDict[sessionNum]['notRemoved']) == 0 and len(progressDict[sessionNum]['failedCommentsList']) == 0):
     if continued == True:
-      print(f"\n{F.LIGHTGREEN_EX}Success!{S.R} All comments should be removed. {F.YELLOW}Will now remove{S.R} finished progress file. (Log file will remain)")
+      print(f"\n{FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}Success!{TEXT_STYLE.RESET_ALL} All comments should be removed. {FOREGROUND_TEXT_COLOR.YELLOW}Will now remove{TEXT_STYLE.RESET_ALL} finished progress file. (Log file will remain)")
       files.try_remove_file(progressFileNameWithPath)
     else:
-      print(f"\n{F.LIGHTGREEN_EX}Success!{S.R} All comments should be removed.")
+      print(f"\n{FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}Success!{TEXT_STYLE.RESET_ALL} All comments should be removed.")
   else:
     #progressFileName = listFileNameBase + "_removal_progress.save"
     result = files.write_dict_pickle_file(progressDict, progressFileName, progressFileFolder, forceOverwrite=True)
@@ -688,9 +688,9 @@ def delete_comment_list(config):
     notRemoved = len(progressDict[sessionNum]['notRemoved'])
     failed = len(progressDict[sessionNum]['failedCommentsList'])
 
-    print(f"\n {F.LIGHTCYAN_EX}----------------------- Comment List Status -----------------------{S.R}")
-    print(f" {F.LIGHTGREEN_EX}{removed} removed{S.R}  |  {F.YELLOW}{notRemoved} not removed yet{S.R}  |  {F.LIGHTRED_EX}{failed} failed to be removed{S.R}")
-    print(f"\n You will be able to {F.YELLOW}continue later{S.R} using the {F.YELLOW}same log file{S.R}.")
+    print(f"\n {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}----------------------- Comment List Status -----------------------{TEXT_STYLE.RESET_ALL}")
+    print(f" {FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}{removed} removed{TEXT_STYLE.RESET_ALL}  |  {FOREGROUND_TEXT_COLOR.YELLOW}{notRemoved} not removed yet{TEXT_STYLE.RESET_ALL}  |  {FOREGROUND_TEXT_COLOR.LIGHTRED_EX}{failed} failed to be removed{TEXT_STYLE.RESET_ALL}")
+    print(f"\n You will be able to {FOREGROUND_TEXT_COLOR.YELLOW}continue later{TEXT_STYLE.RESET_ALL} using the {FOREGROUND_TEXT_COLOR.YELLOW}same log file{TEXT_STYLE.RESET_ALL}.")
 
-  input(f"\nPress {F.YELLOW}Enter{S.R} to return to Main Menu...")
+  input(f"\nPress {FOREGROUND_TEXT_COLOR.YELLOW}Enter{TEXT_STYLE.RESET_ALL} to return to Main Menu...")
   return "MainMenu"

@@ -78,9 +78,9 @@ from googleapiclient.errors import HttpError
 
 def main():
   # Fix issue with unassigned variables
-  global S
-  global B
-  global F
+  global TEXT_STYLE
+  global BACKGROUND_TEXT_COLOR
+  global FOREGROUND_TEXT_COLOR
 
   # Run check on python version, must be 3.6 or higher because of f strings
   if sys.version_info[0] < 3 or sys.version_info[1] < 6:
@@ -210,7 +210,7 @@ def main():
       updateReleaseChannel = "all"
   except KeyError:
     print("\nYour version of the config file does not specify a release channel. Defaulting to 'All'")
-    print(f"{F.YELLOW}Re-create your config{S.R} to get the latest version.")
+    print(f"{FOREGROUND_TEXT_COLOR.YELLOW}Re-create your config{TEXT_STYLE.RESET_ALL} to get the latest version.")
     input("\nPress Enter to continue...")
     updateReleaseChannel = "all"
 
@@ -218,7 +218,7 @@ def main():
     try:
       updateAvailable = files.check_for_update(version, updateReleaseChannel, silentCheck=True, )
     except Exception as e:
-      print(f"{F.LIGHTRED_EX}Error Code U-3 occurred while checking for updates. (Checking can be disabled using the config file setting) Continuing...{S.R}\n")      
+      print(f"{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}Error Code U-3 occurred while checking for updates. (Checking can be disabled using the config file setting) Continuing...{TEXT_STYLE.RESET_ALL}\n")      
       updateAvailable = None
     
     # Check if today or tomorrow's date is later than the last update date (add day to account for time zones)
@@ -282,7 +282,7 @@ def main():
 
 
   #----------------------------------- Begin Showing Program ---------------------------------
-  print(f"{F.LIGHTYELLOW_EX}\n===================== YOUTUBE SPAMMER PURGE v" + version + f" ====================={S.R}")
+  print(f"{FOREGROUND_TEXT_COLOR.LIGHTYELLOW_EX}\n===================== YOUTUBE SPAMMER PURGE v" + version + f" ====================={TEXT_STYLE.RESET_ALL}")
   print("=========== https://github.com/ThioJoe/YT-Spammer-Purge ===========")
   print("================= Author: ThioJoe - YouTube.com/ThioJoe ================ \n")
 
@@ -299,7 +299,7 @@ def main():
     userInfo = auth.get_current_user(config)
     CURRENTUSER = User(id=userInfo[0], name=userInfo[1], configMatch=userInfo[2]) # Returns [channelID, channelTitle, configmatch]
     auth.CURRENTUSER = CURRENTUSER
-    print("\n    >  Currently logged in user: " + f"{F.LIGHTGREEN_EX}" + str(CURRENTUSER.name) + f"{S.R} (Channel ID: {F.LIGHTGREEN_EX}" + str(CURRENTUSER.id) + f"{S.R} )")
+    print("\n    >  Currently logged in user: " + f"{FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}" + str(CURRENTUSER.name) + f"{TEXT_STYLE.RESET_ALL} (Channel ID: {FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}" + str(CURRENTUSER.id) + f"{TEXT_STYLE.RESET_ALL} )")
     if choice("       Continue as this user?", CURRENTUSER.configMatch) == True:
       confirmedCorrectLogin = True
       utils.console_cleanup()
@@ -372,16 +372,16 @@ def main():
     if updateAvailable != False:
       updateStringLabel = "Update Available: "
       if updateAvailable == True: # Stable update available
-        updateString = f"{B.LIGHTGREEN_EX}{F.BLACK} Yes {S.R}"
+        updateString = f"{BACKGROUND_TEXT_COLOR.LIGHTGREEN_EX}{FOREGROUND_TEXT_COLOR.BLACK} Yes {TEXT_STYLE.RESET_ALL}"
 
       elif updateAvailable == "beta": # Beta Update Available
         if updateReleaseChannel == "stable":
           updateStringLabel = ""
           updateString = ""
         else:
-          updateString = f"{B.LIGHTCYAN_EX}{F.BLACK} Beta {S.R}"
+          updateString = f"{BACKGROUND_TEXT_COLOR.LIGHTCYAN_EX}{FOREGROUND_TEXT_COLOR.BLACK} Beta {TEXT_STYLE.RESET_ALL}"
       elif updateAvailable == None:
-        updateString = f"{F.LIGHTRED_EX}Error{S.R}"
+        updateString = f"{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}Error{TEXT_STYLE.RESET_ALL}"
         print("> Note: Error during check for updates. Select 'Check For Updates' for details.")  
 
     else:
@@ -396,17 +396,17 @@ def main():
     print("\n{:<59}{:<18}{:>7}".format("> At any prompt, enter 'X' to return here", updateStringLabel, updateString))
     print("> Enter 'Q' now to quit")
 
-    print(f"\n\n-------------------------------- {F.YELLOW}Scanning Options{S.R} --------------------------------")
-    print(f"      1. Scan {F.LIGHTCYAN_EX}specific videos{S.R}")
-    print(f"      2. Scan {F.LIGHTCYAN_EX}recent videos{S.R} for a channel")
-    print(f"      3. Scan recent comments across your {F.LIGHTBLUE_EX}Entire Channel{S.R}")
-    print(f"      4. Scan a specific {F.LIGHTMAGENTA_EX}community post{S.R} (Experimental)")
-    print(f"      5. Scan {F.LIGHTMAGENTA_EX}recent community posts{S.R} for a channel (Experimental)")
-    print(f"\n--------------------------------- {F.YELLOW}Other Options{S.R} ----------------------------------")
-    print(f"      6. Create your own {F.LIGHTGREEN_EX}config file(s){S.R} to run the program with pre-set settings")
-    print(f"      7. Remove comments using a {F.LIGHTRED_EX}pre-existing list{S.R} or log file")
+    print(f"\n\n-------------------------------- {FOREGROUND_TEXT_COLOR.YELLOW}Scanning Options{TEXT_STYLE.RESET_ALL} --------------------------------")
+    print(f"      1. Scan {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}specific videos{TEXT_STYLE.RESET_ALL}")
+    print(f"      2. Scan {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}recent videos{TEXT_STYLE.RESET_ALL} for a channel")
+    print(f"      3. Scan recent comments across your {FOREGROUND_TEXT_COLOR.LIGHTBLUE_EX}Entire Channel{TEXT_STYLE.RESET_ALL}")
+    print(f"      4. Scan a specific {FOREGROUND_TEXT_COLOR.LIGHTMAGENTA_EX}community post{TEXT_STYLE.RESET_ALL} (Experimental)")
+    print(f"      5. Scan {FOREGROUND_TEXT_COLOR.LIGHTMAGENTA_EX}recent community posts{TEXT_STYLE.RESET_ALL} for a channel (Experimental)")
+    print(f"\n--------------------------------- {FOREGROUND_TEXT_COLOR.YELLOW}Other Options{TEXT_STYLE.RESET_ALL} ----------------------------------")
+    print(f"      6. Create your own {FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}config file(s){TEXT_STYLE.RESET_ALL} to run the program with pre-set settings")
+    print(f"      7. Remove comments using a {FOREGROUND_TEXT_COLOR.LIGHTRED_EX}pre-existing list{TEXT_STYLE.RESET_ALL} or log file")
     print(f"      8. Recover deleted comments using log file")
-    print(f"      9. Check & Download {F.LIGHTCYAN_EX}Updates{S.R}\n")
+    print(f"      9. Check & Download {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}Updates{TEXT_STYLE.RESET_ALL}\n")
     
 
 
@@ -468,11 +468,11 @@ def main():
             if len(enteredVideosList) == 0:
               validConfigSetting = False
               listNotEmpty = False
-              print(f"{F.LIGHTRED_EX}\nError: Video list is empty!{S.R}")
+              print(f"{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}\nError: Video list is empty!{TEXT_STYLE.RESET_ALL}")
             else:
               listNotEmpty = True
           else:
-            print(f"\nEnter a list of {F.YELLOW}Video Links{S.R} or {F.YELLOW}Video IDs{S.R} to scan, separated by commas.")
+            print(f"\nEnter a list of {FOREGROUND_TEXT_COLOR.YELLOW}Video Links{TEXT_STYLE.RESET_ALL} or {FOREGROUND_TEXT_COLOR.YELLOW}Video IDs{TEXT_STYLE.RESET_ALL} to scan, separated by commas.")
             print(" > Note: All videos must be from the same channel.")
             enteredVideosList = utils.string_to_list(input("\nEnter here: "))
             if str(enteredVideosList).lower() == "['x']":
@@ -480,7 +480,7 @@ def main():
             validConfigSetting = False
             if len(enteredVideosList) == 0:
               listNotEmpty = False
-              print(f"{F.LIGHTRED_EX}\nError: Video list is empty!{S.R}")
+              print(f"{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}\nError: Video list is empty!{TEXT_STYLE.RESET_ALL}")
             else:
               listNotEmpty = True
 
@@ -518,7 +518,7 @@ def main():
           if videosToScan[0]['channelOwnerID'] != videosToScan[i]['channelOwnerID']:
             misMatchVidIndex += 1
             if allVideosMatchBool == True:
-              print(f"\n {F.LIGHTRED_EX}ERROR: Videos scanned together all must be from the same channel.{S.R}")
+              print(f"\n {FOREGROUND_TEXT_COLOR.LIGHTRED_EX}ERROR: Videos scanned together all must be from the same channel.{TEXT_STYLE.RESET_ALL}")
               print("  The following videos do not match the channel owner of the first video in the list: ")
             if misMatchVidIndex == 11 and len(enteredVideosList) > 10:
               remainingCount = str(len(enteredVideosList) - 10)
@@ -535,7 +535,7 @@ def main():
         if allVideosMatchBool == True:       
           # Print video titles, if there are many, ask user to see all if more than 5
           i = 0
-          print(f"\n{F.BLUE}Chosen Videos:{S.R}")
+          print(f"\n{FOREGROUND_TEXT_COLOR.BLUE}Chosen Videos:{TEXT_STYLE.RESET_ALL}")
           for video in videosToScan:
             i += 1
             if i==6 and len(enteredVideosList) > 5:
@@ -560,16 +560,16 @@ def main():
             confirm = True
           else:
             if userNotChannelOwner == True and moderator_mode == False:
-              print(f"{F.LIGHTRED_EX}NOTE: This is not your video. Enabling '{F.YELLOW}Not Your Channel Mode{F.LIGHTRED_EX}'. You can report spam comments, but not delete them.{S.R}")
+              print(f"{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}NOTE: This is not your video. Enabling '{FOREGROUND_TEXT_COLOR.YELLOW}Not Your Channel Mode{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}'. You can report spam comments, but not delete them.{TEXT_STYLE.RESET_ALL}")
             elif userNotChannelOwner == True and moderator_mode == True:
-              print(f"{F.LIGHTRED_EX}NOTE: {F.YELLOW}Moderator Mode is enabled{F.LIGHTRED_EX}. You can hold comments for review when using certain modes{S.R}")
+              print(f"{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}NOTE: {FOREGROUND_TEXT_COLOR.YELLOW}Moderator Mode is enabled{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}. You can hold comments for review when using certain modes{TEXT_STYLE.RESET_ALL}")
             print("Total number of comments to scan: " + str(miscData.totalCommentCount))
             if miscData.totalCommentCount >= 100000:
-              print(f"\n{B.YELLOW}{F.BLACK} WARNING: {S.R} You have chosen to scan a large amount of comments. The default API quota limit ends up")
-              print(f" around {F.YELLOW}10,000 comment deletions per day{S.R}. If you find more spam than that you will go over the limit.")
-              print(f"        > Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
+              print(f"\n{BACKGROUND_TEXT_COLOR.YELLOW}{FOREGROUND_TEXT_COLOR.BLACK} WARNING: {TEXT_STYLE.RESET_ALL} You have chosen to scan a large amount of comments. The default API quota limit ends up")
+              print(f" around {FOREGROUND_TEXT_COLOR.YELLOW}10,000 comment deletions per day{TEXT_STYLE.RESET_ALL}. If you find more spam than that you will go over the limit.")
+              print(f"        > Read more about the quota limits for this app here: {FOREGROUND_TEXT_COLOR.YELLOW}TJoe.io/api-limit-info{TEXT_STYLE.RESET_ALL}")
               if userNotChannelOwner == False or moderator_mode == True:
-                print(f"{F.LIGHTCYAN_EX}> Note:{S.R} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")
+                print(f"{FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}> Note:{TEXT_STYLE.RESET_ALL} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")
             confirm = choice("Is this video list correct?", bypass=validConfigSetting)
             if confirm == None:
               return True # Return to main menu
@@ -596,8 +596,8 @@ def main():
             else:
               print("Invalid Channel ID or Link in config file!")
 
-        print(f"\nEnter a {F.YELLOW}channel ID or Link{S.R} to scan {F.LIGHTCYAN_EX}recent videos{S.R} from")
-        print(f"   > If scanning {F.YELLOW}your own channel{S.R}, just hit {F.LIGHTGREEN_EX}Enter{S.R}")
+        print(f"\nEnter a {FOREGROUND_TEXT_COLOR.YELLOW}channel ID or Link{TEXT_STYLE.RESET_ALL} to scan {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}recent videos{TEXT_STYLE.RESET_ALL} from")
+        print(f"   > If scanning {FOREGROUND_TEXT_COLOR.YELLOW}your own channel{TEXT_STYLE.RESET_ALL}, just hit {FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}Enter{TEXT_STYLE.RESET_ALL}")
         inputtedChannel = input("\nEnter Here: ")
         if inputtedChannel == "":
           channelID = CURRENTUSER.id
@@ -611,7 +611,7 @@ def main():
       if CURRENTUSER.id != channelID:
         userNotChannelOwner = True
 
-      print(f"\nChosen Channel: {F.LIGHTCYAN_EX}{channelTitle}{S.R}")
+      print(f"\nChosen Channel: {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}{channelTitle}{TEXT_STYLE.RESET_ALL}")
       
       # Get number of recent videos to scan, either from config or user input, and validate
       while validEntry == False or confirm == False:
@@ -626,7 +626,7 @@ def main():
             print("Invalid number entered in config file for recent_videos_amount")
             numVideos = None
         else:
-          print(f"\nEnter the {F.YELLOW}number most recent videos{S.R} to scan back-to-back:")
+          print(f"\nEnter the {FOREGROUND_TEXT_COLOR.YELLOW}number most recent videos{TEXT_STYLE.RESET_ALL} to scan back-to-back:")
           numVideos = input("\nNumber of Recent Videos: ")
           print("")
           if str(numVideos).lower() == "x":
@@ -641,12 +641,12 @@ def main():
             validEntry = False
             validConfigSetting = False
         except ValueError:
-          print(f"{F.LIGHTRED_EX}Error:{S.R} Entry must be a whole number greater than zero.")
+          print(f"{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}Error:{TEXT_STYLE.RESET_ALL} Entry must be a whole number greater than zero.")
           validEntry = False
         if validEntry == True and numVideos >= 1000:
-          print(f"\n{B.YELLOW}{F.BLACK} WARNING: {S.R} You have chosen to scan a large amount of videos. With the default API quota limit,")
-          print(f" every 1000 videos will use up 20% of the quota {F.YELLOW}just from listing the videos alone, before any comment scanning.{S.R}")
-          print(f"        > Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
+          print(f"\n{BACKGROUND_TEXT_COLOR.YELLOW}{FOREGROUND_TEXT_COLOR.BLACK} WARNING: {TEXT_STYLE.RESET_ALL} You have chosen to scan a large amount of videos. With the default API quota limit,")
+          print(f" every 1000 videos will use up 20% of the quota {FOREGROUND_TEXT_COLOR.YELLOW}just from listing the videos alone, before any comment scanning.{TEXT_STYLE.RESET_ALL}")
+          print(f"        > Read more about the quota limits for this app here: {FOREGROUND_TEXT_COLOR.YELLOW}TJoe.io/api-limit-info{TEXT_STYLE.RESET_ALL}")
 
         if validEntry == True:
           # Fetch recent videos and print titles to user for confirmation
@@ -654,7 +654,7 @@ def main():
           if str(videosToScan) == "MainMenu":
             return True # Return to main menu
           if len(videosToScan) == 0:
-            print(f"\n{F.LIGHTRED_EX}Error:{S.R} No scannable videos found in selected range!  They all may have no comments and/or are live streams.")
+            print(f"\n{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}Error:{TEXT_STYLE.RESET_ALL} No scannable videos found in selected range!  They all may have no comments and/or are live streams.")
             if config['auto_close'] == True:
               print("Auto-close enabled in config. Exiting in 5 seconds...")
               time.sleep(5)
@@ -669,7 +669,7 @@ def main():
             miscData.totalCommentCount += int(video['commentCount'])
 
           if len(videosToScan) < numVideos:
-            print(f"\n{F.YELLOW} WARNING:{S.R} Only {len(videosToScan)} videos found. Videos may be skipped if there are no comments.")
+            print(f"\n{FOREGROUND_TEXT_COLOR.YELLOW} WARNING:{TEXT_STYLE.RESET_ALL} Only {len(videosToScan)} videos found. Videos may be skipped if there are no comments.")
           print("\nRecent Videos To Be Scanned:")
           for i in range(len(videosToScan)):
             if config['skip_confirm_video'] == False:
@@ -686,16 +686,16 @@ def main():
             confirm = True
           else:
             if userNotChannelOwner == True and moderator_mode == False:
-              print(f"{F.LIGHTRED_EX}NOTE: These aren't your videos. Enabling '{F.YELLOW}Not Your Channel Mode{F.LIGHTRED_EX}'. You can report spam comments, but not delete them.{S.R}")
+              print(f"{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}NOTE: These aren't your videos. Enabling '{FOREGROUND_TEXT_COLOR.YELLOW}Not Your Channel Mode{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}'. You can report spam comments, but not delete them.{TEXT_STYLE.RESET_ALL}")
             elif userNotChannelOwner == True and moderator_mode == True:
-              print(f"{F.LIGHTRED_EX}NOTE: {F.YELLOW}Moderator Mode is enabled{F.LIGHTRED_EX}. You can hold comments for review when using certain modes{S.R}")
+              print(f"{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}NOTE: {FOREGROUND_TEXT_COLOR.YELLOW}Moderator Mode is enabled{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}. You can hold comments for review when using certain modes{TEXT_STYLE.RESET_ALL}")
             print("\nTotal number of comments to scan: " + str(miscData.totalCommentCount))
             if miscData.totalCommentCount >= 100000:
-              print(f"\n{B.YELLOW}{F.BLACK} WARNING: {S.R} You have chosen to scan a large amount of comments. The default API quota limit ends up")
-              print(f" around {F.YELLOW}10,000 comment deletions per day{S.R}. If you find more spam than that you will go over the limit.")
-              print(f"        > Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
+              print(f"\n{BACKGROUND_TEXT_COLOR.YELLOW}{FOREGROUND_TEXT_COLOR.BLACK} WARNING: {TEXT_STYLE.RESET_ALL} You have chosen to scan a large amount of comments. The default API quota limit ends up")
+              print(f" around {FOREGROUND_TEXT_COLOR.YELLOW}10,000 comment deletions per day{TEXT_STYLE.RESET_ALL}. If you find more spam than that you will go over the limit.")
+              print(f"        > Read more about the quota limits for this app here: {FOREGROUND_TEXT_COLOR.YELLOW}TJoe.io/api-limit-info{TEXT_STYLE.RESET_ALL}")
               if userNotChannelOwner == True or moderator_mode == True:
-                print(f"{F.LIGHTCYAN_EX}> Note:{S.R} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")
+                print(f"{FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}> Note:{TEXT_STYLE.RESET_ALL} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")
             confirm = choice("Is everything correct?", bypass=config['skip_confirm_video'])
             if confirm == None:
               return True # Return to main menu
@@ -716,17 +716,17 @@ def main():
           if validConfigSetting == True and config and config['max_comments'] != 'ask':
             maxScanNumber = int(config['max_comments'])
           else:
-            maxScanNumber = input(f"Enter the maximum {F.YELLOW}number of comments{S.R} to scan: ")
+            maxScanNumber = input(f"Enter the maximum {FOREGROUND_TEXT_COLOR.YELLOW}number of comments{TEXT_STYLE.RESET_ALL} to scan: ")
             if str(maxScanNumber).lower() == "x":
               return True # Return to main menu
             maxScanNumber = int(maxScanNumber)
 
             if maxScanNumber >= 100000:
-              print(f"\n{B.YELLOW}{F.BLACK} WARNING: {S.R} You have chosen to scan a large amount of comments. The default API quota limit ends up")
-              print(f" around {F.YELLOW}10,000 comment deletions per day{S.R}. If you find more spam than that you will go over the limit.")
-              print(f"        > Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
+              print(f"\n{BACKGROUND_TEXT_COLOR.YELLOW}{FOREGROUND_TEXT_COLOR.BLACK} WARNING: {TEXT_STYLE.RESET_ALL} You have chosen to scan a large amount of comments. The default API quota limit ends up")
+              print(f" around {FOREGROUND_TEXT_COLOR.YELLOW}10,000 comment deletions per day{TEXT_STYLE.RESET_ALL}. If you find more spam than that you will go over the limit.")
+              print(f"        > Read more about the quota limits for this app here: {FOREGROUND_TEXT_COLOR.YELLOW}TJoe.io/api-limit-info{TEXT_STYLE.RESET_ALL}")
               if userNotChannelOwner == True or moderator_mode == True:
-                print(f"{F.LIGHTCYAN_EX}> Note:{S.R} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")
+                print(f"{FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}> Note:{TEXT_STYLE.RESET_ALL} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")
               userChoice = choice("Do you still want to continue?")
               if userChoice == False:
                 validInteger == False
@@ -748,7 +748,7 @@ def main():
 # ================================================================================ COMMUNITY POST =====================================================================================================
 
     elif scanMode == 'communityPost':
-      print(f"\nNOTES: This mode is {F.YELLOW}experimental{S.R}, and not as polished as other features. Expect some janky-ness.")
+      print(f"\nNOTES: This mode is {FOREGROUND_TEXT_COLOR.YELLOW}experimental{TEXT_STYLE.RESET_ALL}, and not as polished as other features. Expect some janky-ness.")
       print("   > It is also much slower to retrieve comments, because it does not use the API")
       confirm = False
       while confirm == False:
@@ -761,7 +761,7 @@ def main():
           print("\nCommunity Post By: " + postOwnerUsername)
           if postOwnerID != CURRENTUSER.id:
             userNotChannelOwner = True
-            print(f"\n{F.YELLOW}Warning:{S.R} You are scanning someone elses post. '{F.LIGHTRED_EX}Not Your Channel Mode{S.R}' Enabled.")
+            print(f"\n{FOREGROUND_TEXT_COLOR.YELLOW}Warning:{TEXT_STYLE.RESET_ALL} You are scanning someone elses post. '{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}Not Your Channel Mode{TEXT_STYLE.RESET_ALL}' Enabled.")
           confirm = choice("Continue?")
           if confirm == None:
             return True # Return to main menu
@@ -785,7 +785,7 @@ def main():
         if validInteger == False:
           print("\nInvalid max_comments setting in config! Number must a whole number be greater than zero.")
         while validInteger == False:
-          maxScanInput = input(f"\nEnter the maximum {F.YELLOW}number of comments{S.R} to scan: ")
+          maxScanInput = input(f"\nEnter the maximum {FOREGROUND_TEXT_COLOR.YELLOW}number of comments{TEXT_STYLE.RESET_ALL} to scan: ")
           if str(maxScanInput).lower() == "x":
             return True # Return to main menu
           try:
@@ -801,7 +801,7 @@ def main():
 
     # Recent Community Posts
     elif scanMode == 'recentCommunityPosts':
-      print(f"\nNOTES: This mode is {F.YELLOW}experimental{S.R}, and not as polished as other features. Expect some janky-ness.")
+      print(f"\nNOTES: This mode is {FOREGROUND_TEXT_COLOR.YELLOW}experimental{TEXT_STYLE.RESET_ALL}, and not as polished as other features. Expect some janky-ness.")
       print("   > It is also much slower to retrieve comments, because it does not use the API")
         
       confirm = False
@@ -823,8 +823,8 @@ def main():
             else:
               print("Invalid Channel ID or Link in config file!")
 
-        print(f"\nEnter a {F.YELLOW}channel ID or Link{S.R} to scan {F.LIGHTCYAN_EX}recent community posts{S.R} from")
-        print(f"   > If scanning {F.YELLOW}your own channel{S.R}, just hit {F.LIGHTGREEN_EX}Enter{S.R}")
+        print(f"\nEnter a {FOREGROUND_TEXT_COLOR.YELLOW}channel ID or Link{TEXT_STYLE.RESET_ALL} to scan {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}recent community posts{TEXT_STYLE.RESET_ALL} from")
+        print(f"   > If scanning {FOREGROUND_TEXT_COLOR.YELLOW}your own channel{TEXT_STYLE.RESET_ALL}, just hit {FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}Enter{TEXT_STYLE.RESET_ALL}")
         inputtedChannel = input("\nEnter Here: ")
         if inputtedChannel == "":
           channelID = CURRENTUSER.id
@@ -842,16 +842,16 @@ def main():
       recentPostsListofDicts = community_downloader.fetch_recent_community_posts(channelID)
       
       print("\n------------------------------------------------------------")
-      print(f"Retrieved {F.YELLOW}{len(recentPostsListofDicts)} recent posts{S.R} from {F.LIGHTCYAN_EX}{channelTitle}{S.R}")
+      print(f"Retrieved {FOREGROUND_TEXT_COLOR.YELLOW}{len(recentPostsListofDicts)} recent posts{TEXT_STYLE.RESET_ALL} from {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}{channelTitle}{TEXT_STYLE.RESET_ALL}")
       print(f"\n  Post Content Samples:")
       for i in range(len(recentPostsListofDicts)):
         # recentPostsListofDicts = {post id : post text} - Below prints sample of post text
         print(f"    {i+1}.".ljust(9, " ") + f"{list(recentPostsListofDicts[i].values())[0][0:50]}")
 
       if userNotChannelOwner == True:
-              print(f"\n > {F.LIGHTRED_EX}Warning:{S.R} You are scanning someone elses post. {F.LIGHTRED_EX}'Not Your Channel Mode'{S.R} Enabled.")
+              print(f"\n > {FOREGROUND_TEXT_COLOR.LIGHTRED_EX}Warning:{TEXT_STYLE.RESET_ALL} You are scanning someone elses post. {FOREGROUND_TEXT_COLOR.LIGHTRED_EX}'Not Your Channel Mode'{TEXT_STYLE.RESET_ALL} Enabled.")
 
-      print(f"\n{F.YELLOW}How many{S.R} of the most recent posts do you want to scan?")
+      print(f"\n{FOREGROUND_TEXT_COLOR.YELLOW}How many{TEXT_STYLE.RESET_ALL} of the most recent posts do you want to scan?")
 
       inputStr = ""
       while True:
@@ -909,44 +909,44 @@ def main():
 # ====================================================================================================================================================================================================
 
     # Set Menu Colors
-    autoSmartColor = F.YELLOW
-    sensitiveColor = F.YELLOW
-    IDColor = F.LIGHTRED_EX
-    usernameColor = F.LIGHTBLUE_EX
-    textColor = F.CYAN
-    usernameTextColor = F.LIGHTBLUE_EX
-    asciiColor = F.LIGHTMAGENTA_EX
-    styleID = S.BRIGHT
-    styleOther = S.BRIGHT
+    autoSmartColor = FOREGROUND_TEXT_COLOR.YELLOW
+    sensitiveColor = FOREGROUND_TEXT_COLOR.YELLOW
+    IDColor = FOREGROUND_TEXT_COLOR.LIGHTRED_EX
+    usernameColor = FOREGROUND_TEXT_COLOR.LIGHTBLUE_EX
+    textColor = FOREGROUND_TEXT_COLOR.CYAN
+    usernameTextColor = FOREGROUND_TEXT_COLOR.LIGHTBLUE_EX
+    asciiColor = FOREGROUND_TEXT_COLOR.LIGHTMAGENTA_EX
+    styleID = TEXT_STYLE.BRIGHT
+    styleOther = TEXT_STYLE.BRIGHT
     a1 = ""
     a2 = ""
 
     # Change menu display & colors of some options depending on privileges
     if userNotChannelOwner:
-      styleOther = S.DIM
-      a2 = f"{F.LIGHTRED_EX}*{S.R}" # a = asterisk
+      styleOther = TEXT_STYLE.DIM
+      a2 = f"{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}*{TEXT_STYLE.RESET_ALL}" # a = asterisk
 
     if not moderator_mode and userNotChannelOwner:
-      styleID = S.DIM
-      a1 = f"{F.LIGHTRED_EX}*{S.R}"
+      styleID = TEXT_STYLE.DIM
+      a1 = f"{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}*{TEXT_STYLE.RESET_ALL}"
 
     # User inputs filtering mode
     print("\n-------------------------------------------------------")
     print(f"~~~~~~~~~~~ Choose how to identify spammers ~~~~~~~~~~~")
     print("-------------------------------------------------------")
-    print(f"{S.BRIGHT} 1. {S.R}{F.BLACK}{B.LIGHTGREEN_EX}(RECOMMENDED):{S.R} {S.BRIGHT}{autoSmartColor}Auto-Smart Mode{F.R}: Automatically detects multiple spammer techniques{S.R}")
-    print(f"{S.BRIGHT} 2. {sensitiveColor}Sensitive-Smart Mode{F.R}: Much more likely to catch all spammers, but with significantly more false positives{S.R}")  
-    print(f"{a1}{styleID} 3. Enter Spammer's {IDColor}channel ID(s) or link(s){F.R}{S.R}")
-    print(f"{a2}{styleOther} 4. Scan {usernameColor}usernames{F.R} for criteria you choose{S.R}")
-    print(f"{a2}{styleOther} 5. Scan {textColor}comment text{F.R} for criteria you choose{S.R}")
-    print(f"{a2}{styleOther} 6. Scan both {usernameTextColor}usernames{F.R} and {textColor}comment text{F.R} for criteria you choose{S.R}")
-    print(f"{a2}{styleOther} 7. ASCII Mode: Scan usernames for {asciiColor}ANY non-ASCII special characters{F.R} (May cause collateral damage!){S.R}")
+    print(f"{TEXT_STYLE.BRIGHT} 1. {TEXT_STYLE.RESET_ALL}{FOREGROUND_TEXT_COLOR.BLACK}{BACKGROUND_TEXT_COLOR.LIGHTGREEN_EX}(RECOMMENDED):{TEXT_STYLE.RESET_ALL} {TEXT_STYLE.BRIGHT}{autoSmartColor}Auto-Smart Mode{FOREGROUND_TEXT_COLOR.RESET}: Automatically detects multiple spammer techniques{TEXT_STYLE.RESET_ALL}")
+    print(f"{TEXT_STYLE.BRIGHT} 2. {sensitiveColor}Sensitive-Smart Mode{FOREGROUND_TEXT_COLOR.RESET}: Much more likely to catch all spammers, but with significantly more false positives{TEXT_STYLE.RESET_ALL}")  
+    print(f"{a1}{styleID} 3. Enter Spammer's {IDColor}channel ID(s) or link(s){FOREGROUND_TEXT_COLOR.RESET}{TEXT_STYLE.RESET_ALL}")
+    print(f"{a2}{styleOther} 4. Scan {usernameColor}usernames{FOREGROUND_TEXT_COLOR.RESET} for criteria you choose{TEXT_STYLE.RESET_ALL}")
+    print(f"{a2}{styleOther} 5. Scan {textColor}comment text{FOREGROUND_TEXT_COLOR.RESET} for criteria you choose{TEXT_STYLE.RESET_ALL}")
+    print(f"{a2}{styleOther} 6. Scan both {usernameTextColor}usernames{FOREGROUND_TEXT_COLOR.RESET} and {textColor}comment text{FOREGROUND_TEXT_COLOR.RESET} for criteria you choose{TEXT_STYLE.RESET_ALL}")
+    print(f"{a2}{styleOther} 7. ASCII Mode: Scan usernames for {asciiColor}ANY non-ASCII special characters{FOREGROUND_TEXT_COLOR.RESET} (May cause collateral damage!){TEXT_STYLE.RESET_ALL}")
 
 
     if userNotChannelOwner == True and moderator_mode == False:
-      print(f" {F.LIGHTRED_EX}*Note: With 'Not Your Channel Mode' enabled, you can only report matched comments while using 'Auto-Smart Mode' \n        or 'Sensitive-Smart Mode'.{S.R}") # Based on filterModesAllowedforNonOwners
+      print(f" {FOREGROUND_TEXT_COLOR.LIGHTRED_EX}*Note: With 'Not Your Channel Mode' enabled, you can only report matched comments while using 'Auto-Smart Mode' \n        or 'Sensitive-Smart Mode'.{TEXT_STYLE.RESET_ALL}") # Based on filterModesAllowedforNonOwners
     elif userNotChannelOwner == True and moderator_mode == True:
-      print(f" {F.LIGHTRED_EX}*Note: With 'Moderator Mode', you can Hold and/or Report using: 'Auto-Smart', 'Sensitive-Smart', and Channel ID modes.{S.R}")
+      print(f" {FOREGROUND_TEXT_COLOR.LIGHTRED_EX}*Note: With 'Moderator Mode', you can Hold and/or Report using: 'Auto-Smart', 'Sensitive-Smart', and Channel ID modes.{TEXT_STYLE.RESET_ALL}")
     # Make sure input is valid, if not ask again
     validFilterMode = False
     validFilterSubMode = False
@@ -1002,9 +1002,9 @@ def main():
         print("~~~ What do you want to scan comment text for specifically? ~~~")
       elif filterMode == "NameAndText":
         print("~~~ What do you want to scan names and comments for specifically? ~~~")
-      print(f" 1. A {F.CYAN}certain special character{S.R}, or set of multiple characters")
-      print(f" 2. An {F.LIGHTMAGENTA_EX}entire string{S.R}, or multiple strings")
-      print(f" 3. Advanced: A custom {F.YELLOW}Regex pattern{S.R} you'll enter")
+      print(f" 1. A {FOREGROUND_TEXT_COLOR.CYAN}certain special character{TEXT_STYLE.RESET_ALL}, or set of multiple characters")
+      print(f" 2. An {FOREGROUND_TEXT_COLOR.LIGHTMAGENTA_EX}entire string{TEXT_STYLE.RESET_ALL}, or multiple strings")
+      print(f" 3. Advanced: A custom {FOREGROUND_TEXT_COLOR.YELLOW}Regex pattern{TEXT_STYLE.RESET_ALL} you'll enter")
 
       while validFilterSubMode == False:
         if validConfigSetting == True:
@@ -1228,12 +1228,12 @@ def main():
 
     # Counts number of found spam comments and prints list
     if not current.matchedCommentsDict and not current.duplicateCommentsDict and not current.spamThreadsDict and not current.repostedCommentsDict: # If no spam comments found, exits
-      print(f"{B.RED}{F.BLACK} No matched comments or users found! {F.R}{B.R}{S.R}\n")
-      print(f"If you see missed spam or false positives, you can submit a filter suggestion here: {F.YELLOW}TJoe.io/filter-feedback{S.R}")
+      print(f"{BACKGROUND_TEXT_COLOR.RED}{FOREGROUND_TEXT_COLOR.BLACK} No matched comments or users found! {FOREGROUND_TEXT_COLOR.RESET}{BACKGROUND_TEXT_COLOR.RESET}{TEXT_STYLE.RESET_ALL}\n")
+      print(f"If you see missed spam or false positives, you can submit a filter suggestion here: {FOREGROUND_TEXT_COLOR.YELLOW}TJoe.io/filter-feedback{TEXT_STYLE.RESET_ALL}")
 
       # Can still log to json even though no comments
       if config['json_log_all_comments'] and config['json_log'] and config['enable_logging'] != False:
-        print(f"Because you enabled '{F.LIGHTCYAN_EX}json_log_all_comments{S.R}' in config, {F.LIGHTCYAN_EX}continuing on to log anyway{S.R}.")
+        print(f"Because you enabled '{FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}json_log_all_comments{TEXT_STYLE.RESET_ALL}' in config, {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}continuing on to log anyway{TEXT_STYLE.RESET_ALL}.")
         jsonSettingsDict = {}
         current, logMode, jsonSettingsDict = logging.prepare_logFile_settings(current, config, miscData, jsonSettingsDict, filtersDict, bypass)
         jsonDataDict = logging.get_extra_json_data([], jsonSettingsDict)
@@ -1246,19 +1246,19 @@ def main():
         print("\nAuto-close enabled in config. Exiting in 5 seconds...")
         time.sleep(5)
         sys.exit()
-    print(f"Number of {S.BRIGHT}{F.LIGHTRED_EX}Matched{S.R} Comments Found: {B.RED}{F.WHITE} {str(len(current.matchedCommentsDict))} {F.R}{B.R}{S.R}")
+    print(f"Number of {TEXT_STYLE.BRIGHT}{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}Matched{TEXT_STYLE.RESET_ALL} Comments Found: {BACKGROUND_TEXT_COLOR.RED}{FOREGROUND_TEXT_COLOR.WHITE} {str(len(current.matchedCommentsDict))} {FOREGROUND_TEXT_COLOR.RESET}{BACKGROUND_TEXT_COLOR.RESET}{TEXT_STYLE.RESET_ALL}")
     if current.spamThreadsDict:
-      print(f"\nNumber of {S.BRIGHT}{F.RED}Spam Bot Threads{S.R} Found: {S.BRIGHT}{B.RED}{F.WHITE} {str(len(current.spamThreadsDict))} {F.R}{B.R}{S.R}")
+      print(f"\nNumber of {TEXT_STYLE.BRIGHT}{FOREGROUND_TEXT_COLOR.RED}Spam Bot Threads{TEXT_STYLE.RESET_ALL} Found: {TEXT_STYLE.BRIGHT}{BACKGROUND_TEXT_COLOR.RED}{FOREGROUND_TEXT_COLOR.WHITE} {str(len(current.spamThreadsDict))} {FOREGROUND_TEXT_COLOR.RESET}{BACKGROUND_TEXT_COLOR.RESET}{TEXT_STYLE.RESET_ALL}")
     if current.duplicateCommentsDict:
-      print(f"\nNumber of {S.BRIGHT}{F.LIGHTBLUE_EX}Non-Matched But Duplicate{S.R} Comments Found: {S.BRIGHT}{F.WHITE}{B.BLUE} {str(len(current.duplicateCommentsDict))} {F.R}{B.R}{S.R}")
+      print(f"\nNumber of {TEXT_STYLE.BRIGHT}{FOREGROUND_TEXT_COLOR.LIGHTBLUE_EX}Non-Matched But Duplicate{TEXT_STYLE.RESET_ALL} Comments Found: {TEXT_STYLE.BRIGHT}{FOREGROUND_TEXT_COLOR.WHITE}{BACKGROUND_TEXT_COLOR.BLUE} {str(len(current.duplicateCommentsDict))} {FOREGROUND_TEXT_COLOR.RESET}{BACKGROUND_TEXT_COLOR.RESET}{TEXT_STYLE.RESET_ALL}")
     if current.repostedCommentsDict:
-      print(f"\nNumber of {S.BRIGHT}{F.LIGHTBLUE_EX}Non-Matched But Stolen & Reposted{S.R} Comments Found: {S.BRIGHT}{F.WHITE}{B.BLUE} {str(len(current.repostedCommentsDict))} {F.R}{B.R}{S.R}")
+      print(f"\nNumber of {TEXT_STYLE.BRIGHT}{FOREGROUND_TEXT_COLOR.LIGHTBLUE_EX}Non-Matched But Stolen & Reposted{TEXT_STYLE.RESET_ALL} Comments Found: {TEXT_STYLE.BRIGHT}{FOREGROUND_TEXT_COLOR.WHITE}{BACKGROUND_TEXT_COLOR.BLUE} {str(len(current.repostedCommentsDict))} {FOREGROUND_TEXT_COLOR.RESET}{BACKGROUND_TEXT_COLOR.RESET}{TEXT_STYLE.RESET_ALL}")
 
     # If spam comments were found, continue
     if bypass == False:
       # Asks user if they want to save list of spam comments to a file
-      print(f"\nComments ready to display. Also {F.LIGHTGREEN_EX}save a log file?{S.R} {B.GREEN}{F.BLACK} Highly Recommended! {F.R}{B.R}{S.R}")
-      print(f"        (It even allows you to {F.LIGHTGREEN_EX}restore{S.R} deleted comments later)")
+      print(f"\nComments ready to display. Also {FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}save a log file?{TEXT_STYLE.RESET_ALL} {BACKGROUND_TEXT_COLOR.GREEN}{FOREGROUND_TEXT_COLOR.BLACK} Highly Recommended! {FOREGROUND_TEXT_COLOR.RESET}{BACKGROUND_TEXT_COLOR.RESET}{TEXT_STYLE.RESET_ALL}")
+      print(f"        (It even allows you to {FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}restore{TEXT_STYLE.RESET_ALL} deleted comments later)")
       loggingEnabled = choice(f"Save Log File (Recommended)?")
       if loggingEnabled == None:
         return True # Return to main menu
@@ -1281,8 +1281,8 @@ def main():
     # Print comments  and write to log files
     logFileContents, logMode = logging.print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMode)
 
-    print(f"\n{F.WHITE}{B.RED} NOTE: {S.R} Check that all comments listed above are indeed spam.")
-    print(f" > If you see missed spam or false positives, you can submit a filter suggestion here: {F.YELLOW}TJoe.io/filter-feedback{S.R}")
+    print(f"\n{FOREGROUND_TEXT_COLOR.WHITE}{BACKGROUND_TEXT_COLOR.RED} NOTE: {TEXT_STYLE.RESET_ALL} Check that all comments listed above are indeed spam.")
+    print(f" > If you see missed spam or false positives, you can submit a filter suggestion here: {FOREGROUND_TEXT_COLOR.YELLOW}TJoe.io/filter-feedback{TEXT_STYLE.RESET_ALL}")
     print()
 
     ### ---------------- Decide whether to skip deletion ----------------
@@ -1301,7 +1301,7 @@ def main():
     if userNotChannelOwner == True and filterMode not in filterModesAllowedforNonOwners:
       confirmDelete = False
       deletionEnabled = False
-      print(f"{F.LIGHTRED_EX}Error:{S.R}To prevent abuse, even in moderator mode, you can only use filter modes: Auto Smart, Sensitive Smart, and ID")
+      print(f"{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}Error:{TEXT_STYLE.RESET_ALL}To prevent abuse, even in moderator mode, you can only use filter modes: Auto Smart, Sensitive Smart, and ID")
       response = input("Press Enter to continue, or type 'x' to return to Main Menu...")
       if response.lower() == 'x':
         return True
@@ -1313,7 +1313,7 @@ def main():
 
     elif config['skip_deletion'] != False:
       print("Error Code C-3: Invalid value for 'skip_deletion' in config file. Must be 'True' or 'False'. Current Value:  " + str(config['skip_deletion']))
-      print(f"Defaulting to '{F.YELLOW}False{S.R}'")
+      print(f"Defaulting to '{FOREGROUND_TEXT_COLOR.YELLOW}False{TEXT_STYLE.RESET_ALL}'")
       input("\nPress Enter to continue...")
 
     ### ----------------------------------------------------------------
@@ -1373,7 +1373,7 @@ def main():
     if returnToMenu == False and deletionEnabled != "Allowed" and deletionEnabled != True:
         print("\nThe deletion functionality was not enabled. Cannot delete or report comments.")
         print("Possible Cause: You're scanning someone elses video with a non-supported filter mode.\n")
-        print(f"If you think this is a bug, you may report it on this project's GitHub page: {F.YELLOW}TJoe.io/bug-report{S.R}")
+        print(f"If you think this is a bug, you may report it on this project's GitHub page: {FOREGROUND_TEXT_COLOR.YELLOW}TJoe.io/bug-report{TEXT_STYLE.RESET_ALL}")
         if config['auto_close'] == True:
           print("\nAuto-close enabled in config. Exiting in 5 seconds...")
           time.sleep(5)
@@ -1397,45 +1397,45 @@ def main():
       while confirmDelete == None or confirmDelete.lower() not in validResponses:
         # Title
         if current.errorOccurred == True:
-          print(f"\n--- {F.WHITE}{B.RED} NOTE: {S.R} Options limited due to error during scanning ---")
+          print(f"\n--- {FOREGROUND_TEXT_COLOR.WHITE}{BACKGROUND_TEXT_COLOR.RED} NOTE: {TEXT_STYLE.RESET_ALL} Options limited due to error during scanning ---")
         if exclude == False:
-          print(f"{F.YELLOW}How do you want to handle {F.BLACK}{B.YELLOW} ALL {S.R}{F.YELLOW} the listed comments above?{S.R} (Including Non-Matched Duplicates)")
+          print(f"{FOREGROUND_TEXT_COLOR.YELLOW}How do you want to handle {FOREGROUND_TEXT_COLOR.BLACK}{BACKGROUND_TEXT_COLOR.YELLOW} ALL {TEXT_STYLE.RESET_ALL}{FOREGROUND_TEXT_COLOR.YELLOW} the listed comments above?{TEXT_STYLE.RESET_ALL} (Including Non-Matched Duplicates)")
         elif exclude == True:
-          print(f"{F.YELLOW}How do you want to handle the rest of the comments (not ones you {F.LIGHTGREEN_EX}excluded{F.YELLOW})?{S.R}")
+          print(f"{FOREGROUND_TEXT_COLOR.YELLOW}How do you want to handle the rest of the comments (not ones you {FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}excluded{FOREGROUND_TEXT_COLOR.YELLOW})?{TEXT_STYLE.RESET_ALL}")
         if userNotChannelOwner == True and moderator_mode == False:
-          print(f"{F.GREEN}~~ Not Your Channel Mode: Only Reporting is Possible ~~{S.R}")
+          print(f"{FOREGROUND_TEXT_COLOR.GREEN}~~ Not Your Channel Mode: Only Reporting is Possible ~~{TEXT_STYLE.RESET_ALL}")
         if userNotChannelOwner == True and moderator_mode == True:
-          print(f"{F.GREEN}~~ Moderator Mode: Reporting and Holding for Review is possible ~~{S.R}")
+          print(f"{FOREGROUND_TEXT_COLOR.GREEN}~~ Moderator Mode: Reporting and Holding for Review is possible ~~{TEXT_STYLE.RESET_ALL}")
 
         # Exclude
         if exclude == False:
-          print(f" > To {F.LIGHTGREEN_EX}exclude certain authors{S.R}: Type \'{F.LIGHTGREEN_EX}exclude{S.R}\' followed by a list of the numbers (or ranges of #'s) {F.LIGHTMAGENTA_EX}from the sample list{S.R}")
+          print(f" > To {FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}exclude certain authors{TEXT_STYLE.RESET_ALL}: Type \'{FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}exclude{TEXT_STYLE.RESET_ALL}\' followed by a list of the numbers (or ranges of #'s) {FOREGROUND_TEXT_COLOR.LIGHTMAGENTA_EX}from the sample list{TEXT_STYLE.RESET_ALL}")
           print("      > Example:  exclude 1, 3-5, 7, 12-15")
-          print(f" > To {F.LIGHTGREEN_EX}only process certain authors{S.R}: Type \'{F.LIGHTGREEN_EX}only{S.R}\' followed by a list of the numbers (or ranges of #s) {F.LIGHTMAGENTA_EX}from the sample list{S.R}")
+          print(f" > To {FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}only process certain authors{TEXT_STYLE.RESET_ALL}: Type \'{FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}only{TEXT_STYLE.RESET_ALL}\' followed by a list of the numbers (or ranges of #s) {FOREGROUND_TEXT_COLOR.LIGHTMAGENTA_EX}from the sample list{TEXT_STYLE.RESET_ALL}")
           print("      > Example:  only 1, 3-5, 7, 12-15  --  (Will effectively exclude the 'inverse' of the 'only' selected authors)")
 
         # Delete & Hold
         if exclude == False:
           if userNotChannelOwner == False and current.errorOccurred == False:
-            print(f" > To {F.LIGHTRED_EX}delete ALL of the above comments{S.R}: Type '{F.LIGHTRED_EX}DELETE{S.R}', then hit Enter.")
+            print(f" > To {FOREGROUND_TEXT_COLOR.LIGHTRED_EX}delete ALL of the above comments{TEXT_STYLE.RESET_ALL}: Type '{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}DELETE{TEXT_STYLE.RESET_ALL}', then hit Enter.")
           if (userNotChannelOwner == False or moderator_mode == True) and current.errorOccurred == False:
-            print(f" > To {F.LIGHTRED_EX}move ALL comments above to 'Held For Review' in YT Studio{S.R}: Type '{F.LIGHTRED_EX}HOLD{S.R}', then hit Enter.")
+            print(f" > To {FOREGROUND_TEXT_COLOR.LIGHTRED_EX}move ALL comments above to 'Held For Review' in YT Studio{TEXT_STYLE.RESET_ALL}: Type '{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}HOLD{TEXT_STYLE.RESET_ALL}', then hit Enter.")
         elif exclude == True:
           if userNotChannelOwner == False and current.errorOccurred == False:
-            print(f" > To {F.LIGHTRED_EX}delete the rest of the comments{S.R}: Type '{F.LIGHTRED_EX}DELETE{S.R}', then hit Enter.")
+            print(f" > To {FOREGROUND_TEXT_COLOR.LIGHTRED_EX}delete the rest of the comments{TEXT_STYLE.RESET_ALL}: Type '{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}DELETE{TEXT_STYLE.RESET_ALL}', then hit Enter.")
           if (userNotChannelOwner == False or moderator_mode == True) and current.errorOccurred == False:
-            print(f" > To {F.LIGHTRED_EX}move rest of comments above to 'Held For Review' in YT Studio{S.R}: Type '{F.LIGHTRED_EX}HOLD{S.R}', then hit Enter.")
+            print(f" > To {FOREGROUND_TEXT_COLOR.LIGHTRED_EX}move rest of comments above to 'Held For Review' in YT Studio{TEXT_STYLE.RESET_ALL}: Type '{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}HOLD{TEXT_STYLE.RESET_ALL}', then hit Enter.")
 
         # Report & None    
         if current.errorOccurred == False:
-          print(f" > To {F.LIGHTCYAN_EX}report the comments for spam{S.R}, type '{F.LIGHTCYAN_EX}REPORT{S.R}'.")
+          print(f" > To {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}report the comments for spam{TEXT_STYLE.RESET_ALL}, type '{FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}REPORT{TEXT_STYLE.RESET_ALL}'.")
         if loggingEnabled:
-          print(f" > To do nothing and {F.YELLOW}only log{S.R}, type '{F.YELLOW}NONE{S.R}'")
+          print(f" > To do nothing and {FOREGROUND_TEXT_COLOR.YELLOW}only log{TEXT_STYLE.RESET_ALL}, type '{FOREGROUND_TEXT_COLOR.YELLOW}NONE{TEXT_STYLE.RESET_ALL}'")
         else:
-          print(f" > To do {F.YELLOW}nothing{S.R}, type '{F.YELLOW}NONE{S.R}'")
+          print(f" > To do {FOREGROUND_TEXT_COLOR.YELLOW}nothing{TEXT_STYLE.RESET_ALL}, type '{FOREGROUND_TEXT_COLOR.YELLOW}NONE{TEXT_STYLE.RESET_ALL}'")
 
         if config['json_log'] == True and config['json_extra_data'] == True and loggingEnabled:
-          print(f"\n{F.WHITE}{B.BLUE} JSON NOTE: {S.R} You must proceed to write the JSON log file, even if you choose nothing")
+          print(f"\n{FOREGROUND_TEXT_COLOR.WHITE}{BACKGROUND_TEXT_COLOR.BLUE} JSON NOTE: {TEXT_STYLE.RESET_ALL} You must proceed to write the JSON log file, even if you choose nothing")
 
         # Take Entry
         confirmDelete = input("\n (Not Case Sensitive) Input: ")
@@ -1477,7 +1477,7 @@ def main():
 
           # Check that remaining comments list to remove is not empty
           if not current.matchedCommentsDict and not current.duplicateCommentsDict and not current.spamThreadsDict and not current.repostedCommentsDict:
-            print(f"\n{F.YELLOW}All authors excluded, no comments left to remove!{S.R}")
+            print(f"\n{FOREGROUND_TEXT_COLOR.YELLOW}All authors excluded, no comments left to remove!{TEXT_STYLE.RESET_ALL}")
             input("\nPress Enter to log and/or return to main menu...")
             returnToMenu = True
             break
@@ -1486,7 +1486,7 @@ def main():
           returnToMenu = True
 
         else:
-          print(f"\n{F.LIGHTRED_EX}ERROR:{S.R} This entry was invalid or not allowed with current settings: {confirmDelete}")
+          print(f"\n{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}ERROR:{TEXT_STYLE.RESET_ALL} This entry was invalid or not allowed with current settings: {confirmDelete}")
           input("\nPress Enter to try again...")
           print("\n")
 
@@ -1521,7 +1521,7 @@ def main():
             input("Press Enter to continue...")
         elif deletionMode == "rejected":
           print("\nAlso ban the spammer(s)?")
-          banChoice = choice(f"{F.YELLOW}Ban{S.R} the spammer(s) ?")
+          banChoice = choice(f"{FOREGROUND_TEXT_COLOR.YELLOW}Ban{TEXT_STYLE.RESET_ALL} the spammer(s) ?")
           if banChoice == None:
             banChoice = False
             returnToMenu = True
@@ -1531,7 +1531,7 @@ def main():
           if config['remove_all_author_comments'] != 'ask':
             includeOtherAuthorComments = config['remove_all_author_comments']
           else:
-            print(f"\nAlso remove {F.YELLOW}all other comments{S.R} from the selected authors, even if their other comments weren't matched?")
+            print(f"\nAlso remove {FOREGROUND_TEXT_COLOR.YELLOW}all other comments{TEXT_STYLE.RESET_ALL} from the selected authors, even if their other comments weren't matched?")
             includeOtherAuthorComments = choice("Choose:")
         else:
           includeOtherAuthorComments = False
@@ -1585,7 +1585,7 @@ def main():
             jsonDataDict = logging.get_extra_json_data(list(current.matchSamplesDict.keys()), jsonSettingsDict)
             logging.write_json_log(current, config, jsonSettingsDict, combinedCommentDict, jsonDataDict)
           else:
-            print(f"\n{F.LIGHTRED_EX}NOTE:{S.R} Extra JSON data collection disabled due to error during scanning")
+            print(f"\n{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}NOTE:{TEXT_STYLE.RESET_ALL} Extra JSON data collection disabled due to error during scanning")
         else:
           logging.write_json_log(current, config, jsonSettingsDict, combinedCommentDict)
         if returnToMenu == True:
@@ -1606,7 +1606,7 @@ def main():
         time.sleep(5)
         sys.exit()
       else:
-        input(f"\nProgram {F.LIGHTGREEN_EX}Complete{S.R}. Press Enter to to return to main menu...")
+        input(f"\nProgram {FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}Complete{TEXT_STYLE.RESET_ALL}. Press Enter to to return to main menu...")
         return True
     elif current.errorOccurred == True:
       if config['auto_close'] == True:
@@ -1625,9 +1625,9 @@ def main():
         sys.exit()
       else:
         if confirmDelete != None and str(confirmDelete.lower()) == "none":
-          input(f"\nDeletion {F.LIGHTCYAN_EX}Declined{S.R}. Press Enter to to return to main menu...")
+          input(f"\nDeletion {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}Declined{TEXT_STYLE.RESET_ALL}. Press Enter to to return to main menu...")
         else:
-          input(f"\nDeletion {F.LIGHTRED_EX}Cancelled{S.R}. Press Enter to to return to main menu...")
+          input(f"\nDeletion {FOREGROUND_TEXT_COLOR.LIGHTRED_EX}Cancelled{TEXT_STYLE.RESET_ALL}. Press Enter to to return to main menu...")
         return True
     else:
       if config['auto_close'] == True:
@@ -1635,7 +1635,7 @@ def main():
         time.sleep(5)
         sys.exit()
       else:
-        input(f"\nDeletion {F.LIGHTRED_EX}Cancelled{S.R}. Press Enter to to return to main menu...")
+        input(f"\nDeletion {FOREGROUND_TEXT_COLOR.LIGHTRED_EX}Cancelled{TEXT_STYLE.RESET_ALL}. Press Enter to to return to main menu...")
         return True
   # -------------------------------------------------------------------------------------------------------------------------------------------------
   # ------------------------------------------------END PRIMARY INSTANCE-----------------------------------------------------------------------------
@@ -1681,49 +1681,49 @@ if __name__ == "__main__":
       if hx.error_details[0]["reason"]: # If error reason is available, print it
           reason = str(hx.error_details[0]["reason"])
           utils.print_exception_reason(reason)
-      print(f"\nAn {F.LIGHTRED_EX}'HttpError'{S.R} was raised. This is sometimes caused by a remote server error. See the error info above.")
+      print(f"\nAn {FOREGROUND_TEXT_COLOR.LIGHTRED_EX}'HttpError'{TEXT_STYLE.RESET_ALL} was raised. This is sometimes caused by a remote server error. See the error info above.")
       print(f"If this keeps happening, consider posting a bug report on the GitHub issues page, and include the above error info.")
-      print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+      print(f"Short Link: {FOREGROUND_TEXT_COLOR.YELLOW}TJoe.io/bug-report{TEXT_STYLE.RESET_ALL}")
       input("\nPress Enter to Exit...")
     else:
-      print(f"{F.LIGHTRED_EX}Unknown Error - Code: Z-1{S.R} occurred. If this keeps happening, consider posting a bug report on the GitHub issues page, and include the above error info.")
-      print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+      print(f"{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}Unknown Error - Code: Z-1{TEXT_STYLE.RESET_ALL} occurred. If this keeps happening, consider posting a bug report on the GitHub issues page, and include the above error info.")
+      print(f"Short Link: {FOREGROUND_TEXT_COLOR.YELLOW}TJoe.io/bug-report{TEXT_STYLE.RESET_ALL}")
       input("\n Press Enter to Exit...")
   except UnboundLocalError as ux:
     traceback.print_exc()
     print("------------------------------------------------")
     print("Error Message: " + str(ux))
     if "referenced before assignment" in str(ux):
-      print(f"\n{F.LIGHTRED_EX}Error - Code: X-2{S.R} occurred. This is almost definitely {F.YELLOW}my fault and requires patching{S.R} (big bruh moment)")
+      print(f"\n{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}Error - Code: X-2{TEXT_STYLE.RESET_ALL} occurred. This is almost definitely {FOREGROUND_TEXT_COLOR.YELLOW}my fault and requires patching{TEXT_STYLE.RESET_ALL} (big bruh moment)")
       print(f"Please post a bug report on the GitHub issues page, and include the above error info.")
-      print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+      print(f"Short Link: {FOREGROUND_TEXT_COLOR.YELLOW}TJoe.io/bug-report{TEXT_STYLE.RESET_ALL}")
       print("    (In the mean time, try using a previous release of the program.)")
       input("\n Press Enter to Exit...")
     else:
       traceback.print_exc()
       print("------------------------------------------------")
-      print(f"\n{F.LIGHTRED_EX}Unknown Error - Code: Z-2{S.R} occurred. If this keeps happening,")
+      print(f"\n{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}Unknown Error - Code: Z-2{TEXT_STYLE.RESET_ALL} occurred. If this keeps happening,")
       print("consider posting a bug report on the GitHub issues page, and include the above error info.")
-      print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+      print(f"Short Link: {FOREGROUND_TEXT_COLOR.YELLOW}TJoe.io/bug-report{TEXT_STYLE.RESET_ALL}")
       input("\n Press Enter to Exit...")
   except KeyError as kx:
     traceback.print_exc()
     print("------------------------------------------------")
     if "config" in str(kx):
-      print(f"{F.LIGHTRED_EX}Unknown Error - Code: X-3{S.R}")
+      print(f"{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}Unknown Error - Code: X-3{TEXT_STYLE.RESET_ALL}")
       print("Are you using an outdated version of the config file? Try re-creating the config file to get the latest version.")
-      print(f"{F.LIGHTYELLOW_EX}If that doesn't work{S.R}, consider posting a {F.LIGHTYELLOW_EX}bug report{S.R} on the GitHub issues page, and include the above error info.")
+      print(f"{FOREGROUND_TEXT_COLOR.LIGHTYELLOW_EX}If that doesn't work{TEXT_STYLE.RESET_ALL}, consider posting a {FOREGROUND_TEXT_COLOR.LIGHTYELLOW_EX}bug report{TEXT_STYLE.RESET_ALL} on the GitHub issues page, and include the above error info.")
     else:
-      print(f"{F.RED}Unknown Error - Code: X-4{S.R} occurred. This is {F.YELLOW}probably my fault{S.R},")
-      print(f"please a {F.LIGHTYELLOW_EX}bug report{S.R} on the GitHub issues page, and include the above error info.")
-    print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+      print(f"{FOREGROUND_TEXT_COLOR.RED}Unknown Error - Code: X-4{TEXT_STYLE.RESET_ALL} occurred. This is {FOREGROUND_TEXT_COLOR.YELLOW}probably my fault{TEXT_STYLE.RESET_ALL},")
+      print(f"please a {FOREGROUND_TEXT_COLOR.LIGHTYELLOW_EX}bug report{TEXT_STYLE.RESET_ALL} on the GitHub issues page, and include the above error info.")
+    print(f"Short Link: {FOREGROUND_TEXT_COLOR.YELLOW}TJoe.io/bug-report{TEXT_STYLE.RESET_ALL}")
     input("\n Press Enter to Exit...")
   except TypeError:
     traceback.print_exc()
     print("------------------------------------------------")
-    print(f"{F.RED}Unknown Error - Code: X-5{S.R} occurred. This is {F.YELLOW}probably my fault{S.R},")
-    print(f"please a {F.LIGHTYELLOW_EX}bug report{S.R} on the GitHub issues page, and include the above error info.")
-    print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+    print(f"{FOREGROUND_TEXT_COLOR.RED}Unknown Error - Code: X-5{TEXT_STYLE.RESET_ALL} occurred. This is {FOREGROUND_TEXT_COLOR.YELLOW}probably my fault{TEXT_STYLE.RESET_ALL},")
+    print(f"please a {FOREGROUND_TEXT_COLOR.LIGHTYELLOW_EX}bug report{TEXT_STYLE.RESET_ALL} on the GitHub issues page, and include the above error info.")
+    print(f"Short Link: {FOREGROUND_TEXT_COLOR.YELLOW}TJoe.io/bug-report{TEXT_STYLE.RESET_ALL}")
     input("\n Press Enter to Exit...")
   except KeyboardInterrupt:
     print("\n\nProcess Cancelled via Keyboard Shortcut")
@@ -1732,9 +1732,9 @@ if __name__ == "__main__":
     traceback.print_exc()
     print("------------------------------------------------")
     print("Error Message: " + str(x))
-    print(f"\n{F.LIGHTRED_EX}Unknown Error - Code: Z-3{S.R} occurred. If this keeps happening, consider posting a bug report")
+    print(f"\n{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}Unknown Error - Code: Z-3{TEXT_STYLE.RESET_ALL} occurred. If this keeps happening, consider posting a bug report")
     print("on the GitHub issues page, and include the above error info.")
-    print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+    print(f"Short Link: {FOREGROUND_TEXT_COLOR.YELLOW}TJoe.io/bug-report{TEXT_STYLE.RESET_ALL}")
     input("\n Press Enter to Exit...")
   else:
     print("\nFinished Executing.")

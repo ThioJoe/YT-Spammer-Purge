@@ -731,7 +731,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
   commentText = str(currentCommentDict['commentText']).replace("\r", "")
 
   # #Debugging
-  # print(f"{F.LIGHTRED_EX}DEBUG MODE{S.R} - If you see this, I forgot to disable it before release, oops. \n Please report here: {F.YELLOW}TJoe.io/bug-report{S.R}")
+  # print(f"{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}DEBUG MODE{TEXT_STYLE.RESET_ALL} - If you see this, I forgot to disable it before release, oops. \n Please report here: {FOREGROUND_TEXT_COLOR.YELLOW}TJoe.io/bug-report{TEXT_STYLE.RESET_ALL}")
   # print("Comment ID: " + commentID)
   # debugSingleComment = True #Debug usage
   # if debugSingleComment == True:
@@ -1096,7 +1096,7 @@ def delete_found_comments(commentsList, banChoice, deletionMode, recoveryMode=Fa
       failedComments = setStatus(commentsList, failedComments)
       print_progress(deletedCounter, total, recoveryMode)
   if deletionMode == "reportSpam":
-    print(f"{F.YELLOW}Comments Reported!{S.R} If no error messages were displayed, then everything was successful.")
+    print(f"{FOREGROUND_TEXT_COLOR.YELLOW}Comments Reported!{TEXT_STYLE.RESET_ALL} If no error messages were displayed, then everything was successful.")
     return failedComments
   elif recoveryMode == False and skipCheck == False:
     print("Comments " + actionPast + "! Will now verify each is gone.                          \n")
@@ -1213,7 +1213,7 @@ def check_recovered_comments(commentsList):
       unsuccessfulResults.append(comment)
   
   if i == 0:
-      print(f"\n\n{F.LIGHTGREEN_EX}Success: All spam comments should be restored!{S.R}")
+      print(f"\n\n{FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}Success: All spam comments should be restored!{TEXT_STYLE.RESET_ALL}")
       print("You can view them by using the links to them in the same log file you used.")
 
   elif i > 0:
@@ -1248,7 +1248,7 @@ def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToEx
     result = result.replace(" ", "")
     validInputExpression = r'^[0-9,-]+$' # Ensures only digits, commas, and dashes are used
     if re.match(validInputExpression, result) == None:
-      print(f"\n{F.LIGHTRED_EX}Invalid input!{S.R} Must be a comma separated list of numbers and/or range of numbers. Please try again.")
+      print(f"\n{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}Invalid input!{TEXT_STYLE.RESET_ALL} Must be a comma separated list of numbers and/or range of numbers. Please try again.")
       if only == False:
         inputtedString = input("\nEnter the list of authors to exclude from deletion: ")
       elif only == True:
@@ -1261,7 +1261,7 @@ def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToEx
       valid = True
       for num in chosenSampleIndexes: # Check if any numbers outside max range
         if int(num) > len(current.matchSamplesDict) or int(num)<1:
-          print(f"\n{F.LIGHTRED_EX}Invalid input!{S.R} Number is outside the range of samples: {num} --  Please try again.")
+          print(f"\n{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}Invalid input!{TEXT_STYLE.RESET_ALL} Number is outside the range of samples: {num} --  Please try again.")
           valid = False
           break
       if valid == False:
@@ -1325,8 +1325,8 @@ def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToEx
   # Verify removal
   for comment in current.matchedCommentsDict.keys():
     if comment in commentIDExcludeSet:
-      print(f"{F.LIGHTRED_EX}FATAL ERROR{S.R}: Something went wrong while trying to exclude comments. No comments have been deleted.")
-      print(f"You should {F.YELLOW}DEFINITELY{S.R} report this bug here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
+      print(f"{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}FATAL ERROR{TEXT_STYLE.RESET_ALL}: Something went wrong while trying to exclude comments. No comments have been deleted.")
+      print(f"You should {FOREGROUND_TEXT_COLOR.YELLOW}DEFINITELY{TEXT_STYLE.RESET_ALL} report this bug here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
       print("Provide the error code: X-1")
       input("Press Enter to Exit...")
       sys.exit()
@@ -1336,11 +1336,11 @@ def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToEx
     displayString += f"    User ID: {author}   |   User Name: {current.matchSamplesDict[author]['authorName']}\n"
 
 
-  print(f"\n{F.CYAN}All {len(excludedCommentsDict)} comments{S.R} from the {F.CYAN}following users{S.R} are now {F.LIGHTGREEN_EX}excluded{S.R} from deletion:")
+  print(f"\n{FOREGROUND_TEXT_COLOR.CYAN}All {len(excludedCommentsDict)} comments{TEXT_STYLE.RESET_ALL} from the {FOREGROUND_TEXT_COLOR.CYAN}following users{TEXT_STYLE.RESET_ALL} are now {FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}excluded{TEXT_STYLE.RESET_ALL} from deletion:")
   print(displayString)
 
   if config['whitelist_excluded'] == 'ask':
-    print(f"\nAdd these {F.LIGHTGREEN_EX}excluded{S.R} users to the {F.LIGHTGREEN_EX}whitelist{S.R} for future scans?")
+    print(f"\nAdd these {FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}excluded{TEXT_STYLE.RESET_ALL} users to the {FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}whitelist{TEXT_STYLE.RESET_ALL} for future scans?")
     addWhitelist = choice("Whitelist Users?")
   elif config['whitelist_excluded'] == True:
     addWhitelist = True
@@ -1381,7 +1381,7 @@ def get_recent_videos(current, channel_id, numVideosTotal):
       commentCount = validation.validate_video_id(videoID, pass_exception = True)[3]
       #Skips over video if comment count is zero, or comments disabled / is live stream
       if str(commentCount) == '0':
-        print(f"{B.YELLOW}{F.BLACK} Skipping {S.R} {F.LIGHTRED_EX}Video with no comments:{S.R} " + str(item['snippet']['title']))
+        print(f"{BACKGROUND_TEXT_COLOR.YELLOW}{FOREGROUND_TEXT_COLOR.BLACK} Skipping {TEXT_STYLE.RESET_ALL} {FOREGROUND_TEXT_COLOR.LIGHTRED_EX}Video with no comments:{TEXT_STYLE.RESET_ALL} " + str(item['snippet']['title']))
         k+=1
         continue
       
@@ -1446,8 +1446,8 @@ def print_count_stats(current, miscData, videosToScan, final):
   matchCount = str(len(current.matchedCommentsDict) + len(current.spamThreadsDict))
 
   if final == True:
-    print(f" {progress} Comments Scanned: {F.YELLOW}{comScanned}{S.R} | Replies Scanned: {F.YELLOW}{repScanned}{S.R} | Matches Found So Far: {F.LIGHTRED_EX}{matchCount}{S.R}\n")
+    print(f" {progress} Comments Scanned: {FOREGROUND_TEXT_COLOR.YELLOW}{comScanned}{TEXT_STYLE.RESET_ALL} | Replies Scanned: {FOREGROUND_TEXT_COLOR.YELLOW}{repScanned}{TEXT_STYLE.RESET_ALL} | Matches Found So Far: {FOREGROUND_TEXT_COLOR.LIGHTRED_EX}{matchCount}{TEXT_STYLE.RESET_ALL}\n")
   else:
-    print(f" {progress} Comments Scanned: {F.YELLOW}{comScanned}{S.R} | Replies Scanned: {F.YELLOW}{repScanned}{S.R} | Matches Found So Far: {F.LIGHTRED_EX}{matchCount}{S.R}", end = "\r")
+    print(f" {progress} Comments Scanned: {FOREGROUND_TEXT_COLOR.YELLOW}{comScanned}{TEXT_STYLE.RESET_ALL} | Replies Scanned: {FOREGROUND_TEXT_COLOR.YELLOW}{repScanned}{TEXT_STYLE.RESET_ALL} | Matches Found So Far: {FOREGROUND_TEXT_COLOR.LIGHTRED_EX}{matchCount}{TEXT_STYLE.RESET_ALL}", end = "\r")
   
   return None

@@ -98,9 +98,9 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
     # --------------------------------------------------------------------------------------------
 
   if doWritePrint:
-    print(f"{F.LIGHTMAGENTA_EX}============================ Match Samples: One comment per matched-comment author ============================{S.R}")
+    print(f"{FOREGROUND_TEXT_COLOR.LIGHTMAGENTA_EX}============================ Match Samples: One comment per matched-comment author ============================{TEXT_STYLE.RESET_ALL}")
     if possibleFalsePositive:
-      print(f"{F.GREEN}======= {B.GREEN}{F.BLACK} NOTE: {S.R}{F.GREEN} Possible false positives marked with * and highlighted in green. Check them extra well! ======={S.R}")
+      print(f"{FOREGROUND_TEXT_COLOR.GREEN}======= {BACKGROUND_TEXT_COLOR.GREEN}{FOREGROUND_TEXT_COLOR.BLACK} NOTE: {TEXT_STYLE.RESET_ALL}{FOREGROUND_TEXT_COLOR.GREEN} Possible false positives marked with * and highlighted in green. Check them extra well! ======={TEXT_STYLE.RESET_ALL}")
   for value in current.matchSamplesDict.values():
     if value['matchReason'] != "Duplicate" and value['matchReason'] != "Spam Bot Thread" and value['matchReason'] != "Repost":
       valuesPreparedToWrite, valuesPreparedToPrint = print_and_write(value, valuesPreparedToWrite, valuesPreparedToPrint)
@@ -124,9 +124,9 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
   # Print Spam Thread Match Samples
   if hasSpamThreads == True:
     if doWritePrint:
-      print(f"{S.BRIGHT}{F.MAGENTA}============================ Match Samples: Spam Bot Threads ============================{S.R}")
+      print(f"{TEXT_STYLE.BRIGHT}{FOREGROUND_TEXT_COLOR.MAGENTA}============================ Match Samples: Spam Bot Threads ============================{TEXT_STYLE.RESET_ALL}")
       if spamThreadNotice == True:
-        print(f"{F.YELLOW}{F.BLACK}{B.YELLOW} NOTE: {S.R}{F.YELLOW} If video is about investing/crypto, inspect these extra well for false positives{S.R}")
+        print(f"{FOREGROUND_TEXT_COLOR.YELLOW}{FOREGROUND_TEXT_COLOR.BLACK}{BACKGROUND_TEXT_COLOR.YELLOW} NOTE: {TEXT_STYLE.RESET_ALL}{FOREGROUND_TEXT_COLOR.YELLOW} If video is about investing/crypto, inspect these extra well for false positives{TEXT_STYLE.RESET_ALL}")
         print("-----------------------------------------------------------------------------------------")
   for value in current.matchSamplesDict.values():
     if value['matchReason'] == "Spam Bot Thread":
@@ -137,8 +137,8 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
   # Print Duplicate Match Samples
   if hasDuplicates == True:
     if doWritePrint:
-      print(f"{F.LIGHTMAGENTA_EX}------------------------- {S.BRIGHT}{F.WHITE}{B.BLUE} Non-Matched {S.R}{F.LIGHTCYAN_EX} Commenters, But Who Wrote Many Similar Comments{F.LIGHTMAGENTA_EX} -------------------------{S.R}")
-      print(f"{F.MAGENTA}---------------------------- ( {F.LIGHTBLUE_EX}Similarity Threshold: {similarity}  |  Minimum Duplicates: {minDupes}{F.MAGENTA} ) ----------------------------{S.R}")
+      print(f"{FOREGROUND_TEXT_COLOR.LIGHTMAGENTA_EX}------------------------- {TEXT_STYLE.BRIGHT}{FOREGROUND_TEXT_COLOR.WHITE}{BACKGROUND_TEXT_COLOR.BLUE} Non-Matched {TEXT_STYLE.RESET_ALL}{FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX} Commenters, But Who Wrote Many Similar Comments{FOREGROUND_TEXT_COLOR.LIGHTMAGENTA_EX} -------------------------{TEXT_STYLE.RESET_ALL}")
+      print(f"{FOREGROUND_TEXT_COLOR.MAGENTA}---------------------------- ( {FOREGROUND_TEXT_COLOR.LIGHTBLUE_EX}Similarity Threshold: {similarity}  |  Minimum Duplicates: {minDupes}{FOREGROUND_TEXT_COLOR.MAGENTA} ) ----------------------------{TEXT_STYLE.RESET_ALL}")
   for value in current.matchSamplesDict.values():
     if value['matchReason'] == "Duplicate":
       duplicateValuesToWrite, duplicateValuesToPrint = print_and_write(value, duplicateValuesToWrite, duplicateValuesToPrint)
@@ -147,8 +147,8 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
 
   # Print Repost Match Samples
   if hasReposts == True:
-    print(f"{F.LIGHTMAGENTA_EX}------------------------- {S.BRIGHT}{F.WHITE}{B.BLUE} Non-Matched {S.R}{F.LIGHTCYAN_EX} Commenters, But Who Reposted a Previous Comment{F.LIGHTMAGENTA_EX} -------------------------{S.R}")
-    print(f"{F.MAGENTA}---------------------------- ( {F.LIGHTBLUE_EX}Similarity Threshold: {repostSimilarity}  |  Minimum Length: {minLength}{F.MAGENTA} ) ------------------------------{S.R}")
+    print(f"{FOREGROUND_TEXT_COLOR.LIGHTMAGENTA_EX}------------------------- {TEXT_STYLE.BRIGHT}{FOREGROUND_TEXT_COLOR.WHITE}{BACKGROUND_TEXT_COLOR.BLUE} Non-Matched {TEXT_STYLE.RESET_ALL}{FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX} Commenters, But Who Reposted a Previous Comment{FOREGROUND_TEXT_COLOR.LIGHTMAGENTA_EX} -------------------------{TEXT_STYLE.RESET_ALL}")
+    print(f"{FOREGROUND_TEXT_COLOR.MAGENTA}---------------------------- ( {FOREGROUND_TEXT_COLOR.LIGHTBLUE_EX}Similarity Threshold: {repostSimilarity}  |  Minimum Length: {minLength}{FOREGROUND_TEXT_COLOR.MAGENTA} ) ------------------------------{TEXT_STYLE.RESET_ALL}")
   for value in current.matchSamplesDict.values():
     if value['matchReason'] == "Repost":
       repostValuesToWrite, repostValuesToPrint = print_and_write(value, repostValuesToWrite, repostValuesToPrint)
@@ -218,7 +218,7 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
     logFileContents = None
     logMode = None
   if doWritePrint:
-    print(f"{F.LIGHTMAGENTA_EX}==================== (See log file for channel IDs of matched authors above) ===================={S.R}")
+    print(f"{FOREGROUND_TEXT_COLOR.LIGHTMAGENTA_EX}==================== (See log file for channel IDs of matched authors above) ===================={TEXT_STYLE.RESET_ALL}")
 
   return logFileContents, logMode
 
@@ -316,7 +316,7 @@ def print_prepared_comments(current, commentsContents, scanVideoID, comments, j,
 
     # Prints comment info to console
     if doWritePrint:
-      print(str(j+1) + f". {F.LIGHTCYAN_EX}" + author + f"{S.R}:  {F.YELLOW}" + text + f"{S.R}")
+      print(str(j+1) + f". {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}" + author + f"{TEXT_STYLE.RESET_ALL}:  {FOREGROUND_TEXT_COLOR.YELLOW}" + text + f"{TEXT_STYLE.RESET_ALL}")
       print("—————————————————————————————————————————————————————————————————————————————————————————————")
       print("     > Reason: " + matchReason)
       if isRepost:
@@ -327,7 +327,7 @@ def print_prepared_comments(current, commentsContents, scanVideoID, comments, j,
         print("     > Video: " + title)
     if doWritePrint:
       print("     > Direct Link: " + directLink)
-      print(f"     > Author Channel ID: {F.LIGHTBLUE_EX}" + author_id_local + f"{S.R}")
+      print(f"     > Author Channel ID: {FOREGROUND_TEXT_COLOR.LIGHTBLUE_EX}" + author_id_local + f"{TEXT_STYLE.RESET_ALL}")
       print("=============================================================================================\n")
 
     # If logging enabled, also prints to log file 
@@ -425,7 +425,7 @@ def write_rtf(fileName, newText=None, firstWrite=False, fullWrite=False):
         if not os.path.isabs(fileName):
           fileName = os.path.join(logFolderPath, os.path.basename(fileName))
       except:
-        print(f"{F.LIGHTRED_EX}Error:{S.R} Could not create desired directory for log files. Will place them in current directory.")
+        print(f"{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}Error:{TEXT_STYLE.RESET_ALL} Could not create desired directory for log files. Will place them in current directory.")
         fileName = os.path.basename(fileName)
     while success == False:
       try:
@@ -445,10 +445,10 @@ def write_rtf(fileName, newText=None, firstWrite=False, fullWrite=False):
         success = True
       except PermissionError:
         if attempts < 3:
-          print(f"\n{F.YELLOW}\nERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{fileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
+          print(f"\n{FOREGROUND_TEXT_COLOR.YELLOW}\nERROR!{TEXT_STYLE.RESET_ALL} Cannot write to {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}{fileName}{TEXT_STYLE.RESET_ALL}. Is it open? Try {FOREGROUND_TEXT_COLOR.YELLOW}closing the file{TEXT_STYLE.RESET_ALL} before continuing.")
           input("\n Press Enter to Try Again...")
         else:
-          print(f"{F.LIGHTRED_EX}\nERROR! Still cannot write to {F.LIGHTCYAN_EX}{fileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Writing Log?{S.R} (N)")
+          print(f"{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}\nERROR! Still cannot write to {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}{fileName}{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}. {FOREGROUND_TEXT_COLOR.YELLOW}Try again?{TEXT_STYLE.RESET_ALL} (Y) or {FOREGROUND_TEXT_COLOR.YELLOW}Skip Writing Log?{TEXT_STYLE.RESET_ALL} (N)")
           if choice("Choice") == False:
             break
 
@@ -477,10 +477,10 @@ def write_rtf(fileName, newText=None, firstWrite=False, fullWrite=False):
           success = True
       except PermissionError:
         if attempts < 3:
-          print(f"\n{F.YELLOW}\nERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{fileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
+          print(f"\n{FOREGROUND_TEXT_COLOR.YELLOW}\nERROR!{TEXT_STYLE.RESET_ALL} Cannot write to {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}{fileName}{TEXT_STYLE.RESET_ALL}. Is it open? Try {FOREGROUND_TEXT_COLOR.YELLOW}closing the file{TEXT_STYLE.RESET_ALL} before continuing.")
           input("\n Press Enter to Try Again...")
         else:
-          print(f"{F.LIGHTRED_EX}\nERROR! Still cannot write to {F.LIGHTCYAN_EX}{fileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Writing Log?{S.R} (N)")
+          print(f"{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}\nERROR! Still cannot write to {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}{fileName}{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}. {FOREGROUND_TEXT_COLOR.YELLOW}Try again?{TEXT_STYLE.RESET_ALL} (Y) or {FOREGROUND_TEXT_COLOR.YELLOW}Skip Writing Log?{TEXT_STYLE.RESET_ALL} (N)")
           if choice("Choice") == False:
             break
 
@@ -499,7 +499,7 @@ def write_plaintext_log(fileName, newText=None, firstWrite=False, fullWrite=Fals
         if not os.path.isabs(fileName):
           fileName = os.path.join(logFolderPath, os.path.basename(fileName))
       except:
-        print(f"{F.LIGHTRED_EX}Error:{S.R} Could not create desired directory for log files. Will place them in current directory.")
+        print(f"{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}Error:{TEXT_STYLE.RESET_ALL} Could not create desired directory for log files. Will place them in current directory.")
         fileName = os.path.basename(fileName)
     while success == False:
       try:
@@ -513,10 +513,10 @@ def write_plaintext_log(fileName, newText=None, firstWrite=False, fullWrite=Fals
         success = True
       except PermissionError:
         if attempts < 3:
-          print(f"\n{F.YELLOW}\nERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{fileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
+          print(f"\n{FOREGROUND_TEXT_COLOR.YELLOW}\nERROR!{TEXT_STYLE.RESET_ALL} Cannot write to {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}{fileName}{TEXT_STYLE.RESET_ALL}. Is it open? Try {FOREGROUND_TEXT_COLOR.YELLOW}closing the file{TEXT_STYLE.RESET_ALL} before continuing.")
           input("\n Press Enter to Try Again...")
         else:
-          print(f"{F.LIGHTRED_EX}\nERROR! Still cannot write to {F.LIGHTCYAN_EX}{fileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Writing Log?{S.R} (N)")
+          print(f"{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}\nERROR! Still cannot write to {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}{fileName}{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}. {FOREGROUND_TEXT_COLOR.YELLOW}Try again?{TEXT_STYLE.RESET_ALL} (Y) or {FOREGROUND_TEXT_COLOR.YELLOW}Skip Writing Log?{TEXT_STYLE.RESET_ALL} (N)")
           if choice("Choice") == False:
             break 
 
@@ -531,10 +531,10 @@ def write_plaintext_log(fileName, newText=None, firstWrite=False, fullWrite=Fals
         success = True
       except PermissionError:
         if attempts < 3:
-          print(f"\n{F.YELLOW}\nERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{fileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
+          print(f"\n{FOREGROUND_TEXT_COLOR.YELLOW}\nERROR!{TEXT_STYLE.RESET_ALL} Cannot write to {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}{fileName}{TEXT_STYLE.RESET_ALL}. Is it open? Try {FOREGROUND_TEXT_COLOR.YELLOW}closing the file{TEXT_STYLE.RESET_ALL} before continuing.")
           input("\n Press Enter to Try Again...")
         else:
-          print(f"{F.LIGHTRED_EX}\nERROR! Still cannot write to {F.LIGHTCYAN_EX}{fileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Writing Log?{S.R} (N)")
+          print(f"{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}\nERROR! Still cannot write to {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}{fileName}{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}. {FOREGROUND_TEXT_COLOR.YELLOW}Try again?{TEXT_STYLE.RESET_ALL} (Y) or {FOREGROUND_TEXT_COLOR.YELLOW}Skip Writing Log?{TEXT_STYLE.RESET_ALL} (N)")
           if choice("Choice") == False:
             break 
 
@@ -570,7 +570,7 @@ def write_json_log(current, config, jsonSettingsDict, commentsDict, jsonDataDict
       if not os.path.isabs(fileName):
         fileName = os.path.join(logFolderPath, os.path.basename(fileName))
     except:
-      print(f"{F.LIGHTRED_EX}Error:{S.R} Could not create desired directory for log files. Will place them in current directory.")
+      print(f"{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}Error:{TEXT_STYLE.RESET_ALL} Could not create desired directory for log files. Will place them in current directory.")
       fileName = os.path.basename(fileName)
   while success == False:
     try:
@@ -589,10 +589,10 @@ def write_json_log(current, config, jsonSettingsDict, commentsDict, jsonDataDict
       success = True
     except PermissionError:
       if attempts < 3:
-        print(f"\n{F.YELLOW}\nERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{fileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
+        print(f"\n{FOREGROUND_TEXT_COLOR.YELLOW}\nERROR!{TEXT_STYLE.RESET_ALL} Cannot write to {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}{fileName}{TEXT_STYLE.RESET_ALL}. Is it open? Try {FOREGROUND_TEXT_COLOR.YELLOW}closing the file{TEXT_STYLE.RESET_ALL} before continuing.")
         input("\n Press Enter to Try Again...")
       else:
-        print(f"{F.LIGHTRED_EX}\nERROR! Still cannot write to {F.LIGHTCYAN_EX}{fileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Writing Log?{S.R} (N)")
+        print(f"{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}\nERROR! Still cannot write to {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}{fileName}{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}. {FOREGROUND_TEXT_COLOR.YELLOW}Try again?{TEXT_STYLE.RESET_ALL} (Y) or {FOREGROUND_TEXT_COLOR.YELLOW}Skip Writing Log?{TEXT_STYLE.RESET_ALL} (N)")
         if choice("Choice") == False:
           break 
 
@@ -616,7 +616,7 @@ def get_extra_json_data(channelIDs, jsonSettingsDict):
       resolution = jsonSettingsDict['json_profile_picture']
       possibleResolutions = ['default', 'medium', 'high']
       if resolution not in possibleResolutions:
-        print(f"{B.RED}{F.BLACK}Invalid Resolution!{S.R} Defaulting to 'default' (smallest)")
+        print(f"{BACKGROUND_TEXT_COLOR.RED}{FOREGROUND_TEXT_COLOR.BLACK}Invalid Resolution!{TEXT_STYLE.RESET_ALL} Defaulting to 'default' (smallest)")
         resolution = 'default'
 
   total = len(channelIDs)
@@ -693,7 +693,7 @@ def download_profile_pictures(pictureUrlsDict, jsonSettingsDict):
     try:
       os.mkdir(imageFolderPath)
     except:
-      print(f"{F.LIGHTRED_EX}Error:{S.R} Unable to create image folder. Try creating a folder called 'ProfileImages' in the log file folder.")
+      print(f"{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}Error:{TEXT_STYLE.RESET_ALL} Unable to create image folder. Try creating a folder called 'ProfileImages' in the log file folder.")
       return False, None
 
   attempts = 0
@@ -715,10 +715,10 @@ def download_profile_pictures(pictureUrlsDict, jsonSettingsDict):
       print("Successfully downloaded profile pictures.")
     except PermissionError:
       if attempts < 3:
-        print(f"\n{F.YELLOW}\nERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{fileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
+        print(f"\n{FOREGROUND_TEXT_COLOR.YELLOW}\nERROR!{TEXT_STYLE.RESET_ALL} Cannot write to {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}{fileName}{TEXT_STYLE.RESET_ALL}. Is it open? Try {FOREGROUND_TEXT_COLOR.YELLOW}closing the file{TEXT_STYLE.RESET_ALL} before continuing.")
         input("\n Press Enter to Try Again...")
       else:
-        print(f"{F.LIGHTRED_EX}\nERROR! Still cannot write to {F.LIGHTCYAN_EX}{fileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Downloading Profile Pictures?{S.R} (N)")
+        print(f"{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}\nERROR! Still cannot write to {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}{fileName}{FOREGROUND_TEXT_COLOR.LIGHTRED_EX}. {FOREGROUND_TEXT_COLOR.YELLOW}Try again?{TEXT_STYLE.RESET_ALL} (Y) or {FOREGROUND_TEXT_COLOR.YELLOW}Skip Downloading Profile Pictures?{TEXT_STYLE.RESET_ALL} (N)")
         if choice("Choice") == False:
           break 
 
@@ -780,9 +780,9 @@ def sort_samples(current):
   for author, dictionary in newDict.items():
     # Makes the sample line green if marked as possible false positive, also adds asterisk
     if dictionary['possibleFalsePositive'] == True:
-      iString = f"{F.GREEN}*{str(i)}. {S.R}".ljust(5)
-      newDict[author]['cString'] = f"{F.GREEN}{dictionary['cString']}{S.R}" #cString is 'count string'
-      newDict[author]['nameAndText'] = f"{F.GREEN}{dictionary['nameAndText']}{S.R}"
+      iString = f"{FOREGROUND_TEXT_COLOR.GREEN}*{str(i)}. {TEXT_STYLE.RESET_ALL}".ljust(5)
+      newDict[author]['cString'] = f"{FOREGROUND_TEXT_COLOR.GREEN}{dictionary['cString']}{TEXT_STYLE.RESET_ALL}" #cString is 'count string'
+      newDict[author]['nameAndText'] = f"{FOREGROUND_TEXT_COLOR.GREEN}{dictionary['nameAndText']}{TEXT_STYLE.RESET_ALL}"
     else:
       iString = f" {str(i)}. ".ljust(5)
     newDict[author]['index'] = i
@@ -869,17 +869,17 @@ def prepare_logFile_settings(current, config, miscData, jsonSettingsDict, filter
     else:
       logPath = config['log_path']
     current.logFileName = os.path.normpath(logPath + "/" + fileName)
-    print(f"Log file will be located at {F.YELLOW}" + current.logFileName + f"{S.R}\n")
+    print(f"Log file will be located at {FOREGROUND_TEXT_COLOR.YELLOW}" + current.logFileName + f"{TEXT_STYLE.RESET_ALL}\n")
     if jsonLogging == True:
       jsonLogFileName = os.path.normpath(logPath + "/" + jsonLogFileName)
       jsonSettingsDict['jsonLogFileName'] = jsonLogFileName
-      print(f"JSON log file will be located at {F.YELLOW}" + jsonLogFileName + f"{S.R}\n")
+      print(f"JSON log file will be located at {FOREGROUND_TEXT_COLOR.YELLOW}" + jsonLogFileName + f"{TEXT_STYLE.RESET_ALL}\n")
   else:
     current.logFileName = os.path.normpath(defaultLogPath + "/" + fileName)
-    print(f"Log file will be called {F.YELLOW}" + current.logFileName + f"{S.R}\n")
+    print(f"Log file will be called {FOREGROUND_TEXT_COLOR.YELLOW}" + current.logFileName + f"{TEXT_STYLE.RESET_ALL}\n")
 
   if bypass == False:
-    input(f"Press {F.YELLOW}Enter{S.R} to display comments...")
+    input(f"Press {FOREGROUND_TEXT_COLOR.YELLOW}Enter{TEXT_STYLE.RESET_ALL} to display comments...")
 
   # Write heading info to log file
   write_log_heading(current, logMode, filtersDict)

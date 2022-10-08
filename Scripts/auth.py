@@ -51,9 +51,9 @@ def get_authenticated_service():
     if os.path.exists(f"{CLIENT_SECRETS_FILE}.json"):
       CLIENT_SECRETS_FILE = CLIENT_SECRETS_FILE + ".json"
     else:
-      print(f"\n         ----- {F.WHITE}{B.RED}[!] Error:{S.R} client_secrets.json file not found -----")
-      print(f" ----- Did you create a {F.YELLOW}Google Cloud Platform Project{S.R} to access the API? ----- ")
-      print(f"  > For instructions on how to get an API key, visit: {F.YELLOW}TJoe.io/api-setup{S.R}")
+      print(f"\n         ----- {FOREGROUND_TEXT_COLOR.WHITE}{BACKGROUND_TEXT_COLOR.RED}[!] Error:{TEXT_STYLE.RESET_ALL} client_secrets.json file not found -----")
+      print(f" ----- Did you create a {FOREGROUND_TEXT_COLOR.YELLOW}Google Cloud Platform Project{TEXT_STYLE.RESET_ALL} to access the API? ----- ")
+      print(f"  > For instructions on how to get an API key, visit: {FOREGROUND_TEXT_COLOR.YELLOW}TJoe.io/api-setup{TEXT_STYLE.RESET_ALL}")
       print(f"\n  > (Non-shortened Link: https://github.com/ThioJoe/YT-Spammer-Purge/wiki/Instructions:-Obtaining-an-API-Key)")
       input("\nPress Enter to Exit...")
       sys.exit()
@@ -69,10 +69,10 @@ def get_authenticated_service():
     if creds and creds.expired and creds.refresh_token:
       creds.refresh(Request())
     else:
-      print(f"\nPlease {F.YELLOW}login using the browser window{S.R} that opened just now.\n")
+      print(f"\nPlease {FOREGROUND_TEXT_COLOR.YELLOW}login using the browser window{TEXT_STYLE.RESET_ALL} that opened just now.\n")
       flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRETS_FILE, scopes=YOUTUBE_READ_WRITE_SSL_SCOPE)
       creds = flow.run_local_server(port=0, authorization_prompt_message="Waiting for authorization. See message above.")
-      print(f"{F.GREEN}[OK] Authorization Complete.{S.R}")
+      print(f"{FOREGROUND_TEXT_COLOR.GREEN}[OK] Authorization Complete.{TEXT_STYLE.RESET_ALL}")
       # Save the credentials for the next run
     with open(TOKEN_FILE_NAME, 'w') as token:
       token.write(creds.to_json())
@@ -85,24 +85,24 @@ def first_authentication():
   try:
     YOUTUBE = get_authenticated_service() # Create authentication object
   except JSONDecodeError as jx:
-    print(f"{F.WHITE}{B.RED} [!!!] Error: {S.R}" + str(jx))
-    print(f"\nDid you make the client_secrets.json file yourself by {F.LIGHTRED_EX}copying and pasting into it{S.R}, instead of {F.LIGHTGREEN_EX}downloading it{S.R}?")
-    print(f"You need to {F.YELLOW}download the json file directly from the google cloud dashboard{S.R} as shown in the instructions.")
+    print(f"{FOREGROUND_TEXT_COLOR.WHITE}{BACKGROUND_TEXT_COLOR.RED} [!!!] Error: {TEXT_STYLE.RESET_ALL}" + str(jx))
+    print(f"\nDid you make the client_secrets.json file yourself by {FOREGROUND_TEXT_COLOR.LIGHTRED_EX}copying and pasting into it{TEXT_STYLE.RESET_ALL}, instead of {FOREGROUND_TEXT_COLOR.LIGHTGREEN_EX}downloading it{TEXT_STYLE.RESET_ALL}?")
+    print(f"You need to {FOREGROUND_TEXT_COLOR.YELLOW}download the json file directly from the google cloud dashboard{TEXT_STYLE.RESET_ALL} as shown in the instructions.")
     print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
     input("Press Enter to Exit...")
     sys.exit()
   except Exception as e:
     if "invalid_grant" in str(e):
-      print(f"{F.YELLOW}[!] Invalid token{S.R} - Requires Re-Authentication")
+      print(f"{FOREGROUND_TEXT_COLOR.YELLOW}[!] Invalid token{TEXT_STYLE.RESET_ALL} - Requires Re-Authentication")
       os.remove(TOKEN_FILE_NAME)
       YOUTUBE = get_authenticated_service()
     else:
       print('\n')
       traceback.print_exc() # Prints traceback
       print("----------------")
-      print(f"{F.RED}[!!!] Error: {S.R}" + str(e))
+      print(f"{FOREGROUND_TEXT_COLOR.RED}[!!!] Error: {TEXT_STYLE.RESET_ALL}" + str(e))
       print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
-      input(f"\nError Code A-1: {F.RED}Something went wrong during authentication.{S.R} {F.YELLOW}Try deleting the token.pickle file.{S.R} \nPress Enter to exit...")
+      input(f"\nError Code A-1: {FOREGROUND_TEXT_COLOR.RED}Something went wrong during authentication.{TEXT_STYLE.RESET_ALL} {FOREGROUND_TEXT_COLOR.YELLOW}Try deleting the token.pickle file.{TEXT_STYLE.RESET_ALL} \nPress Enter to exit...")
       sys.exit()
   return YOUTUBE
 
@@ -128,8 +128,8 @@ def get_current_user(config):
   # Catch exceptions if problems getting info
   if len(results) == 0: # Check if results are empty
     print("\n----------------------------------------------------------------------------------------")
-    print(f"{F.YELLOW}Error Getting Current User{S.R}: The YouTube API responded, but did not provide a Channel ID.")
-    print(f"{F.CYAN}Known Possible Causes:{S.R}")
+    print(f"{FOREGROUND_TEXT_COLOR.YELLOW}Error Getting Current User{TEXT_STYLE.RESET_ALL}: The YouTube API responded, but did not provide a Channel ID.")
+    print(f"{FOREGROUND_TEXT_COLOR.CYAN}Known Possible Causes:{TEXT_STYLE.RESET_ALL}")
     print("> The client_secrets file does not match user authorized with token.pickle file.")
     print("> You are logging in with a Google account that does not have a YouTube channel created yet.")
     print("> When choosing the account to log into, you selected the option showing the Google Account's email address, which might not have a channel attached to it.")

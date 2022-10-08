@@ -212,10 +212,10 @@ def main(communityPostID=None, limit=1000, sort=SORT_BY_RECENT, language=None, p
         print(f'\n Loading Comments For Post: {communityPostID}')
 
     if postText:
-            print(f"    >  {F.LIGHTCYAN_EX}Post Text Sample:{S.R} {postText[0:90]}")
+            print(f"    >  {FOREGROUND_TEXT_COLOR.LIGHTCYAN_EX}Post Text Sample:{TEXT_STYLE.RESET_ALL} {postText[0:90]}")
 
     count = 0
-    #print(f'    >  Loaded {F.YELLOW}{count}{S.R} comment(s)', end='\r')
+    #print(f'    >  Loaded {FOREGROUND_TEXT_COLOR.YELLOW}{count}{TEXT_STYLE.RESET_ALL} comment(s)', end='\r')
 
     totalComments = 0
     commentsDict = {}
@@ -238,7 +238,7 @@ def main(communityPostID=None, limit=1000, sort=SORT_BY_RECENT, language=None, p
             progressStats = f"[ {str(count)} / {str(totalComments)} ]".ljust(15, " ") + f" ({percent:.2f}%)"
             print(f'    >  Retrieving Post Comments - {progressStats}', end='\r')
         else: 
-            print(f'    >  Loaded {F.YELLOW}{count}{S.R} comment(s)', end='\r')
+            print(f'    >  Loaded {FOREGROUND_TEXT_COLOR.YELLOW}{count}{TEXT_STYLE.RESET_ALL} comment(s)', end='\r')
 
         if limit and count >= limit:
             print("                                                                                 ")
