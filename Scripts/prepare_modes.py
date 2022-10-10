@@ -52,7 +52,7 @@ def prepare_filter_mode_chars(scanMode, filterMode, config):
         print("                                                                                          ") # Clears the line because of \r on previous print
         print("\nError Code G-1: Something went wrong with the input, or you closed the window improperly.")
         print("If this keeps happening inexplicably, consider filing a bug report here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
-        input("Press Enter to exit...")
+        input(f"Press {F.YELLOW}Enter{S.R} to exit...")
         sys.exit()
 
     print(f"     {whatToScanMsg} will be scanned for {F.MAGENTA}ANY{S.R} of the characters you entered in the previous window.")
@@ -200,7 +200,7 @@ def prepare_filter_mode_ID(scanMode, config):
     if config['channel_ids_to_filter'] != "ask":
       pass
     else:
-      input("\nPress Enter to Continue...")
+      input(f"\nPress {F.YELLOW}Enter{S.R} to Continue...")
 
   return inputtedSpammerChannelID, None
 
@@ -265,7 +265,7 @@ def prepare_filter_mode_non_ascii(scanMode, config):
   if confirmation == True:
     return regexPattern, autoModeName
   else:
-    input("How did you get here? Something very strange went wrong. Press Enter to Exit...")
+    input(f"How did you get here? Something very strange went wrong. Press {F.YELLOW}Enter{S.R} to Exit...")
     sys.exit()
 
 # Auto smart mode
@@ -279,9 +279,9 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
     pass
   else:
     if sensitive:
-      print("\n----------------------------------------------- Sensitive-Smart Mode -----------------------------------------------")
+      print(f"\n----------------------------------------------- {F.YELLOW}Sensitive-Smart Mode{S.R} -----------------------------------------------")
     else: # if not sensitive
-      print("\n----------------------------------------------- Auto-Smart Mode -----------------------------------------------")
+      print(f"\n----------------------------------------------- {F.YELLOW}Auto-Smart Mode{S.R} -----------------------------------------------")
     print(f"~~~ This mode is a {F.LIGHTCYAN_EX}spammer's worst nightmare{S.R}. It automatically scans for multiple spammer techniques ~~~\n")
     print(" > Extremely low (near 0%) false positives")
     print(" > Detects whatsapp scammers and '18+ spam' bots")
@@ -290,7 +290,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
       print(f" > {F.LIGHTRED_EX}NOTE:{S.R} This mode prioritizes a {F.LIGHTGREEN_EX}VERY low false positive rate{S.R}, at the cost of occasionally missing some spammers.\n")
     elif sensitive == True:
       print(f" > {F.LIGHTRED_EX}NOTE:{S.R} In sensitive mode, {F.LIGHTRED_EX}expect more false positives{S.R}. Recommended to run this AFTER regular Auto Smart Mode.\n")
-    input("Press Enter to Begin Scanning...")
+    input(f"Press {F.YELLOW}Enter{S.R} to Begin Scanning...")
     print ("\033[A                                     \033[A") # Erases previous line
   print("  Loading Filters  [                              ]", end="\r")
 
@@ -525,7 +525,7 @@ def delete_comment_list(config):
           elif saveChoice.lower() == "x":
             return "MainMenu"
           else:
-            print(f"\n{F.RED}Invalid Selectionp{S.R}. Please try again.")
+            print(f"\n{F.RED}Invalid Selection{S.R}. Please try again.")
       progressFileName = saveChoice
       progressFileNameWithPath = os.path.join(progressFileFolder, progressFileName)
       progressDict = files.read_dict_pickle_file(progressFileName, progressFileFolder)
@@ -534,7 +534,7 @@ def delete_comment_list(config):
 
     else:
       print(f"\n{F.RED}No previous saves found!{S.R}")
-      input("\nPress Enter to return to Main Menu...")
+      input(f"\nPress {F.YELLOW}Enter{S.R} to return to Main Menu...")
       return "MainMenu"
 
 
@@ -575,7 +575,7 @@ def delete_comment_list(config):
 
     print(f"\n {F.LIGHTCYAN_EX}----------------------- Loaded Saved Comment List Status -----------------------{S.R}")
     print(f" {F.LIGHTGREEN_EX}{prevRemovedNum} removed{S.R}  |  {F.YELLOW}{prevNotRemovedNum} not removed yet{S.R}  |  {F.LIGHTRED_EX}{prevFailedNum} failed to be removed{S.R}")
-    input("\n Press Enter to Continue...")
+    input(f"\n Press {F.YELLOW}Enter{S.R} to Continue...")
 
     # Set removal list based on previous save
     removalList = list(remainingCommentsSet)
@@ -657,7 +657,7 @@ def delete_comment_list(config):
   ### Handle Results ###
   if len(failedCommentsList) > 0:
     print(f"\n{F.LIGHTRED_EX}Warning!{S.R} {len(failedCommentsList)} comments apparently failed to be removed. They'll be saved to be tried later.")
-    input("\nPress Enter to Continue...")
+    input(f"\nPress {F.YELLOW}Enter{S.R} to Continue...")
     failedCommentsSet = set(failedCommentsList)
   else:
     failedCommentsSet = set()

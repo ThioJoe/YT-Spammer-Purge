@@ -39,14 +39,14 @@ for _ in range(NUM_PAIRS):
 
 print("Generated experiment.\n\nRunning benchmark...")
 
-# Benchmart time for python-Levenshtein
+# Benchmark time for python-Levenshtein
 start = datetime.now()
 for sen_x, sen_y in zip(x, y):
     value = ratio(sen_x, sen_y)
 end = datetime.now()
 print(f"\npython-Levenshtein time: {end - start}")
 
-# Benchmart time for rapidfuzz
+# Benchmark time for rapidfuzz
 start = datetime.now()
 for sen_x, sen_y in zip(x, y):
     value = fuzz.ratio(sen_x, sen_y) / 100
