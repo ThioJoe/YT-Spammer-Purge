@@ -127,20 +127,20 @@ def get_comments(current, filtersDict, miscData, config, allVideoCommentsDict, s
     except TypeError: # This might not be necessary, might remove later if not
       pass
     
+    if numReplies > 0 and (filtersDict['filterMode'] == "AutoSmart" or filtersDict['filterMode'] == "SensitiveSmart") and config['detect_spam_threads'] == True:
+        parentCommentDict = currentCommentDict
+    else:
+      parentCommentDict = None
+
     # If there are more replies than in the limited list
     if numReplies > 0 and len(limitedRepliesList) < numReplies:
-      if numReplies > 7 and (filtersDict['filterMode'] == "AutoSmart" or filtersDict['filterMode'] == "SensitiveSmart") and config['detect_spam_threads'] == True:
-        parentCommentDict = currentCommentDict
-      else:
-        parentCommentDict = None
-
       allVideoCommentsDict = get_replies(current, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, allVideoCommentsDict, parentCommentDict=parentCommentDict)
       if allVideoCommentsDict == "Error":
         return "Error", None
 
     # If all the replies are in the limited list
     elif numReplies > 0 and len(limitedRepliesList) == numReplies: # limitedRepliesList can never be more than numReplies
-      allVideoCommentsDict = get_replies(current, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, allVideoCommentsDict, repliesList=limitedRepliesList)
+      allVideoCommentsDict = get_replies(current, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, allVideoCommentsDict, repliesList=limitedRepliesList, parentCommentDict=parentCommentDict)
       if allVideoCommentsDict == "Error":
         return "Error", None
     else:
@@ -299,12 +299,13 @@ def check_spam_threads(current, filtersDict, miscData, config, parentCommentDict
   preliminaryCount, redCount, yellowCount, nameCount, fullNameCount, partialNameCount, susMentionCount = 0, 0, 0, 0, 0, 0, 0
   nameList, partialNameList, fullNameList =[] , [], []
   name, partialName, fullName = "", "", ""
+  minReplies = 5
 
   if any(item in parentCommentDict['commentText'].lower() for item in miscData.spamLists['spamThreadsList']):
     add_spam(current, config, miscData, parentCommentDict, parentCommentDict['videoID'], matchReason="Spam Bot Thread")
     return current
   # Preliminary Analysis
-  if not threadDict:
+  if not threadDict or len(threadDict) < minReplies:
     return current
   matchCount = threadWordsRegex.findall(parentCommentDict['commentText'].lower())
   if matchCount:

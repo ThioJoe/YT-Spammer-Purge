@@ -272,7 +272,7 @@ def prepare_filter_mode_non_ascii(scanMode, config):
 def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   rootDomainList = miscData.resources['rootDomainList']
   spamDomainsList = miscData.spamLists['spamDomainsList'] # List of domains from crowd sourced list
-  #spamThreadsList = miscData.spamLists['spamThreadsList'] # List of filters associated with spam threads from crowd sourced list
+  spamThreadsList = miscData.spamLists['spamThreadsList'] # List of filters associated with spam threads from crowd sourced list
   spamAccountsList = miscData.spamLists['spamAccountsList'] # List of mentioned instagram/telegram scam accounts from crowd sourced list
   utf_16 = "utf-8"
   if config['filter_mode'] == "autosmart":
@@ -405,8 +405,9 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
     spamListExpressionsList.append(confusable_regex(domain.upper().replace(".", "⚫"), include_character_padding=False).replace("(?:⚫)", "(?:[^a-zA-Z0-9 ]{1,2})"))
   for account in spamAccountsList:
     spamListExpressionsList.append(confusable_regex(account.upper(), include_character_padding=True).replace(m, a))
-  # for thread in spamThreadsList:
-  #   spamListExpressionsList.append(confusable_regex(thread.upper(), include_character_padding=True).replace(m, a))
+  for spamName in spamThreadsList:
+    #spamListExpressionsList.append(confusable_regex(thread.upper(), include_character_padding=True).replace(m, a)) #With Confusables
+    spamListExpressionsList.append(re.escape(spamName.lower())) #Exact lowercase match
   print("  Loading Filters  [======================        ]", end="\r")
   spamListCombinedRegex = re.compile('|'.join(spamListExpressionsList))
 
