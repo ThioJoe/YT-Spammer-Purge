@@ -846,6 +846,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
 
       # Spam Lists
       spamListCombinedRegex = smartFilter['spamListCombinedRegex']
+      spamThreadsRegex = smartFilter['spamThreadsRegex']
 
       # if debugSingleComment == True: 
       #   if input("Sensitive True/False: ").lower() == 'true': sensitive = True
@@ -936,6 +937,10 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
       else:
         processedText = commentText
       upLowTextSet = set(processedText)
+
+      # Run Spam Thread specific check first
+      if spamThreadsRegex.search(commentTextNormalized.lower()):
+        add_spam(current, config, miscData, currentCommentDict, videoID)
 
       # Run Checks
       if authorChannelID == parentAuthorChannelID:

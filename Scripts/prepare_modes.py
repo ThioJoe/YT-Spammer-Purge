@@ -400,6 +400,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   print("  Loading Filters  [===================           ]", end="\r")
 
   spamListExpressionsList = []
+  spamThreadsExpressionsList = []
   # Prepare spam domain regex
   for domain in spamDomainsList:
     spamListExpressionsList.append(confusable_regex(domain.upper().replace(".", "⚫"), include_character_padding=False).replace("(?:⚫)", "(?:[^a-zA-Z0-9 ]{1,2})"))
@@ -407,9 +408,11 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
     spamListExpressionsList.append(confusable_regex(account.upper(), include_character_padding=True).replace(m, a))
   for spamName in spamThreadsList:
     #spamListExpressionsList.append(confusable_regex(thread.upper(), include_character_padding=True).replace(m, a)) #With Confusables
-    spamListExpressionsList.append(re.escape(spamName.lower())) #Exact lowercase match
+    spamThreadsExpressionsList.append(re.escape(spamName.lower())) #Exact lowercase match
   print("  Loading Filters  [======================        ]", end="\r")
   spamListCombinedRegex = re.compile('|'.join(spamListExpressionsList))
+  print("  Loading Filters  [=========================     ]", end="\r")
+  spamThreadsRegex = re.compile('|'.join(spamThreadsExpressionsList))
 
   # Prepare Multi Language Detection
   turkish = 'ÇçŞşĞğİ'
@@ -445,6 +448,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
     'sensitiveRootDomainRegex': sensitiveRootDomainRegex,
     'unicodeCategoriesStrip': unicodeCategoriesStrip,
     'spamListCombinedRegex': spamListCombinedRegex,
+    'spamThreadsRegex': spamThreadsRegex,
     'threadFiltersDict': threadFiltersDict,
     'accompanyingLinkSpamDict': accompanyingLinkSpamDict,
     'comboDict': filter.comboDict
