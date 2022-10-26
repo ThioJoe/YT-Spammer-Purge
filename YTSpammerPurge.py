@@ -36,7 +36,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.17.0-Beta3"
+version = "2.17.0-Beta4"
 configVersion = 32
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 print("Importing Script Modules...")
@@ -924,6 +924,7 @@ def main():
     elif scanMode == "checkUpdates":
       files.check_lists_update(spamListDict)
       files.check_for_update(version, updateReleaseChannel)
+      files.check_for_filter_update(filterListDict, silentCheck=True)
       input("\nPress Enter to return to main menu...")
       return True
 

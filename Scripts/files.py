@@ -180,7 +180,7 @@ def check_for_filter_update(filterListDict, silentCheck = False):
       print("Error: Could not get latest release info from GitHub. Please try again later.")
       return False
 
-  if parse_version(localVersion) <= parse_version(latestFilterVersion):
+  if parse_version(localVersion) < parse_version(latestFilterVersion):
     print("\n>  A new filter variables update is available. Downloading...")
     # Create backup of old filter_variables.py file, append version number to filename
     backupFilePath = os.path.join(filterListDict['ResourcePath'], f"filter_variables.py.{localVersion}")
