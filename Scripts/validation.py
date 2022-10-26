@@ -32,6 +32,12 @@ def validate_video_id(video_url_or_id, silent=False, pass_exception=False, basic
           id=possibleVideoID,
           fields='items/id,items/snippet/channelId,items/snippet/channelTitle,items/statistics/commentCount,items/snippet/title',
           ).execute()
+
+        # Checks if video exists but is unavailable
+        if result['items'] == []:
+          print(f"\n{B.RED}{F.WHITE} ERROR: {S.R} {F.RED}No info returned for ID: {S.R} {possibleVideoID} {F.LIGHTRED_EX} - Video may be unavailable or deleted.{S.R}")
+          return False, None, None, None, None
+
         if possibleVideoID == result['items'][0]['id']:
           channelID = result['items'][0]['snippet']['channelId']
           channelTitle = result["items"][0]["snippet"]["channelTitle"]

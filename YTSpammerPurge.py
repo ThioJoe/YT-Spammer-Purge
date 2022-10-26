@@ -530,6 +530,7 @@ def main():
             videoListResult[i] = validation.validate_video_id(enteredVideosList[i]) # Sends link or video ID for isolation and validation
             if videoListResult[i][0] == False:
               validVideoIDs = False
+              validConfigSetting = False
               confirm = False
               break
 
