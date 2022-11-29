@@ -140,6 +140,16 @@ def validate_channel_id(inputted_channel):
       if response.get("items"):
         isolatedChannelID = response.get("items")[0]["snippet"]["channelId"] # Get channel ID from custom channel URL username
   
+  #Handle the new YouTube handles (there's no official API for it right now)
+  elif re.search(r'@([^\/]*)', inputted_channel):
+    handle = re.search(r'@([^\/]*)', inputted_channel).group(1)
+    response = urlopen("https://yt.lemnoslife.com/channels?handle=" + handle).read()
+    if json.loads(response)['items'][0]['id']:
+      isolatedChannelID = json.loads(response)['items'][0]['id']
+    else:
+      print(f"\n{B.RED}{F.BLACK}Error:{S.R} Invalid handle!")
+      return False, None, None
+  
   # Handle legacy style custom URL (no /c/ for custom URL)
   elif not any(x in inputted_channel for x in notChannelList) and (inputted_channel.lower().startswith("youtube.com/") or str(urlparse(inputted_channel).hostname).lower() == "youtube.com"):
     startIndex = inputted_channel.rindex("/") + 1
