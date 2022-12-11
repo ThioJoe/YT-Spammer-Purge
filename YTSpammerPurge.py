@@ -48,6 +48,7 @@ import Scripts.utils as utils
 import Scripts.files as files
 import Scripts.logging as logging
 import Scripts.operations as operations
+import Scripts.user_tools as user_tools
 from Scripts.community_downloader import main as get_community_comments #Args = post's ID, comment limit
 import Scripts.community_downloader as community_downloader
 from Scripts.utils import choice
@@ -441,7 +442,9 @@ def main():
     print(f"      6. Create your own {F.LIGHTGREEN_EX}config file(s){S.R} to run the program with pre-set settings")
     print(f"      7. Remove comments using a {F.LIGHTRED_EX}pre-existing list{S.R} or log file")
     print(f"      8. Recover deleted comments using log file")
-    print(f"      9. Check & Download {F.LIGHTCYAN_EX}Updates{S.R}\n")
+    print(f"      9. Check & Download {F.LIGHTCYAN_EX}Updates{S.R}")
+    print(f"      10. {F.BLACK}{B.LIGHTGREEN_EX} NEW! {S.R} Helpful Tools")
+    print("")
 
 
 
@@ -452,12 +455,12 @@ def main():
       if validConfigSetting == True and config and config['scan_mode'] != 'ask':
         scanMode = config['scan_mode']
       else:
-        scanMode = input("Choice (1-9): ")
+        scanMode = input("Choice (1-10): ")
       if scanMode.lower() == "q":
         sys.exit()
 
       # Set scanMode Variable Names
-      validModeValues = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'chosenvideos', 'recentvideos', 'entirechannel', 'communitypost', 'commentlist', 'recentcommunityposts']
+      validModeValues = ['1', '2', '3', '4', '5', '6', '7', '8', '9','10', 'chosenvideos', 'recentvideos', 'entirechannel', 'communitypost', 'commentlist', 'recentcommunityposts']
       if scanMode in validModeValues:
         validMode = True
         if scanMode == "1" or scanMode == "chosenvideos":
@@ -478,8 +481,10 @@ def main():
           scanMode = "recoverMode"
         elif scanMode == "9":
           scanMode = "checkUpdates"
+        elif scanMode == "10":
+          scanMode = "tools"
       else:
-        print(f"\nInvalid choice: {scanMode} - Enter a number from 1 to 9")
+        print(f"\nInvalid choice: {scanMode} - Enter a number from 1 to 10")
         validConfigSetting = False
 
 # ================================================================================= CHOSEN VIDEOS ======================================================================================================
@@ -931,12 +936,16 @@ def main():
     # Recove deleted comments mode
     elif scanMode == "recoverMode":
       result = modes.recover_deleted_comments(config)
-
       if str(result) == "MainMenu":
         return True
 
     elif scanMode == "commentList":
       result = modes.delete_comment_list(config)
+      if str(result) == "MainMenu":
+        return True
+
+    elif scanMode == "tools":
+      result = user_tools.user_tools_menu(config)
       if str(result) == "MainMenu":
         return True
 
