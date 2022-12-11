@@ -142,12 +142,15 @@ def validate_channel_id(inputted_channel):
 
     if startIndex < endIndex and endIndex <= len(inputted_channel):
       customURL = inputted_channel[startIndex:endIndex]
-      response = auth.YOUTUBE.search().list(part="snippet",q=customURL, maxResults=1).execute()
+      response = auth.YOUTUBE.search().list(part="snippet",q=customURL, maxResults=1, type="channel").execute()
       if response.get("items"):
         isolatedChannelID = response.get("items")[0]["snippet"]["channelId"] # Get channel ID from custom channel URL username
+      else:
+        print(f"\n{F.LIGHTRED_EX}No Channel Found!{S.R} YouTube returned no results for that channel. Try entering the @handle instead.")
+        return False, None, None
   
   # Handle legacy style custom URL (no /c/ for custom URL)
-  elif not any(x in inputted_channel for x in notChannelList) and (inputted_channel.lower().startswith("youtube.com/") or str(urlparse(inputted_channel).hostname).lower() == "youtube.com"):
+  elif not any(x in inputted_channel for x in notChannelList) and (inputted_channel.lower().startswith("youtube.com/") or str(urlparse(inputted_channel).hostname).lower() in ["youtube.com", "www.youtube.com"]):
     startIndex = inputted_channel.rindex("/") + 1
     endIndex = len(inputted_channel)
 
@@ -158,18 +161,24 @@ def validate_channel_id(inputted_channel):
         print(f"{F.LIGHTRED_EX}Invalid Channel ID / Link!{S.R} Did you enter a video ID / link by mistake?")
         return False, None, None
 
-      response = auth.YOUTUBE.search().list(part="snippet",q=customURL, maxResults=1).execute()
+      response = auth.YOUTUBE.search().list(part="snippet",q=customURL, maxResults=1, type="channel").execute()
       if response.get("items"):
         isolatedChannelID = response.get("items")[0]["snippet"]["channelId"] # Get channel ID from custom channel URL username
+      else:
+        print(f"\n{F.LIGHTRED_EX}No Channel Found!{S.R} YouTube returned no results for that channel. Try entering the @handle instead.")
+        return False, None, None
   
   # Check if new "handle" identifier is used
   elif inputted_channel.lower().startswith("@"):
     # Check for handle validity: Only letters and numbers, periods, underscores, and hyphens, and between 3 and 30 characters
     if re.match(r'^[a-zA-Z0-9._-]{3,30}$', inputted_channel[1:]):
       # Does a search for the handle and gets the channel ID from first response
-      response = auth.YOUTUBE.search().list(part="snippet",q=inputted_channel, maxResults=1).execute()
+      response = auth.YOUTUBE.search().list(part="snippet",q=inputted_channel, maxResults=1, type="channel").execute()
       if response.get("items"):
         isolatedChannelID = response.get("items")[0]["snippet"]["channelId"]
+      else:
+        print(f"\n{F.LIGHTRED_EX}No Channel Found!{S.R} YouTube returned no results for that channel. Double check it is correct, or try entering the Channel ID.")
+        return False, None, None
     else:
       print(f"\n{B.RED}{F.BLACK}Error:{S.R} You appear to have entered an invalid handle! It must be between 3 and 30 characters long and only contain letters, numbers, periods, underscores, and hyphens.")
       return False, None, None
