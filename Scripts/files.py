@@ -242,10 +242,10 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
       elif updateReleaseChannel == "all":
         latestVersion = response.json()[0]["name"]
         # check if latest version is a beta. 
-        # if it is continue, else check for another beta with a higher version in the 5 newest releases 
+        # if it is continue, else check for another beta with a higher version in the 10 newest releases 
         isBeta = response.json()[0]["prerelease"]
         if (isBeta == False): 
-          for i in range(4):
+          for i in range(9):
             # add a "+ 1" to index to not count the first release (already checked)
             latestVersion2 = response.json()[i + 1]["name"]
             # make sure the version is higher than the current version

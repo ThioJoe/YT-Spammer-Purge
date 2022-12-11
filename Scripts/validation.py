@@ -161,6 +161,19 @@ def validate_channel_id(inputted_channel):
       response = auth.YOUTUBE.search().list(part="snippet",q=customURL, maxResults=1).execute()
       if response.get("items"):
         isolatedChannelID = response.get("items")[0]["snippet"]["channelId"] # Get channel ID from custom channel URL username
+  
+  # Check if new "handle" identifier is used
+  elif inputted_channel.lower().startswith("@"):
+    # Check for handle validity: Only letters and numbers, periods, underscores, and hyphens, and between 3 and 30 characters
+    if re.match(r'^[a-zA-Z0-9._-]{3,30}$', inputted_channel[1:]):
+      # Does a search for the handle and gets the channel ID from first response
+      response = auth.YOUTUBE.search().list(part="snippet",q=inputted_channel, maxResults=1).execute()
+      if response.get("items"):
+        isolatedChannelID = response.get("items")[0]["snippet"]["channelId"]
+    else:
+      print(f"\n{B.RED}{F.BLACK}Error:{S.R} You appear to have entered an invalid handle! It must be between 3 and 30 characters long and only contain letters, numbers, periods, underscores, and hyphens.")
+      return False, None, None
+
 
   # Channel ID regex expression from: https://webapps.stackexchange.com/a/101153
   elif re.match(r'UC[0-9A-Za-z_-]{21}[AQgw]', inputted_channel):
