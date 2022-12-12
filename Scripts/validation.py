@@ -18,7 +18,12 @@ def validate_video_id(video_url_or_id, silent=False, pass_exception=False, basic
       if basicCheck == True:
         return False
       if silent == False:
-        print(f"\n{B.RED}{F.BLACK}Invalid Video link or ID!{S.R} Video IDs are 11 characters long.")
+        if ("youtube.com" in video_url_or_id or "youtu.be" in video_url_or_id) and "?v=" not in video_url_or_id:
+          print(f"\n{B.RED}{F.BLACK}Invalid Video link!{S.R} Did you accidentally enter a channel link (or something else) instead of a video link?")
+        elif ("youtube.com" in video_url_or_id or "youtu.be" in video_url_or_id):
+          print(f"\n{B.RED}{F.BLACK}Invalid Video link!{S.R} Check that you copied it correctly. It should look something like \"youtube.com/watch?v=whatever-ID\" where 'whatever-ID' is 11 characters long.")
+        else:
+          print(f"\n{B.RED}{F.BLACK}Invalid Video link or ID!{S.R} Video IDs are 11 characters long.")
       return False, None, None, None, None
     elif basicCheck == True:
       possibleVideoID = match.group('video_id')

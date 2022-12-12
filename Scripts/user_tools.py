@@ -34,7 +34,9 @@ def user_tools_menu(config):
         return "MainMenu"
     
     else:
-      print(f"{F.LIGHTRED_EX}Invalid Choice!\n{S.R}")
+      print(f"{F.LIGHTRED_EX}Invalid Choice! Must be a number from the selections above.\n{S.R}")
+      if len(validChoices) == 1:
+        print(f"(Note: For now there is currently only one option available, so enter \"1\".)\n")
 
 
 ################################ VIDEO URL TO CHANNEL ID ###########################################
