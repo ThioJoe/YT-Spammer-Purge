@@ -30,6 +30,45 @@
       "title": "general options",
       "type": "object",
       "description": "General options\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L47",
+      "properties": {
+        "your_channel_id": {
+          "description": "A channel identifier\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L51",
+          "type": "string",
+          "pattern": "^(Ask|[A-Za-z0-9_\\-]{24})$",
+          "default": "Ask"
+        },
+        "auto_check_update": {
+          "description": "Whether to check for new update automatically\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L57",
+          "type": "boolean",
+          "default": true
+        },
+        "release_channel": {
+          "description": "A release channel\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L62",
+          "type": "string",
+          "enum": ["All", "Stable"],
+          "default": ["All"]
+        },
+        "skip_confirm_video": {
+          "description": "Whether to check whether a video url is correct\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L67",
+          "type": "boolean",
+          "default": false
+        },
+        "moderator_mode": {
+          "description": "Whether to override `Not Your Channel` mode\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L72",
+          "type": "boolean",
+          "default": false
+        },
+        "auto_close": {
+          "description": "Whether to exit after channel is handled\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L77",
+          "type": "boolean",
+          "default": false
+        },
+        "colors_enabled": {
+          "description": "Whether to enable output coloring\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L77",
+          "type": "boolean",
+          "default": true
+        }
+      },
       "additionalProperties": false
     },
     "scanning": {
