@@ -21,7 +21,8 @@
         },
         "configs_path": {
           "description": "A config description\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L37",
-          "$ref": "https://json.schemastore.org/base.json#/definitions/path"
+          "$ref": "https://json.schemastore.org/base.json#/definitions/path",
+          "default": "configs"
         }
       },
       "additionalProperties": false
