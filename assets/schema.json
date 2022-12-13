@@ -76,6 +76,52 @@
       "title": "scanning options",
       "type": "object",
       "description": "Scanning options\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L85",
+      "properties": {
+        "scan_mode": {
+          "description": "A mode\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L89",
+          "type": "string",
+          "enum": ["Ask", "ChosenVideos", "RecentVideos", "EntireChannel", "CommunityPost", "RecentCommunityPosts"],
+          "default": "Ask"
+        },
+        "max_comments": {
+          "description": "A maximum commentc count\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L93",
+          "type": ["integer", "string"],
+          "minimum": 0,
+          "default": "Ask"
+        },
+        "videos_to_scan": {
+          "description": "Video identifiers\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L98",
+          "type": ["string", "array"],
+          "uniqueItems": true,
+          "items": {
+            "description": "Video identifier\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L98",
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_\\-]{15}$"
+          },
+          "default": "Ask"
+        },
+        "channel_to_scan": {
+          "description": "A channel identifier\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L102",
+          "type": "string",
+          "oneOf":
+          [
+            {
+              "enum": ["Ask", "Mine"]
+            },
+            {
+              "pattern": "^[A-Za-z0-9_\\-]{24}$"
+            }
+          ],
+          "default": "Ask"
+        },
+        "recent_videos_amount": {
+          "description": "An amount of videos\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L107",
+          "type": ["string", "integer"],
+          "minimum": 1,
+          "maximum": 5000,
+          "default": "Ask"
+        }
+      },
       "additionalProperties": false
     },
     "filtering": {
