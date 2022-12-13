@@ -12,7 +12,8 @@
         "use_this_config": {
           "description": "Whether to use this config\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L31",
           "type": ["boolean", "string"],
-          "enum": [true, false, "Ask"]
+          "enum": [true, false, "Ask"],
+          "default": "Ask"
         },
         "this_config_description": {
           "description": "A config description\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L37",
