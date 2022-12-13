@@ -36,6 +36,7 @@
           "description": "A channel identifier\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L51",
           "type": "string",
           "pattern": "^(Ask|[A-Za-z0-9_\\-]{24})$",
+          "examples": ["UCx123-BlahBlahExampleID"],
           "default": "Ask"
         },
         "auto_check_update": {
@@ -96,7 +97,8 @@
           "items": {
             "description": "Video identifier\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L98",
             "type": "string",
-            "pattern": "^[A-Za-z0-9_\\-]{15}$"
+            "pattern": "^[A-Za-z0-9_\\-]{15}$",
+            "examples": ["xyzVidIDExample"]
           },
           "default": "Ask"
         },
@@ -109,7 +111,8 @@
               "enum": ["Ask", "Mine"]
             },
             {
-              "pattern": "^[A-Za-z0-9_\\-]{24}$"
+              "pattern": "^[A-Za-z0-9_\\-]{24}$",
+              "examples": ["UCx123-BlahBlahExampleID"]
             }
           ],
           "default": "Ask"
