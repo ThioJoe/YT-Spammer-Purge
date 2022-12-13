@@ -64,7 +64,7 @@
           "default": false
         },
         "colors_enabled": {
-          "description": "Whether to enable output coloring\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L77",
+          "description": "Whether to enable output coloring\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L82",
           "type": "boolean",
           "default": true
         }
