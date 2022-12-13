@@ -6,8 +6,8 @@
   "properties": {
     "config-meta": {
       "title": "meta options",
-      "type": "object",
       "description": "Config meta options\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L24",
+      "type": "object",
       "properties": {
         "use_this_config": {
           "description": "Whether to use this config\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L31",
@@ -29,8 +29,8 @@
     },
     "general": {
       "title": "general options",
-      "type": "object",
       "description": "General options\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L47",
+      "type": "object",
       "properties": {
         "your_channel_id": {
           "description": "A channel identifier\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L51",
@@ -75,8 +75,8 @@
     },
     "scanning": {
       "title": "scanning options",
-      "type": "object",
       "description": "Scanning options\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L85",
+      "type": "object",
       "properties": {
         "scan_mode": {
           "description": "A mode\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L89",
