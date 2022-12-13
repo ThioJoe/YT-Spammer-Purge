@@ -12,8 +12,8 @@
         "use_this_config": {
           "description": "Whether to use this config\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L31",
           "type": ["boolean", "string"],
-          "enum": [true, false, "Ask"],
-          "default": "Ask"
+          "enum": [true, false, "ask"],
+          "default": "ask"
         },
         "this_config_description": {
           "description": "A config description\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L37",
@@ -35,9 +35,9 @@
         "your_channel_id": {
           "description": "A channel identifier\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L51",
           "type": "string",
-          "pattern": "^(Ask|[A-Za-z0-9_\\-]{24})$",
+          "pattern": "^(ask|[A-Za-z0-9_\\-]{24})$",
           "examples": ["UCx123-BlahBlahExampleID"],
-          "default": "Ask"
+          "default": "ask"
         },
         "auto_check_update": {
           "description": "Whether to check for new update automatically\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L57",
@@ -47,8 +47,8 @@
         "release_channel": {
           "description": "A release channel\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L62",
           "type": "string",
-          "enum": ["All", "Stable"],
-          "default": ["All"]
+          "enum": ["all", "stable"],
+          "default": ["all"]
         },
         "skip_confirm_video": {
           "description": "Whether to check whether a video url is correct\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L67",
@@ -81,14 +81,14 @@
         "scan_mode": {
           "description": "A mode\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L89",
           "type": "string",
-          "enum": ["Ask", "ChosenVideos", "RecentVideos", "EntireChannel", "CommunityPost", "RecentCommunityPosts"],
-          "default": "Ask"
+          "enum": ["ask", "chosenvideos", "recentvideos", "entirechannel", "communitypost", "recentcommunityposts"],
+          "default": "ask"
         },
         "max_comments": {
           "description": "A maximum commentc count\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L93",
           "type": ["integer", "string"],
           "minimum": 0,
-          "default": "Ask"
+          "default": "ask"
         },
         "videos_to_scan": {
           "description": "Video identifiers\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L98",
@@ -100,7 +100,7 @@
             "pattern": "^[A-Za-z0-9_\\-]{15}$",
             "examples": ["xyzVidIDExample"]
           },
-          "default": "Ask"
+          "default": "ask"
         },
         "channel_to_scan": {
           "description": "A channel identifier\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L102",
@@ -108,21 +108,21 @@
           "oneOf":
           [
             {
-              "enum": ["Ask", "Mine"]
+              "enum": ["ask", "mine"]
             },
             {
               "pattern": "^[A-Za-z0-9_\\-]{24}$",
               "examples": ["UCx123-BlahBlahExampleID"]
             }
           ],
-          "default": "Ask"
+          "default": "ask"
         },
         "recent_videos_amount": {
           "description": "An amount of videos\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L107",
           "type": ["string", "integer"],
           "minimum": 1,
           "maximum": 5000,
-          "default": "Ask"
+          "default": "ask"
         }
       },
       "additionalProperties": false
