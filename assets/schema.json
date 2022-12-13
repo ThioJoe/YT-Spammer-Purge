@@ -7,61 +7,61 @@
     "config-meta": {
       "title": "",
       "type": "object",
-      "description": "\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L24",
+      "description": "Config meta options\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L24",
       "additionalProperties": false
     },
     "general": {
-      "title": "",
+      "title": "general options",
       "type": "object",
-      "description": "\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L47",
+      "description": "General options\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L47",
       "additionalProperties": false
     },
     "scanning": {
-      "title": "",
+      "title": "scanning options",
       "type": "object",
-      "description": "\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L85",
+      "description": "Scanning options\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L85",
       "additionalProperties": false
     },
     "filtering": {
-      "title": "",
+      "title": "filtering options",
       "type": "object",
-      "description": "\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L110",
+      "description": "Filtering options\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L110",
       "additionalProperties": false
     },
     "autosmart-customization": {
-      "title": "",
+      "title": "autosmart customization options",
       "type": "object",
-      "description": "\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L148",
+      "description": "Autosmart customization options\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L148",
       "additionalProperties": false
     },
     "advanced-filtering": {
-      "title": "",
+      "title": "advanced filtering options",
       "type": "object",
-      "description": "\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L166",
+      "description": "Advanced filtering options\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L166",
       "additionalProperties": false
     },
     "removal": {
-      "title": "",
+      "title": "removal options",
       "type": "object",
-      "description": "\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L214",
+      "description": "Removal options\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L214",
       "additionalProperties": false
     },
     "logging": {
-      "title": "",
+      "title": "logging options",
       "type": "object",
-      "description": "\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L258",
+      "description": "Logging options\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L258",
       "additionalProperties": false
     },
     "api": {
-      "title": "",
+      "title": "api options",
       "type": "object",
-      "description": "\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L299",
+      "description": "API options\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L299",
       "additionalProperties": false
     },
     "info": {
-      "title": "",
+      "title": "info options",
       "type": "object",
-      "description": "\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L308",
+      "description": "Info options\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L308",
       "additionalProperties": false
     }
   },
