@@ -5,7 +5,7 @@
   "type": "object",
   "properties": {
     "config-meta": {
-      "title": "",
+      "title": "meta options",
       "type": "object",
       "description": "Config meta options\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L24",
       "properties": {
