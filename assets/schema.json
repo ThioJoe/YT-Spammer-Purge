@@ -92,13 +92,20 @@
         },
         "videos_to_scan": {
           "description": "Video identifiers\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L98",
-          "type": ["string", "array"],
-          "uniqueItems": true,
-          "items": {
-            "description": "Video identifier\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L98",
-            "type": "string",
-            "pattern": "^[A-Za-z0-9_\\-]{15}$",
-            "examples": ["xyzVidIDExample"]
+          "oneOf":
+          [
+            {
+              "type": "string",
+              "enum": ["ask"]
+            },
+            {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "description": "Video identifier\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L98",
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_\\-]{15}$",
+                "examples": ["xyzVidIDExample"]
           },
           "default": "ask"
         },
