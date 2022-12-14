@@ -64,6 +64,8 @@ function join(array, start, end, sep,    result, i)
       option_types[1] = "\"boolean\""
     else if (default_option_value ~ /^[0-9]+$/)
       option_types[1] = "\"integer\""
+    else if (default_option_value ~ /^[0-9]+\.[0-9]+$/)
+      option_types[1] = "\"number\""
     else
       option_types[1] = "\"string\""
   
@@ -74,6 +76,8 @@ function join(array, start, end, sep,    result, i)
         type_to_add = "\"boolean\""
       else if (option_values_array[i] ~ /^[0-9]+$/)
         type_to_add = "\"integer\""
+      else if (option_values_array[i] ~ /^[0-9]+\.[0-9]+$/)
+        type_to_add = "\"number\""
       else
         type_to_add = "\"string\""
 
