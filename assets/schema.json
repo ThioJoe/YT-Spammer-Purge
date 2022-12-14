@@ -106,7 +106,9 @@
                 "type": "string",
                 "pattern": "^[A-Za-z0-9_\\-]{15}$",
                 "examples": ["xyzVidIDExample"]
-          },
+              }
+            }
+          ],
           "default": "ask"
         },
         "channel_to_scan": {
@@ -138,6 +140,81 @@
       "title": "filtering options",
       "type": "object",
       "description": "Filtering options\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L110",
+      "properties": {
+        "filter_mode": {
+          "description": "A scan mode\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L114",
+          "type": "string",
+          "enum": [
+            "id",
+            "username",
+            "text",
+            "nameandtext",
+            "autoascii",
+            "autosmart",
+            "sensitivesmart",
+            "ask"
+          ],
+          "default": "ask"
+        },
+        "filter_submode": {
+          "description": "A scan submode\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L118",
+          "type": "string",
+          "enum": [
+            "characters",
+            "strings",
+            "regex",
+            "ask"
+          ],
+          "default": "ask"
+        },
+        "channel_ids_to_filter": {
+          "description": "Channel identifiers\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L125",
+          "type": ["string", "array"],
+          "oneOf":
+          [
+            {
+              "const": "ask"
+            },
+            {
+              "uniqueItems": true,
+              "items": {
+                "description": "A channel identifier\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L125",
+                "pattern": "^[A-Za-z0-9_\\-]{24}$",
+                "examples": ["UCx123-BlahBlahExampleID"]
+              }
+            }
+          ],
+          "default": "ask"
+        },
+        "autoascii_sensitivity": {
+          "description": "An ASCII sensivity\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L130",
+          "type": ["integer", "string"],
+          "minimum": 1,
+          "maximum": 3,
+          "default": "ask"
+        },
+        "characters_to_filter": {
+          "description": "Characters to filter\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L137",
+          "type": "string",
+          "default": "ask"
+        },
+        "strings_to_filter": {
+          "description": "Strings to filter\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L141",
+          "type": ["string", "array"],
+          "uniqueItems": true,
+          "items": {
+            "description": "String to filter\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L141",
+            "type": "string",
+            "minLength": 1
+          },
+          "default": "ask"
+        },
+        "regex_to_filter": {
+          "description": "Regex to filter\nhttps://github.com/ThioJoe/YT-Spammer-Purge/blob/main/assets/default_config.ini#L145",
+          "type": "string",
+          "default": "ask"
+        }
+      },
       "additionalProperties": false
     },
     "autosmart-customization": {
