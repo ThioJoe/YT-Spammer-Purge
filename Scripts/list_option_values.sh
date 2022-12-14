@@ -96,6 +96,10 @@ function join(array, start, end, sep,    result, i)
       default_option_value = "\"" default_option_value "\""
     if (option_type_index - 1 == 1)
       print "{ \"" option_name "\": { \"type\": " option_types[1] ", \"default\": " default_option_value " } },"
+    else {
+      types = "[" join(option_types, 1, option_type_index - 1, ", ") "]"
+      print "{ \"" option_name "\": { \"type\": " types ", \"default\": " default_option_value " } },"
+    }
 
     delete option_values_array
     delete option_types
