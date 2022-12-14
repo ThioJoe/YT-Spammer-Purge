@@ -88,8 +88,6 @@ function join(array, start, end, sep,    result, i)
       }
     }
 
-    print "Option: " option_name
-
     if (option_types[1] == "\"string\"")
       default_option_value = "\"" default_option_value "\""
     if (option_type_index - 1 == 1)
