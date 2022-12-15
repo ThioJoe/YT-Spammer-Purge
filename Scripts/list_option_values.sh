@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Just leading spaces are remvoed and placeholders with square brackets.
+# Just leading spaces are removed and placeholders with square brackets.
 # Entries are separated via empty blank lines.
 # Anything else is being unthouched.
 get_values_and_options() {
