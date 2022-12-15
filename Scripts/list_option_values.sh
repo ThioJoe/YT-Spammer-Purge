@@ -5,19 +5,7 @@
 # Anything else is being unthouched.
 get_values_and_options() {
   declare config_path="$1"
-
-  awk 'BEGIN {
-  values = "\\s+#\\s+Default\\s+=\\s+"
-  option_or_values = "^([A-Za-z]" "|" values ")"
-}
-
-$0 ~ option_or_values {
-  result = gensub(/Possible Values:|Possible:|Example Values:/, "", "g", gensub(/\[[A-Za-z0-9 ]+\]/, "", "g", gensub(/\s+=.*/, "", "1", gensub(values, "", "1"))))
-  if (result !~ /--/)
-    result = gensub(/$/, "\n", "1", result)
-  
-  print result
-}' "$config_path"
+  awk --file="./get_raw_property_representation.awk" "$config_path"
 }
 
 convert_to_json_properties() {
