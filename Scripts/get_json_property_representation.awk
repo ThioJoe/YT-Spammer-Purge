@@ -91,6 +91,10 @@ function is_value_in_array(array, value,    i) {
     option_has_range_value = 0
     range_constraints_json = ""
 
+    split("", option_example_values)
+    option_example_values_index = 1
+    option_examples_json = ""
+
     for (i = 2; i <= length(option_values_array); i++) {
       internal_type_to_add = get_internal_value_type(option_values_array[i])
       type_to_add = "\"" get_json_value_type(internal_type_to_add) "\""
@@ -112,23 +116,38 @@ function is_value_in_array(array, value,    i) {
         }
       }
 
+      if (option_values_array[i] ~ /^<.*>$/) {
+        option_example_value = gensub(/<|>/, "", "g", option_values_array[i])
+        if (type_to_add == "\"string\"")
+          option_example_value = "\"" option_example_value "\""
+
+        if (!is_value_in_array(option_example_values, option_example_value)) {
+          option_example_values[option_example_values_index] = option_example_value
+          option_example_values_index++
+        }
+      }
+
       if (!is_value_in_array(option_types_array, type_to_add)) {
         option_types_array[option_type_index] = type_to_add
         option_type_index++
       }
     }
 
+    if (length(option_example_values))
+      option_examples_json = ", \"examples\": [" join(option_example_values, 1, length(option_example_values), ", ") "]"
+
     if (option_types_array[1] == "\"string\"")
       default_option_value = "\"" default_option_value "\""
-    if (option_type_index - 1 == 1)
-      print "{ \"" option_name "\": { \"type\": " default_option_value_type ", \"default\": " default_option_value range_constraints_json " } },"
+    if (length(option_types_array) == 1)
+      print "{ \"" option_name "\": { \"type\": " default_option_value_type ", \"default\": " default_option_value range_constraints_json option_examples_json " } },"
     else {
       types = "[" join(option_types_array, 1, option_type_index - 1, ", ") "]"
-      print "{ \"" option_name "\": { \"type\": " types ", \"default\": " default_option_value range_constraints_json " } },"
+      print "{ \"" option_name "\": { \"type\": " types ", \"default\": " default_option_value range_constraints_json option_examples_json " } },"
     }
 
     delete option_values_array
     delete option_types_array
+    delete option_example_values
   }
 }
 
