@@ -18,6 +18,52 @@ function join(array, start, end, sep,    result, i)
     return result
 }
 
+function get_internal_value_type(value)
+{
+  switch (value)
+  {
+    case /^true|false$/:
+      return "boolean"
+    case /^[-+]?[0-9]+$/:
+      return "integer"
+    case /^[-+]?[0-9]+\.[0-9]+$/:
+      return "float"
+    case /^\[[-+]?[0-9]+-[-+]?[0-9]+\]$/:
+      return "closed_integer_range"
+    case /^\[[-+]?[0-9]+\.[0-9]+-[-+]?[0-9]+\.[0-9]+\]$/:
+      return "closed_float_range"
+    case /^\[[-+]?[0-9]+-infinity\]$/:
+      return "closed_open_integer_range"
+    case /^\[[-+]?[0-9]+\.[0-9]+-infinity\]$/:
+      return "closed_open_float_range"
+    default:
+      return "string";
+  }
+}
+
+function get_json_value_type(internal_value_type)
+{
+  switch (value)
+  {
+    case "boolean":
+      return "boolean"
+    case "integer":
+      return "integer"
+    case "float":
+      return "number"
+    case "closed_integer_range":
+      return "integer"
+    case "closed_float_range":
+      return "number"
+    case "closed_open_integer_range":
+      return "integer"
+    case "closed_open_float_range":
+      return "number"
+    default:
+      return "string";
+  }
+}
+
 {
   option_name = $2
   option_values = $1
