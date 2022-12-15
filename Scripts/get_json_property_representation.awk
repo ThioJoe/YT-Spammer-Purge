@@ -76,37 +76,38 @@ function is_value_in_array(array, value,    i) {
     print "{ \"" option_name "\": { \"type\": \"string\" } }," # We assume that if no value is present than it is string.
   } else {
     option_values = gensub(/\s+(--|\|)\s+/, " ", "g", option_values)
-    option_value_count = split(option_values, option_values_array, " ")
+    split(option_values, option_values_array, " ")
 
     # In JSON schema all keys will have lower case.
     for (key in option_values_array)
       option_values_array[key] = tolower(option_values_array[key])
 
     default_option_value = option_values_array[1]
-    option_types[1] = "\"" get_json_value_type(get_internal_value_type(default_option_value)) "\""
+    option_types_array[1] = "\"" get_json_value_type(get_internal_value_type(default_option_value)) "\""
+    default_option_value_type = option_types_array[1]
     
     option_type_index = 2
 
-    for (i = 2; i <= option_value_count; i++) {
+    for (i = 2; i <= length(option_values_array); i++) {
       type_to_add = "\"" get_json_value_type(get_internal_value_type(option_values_array[i])) "\""
 
-      if (!is_value_in_array(option_types, type_to_add)) {
-        option_types[option_type_index] = type_to_add
+      if (!is_value_in_array(option_types_array, type_to_add)) {
+        option_types_array[option_type_index] = type_to_add
         option_type_index++
       }
     }
 
-    if (option_types[1] == "\"string\"")
+    if (option_types_array[1] == "\"string\"")
       default_option_value = "\"" default_option_value "\""
     if (option_type_index - 1 == 1)
-      print "{ \"" option_name "\": { \"type\": " option_types[1] ", \"default\": " default_option_value " } },"
+      print "{ \"" option_name "\": { \"type\": " default_option_value_type ", \"default\": " default_option_value " } },"
     else {
-      types = "[" join(option_types, 1, option_type_index - 1, ", ") "]"
+      types = "[" join(option_types_array, 1, option_type_index - 1, ", ") "]"
       print "{ \"" option_name "\": { \"type\": " types ", \"default\": " default_option_value " } },"
     }
 
     delete option_values_array
-    delete option_types
+    delete option_types_array
   }
 }
 
