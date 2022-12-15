@@ -6,8 +6,7 @@ BEGIN {
 }
 
 
-function join(array, start, end, sep,    result, i)
-{
+function join(array, start, end, sep,    result, i) {
     if (sep == "")
        sep = " "
     else if (sep == SUBSEP) # magic value
@@ -18,8 +17,7 @@ function join(array, start, end, sep,    result, i)
     return result
 }
 
-function get_internal_value_type(value)
-{
+function get_internal_value_type(value) {
   switch (value)
   {
     case /^true|false$/:
@@ -41,8 +39,7 @@ function get_internal_value_type(value)
   }
 }
 
-function get_json_value_type(internal_value_type)
-{
+function get_json_value_type(internal_value_type) {
   switch (value)
   {
     case "boolean":
@@ -62,6 +59,13 @@ function get_json_value_type(internal_value_type)
     default:
       return "string";
   }
+}
+
+function is_value_in_array(array, value,    i) {
+  for (i = 1; i <= length(array); i++)
+    if (array[i] == value)
+      return 1
+  return 0
 }
 
 {
@@ -102,12 +106,7 @@ function get_json_value_type(internal_value_type)
       else
         type_to_add = "\"string\""
 
-      type_is_already_added = 0
-      for (j = 1; j < option_type_index; j++)
-        if (option_types[j] == type_to_add)
-          type_is_already_added = 1
-
-      if (type_is_already_added == 0) {
+      if (!is_value_in_array(option_types, type_to_add)) {
         option_types[option_type_index] = type_to_add
         option_type_index++
       }
