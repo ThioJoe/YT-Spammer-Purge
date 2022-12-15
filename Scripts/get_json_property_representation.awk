@@ -111,5 +111,5 @@ function is_value_in_array(array, value,    i) {
 }
 
 END {
-  print "}"
+  print "{}\n}" # Add dummy trailing empty object to make JSON syntax correct
 }
