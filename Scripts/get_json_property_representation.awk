@@ -88,8 +88,29 @@ function is_value_in_array(array, value,    i) {
     
     option_type_index = 2
 
+    option_has_range_value = 0
+    range_constraints_json = ""
+
     for (i = 2; i <= length(option_values_array); i++) {
-      type_to_add = "\"" get_json_value_type(get_internal_value_type(option_values_array[i])) "\""
+      internal_type_to_add = get_internal_value_type(option_values_array[i])
+      type_to_add = "\"" get_json_value_type(internal_type_to_add) "\""
+
+      if (internal_type_to_add ~ /range/ && !option_has_range_value) {
+        option_has_range_value = 1 # Just first range is preserved
+
+        range_constraints_json = ", "
+        range = gensub(/\[|\]/, "", "g", option_values_array[i])
+        split(range, range_array, "-")
+
+        switch (internal_type_to_add) {
+          case /closed_integer_range|closed_float_range/:
+            range_constraints_json = range_constraints_json "\"minimum\": " range_array[1] ", \"maximum\": " range_array[2]
+            break
+          case /closed_open_integer_range|closed_open_float_range/:
+            range_constraints_json = range_constraints_json "\"minimum\": " range_array[1]
+            break
+        }
+      }
 
       if (!is_value_in_array(option_types_array, type_to_add)) {
         option_types_array[option_type_index] = type_to_add
@@ -100,10 +121,10 @@ function is_value_in_array(array, value,    i) {
     if (option_types_array[1] == "\"string\"")
       default_option_value = "\"" default_option_value "\""
     if (option_type_index - 1 == 1)
-      print "{ \"" option_name "\": { \"type\": " default_option_value_type ", \"default\": " default_option_value " } },"
+      print "{ \"" option_name "\": { \"type\": " default_option_value_type ", \"default\": " default_option_value range_constraints_json " } },"
     else {
       types = "[" join(option_types_array, 1, option_type_index - 1, ", ") "]"
-      print "{ \"" option_name "\": { \"type\": " types ", \"default\": " default_option_value " } },"
+      print "{ \"" option_name "\": { \"type\": " types ", \"default\": " default_option_value range_constraints_json " } },"
     }
 
     delete option_values_array
