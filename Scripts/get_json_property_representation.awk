@@ -5,7 +5,6 @@ BEGIN {
   print "{"
 }
 
-
 function join(array, start, end, sep,    result, i) {
     if (sep == "")
        sep = " "
