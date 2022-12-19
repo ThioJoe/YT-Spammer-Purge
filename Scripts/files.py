@@ -403,15 +403,9 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
           print(f"\n> Downloading version: {F.GREEN}{latestVersion}{S.R}")
 
           url = f'https://codeload.github.com/ThioJoe/YT-Spammer-Purge/tar.gz/refs/tags/v{latestVersion}'
-          r = requests.get(url, stream=True)
-          if(r.status_code == 200):
-            with open(tarFileName, 'wb') as file:
-              for chunk in r.iter_content(chunk_size=1048576):
-                if chunk:
-                  file.write(chunk)
-          else:
-            print("Downloading of new version failed!")
-            print(f"\n> {F.RED}Error: {S.R}GitHub returned a non 200 status code while trying to download newer version.\nStatus returned: {r.status_code}")
+
+          fileDownloadResult = getRemoteFile(url, tarFileName)
+          if fileDownloadResult == False:
             input("Press Enter to Exit...")
             sys.exit()
           
@@ -477,7 +471,7 @@ def getRemoteFile(url, downloadFilePath, streamChoice=True, silent=False, header
         response = requests.get(url, headers=headers, stream=True)
       if response.status_code != 200:
         if silent == False:
-          print("Error fetching remote file or resource: " + url)
+          print("Error fetching remote file or resource:  " + url)
           print("Response Code: " + str(response.status_code))
       else:
         return response
