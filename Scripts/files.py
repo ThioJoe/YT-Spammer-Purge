@@ -76,6 +76,11 @@ def check_lists_update(spamListDict, silentCheck = False):
       if "WinError 10013" in str(ox):
         print(f"{B.RED}{F.WHITE}WinError 10013:{S.R} The OS blocked the connection to GitHub. Check your firewall settings.\n")
         return False
+      else:
+        print(str(ox))
+        print(f"{B.RED}{F.WHITE}\n Unexpected OS Error {S.R} See error details above.\n")
+        return False
+        
   except:
     if silentCheck == True:
       return spamListDict
