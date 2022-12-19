@@ -93,14 +93,14 @@ def check_lists_update(spamListDict, silentCheck = False):
     print("\n>  A new spam list update is available. Downloading...")
     fileName = response.json()["assets"][0]['name']
     total_size_in_bytes = response.json()["assets"][0]['size']
-    downloadFilePath = SpamListFolder + fileName
+    downloadFilePath = os.path.join(SpamListFolder, fileName)
     downloadURL = response.json()["assets"][0]['browser_download_url']
-    filedownload = getRemoteFile(downloadURL, stream=True) # These headers required to get correct file size
-    block_size =  1048576 #1 MiB in bytes
 
-    with open(downloadFilePath, 'wb') as file:
-      for data in filedownload.iter_content(block_size):
-        file.write(data)
+    # Download file
+    downloadResult = getRemoteFile(downloadURL, downloadFilePath, description="spam list zip file")
+
+    if downloadResult == False or downloadResult == None:
+      return False
   
     if os.stat(downloadFilePath).st_size == total_size_in_bytes:
       # Unzip files into folder and delete zip file
@@ -197,19 +197,11 @@ def check_for_filter_update(filterListDict, silentCheck = False):
       input("\nPress Enter to Continue With Current Filter Version...")
       return False
     
-    filedownload = getRemoteFile(latestFilterURL, stream=True)
-    block_size =  1048576 #1 MiB in bytes
-
-    try:
-      with open(filterFilePath, 'wb') as file:
-        for data in filedownload.iter_content(block_size):
-          file.write(data)
+    filedownloadResult = getRemoteFile(latestFilterURL, filterFilePath, description="filter variables file")
+    if filedownloadResult == True:
       print(f"{F.LIGHTGREEN_EX}Filter variables file updated.{S.R}\n")
       return True
 
-    except:
-      print(f" > {F.RED} File failed to download. Please try again later.{S.R}\n")
-      return False
 
 ############################# Check For App Update ##############################
 def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
@@ -475,26 +467,57 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
 
 
 ######################### Try To Get Remote File ##########################
-def getRemoteFile(url, stream, silent=False, headers=None):
-  try:
-    if stream == False:
-      response = requests.get(url, headers=headers)
-    elif stream == True:
-      response = requests.get(url, headers=headers, stream=True)
-    if response.status_code != 200:
-      if silent == False:
-        print("Error fetching remote file or resource: " + url)
-        print("Response Code: " + str(response.status_code))
-    else:
-      return response
+def getRemoteFile(url, downloadFilePath, streamChoice=True, silent=False, headers=None, description="file"):
+  # ----------------- Get Remote File Data -----------------
+  def fetch_file(streamFileSwitch):
+    try:
+      if streamFileSwitch == False:
+        response = requests.get(url, headers=headers)
+      elif streamFileSwitch == True:
+        response = requests.get(url, headers=headers, stream=True)
+      if response.status_code != 200:
+        if silent == False:
+          print("Error fetching remote file or resource: " + url)
+          print("Response Code: " + str(response.status_code))
+      else:
+        return response
 
-  except Exception as e:
-    if silent == False:
-      print(str(e) + "\n")
-      print(f"{B.RED}{F.WHITE} Error {S.R} While Fetching Remote File or Resource: " + url)
-      print("See above messages for details.\n")
-      print("If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
-    return None
+    except Exception as e:
+      if silent == False:
+        print(str(e) + "\n")
+        print(f"{B.RED}{F.WHITE} Error {S.R} While Fetching Remote File or Resource: " + url)
+        print("See above messages for details.\n")
+        print("If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
+      return None
+  # ---------------------------- Download File to Disk ---------------------------- #
+  def download_write_to_disk(downloadInput):
+    block_size =  1048576 #1 MiB in bytes
+    with open(downloadFilePath, 'wb') as file:
+      for data in downloadInput.iter_content(block_size):
+        file.write(data)
+
+  # ---------------------------- Execute Fetch & Download ---------------------------- #
+  filedownload = fetch_file(streamChoice)
+
+  try:
+    download_write_to_disk(filedownload)
+    return True
+  except:
+    print(f"Warning: Error while downloading {description}. Retrying...")
+    # Try again with different download method, 'stream' is set to opposite of before
+
+    streamChoice = not streamChoice
+    try:
+      filedownload = fetch_file(streamChoice)
+      download_write_to_disk(filedownload)
+      return True
+    except Exception as e:
+      traceback.print_exc()
+      print(str(e))
+      print(f"\n{B.RED}{F.WHITE} Error: {S.R} Error while downloading {description}. See error details above.\n")
+      time.sleep(1)
+      return False
+
 
 ############################# Load a Config File ##############################
 # Put config settings into dictionary
