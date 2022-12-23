@@ -6,7 +6,7 @@
         src = '/assets/icon.png' 
         height = '100' 
         width = '100' 
-        alt = 'Icon' 
+        alt = '' 
     />
     <br>
     YouTube Spammer Purge
@@ -15,21 +15,15 @@
 
 <!---------------------------------[ Badges ]---------------------------------->
 
-<div align = 'center'>
-    <a href = 'https://github.com/ThioJoe/YT-Spammer-Purge/issues'>
-        <img src = 'https://img.shields.io/github/issues/ThioJoe/YT-Spammer-Purge'/>
-    </a>
-    <a href = 'https://github.com/ThioJoe/YT-Spammer-Purge/pulls'>
-        <img src = 'https://img.shields.io/github/issues-pr/ThioJoe/YT-Spammer-Purge'/>
-    </a>
+<div align = 'center'>   
     <a href = 'https://github.com/ThioJoe/YT-Spammer-Purge/releases'>
-        <img src = 'https://img.shields.io/github/v/release/ThioJoe/YT-Spammer-Purge?include_prereleases&label=Latest%20Release'/>
+        <img src = 'https://img.shields.io/github/v/release/ThioJoe/YT-Spammer-Purge?include_prereleases&label=Latest%20Release' height = '20' alt = 'Latest Release'/>
     </a>
     <a href = 'https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/codeql-analysis.yml'>
-        <img src = 'https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/codeql-analysis.yml/badge.svg'/>
+        <img src = 'https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/codeql-analysis.yml/badge.svg' height = '20' alt = 'CodeQL'/>
     </a>
     <a href = 'https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/docker-build.yml'>
-        <img src = 'https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/docker-build.yml/badge.svg'/>
+        <img src = 'https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/docker-build.yml/badge.svg' height = '20' alt = 'docker-build'/>
     </a>
 </div>
 
@@ -116,13 +110,15 @@ Read some additional details about 'moderator mode' on the [wiki page here][Mode
     <h2>Filter Mode Selection</h2>
     <br>
     <img 
-        width = '675' 
+         height = '353'
+         width = '675' 
         alt = 'Filter Mode Selection' 
         src = 'https://user-images.githubusercontent.com/93459510/174273476-5af0a1ad-9ca1-4fea-976d-e731ce336922.png'>
     <br>
     <h2>Scanning<br>(Auto Smart Mode)</h2>
     <br>
     <img 
+        height = '353'
         width = '675' 
         alt = 'Scanning (Auto Smart Mode)' 
         src = 'https://user-images.githubusercontent.com/93459510/174273577-38e51d30-f313-4053-ba31-bb2724770dda.png'>
@@ -130,6 +126,7 @@ Read some additional details about 'moderator mode' on the [wiki page here][Mode
     <h2>Matched Comments List</h2>
     <br>
     <img 
+        height = '353'
         width = '675' 
         alt = 'Matched Comments List' 
         src = 'https://user-images.githubusercontent.com/93459510/174273656-0fb22382-ec88-4e63-88f3-e4a93ac1f1ad.png'>
@@ -137,6 +134,7 @@ Read some additional details about 'moderator mode' on the [wiki page here][Mode
     <h2>Match Samples and Deletion Menu</h2>
     <br>
     <img 
+        height = '353'
         width = '675' 
         alt = 'Match Samples and Deletion Menu' 
         src = 'https://user-images.githubusercontent.com/93459510/174273744-3d5a174a-904a-493e-af37-bcca44c57820.png'>
