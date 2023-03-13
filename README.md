@@ -7,7 +7,7 @@
         height = '100' 
         width = '100' 
         alt = '' 
-    />
+    >
     <br>
     YouTube Spammer Purge
     <br>
@@ -17,13 +17,13 @@
 
 <div align = 'center'>   
     <a href = 'https://github.com/ThioJoe/YT-Spammer-Purge/releases'>
-        <img src = 'https://img.shields.io/github/v/release/ThioJoe/YT-Spammer-Purge?include_prereleases&label=Latest%20Release' height = '20' alt = 'Latest Release'/>
+        <img src = 'https://img.shields.io/github/v/release/ThioJoe/YT-Spammer-Purge?include_prereleases&label=Latest%20Release' height = '20' alt = 'Latest Release'>
     </a>
     <a href = 'https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/codeql-analysis.yml'>
-        <img src = 'https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/codeql-analysis.yml/badge.svg' height = '20' alt = 'CodeQL'/>
+        <img src = 'https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/codeql-analysis.yml/badge.svg' height = '20' alt = 'CodeQL'>
     </a>
     <a href = 'https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/docker-build.yml'>
-        <img src = 'https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/docker-build.yml/badge.svg' height = '20' alt = 'docker-build'/>
+        <img src = 'https://github.com/ThioJoe/YT-Spammer-Purge/actions/workflows/docker-build.yml/badge.svg' height = '20' alt = 'docker-build'>
     </a>
 </div>
 
@@ -166,8 +166,7 @@ bash <(curl -s https://raw.githubusercontent.com/ThioJoe/YT-Spammer-Purge/main/i
 
 <img 
     width = '500'
-    src = 'https://user-images.githubusercontent.com/60006481/154855672-165565a1-50db-47d4-bf39-0fb576710f63.gif'
-/>
+    src = 'https://user-images.githubusercontent.com/60006481/154855672-165565a1-50db-47d4-bf39-0fb576710f63.gif'>
 
 See one of the following if you need further help:
 * [Linux Setup Instructions][Instructions Linux]
@@ -179,8 +178,7 @@ To update YTSpammerPurge, run the `install.sh` file inside your installation.
 
 <img 
     width = '500'
-    src = 'https://user-images.githubusercontent.com/60006481/154855673-bf2e8fdb-eaa3-4583-a2a1-80ef4816e2bc.gif' 
-/>
+    src = 'https://user-images.githubusercontent.com/60006481/154855673-bf2e8fdb-eaa3-4583-a2a1-80ef4816e2bc.gif'>
 
 ##### Manual Installation
 
