@@ -199,11 +199,11 @@ def validate_channel_id(inputted_channel):
 
   if len(isolatedChannelID) == 24 and isolatedChannelID[0:2] == "UC":
     response = auth.YOUTUBE.channels().list(part="snippet", id=isolatedChannelID).execute()
-    if response['items']:
+    if response.get('items'):
       channelTitle = response['items'][0]['snippet']['title']
       return True, isolatedChannelID, channelTitle
     else:
-      print(f"{F.LIGHTRED}Error{S.R}: Unable to Get Channel Title. Please check the channel ID.")
+      print(f"{F.LIGHTRED_EX}Error{S.R}: Unable to Get Channel Title. Please check the channel ID.")
       return False, None, None
 
   else:
