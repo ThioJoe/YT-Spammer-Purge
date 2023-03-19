@@ -5,14 +5,13 @@ from Scripts.shared_imports import *
 import Scripts.utils as utils
 import Scripts.auth as auth
 import Scripts.validation as validation
-import Scripts.logging as logging
 from Scripts.utils import choice
 
 import unicodedata
 import time
 import itertools
 from datetime import datetime
-from Levenshtein import ratio
+from rapidfuzz import fuzz
 from googleapiclient.errors import HttpError
 
 ##########################################################################################
@@ -128,20 +127,20 @@ def get_comments(current, filtersDict, miscData, config, allVideoCommentsDict, s
     except TypeError: # This might not be necessary, might remove later if not
       pass
     
+    if numReplies > 0 and (filtersDict['filterMode'] == "AutoSmart" or filtersDict['filterMode'] == "SensitiveSmart") and config['detect_spam_threads'] == True:
+        parentCommentDict = currentCommentDict
+    else:
+      parentCommentDict = None
+
     # If there are more replies than in the limited list
     if numReplies > 0 and len(limitedRepliesList) < numReplies:
-      if numReplies > 7 and (filtersDict['filterMode'] == "AutoSmart" or filtersDict['filterMode'] == "SensitiveSmart") and config['detect_spam_threads'] == True:
-        parentCommentDict = currentCommentDict
-      else:
-        parentCommentDict = None
-
       allVideoCommentsDict = get_replies(current, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, allVideoCommentsDict, parentCommentDict=parentCommentDict)
       if allVideoCommentsDict == "Error":
         return "Error", None
 
     # If all the replies are in the limited list
     elif numReplies > 0 and len(limitedRepliesList) == numReplies: # limitedRepliesList can never be more than numReplies
-      allVideoCommentsDict = get_replies(current, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, allVideoCommentsDict, repliesList=limitedRepliesList)
+      allVideoCommentsDict = get_replies(current, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, allVideoCommentsDict, repliesList=limitedRepliesList, parentCommentDict=parentCommentDict)
       if allVideoCommentsDict == "Error":
         return "Error", None
     else:
@@ -300,12 +299,13 @@ def check_spam_threads(current, filtersDict, miscData, config, parentCommentDict
   preliminaryCount, redCount, yellowCount, nameCount, fullNameCount, partialNameCount, susMentionCount = 0, 0, 0, 0, 0, 0, 0
   nameList, partialNameList, fullNameList =[] , [], []
   name, partialName, fullName = "", "", ""
+  minReplies = 5
 
   if any(item in parentCommentDict['commentText'].lower() for item in miscData.spamLists['spamThreadsList']):
     add_spam(current, config, miscData, parentCommentDict, parentCommentDict['videoID'], matchReason="Spam Bot Thread")
     return current
   # Preliminary Analysis
-  if not threadDict:
+  if not threadDict or len(threadDict) < minReplies:
     return current
   matchCount = threadWordsRegex.findall(parentCommentDict['commentText'].lower())
   if matchCount:
@@ -590,7 +590,7 @@ def check_duplicates(current, config, miscData, allVideoCommentsDict, videoID):
   if minimum_duplicates < 2:
     minimum_duplicates = 4
     print("\nError: minimum_duplicates config setting must be greater than 1. Defaulting to 8.")
-    input("\nPress Enter to continue...")
+    input("\nPress Enter to Continue...")
   
   # Get minimum duplicate length setting - Does not need to be validated as int here, because that happens at beginning of program
   minimum_duplicate_length = int(config['minimum_duplicate_length'])
@@ -630,7 +630,7 @@ def check_duplicates(current, config, miscData, allVideoCommentsDict, videoID):
                 matchedIndexes.append(i)
                 matchedIndexes.append(j)
                 break
-              elif ratio(x,y) > levenshtein:
+              elif fuzz.ratio(x,y) / 100 > levenshtein:
                 # List the indexes of the matched comments in the list
                 matchedIndexes.append(i)
                 matchedIndexes.append(j)
@@ -659,11 +659,11 @@ def check_reposts(current, config, miscData, allVideoCommentsDict, videoID):
       levenshtein = float(config['levenshtein_distance'])
       if levenshtein < 0 or levenshtein > 1:
         print("\nError: Levenshtein_distance config setting must be between 0 and 1. Defaulting to 0.9")
-        input("\nPress Enter to continue...")
+        input("\nPress Enter to Continue...")
         levenshtein = 0.9
     except ValueError:
       print("\nError: Levenshtein_distance config setting must be a number between 0 and 1. Defaulting to 0.9")
-      input("\nPress Enter to continue...")
+      input("\nPress Enter to Continue...")
       levenshtein = 0.9
     fuzzy = True
   else:
@@ -675,11 +675,11 @@ def check_reposts(current, config, miscData, allVideoCommentsDict, videoID):
     if minLength < 1:
       minLength = 25
       print("\nError: stolen_minimum_text_length config setting must be greater than 0. Defaulting to 25.")
-      input("\nPress Enter to continue...")
+      input("\nPress Enter to Continue...")
   except ValueError:
     minLength = 25
     print("\nError: stolen_minimum_text_length config setting is invalid. Defaulting to 25.")
-    input("\nPress Enter to continue...")
+    input("\nPress Enter to Continue...")
 
   flatCommentList = []
 
@@ -705,7 +705,7 @@ def check_reposts(current, config, miscData, allVideoCommentsDict, videoID):
       for j in range(0,i-1): # Only need to check against comments that came before it, so have index less than current
         olderCommentText = flatCommentList[j]['commentText']
         if len(scrutinizedText) >= minLength and flatCommentList[j]['authorChannelID'] != scrutinizedAuthorID and x['commentID'] not in current.matchedCommentsDict and x['commentID'] not in current.duplicateCommentsDict:
-          if (not fuzzy and scrutinizedText == olderCommentText) or (fuzzy and ratio(scrutinizedText, olderCommentText) > levenshtein):
+          if (not fuzzy and scrutinizedText == olderCommentText) or (fuzzy and fuzz.ratio(scrutinizedText, olderCommentText) / 100 > levenshtein):
             # List the indexes of the matched comments in the list
             x['originalCommentID'] = flatCommentList[j]['commentID']
             add_spam(current, config, miscData, x, videoID, matchReason="Repost")
@@ -841,8 +841,12 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
       languages = smartFilter['languages']
       sensitive =  smartFilter['sensitive']
       rootDomainRegex = smartFilter['rootDomainRegex']
+      accompanyingLinkSpamDict = smartFilter['accompanyingLinkSpamDict']
+      comboDict = smartFilter['comboDict']
+
       # Spam Lists
       spamListCombinedRegex = smartFilter['spamListCombinedRegex']
+      spamThreadsRegex = smartFilter['spamThreadsRegex']
 
       # if debugSingleComment == True: 
       #   if input("Sensitive True/False: ").lower() == 'true': sensitive = True
@@ -890,6 +894,27 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
         else:
           return False
 
+      def find_accompanying_link_spam(string):
+        linkResult = re.search(accompanyingLinkSpamDict['videoLinkRegex'], string)
+        if not linkResult:
+          return False
+        else:
+          phrasesList = accompanyingLinkSpamDict['accompanyingLinkSpamPhrasesList']
+          notSpecialChars = accompanyingLinkSpamDict['notSpecial']
+          nonLinkString = string.replace(linkResult.group(0), '')
+          for char in notSpecialChars:
+            nonLinkString = nonLinkString.replace(char, '').replace('\n', '')
+          if any(phrase.lower().replace(' ', '') == nonLinkString for phrase in phrasesList):
+            return True
+          else:
+            return False
+
+      def multiVarDetect(text, username):
+        multiUsernameAllList = comboDict['multiUsernameAllList']
+        for checkList in multiUsernameAllList:
+          if all(word in username for word in checkList):
+            return True
+
       # ------------------------------------------------------------------------
 
       # Normalize usernames and text, remove multiple whitespace and invisible chars
@@ -912,6 +937,10 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
       else:
         processedText = commentText
       upLowTextSet = set(processedText)
+
+      # Run Spam Thread specific check first
+      if spamThreadsRegex.search(commentTextNormalized.lower()):
+        add_spam(current, config, miscData, currentCommentDict, videoID)
 
       # Run Checks
       if authorChannelID == parentAuthorChannelID:
@@ -946,6 +975,10 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
       elif spamListCombinedRegex.search(combinedStringNormalized.lower()):
         add_spam(current, config, miscData, currentCommentDict, videoID)
       elif config['detect_link_spam'] and check_if_only_link(commentTextNormalized.strip()):
+        add_spam(current, config, miscData, currentCommentDict, videoID)
+      elif find_accompanying_link_spam(commentTextNormalized.lower()):
+        add_spam(current, config, miscData, currentCommentDict, videoID)
+      elif multiVarDetect(commentTextNormalized.lower(), authorChannelName.lower()):
         add_spam(current, config, miscData, currentCommentDict, videoID)
       elif sensitive and re.search(smartFilter['usernameConfuseRegex'], authorChannelName):
         add_spam(current, config, miscData, currentCommentDict, videoID)
@@ -1052,7 +1085,7 @@ def delete_found_comments(commentsList, banChoice, deletionMode, recoveryMode=Fa
     if deletionMode == "reportSpam":
       result = auth.YOUTUBE.comments().markAsSpam(id=commentIDs).execute()
       if len(result) > 0:
-        print("\nSomething may gone wrong when reporting the comments.")
+        print("\nSomething may have gone wrong when reporting the comments.")
         failedComments += commentIDs
     elif deletionMode == "heldForReview" or deletionMode == "rejected" or deletionMode == "published":
       try:
@@ -1128,7 +1161,7 @@ def check_deleted_comments(commentInput):
     print(" Preparing to check deletion status...", end="\r")
     time.sleep(1)
     print("                                                      ")
-    print("    (Note: You can disable deletion success checking in the config file, to save time and API quota)\n")
+    print("    (Note: You can disable deletion success checking in the config file to save time and API quota)\n")
     for commentID in commentList:
       try:
         results = auth.YOUTUBE.comments().list(
@@ -1218,7 +1251,7 @@ def check_recovered_comments(commentsList):
 
   elif i > 0:
     print("\n\nWarning: " + str(i) + " comments may have not been restored. See above list.")
-    print("Use the links to the comments from the log file you used, to verify if they are back or not.")
+    print("Use the links to the comments from the log file you used to verify if they are back or not.")
 
   input("\nRecovery process finished. Press Enter to return to main menu...")
   return True
@@ -1365,23 +1398,32 @@ def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToEx
 # Returns a list of lists
 def get_recent_videos(current, channel_id, numVideosTotal):
   def get_block_of_videos(nextPageToken, j, k, numVideosBlock = 50):
-    result = auth.YOUTUBE.search().list(
+    #fetch the channel resource
+    channel = auth.YOUTUBE.channels().list(
+      part="contentDetails",
+      id=channel_id).execute()
+    
+    #get the "uploads" playlist
+    uploadplaylistId = channel['items'][0]['contentDetails']['relatedPlaylists']['uploads']
+    
+    #fetch videos in the playlist
+    result = auth.YOUTUBE.playlistItems().list(
       part="snippet",
-      channelId=channel_id,
-      type='video',
-      order='date',
+      playlistId=uploadplaylistId,
       pageToken=nextPageToken,
-      #fields='nextPageToken,items/id/videoId,items/snippet/title',
       maxResults=numVideosBlock,
       ).execute()
 
     for item in result['items']:
-      videoID = str(item['id']['videoId'])
+      videoID = str(item['snippet']['resourceId']['videoId'])
       videoTitle = str(item['snippet']['title']).replace("&quot;", "\"").replace("&#39;", "'")
       commentCount = validation.validate_video_id(videoID, pass_exception = True)[3]
       #Skips over video if comment count is zero, or comments disabled / is live stream
-      if str(commentCount) == '0':
-        print(f"{B.YELLOW}{F.BLACK} Skipping {S.R} {F.LIGHTRED_EX}Video with no comments:{S.R} " + str(item['snippet']['title']))
+      if str(commentCount) == '0' or commentCount == None:
+        if str(commentCount) == '0':
+          print(f"{B.YELLOW}{F.BLACK} Skipping {S.R} {F.LIGHTRED_EX}Video with no comments:{S.R} " + str(item['snippet']['title']))
+        if commentCount == None:
+          print(f"{B.YELLOW}{F.BLACK} Skipping {S.R} {F.LIGHTRED_EX}Invalid Video, or video may have comments disabled:{S.R} " + str(item['snippet']['title']))
         k+=1
         continue
       

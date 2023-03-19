@@ -18,7 +18,12 @@ def validate_video_id(video_url_or_id, silent=False, pass_exception=False, basic
       if basicCheck == True:
         return False
       if silent == False:
-        print(f"\n{B.RED}{F.BLACK}Invalid Video link or ID!{S.R} Video IDs are 11 characters long.")
+        if ("youtube.com" in video_url_or_id or "youtu.be" in video_url_or_id) and "?v=" not in video_url_or_id:
+          print(f"\n{B.RED}{F.BLACK}Invalid Video link!{S.R} Did you accidentally enter a channel link (or something else) instead of a video link?")
+        elif ("youtube.com" in video_url_or_id or "youtu.be" in video_url_or_id):
+          print(f"\n{B.RED}{F.BLACK}Invalid Video link!{S.R} Check that you copied it correctly. It should look something like \"youtube.com/watch?v=whatever-ID\" where 'whatever-ID' is 11 characters long.")
+        else:
+          print(f"\n{B.RED}{F.BLACK}Invalid Video link or ID!{S.R} Video IDs are 11 characters long.")
       return False, None, None, None, None
     elif basicCheck == True:
       possibleVideoID = match.group('video_id')
@@ -32,6 +37,12 @@ def validate_video_id(video_url_or_id, silent=False, pass_exception=False, basic
           id=possibleVideoID,
           fields='items/id,items/snippet/channelId,items/snippet/channelTitle,items/statistics/commentCount,items/snippet/title',
           ).execute()
+
+        # Checks if video exists but is unavailable
+        if result['items'] == []:
+          print(f"\n{B.RED}{F.WHITE} ERROR: {S.R} {F.RED}No info returned for ID: {S.R} {possibleVideoID} {F.LIGHTRED_EX} - Video may be unavailable or deleted.{S.R}")
+          return False, None, None, None, None
+
         if possibleVideoID == result['items'][0]['id']:
           channelID = result['items'][0]['snippet']['channelId']
           channelTitle = result["items"][0]["snippet"]["channelTitle"]
@@ -136,12 +147,15 @@ def validate_channel_id(inputted_channel):
 
     if startIndex < endIndex and endIndex <= len(inputted_channel):
       customURL = inputted_channel[startIndex:endIndex]
-      response = auth.YOUTUBE.search().list(part="snippet",q=customURL, maxResults=1).execute()
+      response = auth.YOUTUBE.search().list(part="snippet",q=customURL, maxResults=1, type="channel").execute()
       if response.get("items"):
         isolatedChannelID = response.get("items")[0]["snippet"]["channelId"] # Get channel ID from custom channel URL username
+      else:
+        print(f"\n{F.LIGHTRED_EX}No Channel Found!{S.R} YouTube returned no results for that channel. Try entering the @handle instead.")
+        return False, None, None
   
   # Handle legacy style custom URL (no /c/ for custom URL)
-  elif not any(x in inputted_channel for x in notChannelList) and (inputted_channel.lower().startswith("youtube.com/") or str(urlparse(inputted_channel).hostname).lower() == "youtube.com"):
+  elif not any(x in inputted_channel for x in notChannelList) and (inputted_channel.lower().startswith("youtube.com/") or str(urlparse(inputted_channel).hostname).lower() in ["youtube.com", "www.youtube.com"]):
     startIndex = inputted_channel.rindex("/") + 1
     endIndex = len(inputted_channel)
 
@@ -152,9 +166,28 @@ def validate_channel_id(inputted_channel):
         print(f"{F.LIGHTRED_EX}Invalid Channel ID / Link!{S.R} Did you enter a video ID / link by mistake?")
         return False, None, None
 
-      response = auth.YOUTUBE.search().list(part="snippet",q=customURL, maxResults=1).execute()
+      response = auth.YOUTUBE.search().list(part="snippet",q=customURL, maxResults=1, type="channel").execute()
       if response.get("items"):
         isolatedChannelID = response.get("items")[0]["snippet"]["channelId"] # Get channel ID from custom channel URL username
+      else:
+        print(f"\n{F.LIGHTRED_EX}No Channel Found!{S.R} YouTube returned no results for that channel. Try entering the @handle instead.")
+        return False, None, None
+  
+  # Check if new "handle" identifier is used
+  elif inputted_channel.lower().startswith("@"):
+    # Check for handle validity: Only letters and numbers, periods, underscores, and hyphens, and between 3 and 30 characters
+    if re.match(r'^[a-zA-Z0-9._-]{3,30}$', inputted_channel[1:]):
+      # Does a search for the handle and gets the channel ID from first response
+      response = auth.YOUTUBE.search().list(part="snippet",q=inputted_channel, maxResults=1, type="channel").execute()
+      if response.get("items"):
+        isolatedChannelID = response.get("items")[0]["snippet"]["channelId"]
+      else:
+        print(f"\n{F.LIGHTRED_EX}No Channel Found!{S.R} YouTube returned no results for that channel. Double check it is correct, or try entering the Channel ID.")
+        return False, None, None
+    else:
+      print(f"\n{B.RED}{F.BLACK}Error:{S.R} You appear to have entered an invalid handle! It must be between 3 and 30 characters long and only contain letters, numbers, periods, underscores, and hyphens.")
+      return False, None, None
+
 
   # Channel ID regex expression from: https://webapps.stackexchange.com/a/101153
   elif re.match(r'UC[0-9A-Za-z_-]{21}[AQgw]', inputted_channel):
@@ -166,11 +199,11 @@ def validate_channel_id(inputted_channel):
 
   if len(isolatedChannelID) == 24 and isolatedChannelID[0:2] == "UC":
     response = auth.YOUTUBE.channels().list(part="snippet", id=isolatedChannelID).execute()
-    if response['items']:
+    if response.get('items'):
       channelTitle = response['items'][0]['snippet']['title']
       return True, isolatedChannelID, channelTitle
     else:
-      print(f"{F.LIGHTRED}Error{S.R}: Unable to Get Channel Title. Please check the channel ID.")
+      print(f"{F.LIGHTRED_EX}Error{S.R}: Unable to Get Channel Title. Please check the channel ID.")
       return False, None, None
 
   else:
@@ -290,7 +323,7 @@ def validate_config_settings(config):
         videoList = utils.string_to_list(value)
       except:
         print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'videos_to_scan': {str(value)}")
-        print("Make sure it is either a single video ID / Link, or a comma separate list of them!")
+        print("Make sure it is either a single video ID / Link, or a comma separated list of them!")
         print_quit_and_report()
       if len(videoList) > 0:
         for video in videoList:
@@ -300,7 +333,7 @@ def validate_config_settings(config):
         return True
       else:
         print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'videos_to_scan' (it may be empty!): {str(value)}")
-        print("Make sure it is either a single video ID / Link, or a comma separate list of them!")
+        print("Make sure it is either a single video ID / Link, or a comma separated list of them!")
         print_quit_and_report()
 
   def validate_channel_to_scan(value, *args):
@@ -323,12 +356,12 @@ def validate_config_settings(config):
         channelList = utils.string_to_list(value)
       except:
         print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'channel_ids_to_filter': {str(value)}")
-        print("Make sure it is either a single channel ID / Link, or a comma separate list of them!")
+        print("Make sure it is either a single channel ID / Link, or a comma separated list of them!")
         print_quit_and_report()
       for channel in channelList:
         if len(channel) != 24 or channel[0:2] != "UC":
           print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} There appears to be an invalid channel ID in setting 'channel_ids_to_filter': {str(value)}")
-          print("A channel ID must be 24 charactres long and begin with 'UC'!")
+          print("A channel ID must be 24 characters long and begin with 'UC'!")
           print_quit_and_report()
       return True
   
@@ -352,11 +385,11 @@ def validate_config_settings(config):
         return True
       else:
         print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'strings_to_filter': {str(value)}")
-        print("The list appears empty! Make sure it is either a single string, or a comma separate list of them!")
+        print("The list appears empty! Make sure it is either a single string, or a comma separated list of them!")
         print_quit_and_report()
     except:
       print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'strings_to_filter': {str(value)}")
-      print("Make sure it is either a single string, or a comma separate list of them!")
+      print("Make sure it is either a single string, or a comma separated list of them!")
       print_quit_and_report()
   
   def validate_regex_setting(value, *args):
@@ -367,7 +400,7 @@ def validate_config_settings(config):
       return True
     else:
       print(f"\n{B.RED}{F.WHITE} ERROR! {S.R}The config setting 'regex_to_filter' does not appear to be valid: {str(value)}")
-      print("Make sure it is a valid regular expresion! Example:  [^\x00-\xFF]")
+      print("Make sure it is a valid regular expression! Example:  [^\x00-\xFF]")
       print("You can test them out on websites like regex101.com")
       print_quit_and_report()
             
@@ -481,7 +514,7 @@ def validate_config_settings(config):
         print(f"\n{B.RED}{F.WHITE} WARNING! {S.R} An unknown setting was found:  '{settingName}': {str(settingValue)}")
         print(f"If you didn't add or change this setting in the config file, a validation check was probably forgotten to be created!")
         print(f"Consider reporting it: {F.YELLOW}TJoe.io/bug-report{S.R}")
-        input(f"\n It might not cause an issue, so press Enter to continue anyway...")
+        input(f"\n It might not cause an issue, so press Enter to Continue anyway...")
         continue
   
 

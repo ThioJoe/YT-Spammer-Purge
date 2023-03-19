@@ -8,11 +8,10 @@ import Scripts.validation as validation
 import Scripts.auth as auth
 import Scripts.operations as operations
 import Scripts.files as files
-import Scripts.filter_variables as filter
+import SpamPurge_Resources.Filters.filter_variables as filter
 
-from Scripts.confusablesCustom import confusable_regex, normalize
-from base64 import b85decode as b64decode
-import pathlib
+from Scripts.confusablesCustom import confusable_regex
+
 
 ##########################################################################################
 ################################## FILTERING MODES #######################################
@@ -201,7 +200,7 @@ def prepare_filter_mode_ID(scanMode, config):
     if config['channel_ids_to_filter'] != "ask":
       pass
     else:
-      input("\nPress Enter to continue...")
+      input("\nPress Enter to Continue...")
 
   return inputtedSpammerChannelID, None
 
@@ -273,7 +272,7 @@ def prepare_filter_mode_non_ascii(scanMode, config):
 def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   rootDomainList = miscData.resources['rootDomainList']
   spamDomainsList = miscData.spamLists['spamDomainsList'] # List of domains from crowd sourced list
-  #spamThreadsList = miscData.spamLists['spamThreadsList'] # List of filters associated with spam threads from crowd sourced list
+  spamThreadsList = miscData.spamLists['spamThreadsList'] # List of filters associated with spam threads from crowd sourced list
   spamAccountsList = miscData.spamLists['spamAccountsList'] # List of mentioned instagram/telegram scam accounts from crowd sourced list
   utf_16 = "utf-8"
   if config['filter_mode'] == "autosmart":
@@ -366,6 +365,12 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
     'cashRegex': cashRegex,
   }
 
+  accompanyingLinkSpamDict = {
+    'accompanyingLinkSpamPhrasesList': filter.accompanyingLinkSpamPhrasesList,
+    'notSpecial': filter.notSpecial,
+    'videoLinkRegex': re.compile(r"((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?"),
+  }
+
   print("  Loading Filters  [======                        ]", end="\r")
 
   # Compile regex with upper case, otherwise many false positive character matches
@@ -395,15 +400,19 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   print("  Loading Filters  [===================           ]", end="\r")
 
   spamListExpressionsList = []
+  spamThreadsExpressionsList = []
   # Prepare spam domain regex
   for domain in spamDomainsList:
     spamListExpressionsList.append(confusable_regex(domain.upper().replace(".", "⚫"), include_character_padding=False).replace("(?:⚫)", "(?:[^a-zA-Z0-9 ]{1,2})"))
   for account in spamAccountsList:
     spamListExpressionsList.append(confusable_regex(account.upper(), include_character_padding=True).replace(m, a))
-  # for thread in spamThreadsList:
-  #   spamListExpressionsList.append(confusable_regex(thread.upper(), include_character_padding=True).replace(m, a))
+  for spamName in spamThreadsList:
+    #spamListExpressionsList.append(confusable_regex(thread.upper(), include_character_padding=True).replace(m, a)) #With Confusables
+    spamThreadsExpressionsList.append(re.escape(spamName.lower())) #Exact lowercase match
   print("  Loading Filters  [======================        ]", end="\r")
   spamListCombinedRegex = re.compile('|'.join(spamListExpressionsList))
+  print("  Loading Filters  [=========================     ]", end="\r")
+  spamThreadsRegex = re.compile('|'.join(spamThreadsExpressionsList))
 
   # Prepare Multi Language Detection
   turkish = 'ÇçŞşĞğİ'
@@ -439,7 +448,10 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
     'sensitiveRootDomainRegex': sensitiveRootDomainRegex,
     'unicodeCategoriesStrip': unicodeCategoriesStrip,
     'spamListCombinedRegex': spamListCombinedRegex,
-    'threadFiltersDict': threadFiltersDict
+    'spamThreadsRegex': spamThreadsRegex,
+    'threadFiltersDict': threadFiltersDict,
+    'accompanyingLinkSpamDict': accompanyingLinkSpamDict,
+    'comboDict': filter.comboDict
     }
   print("                                                                 ") # Erases line that says "loading filters"
 
@@ -531,7 +543,7 @@ def delete_comment_list(config):
 
 
     while valid == False:
-      input(F"\nNext, follow the process by loading {F.YELLOW}the same comment list/log you used before{S.R}. Press Enter to continue...")
+      input(F"\nNext, follow the process by loading {F.YELLOW}the same comment list/log you used before{S.R}. Press Enter to Continue...")
       removalList, listFileNameBase = files.parse_comment_list(config, removal=True, returnFileName=True)
       if removalList == "MainMenu":
         return "MainMenu"
@@ -567,7 +579,7 @@ def delete_comment_list(config):
 
     print(f"\n {F.LIGHTCYAN_EX}----------------------- Loaded Saved Comment List Status -----------------------{S.R}")
     print(f" {F.LIGHTGREEN_EX}{prevRemovedNum} removed{S.R}  |  {F.YELLOW}{prevNotRemovedNum} not removed yet{S.R}  |  {F.LIGHTRED_EX}{prevFailedNum} failed to be removed{S.R}")
-    input("\n Press Enter to continue...")
+    input("\n Press Enter to Continue...")
 
     # Set removal list based on previous save
     removalList = list(remainingCommentsSet)
@@ -649,7 +661,7 @@ def delete_comment_list(config):
   ### Handle Results ###
   if len(failedCommentsList) > 0:
     print(f"\n{F.LIGHTRED_EX}Warning!{S.R} {len(failedCommentsList)} comments apparently failed to be removed. They'll be saved to be tried later.")
-    input("\nPress Enter to continue...")
+    input("\nPress Enter to Continue...")
     failedCommentsSet = set(failedCommentsList)
   else:
     failedCommentsSet = set()

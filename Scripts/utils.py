@@ -173,13 +173,13 @@ def print_exception_reason(reason):
   if reason == "processingFailure":
     print(f"\n {F.LIGHTRED_EX}[!!] Processing Error{S.R} - Sometimes this error fixes itself. Try just running the program again. !!")
     print("This issue is often on YouTube's side, so if it keeps happening try again later.")
-    print("(This also occurs if you try deleting comments on someone elses video, which is not possible.)")
+    print("(This also occurs if you try deleting comments on someone else's video, which is not possible.)")
   elif reason == "commentsDisabled":
     print(f"\n{F.LIGHTRED_EX}[!] Error:{S.R} Comments are disabled on this video. This error can also occur if scanning a live stream.")
   elif reason == "quotaExceeded":
     print(f"\n{F.LIGHTRED_EX}Error:{S.R} You have exceeded the YouTube API quota. To do more scanning you must wait until the quota resets.")
     print(" > There is a daily limit of 10,000 units/day, which works out to around reporting 10,000 comments/day.")
-    print(" > You can check your quota by searching 'quota' in the google cloud console.")
+    print(" > You can check your quota by searching 'quota' in the Google Cloud console.")
     print(f"{F.YELLOW}Solutions: Either wait until tomorrow, or create additional projects in the cloud console.{S.R}")
     print(f"  > Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
 
@@ -204,7 +204,7 @@ def print_break_finished(scanMode):
   print(f"  > Then, you can {F.LIGHTGREEN_EX}delete the comments later{S.R} using the {F.YELLOW}mode that removes comments using a pre-existing list{S.R}")
   if scanMode == "entireChannel":
     print(f"{F.RED}NOTE: {S.R} Because of the scanning mode (entire channel) the log will be missing the video IDs and video names.")
-  input("\n Press Enter to continue...")
+  input("\n Press Enter to Continue...")
 
 def print_error_title_fetch():
   print("--------------------------------------------------------------------------------------------------------------------------")
@@ -212,4 +212,16 @@ def print_error_title_fetch():
   print(f"Program will {F.LIGHTGREEN_EX}attempt to continue{S.R}, but the {F.YELLOW}video title may not be available{S.R} in the log file.")
   print(f"  > You won't be able to delete/hide any comments like usual, but you can {F.LIGHTMAGENTA_EX}exclude users before saving the log file{S.R}")
   print(f"  > Then, you can {F.LIGHTGREEN_EX}delete the comments later{S.R} using the {F.YELLOW}mode that removes comments using a pre-existing log file{S.R}")
-  input("\n Press Enter to continue...")
+  input("\n Press Enter to Continue...")
+
+def clear_terminal() -> None:
+  if sys.stdout.isatty(): # if in a terminal
+    if sys.platform.startswith("win"):
+      # For windows, use cls
+      os.system("cls")
+    else:
+      # For MacOS / Linux, this should clear the screen
+      sys.stdout.write("\033[2J\033[1;1H")
+  # Do nothing if not a terminal
+  return
+  # Not 100% sure if there are any cases where sys.stdout.isatty can raise an exception

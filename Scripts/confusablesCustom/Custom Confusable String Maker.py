@@ -68,9 +68,14 @@ spammifiedPhrase = spammifiedPhrase.replace(" ", "")
 realPhrase = realPhrase.replace(" ", "").lower()
 
 makeStringList = []
+alreadyCheckedCharList = []
 
 for i in range(len(spammifiedPhrase)):
-    check_char(realPhrase[i], spammifiedPhrase[i])
+    if spammifiedPhrase[i] in alreadyCheckedCharList:
+        continue
+    else:
+        alreadyCheckedCharList.append(spammifiedPhrase[i])
+        check_char(realPhrase[i], spammifiedPhrase[i])
 
 
 if makeStringList:
