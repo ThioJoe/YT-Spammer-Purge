@@ -238,7 +238,9 @@ def derive_key_from_password(password, salt):
 def encrypt_file(fileName=None, fileData=None):
   # Use 64 Bytes (512 bits) of salt (random data) - Unless changed above
   salt = os.urandom(SALT_BYTES)
-  password = getpass('Enter a password to encrypt the file: ')
+
+  print(f"\n{F.LIGHTGREEN_EX}Choose a password{S.R} to encrypt the login credential file (token.pickle). {F.YELLOW}NOTE: No characters will be displayed while typing.{S.R}")
+  password = getpass('Password: ')
 
   key = derive_key_from_password(password, salt)
   fernet = Fernet(key)
@@ -272,7 +274,7 @@ def decrypt_file(filename):
   # Loop until password is correct
   while success==False:
     try:
-      print(f"\nEnter the token file decryption password. {F.YELLOW}NOTE: No characters will be displayed while typing.{S.R}")
+      print(f"\n{F.LIGHTRED_EX}Enter your password{S.R} to decrypt the login credential file (token.pickle.encrypted) {F.YELLOW}NOTE: No characters will be displayed while typing.{S.R}")
       password = getpass('Password: ')
 
       with open(filename, 'rb') as encrypted_file:
