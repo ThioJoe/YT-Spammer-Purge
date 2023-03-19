@@ -417,6 +417,7 @@ def validate_config_settings(config):
     'moderator_mode': (True, False),
     'auto_close': (True, False),
     'colors_enabled': (True, False),
+    'encrypt_token_file': (True, False),
     'scan_mode': ('ask', 'chosenvideos', 'recentvideos', 'entirechannel', 'communitypost', 'recentcommunityposts'),
     'max_comments': ('ask'), #
     #'videos_to_scan': None,

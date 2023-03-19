@@ -36,8 +36,8 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.17.0"
-configVersion = 32
+version = "2.18.0-Beta1"
+configVersion = 33
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 print("Importing Script Modules...")
 # Import other module files
@@ -66,7 +66,8 @@ print("Importing Third-Party Modules...")
 # Other Libraries
 from googleapiclient.errors import HttpError
 
-
+# Check for encrypted token file
+#auth.initialize
 
 ##########################################################################################
 ##########################################################################################

@@ -515,7 +515,7 @@ def getRemoteFile(url, downloadFilePath, streamChoice=True, silent=False, header
 
 ############################# Load a Config File ##############################
 # Put config settings into dictionary
-def load_config_file(configVersion=None, forceDefault=False, skipConfigChoice=False, configFileName="SpamPurgeConfig.ini", configFolder="configs"):
+def load_config_file(configVersion=None, forceDefault=False, skipConfigChoice=False, onlyGetSettings=False, configFileName="SpamPurgeConfig.ini", configFolder="configs"):
   configDict = {}
 
   def default_config_path(relative_path):
@@ -576,6 +576,10 @@ def load_config_file(configVersion=None, forceDefault=False, skipConfigChoice=Fa
         elif setting[1].lower() == "true":
           configDict[setting[0]] = True
 
+  # Skip some prompts if only getting settings, like for auth script
+  if onlyGetSettings == True:
+    return configDict
+  
   # Prevent prompt about config file if it's the default config file
   if default == True:
     configDict['use_this_config'] = True
