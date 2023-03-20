@@ -11,7 +11,6 @@ import rtfunicode
 import os
 import requests
 import json
-from Levenshtein import ratio
 
 
 ##########################################################################################
