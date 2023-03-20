@@ -40,7 +40,7 @@ def validate_video_id(video_url_or_id, silent=False, pass_exception=False, basic
 
         # Checks if video exists but is unavailable
         if result['items'] == []:
-          print(f"\n{B.RED}{F.WHITE} ERROR: {S.R} {F.RED}No info returned for ID: {S.R} {possibleVideoID} {F.LIGHTRED_EX} - Video may be unavailable or deleted.{S.R}")
+          print(f"\n{B.RED}{F.WHITE} ERROR: {S.R} {F.RED}No info returned for ID: {S.R} {possibleVideoID} {F.LIGHTRED_EX} - Video may be unavailable or deleted.{S.R}", file=sys.stderr)
           return False, None, None, None, None
 
         if possibleVideoID == result['items'][0]['id']:
@@ -57,8 +57,8 @@ def validate_video_id(video_url_or_id, silent=False, pass_exception=False, basic
 
             traceback.print_exc()
             print("--------------------------------------")
-            print(f"\n{B.RED}{F.WHITE} ERROR: {S.R} {F.RED}Unable to get comment count for video: {S.R} {possibleVideoID}  |  {videoTitle}")
-            print(f"\n{F.YELLOW}Are comments disabled on this video?{S.R} If not, please report the bug and include the error info above.")
+            print(f"\n{B.RED}{F.WHITE} ERROR: {S.R} {F.RED}Unable to get comment count for video: {S.R} {possibleVideoID}  |  {videoTitle}", file=sys.stderr)
+            print(f"\n{F.YELLOW}Are comments disabled on this video?{S.R} If not, please report the bug and include the error info above.", file=sys.stderr)
             print(f"                    Bug Report Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
             input("\nPress Enter to return to the main menu...")
             return "MainMenu", "MainMenu", "MainMenu", "MainMenu", "MainMenu"
@@ -185,7 +185,7 @@ def validate_channel_id(inputted_channel):
         print(f"\n{F.LIGHTRED_EX}No Channel Found!{S.R} YouTube returned no results for that channel. Double check it is correct, or try entering the Channel ID.")
         return False, None, None
     else:
-      print(f"\n{B.RED}{F.BLACK}Error:{S.R} You appear to have entered an invalid handle! It must be between 3 and 30 characters long and only contain letters, numbers, periods, underscores, and hyphens.")
+      print(f"\n{B.RED}{F.BLACK}Error:{S.R} You appear to have entered an invalid handle! It must be between 3 and 30 characters long and only contain letters, numbers, periods, underscores, and hyphens.", file=sys.stderr)
       return False, None, None
 
 
@@ -194,7 +194,7 @@ def validate_channel_id(inputted_channel):
     isolatedChannelID = inputted_channel
 
   else:
-    print(f"\n{B.RED}{F.BLACK}Error:{S.R} Invalid Channel link or ID!")
+    print(f"\n{B.RED}{F.BLACK}Error:{S.R} Invalid Channel link or ID!", file=sys.stderr)
     return False, None, None
 
   if len(isolatedChannelID) == 24 and isolatedChannelID[0:2] == "UC":
@@ -203,11 +203,11 @@ def validate_channel_id(inputted_channel):
       channelTitle = response['items'][0]['snippet']['title']
       return True, isolatedChannelID, channelTitle
     else:
-      print(f"{F.LIGHTRED_EX}Error{S.R}: Unable to Get Channel Title. Please check the channel ID.")
+      print(f"{F.LIGHTRED_EX}Error{S.R}: Unable to Get Channel Title. Please check the channel ID.", file=sys.stderr)
       return False, None, None
 
   else:
-    print(f"\n{B.RED}{F.BLACK}Invalid Channel link or ID!{S.R} Channel IDs are 24 characters long and begin with 'UC'.")
+    print(f"\n{B.RED}{F.BLACK}Invalid Channel link or ID!{S.R} Channel IDs are 24 characters long and begin with 'UC'.", file=sys.stderr)
     return False, None, None
 
 ############################ Validate Regex Input #############################
@@ -244,7 +244,7 @@ def validate_config_settings(config):
     sys.exit()
 
   def print_int_fail(setting, value):
-    print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting '{setting}': {str(value)}")
+    print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting '{setting}': {str(value)}", file=sys.stderr)
     print("It must be a whole number greater than zero, or another possible value listed in the config for that setting.")
     print_quit_and_report()
 
@@ -262,19 +262,19 @@ def validate_config_settings(config):
           settingList = utils.string_to_list(value)
           for settingValue in settingList:
             if settingValue not in validSettingsDict[setting]:
-              print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting '{setting}': {str(value)}")
+              print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting '{setting}': {str(value)}", file=sys.stderr)
               print(f"It looks like you tried to enter a list. Check if that setting accepts multiple values or if you entered an invalid value.")
               print_quit_and_report()
           return True
         except:
-          print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting '{setting}': {str(value)}")
+          print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting '{setting}': {str(value)}", file=sys.stderr)
           print("It looks like you tried to enter a list. Check if that setting accepts multiple values or if you entered an invalid value.")
           print_quit_and_report()
 
       elif value in validSettingsDict[setting]:
         return True
       else:
-        print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting '{setting}': {str(value)}")
+        print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting '{setting}': {str(value)}", file=sys.stderr)
         print("Check the config file to see valid possible values for that setting.")
         print_quit_and_report()
     else:
@@ -286,11 +286,11 @@ def validate_config_settings(config):
       if value >= 0.0 and value <= 1.0:
         return True
       else:
-        print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'levenshtein_distance': {str(value)}")
+        print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'levenshtein_distance': {str(value)}", file=sys.stderr)
         print("It must be a number from 0 to 1!")
         print_quit_and_report()
     except:  
-      print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'levenshtein_distance': {str(value)}")
+      print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'levenshtein_distance': {str(value)}", file=sys.stderr)
       print("It must be a number from 0 to 1!")
       print_quit_and_report()
 
@@ -302,7 +302,7 @@ def validate_config_settings(config):
     elif os.path.isdir(path):
       return True
     else:
-      print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting '{settingName}': {str(path)}")
+      print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting '{settingName}': {str(path)}", file=sys.stderr)
       print("Make sure the folder exists!")
       print_quit_and_report()
   
@@ -311,7 +311,7 @@ def validate_config_settings(config):
       codecs.lookup(value)
       return True
     except LookupError:
-      print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'json_encoding': {str(value)}")
+      print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'json_encoding': {str(value)}", file=sys.stderr)
       print("Make sure the encoding is valid!")
       print_quit_and_report()
 
@@ -322,17 +322,17 @@ def validate_config_settings(config):
       try:
         videoList = utils.string_to_list(value)
       except:
-        print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'videos_to_scan': {str(value)}")
+        print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'videos_to_scan': {str(value)}", file=sys.stderr)
         print("Make sure it is either a single video ID / Link, or a comma separated list of them!")
         print_quit_and_report()
       if len(videoList) > 0:
         for video in videoList:
           if not validate_video_id(video, basicCheck=True):
-            print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} There appears to be an invalid video ID or Link in setting 'videos_to_scan': {str(value)}")
+            print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} There appears to be an invalid video ID or Link in setting 'videos_to_scan': {str(value)}", file=sys.stderr)
             print_quit_and_report()
         return True
       else:
-        print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'videos_to_scan' (it may be empty!): {str(value)}")
+        print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'videos_to_scan' (it may be empty!): {str(value)}", file=sys.stderr)
         print("Make sure it is either a single video ID / Link, or a comma separated list of them!")
         print_quit_and_report()
 
@@ -342,7 +342,7 @@ def validate_config_settings(config):
     else:
       result, channelID, channelName = validate_channel_id(value)
       if result == False:
-        print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Config setting for 'channel_to_scan' appears invalid: {str(value)}")
+        print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Config setting for 'channel_to_scan' appears invalid: {str(value)}", file=sys.stderr)
         print("Make sure it is either a single channel ID or channel link.  If it's a link, try using the channel ID instead.")
         print_quit_and_report()
       else:
@@ -355,12 +355,12 @@ def validate_config_settings(config):
       try:
         channelList = utils.string_to_list(value)
       except:
-        print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'channel_ids_to_filter': {str(value)}")
+        print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'channel_ids_to_filter': {str(value)}", file=sys.stderr)
         print("Make sure it is either a single channel ID / Link, or a comma separated list of them!")
         print_quit_and_report()
       for channel in channelList:
         if len(channel) != 24 or channel[0:2] != "UC":
-          print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} There appears to be an invalid channel ID in setting 'channel_ids_to_filter': {str(value)}")
+          print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} There appears to be an invalid channel ID in setting 'channel_ids_to_filter': {str(value)}", file=sys.stderr)
           print("A channel ID must be 24 characters long and begin with 'UC'!")
           print_quit_and_report()
       return True
@@ -372,7 +372,7 @@ def validate_config_settings(config):
     if result:
       return True
     else:
-      print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'characters_to_filter': {str(value)}")
+      print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'characters_to_filter': {str(value)}", file=sys.stderr)
       print("For this mode, numbers, letters, and punctuation are removed. But there were no characters left to search!")
       print_quit_and_report()
 
@@ -384,11 +384,11 @@ def validate_config_settings(config):
       if len(result) > 0:
         return True
       else:
-        print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'strings_to_filter': {str(value)}")
+        print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'strings_to_filter': {str(value)}", file=sys.stderr)
         print("The list appears empty! Make sure it is either a single string, or a comma separated list of them!")
         print_quit_and_report()
     except:
-      print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'strings_to_filter': {str(value)}")
+      print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} Invalid value for config setting 'strings_to_filter': {str(value)}", file=sys.stderr)
       print("Make sure it is either a single string, or a comma separated list of them!")
       print_quit_and_report()
   
@@ -399,7 +399,7 @@ def validate_config_settings(config):
     if isValid:
       return True
     else:
-      print(f"\n{B.RED}{F.WHITE} ERROR! {S.R}The config setting 'regex_to_filter' does not appear to be valid: {str(value)}")
+      print(f"\n{B.RED}{F.WHITE} ERROR! {S.R}The config setting 'regex_to_filter' does not appear to be valid: {str(value)}", file=sys.stderr)
       print("Make sure it is a valid regular expression! Example:  [^\x00-\xFF]")
       print("You can test them out on websites like regex101.com")
       print_quit_and_report()
@@ -477,7 +477,7 @@ def validate_config_settings(config):
   # Checks all settings in the config file to ensure they are valid
   for settingName, settingValue in config.items():
     if settingValue == None or settingValue == '':
-      print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} The config setting '{settingName}' appears empty!")
+      print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} The config setting '{settingName}' appears empty!", file=sys.stderr)
       print("Please go and add a valid setting value!")
       print_quit_and_report()
 
@@ -526,7 +526,7 @@ def validate_config_settings(config):
 
   for settingName in allSettingsDict:
     if settingName not in list(config.keys()):
-      print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} The config setting '{settingName}' is missing from the config file!")
+      print(f"\n{B.RED}{F.WHITE} ERROR! {S.R} The config setting '{settingName}' is missing from the config file!", file=sys.stderr)
       print(" > Did you remove it or are you using an old config file? (It should have auto-updated)")
       print(" > You may need to delete and regenerate the config file.")
       print_quit_and_report()
