@@ -578,6 +578,7 @@ def load_config_file(configVersion=None, forceDefault=False, skipConfigChoice=Fa
 
   # Skip some prompts if only getting settings, like for auth script
   if onlyGetSettings == True:
+    configDict = check_update_config_file(configVersion, configDict, currentConfigFileNameWithPath)
     return configDict
   
   # Prevent prompt about config file if it's the default config file

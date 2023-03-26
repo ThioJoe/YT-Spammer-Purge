@@ -23,7 +23,8 @@ from getpass import getpass
 
 TOKEN_FILE_NAME = 'token.pickle'
 TOKEN_ENCRYPTED_NAME = 'token.pickle.encrypted'
-encrypt_config = load_config_file(onlyGetSettings=True)['encrypt_token_file']
+from YTSpammerPurge import configVersion
+encrypt_config = load_config_file(onlyGetSettings=True, configVersion=configVersion)['encrypt_token_file']
 
 # Encryption Settings
 SALT_BYTES = 64
