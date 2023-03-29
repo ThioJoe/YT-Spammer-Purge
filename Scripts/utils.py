@@ -171,13 +171,13 @@ def choice(message="", bypass=False):
 def print_exception_reason(reason):
   print("    Reason: " + str(reason))
   if reason == "processingFailure":
-    print(f"\n {F.LIGHTRED_EX}[!!] Processing Error{S.R} - Sometimes this error fixes itself. Try just running the program again. !!")
+    print(f"\n {F.LIGHTRED_EX}[!!] Processing Error{S.R} - Sometimes this error fixes itself. Try just running the program again. !!", file=sys.stderr)
     print("This issue is often on YouTube's side, so if it keeps happening try again later.")
     print("(This also occurs if you try deleting comments on someone else's video, which is not possible.)")
   elif reason == "commentsDisabled":
-    print(f"\n{F.LIGHTRED_EX}[!] Error:{S.R} Comments are disabled on this video. This error can also occur if scanning a live stream.")
+    print(f"\n{F.LIGHTRED_EX}[!] Error:{S.R} Comments are disabled on this video. This error can also occur if scanning a live stream.", file=sys.stderr)
   elif reason == "quotaExceeded":
-    print(f"\n{F.LIGHTRED_EX}Error:{S.R} You have exceeded the YouTube API quota. To do more scanning you must wait until the quota resets.")
+    print(f"\n{F.LIGHTRED_EX}Error:{S.R} You have exceeded the YouTube API quota. To do more scanning you must wait until the quota resets.", file=sys.stderr)
     print(" > There is a daily limit of 10,000 units/day, which works out to around reporting 10,000 comments/day.")
     print(" > You can check your quota by searching 'quota' in the Google Cloud console.")
     print(f"{F.YELLOW}Solutions: Either wait until tomorrow, or create additional projects in the cloud console.{S.R}")
@@ -185,7 +185,7 @@ def print_exception_reason(reason):
 
 def print_http_error_during_scan(hx):
   print("------------------------------------------------")
-  print(f"{B.RED}{F.WHITE} ERROR! {S.R}  Error Message: " + str(hx))
+  print(f"{B.RED}{F.WHITE} ERROR! {S.R}  Error Message: " + str(hx), file=sys.stderr)
   if hx.status_code:
     print("Status Code: " + str(hx.status_code))
     if hx.error_details[0]["reason"]: # If error reason is available, print it
@@ -194,11 +194,11 @@ def print_http_error_during_scan(hx):
 
 def print_exception_during_scan(ex):
   print("------------------------------------------------")
-  print(f"{B.RED}{F.WHITE} ERROR! {S.R}  Error Message: " + str(ex))
+  print(f"{B.RED}{F.WHITE} ERROR! {S.R}  Error Message: " + str(ex), file=sys.stderr)
 
 def print_break_finished(scanMode):
   print("------------------------------------------------")
-  print(f"\n{F.LIGHTRED_EX}[!] Fatal Error Occurred During Scan! {F.BLACK}{B.LIGHTRED_EX} Read the important info below! {S.R}")
+  print(f"\n{F.LIGHTRED_EX}[!] Fatal Error Occurred During Scan! {F.BLACK}{B.LIGHTRED_EX} Read the important info below! {S.R}", file=sys.stderr)
   print(f"\nProgram must skip the rest of the scan. {F.LIGHTGREEN_EX}Comments already scanned can still be used to create a log file (if you choose){S.R}")
   print(f"  > You won't be able to delete/hide any comments like usual, but you can {F.LIGHTMAGENTA_EX}exclude users before saving the log file{S.R}")
   print(f"  > Then, you can {F.LIGHTGREEN_EX}delete the comments later{S.R} using the {F.YELLOW}mode that removes comments using a pre-existing list{S.R}")
@@ -208,7 +208,7 @@ def print_break_finished(scanMode):
 
 def print_error_title_fetch():
   print("--------------------------------------------------------------------------------------------------------------------------")
-  print(f"\n{F.BLACK}{B.RED} ERROR OCCURRED {S.R} While Fetching Video Title... {F.BLACK}{B.LIGHTRED_EX} READ THE INFO BELOW {S.R}")
+  print(f"\n{F.BLACK}{B.RED} ERROR OCCURRED {S.R} While Fetching Video Title... {F.BLACK}{B.LIGHTRED_EX} READ THE INFO BELOW {S.R}", file=sys.stderr)
   print(f"Program will {F.LIGHTGREEN_EX}attempt to continue{S.R}, but the {F.YELLOW}video title may not be available{S.R} in the log file.")
   print(f"  > You won't be able to delete/hide any comments like usual, but you can {F.LIGHTMAGENTA_EX}exclude users before saving the log file{S.R}")
   print(f"  > Then, you can {F.LIGHTGREEN_EX}delete the comments later{S.R} using the {F.YELLOW}mode that removes comments using a pre-existing log file{S.R}")

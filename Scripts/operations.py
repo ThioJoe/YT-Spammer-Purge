@@ -589,7 +589,7 @@ def check_duplicates(current, config, miscData, allVideoCommentsDict, videoID):
   minimum_duplicates = int(config['minimum_duplicates'])
   if minimum_duplicates < 2:
     minimum_duplicates = 4
-    print("\nError: minimum_duplicates config setting must be greater than 1. Defaulting to 8.")
+    print("\nError: minimum_duplicates config setting must be greater than 1. Defaulting to 8.", file=sys.stderr)
     input("\nPress Enter to Continue...")
   
   # Get minimum duplicate length setting - Does not need to be validated as int here, because that happens at beginning of program
@@ -658,11 +658,11 @@ def check_reposts(current, config, miscData, allVideoCommentsDict, videoID):
     try:
       levenshtein = float(config['levenshtein_distance'])
       if levenshtein < 0 or levenshtein > 1:
-        print("\nError: Levenshtein_distance config setting must be between 0 and 1. Defaulting to 0.9")
+        print("\nError: Levenshtein_distance config setting must be between 0 and 1. Defaulting to 0.9", file=sys.stderr)
         input("\nPress Enter to Continue...")
         levenshtein = 0.9
     except ValueError:
-      print("\nError: Levenshtein_distance config setting must be a number between 0 and 1. Defaulting to 0.9")
+      print("\nError: Levenshtein_distance config setting must be a number between 0 and 1. Defaulting to 0.9", file=sys.stderr)
       input("\nPress Enter to Continue...")
       levenshtein = 0.9
     fuzzy = True
@@ -674,11 +674,11 @@ def check_reposts(current, config, miscData, allVideoCommentsDict, videoID):
     minLength = int(config['stolen_minimum_text_length'])
     if minLength < 1:
       minLength = 25
-      print("\nError: stolen_minimum_text_length config setting must be greater than 0. Defaulting to 25.")
+      print("\nError: stolen_minimum_text_length config setting must be greater than 0. Defaulting to 25.", file=sys.stderr)
       input("\nPress Enter to Continue...")
   except ValueError:
     minLength = 25
-    print("\nError: stolen_minimum_text_length config setting is invalid. Defaulting to 25.")
+    print("\nError: stolen_minimum_text_length config setting is invalid. Defaulting to 25.", file=sys.stderr)
     input("\nPress Enter to Continue...")
 
   flatCommentList = []
@@ -1093,11 +1093,11 @@ def delete_found_comments(commentsList, banChoice, deletionMode, recoveryMode=Fa
         if len(response) > 0:
           failedComments += commentIDs
       except HttpError:
-        print("\nSomething has gone wrong when removing some comments...")
+        print("\nSomething has gone wrong when removing some comments...", file=sys.stderr)
         failedComments += commentIDs
 
     else:
-      print("Invalid deletion mode. This is definitely a bug, please report it here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
+      print("Invalid deletion mode. This is definitely a bug, please report it here: https://github.com/ThioJoe/YT-Spammer-Purge/issues", file=sys.stderr)
       print("Deletion Mode Is: " + deletionMode)
       input("Press Enter to Exit...")
       sys.exit()
@@ -1210,7 +1210,7 @@ def check_deleted_comments(commentInput):
     elif i > 0:
       print("\n\nWarning: " + str(i) + " comments may remain. Check links above or try running the program again. An error log file has been created: 'Deletion_Error_Log.txt'")
     else:
-      print("\n\nSomething strange happened... The comments may or may have not been deleted.")
+      print("\n\nSomething strange happened... The comments may or may have not been deleted.", file=sys.stderr)
 
     return None
 
@@ -1358,7 +1358,7 @@ def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToEx
   # Verify removal
   for comment in current.matchedCommentsDict.keys():
     if comment in commentIDExcludeSet:
-      print(f"{F.LIGHTRED_EX}FATAL ERROR{S.R}: Something went wrong while trying to exclude comments. No comments have been deleted.")
+      print(f"{F.LIGHTRED_EX}FATAL ERROR{S.R}: Something went wrong while trying to exclude comments. No comments have been deleted.", file=sys.stderr)
       print(f"You should {F.YELLOW}DEFINITELY{S.R} report this bug here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
       print("Provide the error code: X-1")
       input("Press Enter to Exit...")

@@ -425,7 +425,7 @@ def write_rtf(fileName, newText=None, firstWrite=False, fullWrite=False):
         if not os.path.isabs(fileName):
           fileName = os.path.join(logFolderPath, os.path.basename(fileName))
       except:
-        print(f"{F.LIGHTRED_EX}Error:{S.R} Could not create desired directory for log files. Will place them in current directory.")
+        print(f"{F.LIGHTRED_EX}Error:{S.R} Could not create desired directory for log files. Will place them in current directory.", file=sys.stderr)
         fileName = os.path.basename(fileName)
     while success == False:
       try:
@@ -445,10 +445,10 @@ def write_rtf(fileName, newText=None, firstWrite=False, fullWrite=False):
         success = True
       except PermissionError:
         if attempts < 3:
-          print(f"\n{F.YELLOW}\nERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{fileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
+          print(f"\n{F.YELLOW}\nERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{fileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.", file=sys.stderr)
           input("\n Press Enter to Try Again...")
         else:
-          print(f"{F.LIGHTRED_EX}\nERROR! Still cannot write to {F.LIGHTCYAN_EX}{fileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Writing Log?{S.R} (N)")
+          print(f"{F.LIGHTRED_EX}\nERROR! Still cannot write to {F.LIGHTCYAN_EX}{fileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Writing Log?{S.R} (N)", file=sys.stderr)
           if choice("Choice") == False:
             break
 
@@ -477,10 +477,10 @@ def write_rtf(fileName, newText=None, firstWrite=False, fullWrite=False):
           success = True
       except PermissionError:
         if attempts < 3:
-          print(f"\n{F.YELLOW}\nERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{fileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
+          print(f"\n{F.YELLOW}\nERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{fileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.", file=sys.stderr)
           input("\n Press Enter to Try Again...")
         else:
-          print(f"{F.LIGHTRED_EX}\nERROR! Still cannot write to {F.LIGHTCYAN_EX}{fileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Writing Log?{S.R} (N)")
+          print(f"{F.LIGHTRED_EX}\nERROR! Still cannot write to {F.LIGHTCYAN_EX}{fileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Writing Log?{S.R} (N)", file=sys.stderr)
           if choice("Choice") == False:
             break
 
@@ -499,7 +499,7 @@ def write_plaintext_log(fileName, newText=None, firstWrite=False, fullWrite=Fals
         if not os.path.isabs(fileName):
           fileName = os.path.join(logFolderPath, os.path.basename(fileName))
       except:
-        print(f"{F.LIGHTRED_EX}Error:{S.R} Could not create desired directory for log files. Will place them in current directory.")
+        print(f"{F.LIGHTRED_EX}Error:{S.R} Could not create desired directory for log files. Will place them in current directory.", file=sys.stderr)
         fileName = os.path.basename(fileName)
     while success == False:
       try:
@@ -513,10 +513,10 @@ def write_plaintext_log(fileName, newText=None, firstWrite=False, fullWrite=Fals
         success = True
       except PermissionError:
         if attempts < 3:
-          print(f"\n{F.YELLOW}\nERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{fileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
+          print(f"\n{F.YELLOW}\nERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{fileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.", file=sys.stderr)
           input("\n Press Enter to Try Again...")
         else:
-          print(f"{F.LIGHTRED_EX}\nERROR! Still cannot write to {F.LIGHTCYAN_EX}{fileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Writing Log?{S.R} (N)")
+          print(f"{F.LIGHTRED_EX}\nERROR! Still cannot write to {F.LIGHTCYAN_EX}{fileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Writing Log?{S.R} (N)", file=sys.stderr)
           if choice("Choice") == False:
             break 
 
@@ -531,10 +531,10 @@ def write_plaintext_log(fileName, newText=None, firstWrite=False, fullWrite=Fals
         success = True
       except PermissionError:
         if attempts < 3:
-          print(f"\n{F.YELLOW}\nERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{fileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
+          print(f"\n{F.YELLOW}\nERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{fileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.", file=sys.stderr)
           input("\n Press Enter to Try Again...")
         else:
-          print(f"{F.LIGHTRED_EX}\nERROR! Still cannot write to {F.LIGHTCYAN_EX}{fileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Writing Log?{S.R} (N)")
+          print(f"{F.LIGHTRED_EX}\nERROR! Still cannot write to {F.LIGHTCYAN_EX}{fileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Writing Log?{S.R} (N)", file=sys.stderr)
           if choice("Choice") == False:
             break 
 
@@ -570,7 +570,7 @@ def write_json_log(current, config, jsonSettingsDict, commentsDict, jsonDataDict
       if not os.path.isabs(fileName):
         fileName = os.path.join(logFolderPath, os.path.basename(fileName))
     except:
-      print(f"{F.LIGHTRED_EX}Error:{S.R} Could not create desired directory for log files. Will place them in current directory.")
+      print(f"{F.LIGHTRED_EX}Error:{S.R} Could not create desired directory for log files. Will place them in current directory.", file=sys.stderr)
       fileName = os.path.basename(fileName)
   while success == False:
     try:
@@ -589,10 +589,10 @@ def write_json_log(current, config, jsonSettingsDict, commentsDict, jsonDataDict
       success = True
     except PermissionError:
       if attempts < 3:
-        print(f"\n{F.YELLOW}\nERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{fileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
+        print(f"\n{F.YELLOW}\nERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{fileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.", file=sys.stderr)
         input("\n Press Enter to Try Again...")
       else:
-        print(f"{F.LIGHTRED_EX}\nERROR! Still cannot write to {F.LIGHTCYAN_EX}{fileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Writing Log?{S.R} (N)")
+        print(f"{F.LIGHTRED_EX}\nERROR! Still cannot write to {F.LIGHTCYAN_EX}{fileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Writing Log?{S.R} (N)", file=sys.stderr)
         if choice("Choice") == False:
           break 
 
@@ -643,7 +643,7 @@ def get_extra_json_data(channelIDs, jsonSettingsDict):
           jsonExtraDataDict['CommentAuthorInfo'][channelID] = tempDict
     except:
       traceback.print_exc()
-      print("Error occurred when fetching extra JSON data.")
+      print("Error occurred when fetching extra JSON data.", file=sys.stderr)
       return False
 
   # Get Extra Info About Commenters
@@ -693,7 +693,7 @@ def download_profile_pictures(pictureUrlsDict, jsonSettingsDict):
     try:
       os.mkdir(imageFolderPath)
     except:
-      print(f"{F.LIGHTRED_EX}Error:{S.R} Unable to create image folder. Try creating a folder called 'ProfileImages' in the log file folder.")
+      print(f"{F.LIGHTRED_EX}Error:{S.R} Unable to create image folder. Try creating a folder called 'ProfileImages' in the log file folder.", file=sys.stderr)
       return False, None
 
   attempts = 0
@@ -715,10 +715,10 @@ def download_profile_pictures(pictureUrlsDict, jsonSettingsDict):
       print("Successfully downloaded profile pictures.")
     except PermissionError:
       if attempts < 3:
-        print(f"\n{F.YELLOW}\nERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{fileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
+        print(f"\n{F.YELLOW}\nERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{fileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.", file=sys.stderr)
         input("\n Press Enter to Try Again...")
       else:
-        print(f"{F.LIGHTRED_EX}\nERROR! Still cannot write to {F.LIGHTCYAN_EX}{fileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Downloading Profile Pictures?{S.R} (N)")
+        print(f"{F.LIGHTRED_EX}\nERROR! Still cannot write to {F.LIGHTCYAN_EX}{fileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Downloading Profile Pictures?{S.R} (N)", file=sys.stderr)
         if choice("Choice") == False:
           break 
 
@@ -821,7 +821,7 @@ def prepare_logFile_settings(current, config, miscData, jsonSettingsDict, filter
   elif logMode == "plaintext":
     logFileType = ".txt"
   else:
-    print("Invalid value for 'log_mode' in config file:  " + logMode)
+    print("Invalid value for 'log_mode' in config file:  " + logMode, file=sys.stderr)
     print("Defaulting to .rtf file")
     logMode = "rtf"
 
@@ -859,7 +859,7 @@ def prepare_logFile_settings(current, config, miscData, jsonSettingsDict, filter
       jsonSettingsDict['json_profile_picture'] = False
 
   except KeyError:
-    print("Problem getting JSON settings, is your config file correct?")
+    print("Problem getting JSON settings, is your config file correct?", file=sys.stderr)
 
   # Set where to put log files
   defaultLogPath = "logs"

@@ -48,21 +48,21 @@ def check_lists_update(spamListDict, silentCheck = False):
     try:
       os.mkdir(SpamListFolder)
     except:
-      print("Error: Could not create folder. Try creating a folder called 'spam_lists' to update the spam lists.")
+      print("Error: Could not create folder. Try creating a folder called 'spam_lists' to update the spam lists.", file=sys.stderr)
 
   try:
     response = requests.get("https://api.github.com/repos/ThioJoe/YT-Spam-Domains-List/releases/latest")
     if response.status_code != 200:
       if response.status_code == 403:
         if silentCheck == False:
-          print(f"\n{B.RED}{F.WHITE}Error [U-4L]:{S.R} Got an 403 (ratelimit_reached) when attempting to check for spam list update.")
+          print(f"\n{B.RED}{F.WHITE}Error [U-4L]:{S.R} Got a 403 (ratelimit_reached) when attempting to check for spam list update.", file=sys.stderr)
           print(f"This means you have been {F.YELLOW}rate limited by github.com{S.R}. Please try again in a while.\n")
           return False
         else:
           return spamListDict
       else:
         if silentCheck == False:
-          print(f"{B.RED}{F.WHITE}Error [U-3L]:{S.R} Got non 200 status code (got: {response.status_code}) when attempting to check for spam list update.\n")
+          print(f"{B.RED}{F.WHITE}Error [U-3L]:{S.R} Got non 200 status code (got: {response.status_code}) when attempting to check for spam list update.\n", file=sys.stderr)
           print(f"If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
           if silentCheck == False:
             return False
@@ -74,18 +74,18 @@ def check_lists_update(spamListDict, silentCheck = False):
       return spamListDict
     else:
       if "WinError 10013" in str(ox):
-        print(f"{B.RED}{F.WHITE}WinError 10013:{S.R} The OS blocked the connection to GitHub. Check your firewall settings.\n")
+        print(f"{B.RED}{F.WHITE}WinError 10013:{S.R} The OS blocked the connection to GitHub. Check your firewall settings.\n", file=sys.stderr)
         return False
       else:
         print(str(ox))
-        print(f"{B.RED}{F.WHITE}\n Unexpected OS Error {S.R} See error details above.\n")
+        print(f"{B.RED}{F.WHITE}\n Unexpected OS Error {S.R} See error details above.\n", file=sys.stderr)
         return False
         
   except:
     if silentCheck == True:
       return spamListDict
     else:
-      print("Error: Could not get latest release info from GitHub. Please try again later.")
+      print("Error: Could not get latest release info from GitHub. Please try again later.", file=sys.stderr)
       return False
 
   # If update available
@@ -119,7 +119,7 @@ def check_lists_update(spamListDict, silentCheck = False):
             continue
           else:
             traceback.print_exc()
-            print(f"\n> {F.RED}Error:{S.R} The zip file containing the spam lists was downloaded, but there was a problem extracting the files because of a permission error. ")
+            print(f"\n> {F.RED}Error:{S.R} The zip file containing the spam lists was downloaded, but there was a problem extracting the files because of a permission error.", file=sys.stderr)
             print(f"This can happen if an antivirus takes a while to scan the file. You may need to manually extract the zip file.")
             input("\nPress Enter to Continue anyway...")
             break
@@ -130,7 +130,7 @@ def check_lists_update(spamListDict, silentCheck = False):
 
     elif total_size_in_bytes != 0 and os.stat(downloadFilePath).st_size != total_size_in_bytes:
       os.remove(downloadFilePath)
-      print(f" > {F.RED} File did not fully download. Please try again later.{S.R}\n")
+      print(f" > {F.RED} File did not fully download. Please try again later.{S.R}\n", file=sys.stderr)
       return spamListDict
   else:
     update_last_checked()
@@ -176,13 +176,13 @@ def check_for_filter_update(filterListDict, silentCheck = False):
       return False
     else:
       if "WinError 10013" in str(ox):
-        print(f"{B.RED}{F.WHITE}WinError 10013:{S.R} The OS blocked the connection to GitHub. Check your firewall settings.\n")
+        print(f"{B.RED}{F.WHITE}WinError 10013:{S.R} The OS blocked the connection to GitHub. Check your firewall settings.\n", file=sys.stderr)
         return False
   except:
     if silentCheck == True:
       return False
     else:
-      print("Error: Could not get latest release info from GitHub. Please try again later.")
+      print("Error: Could not get latest release info from GitHub. Please try again later.", file=sys.stderr)
       return False
 
   if parse_version(localVersion) < parse_version(latestFilterVersion):
@@ -193,7 +193,7 @@ def check_for_filter_update(filterListDict, silentCheck = False):
       copyfile(filterFilePath, os.path.abspath(backupFilePath))
       print(f"\nOld filter file backed up to {backupFilePath}\n")
     except:
-      print(f" > {F.RED}Error:{S.R} Could not create backup of filter_variables.py file. Please check permissions and try again. Or just rename the file manually.")
+      print(f" > {F.RED}Error:{S.R} Could not create backup of filter_variables.py file. Please check permissions and try again. Or just rename the file manually.", file=sys.stderr)
       input("\nPress Enter to Continue With Current Filter Version...")
       return False
     
@@ -216,19 +216,14 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
 
     if response.status_code != 200:
       if response.status_code == 403:
+        print(f"\n{B.RED}{F.WHITE}Error [U-4]:{S.R} Got an 403 (ratelimit_reached) when attempting to check for update.", file=sys.stderr)
         if silentCheck == False:
-          print(f"\n{B.RED}{F.WHITE}Error [U-4]:{S.R} Got an 403 (ratelimit_reached) when attempting to check for update.")
           print(f"This means you have been {F.YELLOW}rate limited by github.com{S.R}. Please try again in a while.\n")
-        else:
-          print(f"\n{B.RED}{F.WHITE}Error [U-4]:{S.R} Got an 403 (ratelimit_reached) when attempting to check for update.")
         return None
-
       else:
+        print(f"{B.RED}{F.WHITE}Error [U-3]:{S.R} Got non 200 status code (got: {response.status_code}) when attempting to check for update.\n", file=sys.stderr)
         if silentCheck == False:
-          print(f"{B.RED}{F.WHITE}Error [U-3]:{S.R} Got non 200 status code (got: {response.status_code}) when attempting to check for update.\n")
           print(f"If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
-        else:
-          print(f"{B.RED}{F.WHITE}Error [U-3]:{S.R} Got non 200 status code (got: {response.status_code}) when attempting to check for update.\n")
         return None
 
     else:
@@ -255,17 +250,17 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
 
   except OSError as ox:
     if "WinError 10013" in str(ox):
-      print(f"{B.RED}{F.WHITE}WinError 10013:{S.R} The OS blocked the connection to GitHub. Check your firewall settings.\n")
+      print(f"{B.RED}{F.WHITE}WinError 10013:{S.R} The OS blocked the connection to GitHub. Check your firewall settings.\n", file=sys.stderr)
     else:
-      print(f"{B.RED}{F.WHITE}Unknown OSError{S.R} Error occurred while checking for updates\n")
+      print(f"{B.RED}{F.WHITE}Unknown OSError{S.R} Error occurred while checking for updates\n", file=sys.stderr)
     return None
   except Exception as e:
     if silentCheck == False:
-      print(str(e) + "\n")
-      print(f"{B.RED}{F.WHITE}Error [Code U-1]:{S.R} Problem while checking for updates. See above error for more details.\n")
+      print(str(e) + "\n", file=sys.stderr)
+      print(f"{B.RED}{F.WHITE}Error [Code U-1]:{S.R} Problem while checking for updates. See above error for more details.\n", file=sys.stderr)
       print("If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
     elif silentCheck == True:
-      print(f"{B.RED}{F.WHITE}Error [Code U-1]:{S.R} Unknown problem while checking for updates. See above error for more details.\n")
+      print(f"{B.RED}{F.WHITE}Error [Code U-1]:{S.R} Unknown problem while checking for updates. See above error for more details.\n", file=sys.stderr)
     return None
 
   if parse_version(latestVersion) > parse_version(currentVersion):
@@ -311,12 +306,12 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
           ignoreHash = False
           # Validate Retrieved Info    
           if j > 1: # More than one exe file in release
-            print(f"{F.YELLOW}Warning!{S.R} Multiple exe files found in release. You must be updating from the future when that was not anticipated.")
+            print(f"{F.YELLOW}Warning!{S.R} Multiple .exe files found in release. You must be updating from the future when that was not anticipated.")
             print("You should instead manually download the latest version from: https://github.com/ThioJoe/YT-Spammer-Purge/releases")
             print("You can try continuing anyway, but it might not be successful, or might download the wrong exe file.")
             input("\nPress Enter to Continue...")
           elif j == 0: # No exe file in release
-            print(f"{F.LIGHTRED_EX}Warning!{S.R} No exe file found in release. You'll have to manually download the latest version from:")
+            print(f"{F.LIGHTRED_EX}Warning!{S.R} No .exe file found in release. You'll have to manually download the latest version from:")
             print("https://github.com/ThioJoe/YT-Spammer-Purge/releases")
             return False
           if k == 0: # No hash file in release
@@ -344,7 +339,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
                 os.remove(downloadFileName)
               except:
                 traceback.print_exc()
-                print(f"\n{F.LIGHTRED_EX}Error F-6:{S.R} Problem deleting existing file! Check if it's gone, or delete it yourself, then try again.")
+                print(f"\n{F.LIGHTRED_EX}Error F-6:{S.R} Problem deleting existing file! Check if it's gone, or delete it yourself, then try again.", file=sys.stderr)
                 print("The info above may help if it's a bug, which you can report here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
                 input("Press Enter to Exit...")
                 sys.exit()
@@ -368,7 +363,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
             print(f"\n> {F.RED} File did not fully download. Please try again later.")
             return False
           elif total_size_in_bytes == 0:
-            print("Something is wrong with the download on the remote end. You should manually download latest version here:")
+            print("Something is wrong with the download on the remote end. You should manually download latest version here:", file=sys.stderr)
             print("https://github.com/ThioJoe/YT-Spammer-Purge/releases")
 
           # Verify hash
@@ -419,7 +414,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
           extraFolderPath = os.listdir(f"./{stagingFolder}")
           # If there happens to be more then one folder
           if(len(extraFolderPath) != 1):
-            print(f"\n> {F.RED} Error:{S.R} more than one folder in {stagingFolder}! Please make a bug report.")
+            print(f"\n> {F.RED} Error:{S.R} more than one folder in {stagingFolder}! Please file a bug report.", file=sys.stderr)
             print(f"\n{F.RED}Aborting Update!{S.R}")
             print("\n> Cleaning up...")
             rmtree(stagingFolder)
@@ -443,7 +438,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
           sys.exit()
 
         else:
-          print(f"> {F.RED} Error:{S.R} You are using an unsupported OS for the autoupdater (macos). \n This updater only supports Windows and Linux (right now). Feel free to get the files from github: https://github.com/ThioJoe/YT-Spammer-Purge")
+          print(f"> {F.RED} Error:{S.R} You are using an unsupported OS for the autoupdater (macos). \n This updater only supports Windows and Linux (right now). Feel free to get the files from github: https://github.com/ThioJoe/YT-Spammer-Purge", file=sys.stderr)
           return False
       elif userChoice == "False" or userChoice == None:
         return False
@@ -471,7 +466,7 @@ def getRemoteFile(url, downloadFilePath, streamChoice=True, silent=False, header
         response = requests.get(url, headers=headers, stream=True)
       if response.status_code != 200:
         if silent == False:
-          print("Error fetching remote file or resource:  " + url)
+          print("Error fetching remote file or resource:  " + url, file=sys.stderr)
           print("Response Code: " + str(response.status_code))
       else:
         return response
@@ -479,7 +474,7 @@ def getRemoteFile(url, downloadFilePath, streamChoice=True, silent=False, header
     except Exception as e:
       if silent == False:
         print(str(e) + "\n")
-        print(f"{B.RED}{F.WHITE} Error {S.R} While Fetching Remote File or Resource: " + url)
+        print(f"{B.RED}{F.WHITE} Error {S.R} While Fetching Remote File or Resource: " + url, file=sys.stderr)
         print("See above messages for details.\n")
         print("If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
       return None
@@ -497,7 +492,7 @@ def getRemoteFile(url, downloadFilePath, streamChoice=True, silent=False, header
     download_write_to_disk(filedownload)
     return True
   except:
-    print(f"Warning: Error while downloading {description}. Retrying...")
+    print(f"Warning: Error while downloading {description}. Retrying...", file=sys.stderr)
     # Try again with different download method, 'stream' is set to opposite of before
 
     streamChoice = not streamChoice
@@ -508,7 +503,7 @@ def getRemoteFile(url, downloadFilePath, streamChoice=True, silent=False, header
     except Exception as e:
       traceback.print_exc()
       print(str(e))
-      print(f"\n{B.RED}{F.WHITE} Error: {S.R} Error while downloading {description}. See error details above.\n")
+      print(f"\n{B.RED}{F.WHITE} Error: {S.R} Error while downloading {description}. See error details above.\n", file=sys.stderr)
       time.sleep(1)
       return False
 
@@ -545,7 +540,7 @@ def load_config_file(configVersion=None, forceDefault=False, skipConfigChoice=Fa
       configFile.close()
   except:
     traceback.print_exc()
-    print(f"{B.RED}{F.WHITE}Error Code: F-4{S.R} - Config file found, but there was a problem loading it! The info above may help if it's a bug.")
+    print(f"{B.RED}{F.WHITE}Error Code: F-4{S.R} - Config file found, but there was a problem loading it! The info above may help if it's a bug.", file=sys.stderr)
     print("\nYou can manually delete SpamPurgeConfig.ini and use the program to create a new default config.")
     input("Press Enter to Exit...")
     sys.exit()
@@ -593,7 +588,7 @@ def load_config_file(configVersion=None, forceDefault=False, skipConfigChoice=Fa
         configDict = choose_config_file(configDict, configVersion, currentConfigFileNameWithPath)
         
     else:
-      print("Error C-1: Invalid value in config file for setting 'use_this_config' - Must be 'True', 'False', or 'Ask'")
+      print("Error C-1: Invalid value in config file for setting 'use_this_config' - Must be 'True', 'False', or 'Ask'", file=sys.stderr)
       input("Press Enter to Exit...")
       sys.exit()
 
@@ -687,7 +682,7 @@ def check_update_config_file(newVersion, existingConfig, configFileNameWithPath)
           print(f"\n{F.YELLOW}\nERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{os.path.relpath(configFileNameWithPath)}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
           input("\n Press Enter to Try Again...")
         else:
-          print(f"{F.LIGHTRED_EX}\nERROR! Still cannot write to {F.LIGHTCYAN_EX}{os.path.relpath(configFileNameWithPath)}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Updating Config (May Cause Errors)?{S.R} (N)")
+          print(f"{F.LIGHTRED_EX}\nERROR! Still cannot write to {F.LIGHTCYAN_EX}{os.path.relpath(configFileNameWithPath)}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Skip Updating Config (May Cause Errors)?{S.R} (N)", file=sys.stderr)
           if choice("Choice:") == False:
             break 
 
@@ -695,7 +690,7 @@ def check_update_config_file(newVersion, existingConfig, configFileNameWithPath)
   except:
     traceback.print_exc()
     print("--------------------------------------------------------------------------------")
-    print("Something went wrong when copying your config settings. You'll have to manually copy them from backup.")
+    print("Something went wrong when copying your config settings. You'll have to manually copy them from backup.", file=sys.stderr)
     input("\nPress Enter to Exit...")
     sys.exit()
   
@@ -743,7 +738,7 @@ def list_config_files(configDict=None, configPath=None):
             else:
               traceback.print_exc()
               print("--------------------------------------------------------------------------------")
-              print("Something went wrong when getting list of config files. Check your regex.")
+              print("Something went wrong when getting list of config files. Check your regex.", file=sys.stderr)
               input("\nPress Enter to Exit...")
               sys.exit()
 
@@ -931,7 +926,7 @@ def create_config_file(updating=False, dontWarn=False, configFileName="SpamPurge
           os.remove(configFileName)
         except:
           traceback.print_exc()
-          print("Error Code F-1: Problem deleting existing file! Check if it's gone. The info above may help if it's a bug.")
+          print("Error Code F-1: Problem deleting existing file! Check if it's gone. The info above may help if it's a bug.", file=sys.stderr)
           print("If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
           input("Press Enter to Exit...")
           sys.exit()
@@ -948,7 +943,7 @@ def create_config_file(updating=False, dontWarn=False, configFileName="SpamPurge
     defaultConfigFile.close()
   except:
     traceback.print_exc()
-    print(f"{B.RED}{F.WHITE}Error Code: F-2{S.R} - Problem reading default config file! The info above may help if it's a bug.")
+    print(f"{B.RED}{F.WHITE}Error Code: F-2{S.R} - Problem reading default config file! The info above may help if it's a bug.", file=sys.stderr)
     input("Press Enter to Exit...")
     sys.exit()
 
@@ -976,15 +971,15 @@ def create_config_file(updating=False, dontWarn=False, configFileName="SpamPurge
       success = True
     except PermissionError:
       if attempts < 3:
-        print(f"\n{F.YELLOW}\nERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{configFileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.")
+        print(f"\n{F.YELLOW}\nERROR!{S.R} Cannot write to {F.LIGHTCYAN_EX}{configFileName}{S.R}. Is it open? Try {F.YELLOW}closing the file{S.R} before continuing.", file=sys.stderr)
         input("\n Press Enter to Try Again...")
       else:
-        print(f"{F.LIGHTRED_EX}\nERROR! Still cannot write to {F.LIGHTCYAN_EX}{configFileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Abandon Writing Config?{S.R} (N)")
+        print(f"{F.LIGHTRED_EX}\nERROR! Still cannot write to {F.LIGHTCYAN_EX}{configFileName}{F.LIGHTRED_EX}. {F.YELLOW}Try again?{S.R} (Y) or {F.YELLOW}Abandon Writing Config?{S.R} (N)", file=sys.stderr)
         if choice("Choice:") == False:
           break 
     except:
       traceback.print_exc()
-      print(f"{B.RED}{F.WHITE}Error Code: F-3{S.R} Problem creating config file! The info above may help if it's a bug.")
+      print(f"{B.RED}{F.WHITE}Error Code: F-3{S.R} Problem creating config file! The info above may help if it's a bug.", file=sys.stderr)
       input("Press Enter to Exit...")
       sys.exit()
 
@@ -1066,9 +1061,9 @@ def parse_comment_list(config, recovery=False, removal=False, returnFileName=Fal
           listFile.close()
           validFile = True
         except:
-          print(f"{F.RED}Error Code F-5:{S.R} Log File was found but there was a problem reading it.")
+          print(f"{F.RED}Error Code F-5:{S.R} Log File was found but there was a problem reading it.", file=sys.stderr)
       else:
-        print(f"\n{F.LIGHTRED_EX}Error: File not found.{S.R} Make sure it is in the same folder as the program.\n")
+        print(f"\n{F.LIGHTRED_EX}Error: File not found.{S.R} Make sure it is in the same folder as the program.\n", file=sys.stderr)
         print(f"Enter '{F.YELLOW}Y{S.R}' to try again, or '{F.YELLOW}N{S.R}' to manually paste in the comment IDs.")
         userChoice = choice("Try entering file name again?")
         if userChoice == True:
@@ -1103,7 +1098,7 @@ def parse_comment_list(config, recovery=False, removal=False, returnFileName=Fal
   resultList = resultList.split(",")
 
   if len(resultList) == 0:
-    print(f"\n{F.RED}Error Code R-1:{S.R} No comment IDs detected, try entering them manually and make sure they are formatted correctly.")
+    print(f"\n{F.RED}Error Code R-1:{S.R} No comment IDs detected, try entering them manually and make sure they are formatted correctly.", file=sys.stderr)
     input("\nPress Enter to return to main menu...")
     return "MainMenu", None
 
@@ -1153,7 +1148,7 @@ def write_dict_pickle_file(dictToWrite, fileName, relativeFolderPath=RESOURCES_F
         os.mkdir(relativeFolderPath)
         success = True
       except:
-        print(f"Error: Could not create folder. Try creating the folder {relativeFolderPath} to continue.")
+        print(f"Error: Could not create folder. Try creating the folder {relativeFolderPath} to continue.", file=sys.stderr)
         input("Press Enter to try again...")
 
   if os.path.exists(fileNameWithPath):
@@ -1203,13 +1198,13 @@ def read_dict_pickle_file(fileNameNoPath, relativeFolderPath=RESOURCES_FOLDER_NA
         except:
           traceback.print_exc()
           print("--------------------------------------------------------------------------------")
-          print("Something went wrong when reading your pickle file. Is it in use? Try closing it.")
+          print("Something went wrong when reading your pickle file. Is it in use? Try closing it.", file=sys.stderr)
           input(f"\nPress Enter to try loading file again: {fileNameWithPath}")
           failedAttemptCount += 1
       return False
 
     else:
-      print(f"\nFile '{fileNameNoPath}' not found! Try entering the name manually.")
+      print(f"\nFile '{fileNameNoPath}' not found! Try entering the name manually.", file=sys.stderr)
       input(f"\nPress Enter to try loading file again: {fileNameWithPath}")
       failedAttemptCount += 1
 
@@ -1223,10 +1218,10 @@ def try_remove_file(fileNameWithPath):
       os.remove(fileNameWithPath)
       return True
     except:
-      print(f"\n{F.RED}\nERROR:{S.R} Could not remove file: '{fileNameWithPath}'. Is it open? If so, try closing it.")
+      print(f"\n{F.RED}\nERROR:{S.R} Could not remove file: '{fileNameWithPath}'. Is it open? If so, try closing it.", file=sys.stderr)
       input("\nPress Enter to try again...")
       attempts += 1
-  print(f"\n{F.RED}\nERROR:{S.R} The File '{fileNameWithPath}' still could not be removed. You may have to delete it yourself.")
+  print(f"\n{F.RED}\nERROR:{S.R} The File '{fileNameWithPath}' still could not be removed. You may have to delete it yourself.", file=sys.stderr)
   input("\nPress Enter to Continue...")
   return False
 

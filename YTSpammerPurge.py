@@ -86,7 +86,7 @@ def main():
 
   # Run check on python version, must be 3.6 or higher because of f strings
   if sys.version_info[0] < 3 or sys.version_info[1] < 6:
-    print("Error Code U-2: This program requires running python 3.6 or higher! You are running" + str(sys.version_info[0]) + "." + str(sys.version_info[1]))
+    print("Error Code U-2: This program requires running python 3.6 or higher! You are running" + str(sys.version_info[0]) + "." + str(sys.version_info[1]), file=sys.stderr)
     input("Press Enter to Exit...")
     sys.exit()
 
@@ -154,7 +154,7 @@ def main():
         f.write("# new location they will be stored.\n")
 
     except:
-      print("\nError: Could not create folder. To update the spam lists, try creating a folder called 'SpamPurge_Resources',")
+      print("\nError: Could not create folder. To update the spam lists, try creating a folder called 'SpamPurge_Resources',", file=sys.stderr)
       print("       then inside that, create another folder called 'Spam_Lists'.")
       input("Press Enter to Continue...")
 
@@ -162,15 +162,15 @@ def main():
     try:
       os.mkdir(spamListFolder)
     except:
-      print("\nError: Could not create folder. To update the spam lists, go into the 'SpamPurge_Resources' folder,")
-      print("       then inside that, create another folder called 'Spam_Lists'.")
+      print("\nError: Could not create folder. To update the spam lists, go into the 'SpamPurge_Resources' folder,", file=sys.stderr)
+      print("       then inside that, create another folder called 'Spam_Lists'.", file=sys.stderr)
 
   if os.path.isdir(resourceFolder) and not os.path.isdir(filtersFolder):
       try:
         os.mkdir(filtersFolder)
       except:
-        print("\nError: Could not create folder. To update the spam lists, go into the 'SpamPurge_Resources' folder,")
-        print("       then inside that, create another folder called 'Filters'.")
+        print("\nError: Could not create folder. To update the spam lists, go into the 'SpamPurge_Resources' folder,", file=sys.stderr)
+        print("       then inside that, create another folder called 'Filters'.", file=sys.stderr)
 
   # Prepare to check and ingest spammer list files
   # Iterate and get paths of each list. Also gets path of filter_variables.py
@@ -248,7 +248,7 @@ def main():
     try:
       updateAvailable = files.check_for_update(version, updateReleaseChannel, silentCheck=True, )
     except Exception as e:
-      print(f"{F.LIGHTRED_EX}Error Code U-3 occurred while checking for updates. (Checking can be disabled using the config file setting) Continuing...{S.R}\n")
+      print(f"{F.LIGHTRED_EX}Error Code U-3 occurred while checking for updates. (Checking can be disabled using the config file setting) Continuing...{S.R}\n", file=sys.stderr)
       updateAvailable = None
 
     # Only check for updates once a day, compare current date to last checked date
@@ -418,7 +418,7 @@ def main():
           updateString = f"{B.LIGHTCYAN_EX}{F.BLACK} Beta {S.R}"
       elif updateAvailable == None:
         updateString = f"{F.LIGHTRED_EX}Error{S.R}"
-        print("> Note: Error during check for updates. Select 'Check For Updates' for details.")
+        print("> Note: Error during check for updates. Select 'Check For Updates' for details.", file=sys.stderr)
 
     else:
       if config['auto_check_update'] == False:
@@ -508,7 +508,7 @@ def main():
             if len(enteredVideosList) == 0:
               validConfigSetting = False
               listNotEmpty = False
-              print(f"{F.LIGHTRED_EX}\nError: Video list is empty!{S.R}")
+              print(f"{F.LIGHTRED_EX}\nError: Video list is empty!{S.R}", file=sys.stderr)
             else:
               listNotEmpty = True
           else:
@@ -520,7 +520,7 @@ def main():
             validConfigSetting = False
             if len(enteredVideosList) == 0:
               listNotEmpty = False
-              print(f"{F.LIGHTRED_EX}\nError: Video list is empty!{S.R}")
+              print(f"{F.LIGHTRED_EX}\nError: Video list is empty!{S.R}", file=sys.stderr)
             else:
               listNotEmpty = True
 
@@ -559,7 +559,7 @@ def main():
           if videosToScan[0]['channelOwnerID'] != videosToScan[i]['channelOwnerID']:
             misMatchVidIndex += 1
             if allVideosMatchBool == True:
-              print(f"\n {F.LIGHTRED_EX}ERROR: Videos scanned together all must be from the same channel.{S.R}")
+              print(f"\n {F.LIGHTRED_EX}ERROR: Videos scanned together all must be from the same channel.{S.R}", file=sys.stderr)
               print("  The following videos do not match the channel owner of the first video in the list: ")
             if misMatchVidIndex == 11 and len(enteredVideosList) > 10:
               remainingCount = str(len(enteredVideosList) - 10)
@@ -678,11 +678,11 @@ def main():
             validEntry = True
             validConfigSetting = True
           else:
-            print("Error: Entry must be from 1 to 5000 (the YouTube API Limit)")
+            print("Error: Entry must be from 1 to 5000 (the YouTube API Limit)", file=sys.stderr)
             validEntry = False
             validConfigSetting = False
         except ValueError:
-          print(f"{F.LIGHTRED_EX}Error:{S.R} Entry must be a whole number greater than zero.")
+          print(f"{F.LIGHTRED_EX}Error:{S.R} Entry must be a whole number greater than zero.", file=sys.stderr)
           validEntry = False
         if validEntry == True and numVideos >= 1000:
           print(f"\n{B.YELLOW}{F.BLACK} WARNING: {S.R} You have chosen to scan a large amount of videos. With the default API quota limit,")
@@ -695,7 +695,7 @@ def main():
           if str(videosToScan) == "MainMenu":
             return True # Return to main menu
           if len(videosToScan) == 0:
-            print(f"\n{F.LIGHTRED_EX}Error:{S.R} No scannable videos found in selected range!  They all may have no comments and/or are live streams.")
+            print(f"\n{F.LIGHTRED_EX}Error:{S.R} No scannable videos found in selected range!  They all may have no comments and/or are live streams.", file=sys.stderr)
             if config['auto_close'] == True:
               print("Auto-close enabled in config. Exiting in 5 seconds...")
               time.sleep(5)
@@ -908,11 +908,11 @@ def main():
             numRecentPosts = len(recentPostsListofDicts)
             break
           elif numRecentPosts <= 0:
-            print("Please enter a whole number greater than zero.")
+            print("Please enter a whole number greater than zero.", file=sys.stderr)
           else:
             break
         except ValueError:
-          print("Invalid Input! - Must be a whole number.")
+          print("Invalid Input! - Must be a whole number.", file=sys.stderr)
 
       miscData.channelOwnerID = channelID
       miscData.channelOwnerName = channelTitle
@@ -1269,7 +1269,7 @@ def main():
         bypass = False
       else:
         bypass = False
-        print("Error Code C-2: Invalid value for 'enable_logging' in config file:  " + logSetting)
+        print("Error Code C-2: Invalid value for 'enable_logging' in config file:  " + logSetting, file=sys.stderr)
 
     # Counts number of found spam comments and prints list
     if not current.matchedCommentsDict and not current.duplicateCommentsDict and not current.spamThreadsDict and not current.repostedCommentsDict: # If no spam comments found, exits
@@ -1346,7 +1346,7 @@ def main():
     if userNotChannelOwner == True and filterMode not in filterModesAllowedforNonOwners:
       confirmDelete = False
       deletionEnabled = False
-      print(f"{F.LIGHTRED_EX}Error:{S.R}To prevent abuse, even in moderator mode, you can only use filter modes: Auto Smart, Sensitive Smart, and ID")
+      print(f"{F.LIGHTRED_EX}Error:{S.R}To prevent abuse, even in moderator mode, you can only use filter modes: Auto Smart, Sensitive Smart, and ID", file=sys.stderr)
       response = input("Press Enter to Continue, or type 'x' to return to Main Menu...")
       if response.lower() == 'x':
         return True
@@ -1357,7 +1357,7 @@ def main():
       returnToMenu = True
 
     elif config['skip_deletion'] != False:
-      print("Error Code C-3: Invalid value for 'skip_deletion' in config file. Must be 'True' or 'False'. Current Value:  " + str(config['skip_deletion']))
+      print("Error Code C-3: Invalid value for 'skip_deletion' in config file. Must be 'True' or 'False'. Current Value:  " + str(config['skip_deletion']), file=sys.stderr)
       print(f"Defaulting to '{F.YELLOW}False{S.R}'")
       input("\nPress Enter to Continue...")
 
@@ -1374,7 +1374,7 @@ def main():
       elif config['removal_type'] == "rejected":
         deletionMode = "rejected"
       else:
-        print("Error Code C-4: Invalid value for 'removal_type' in config file. Must be 'heldforreview', 'rejected', or 'reportSpam':  " + config['removal_type'])
+        print("Error Code C-4: Invalid value for 'removal_type' in config file. Must be 'heldforreview', 'rejected', or 'reportSpam':  " + config['removal_type'], file=sys.stderr)
         input("\nPress Enter to Exit...")
         sys.exit()
 
@@ -1395,14 +1395,14 @@ def main():
             confirmDelete = "hold"
         else:
           # If non-permitted filter mode with delete_without_reviewing, will allow deletion, but now warns and requires usual confirmation prompt
-          print("Error Code C-5: 'delete_without_reviewing' is set to 'True' in config file. So only filter mode 'AutoSmart' allowed..\n")
+          print("Error Code C-5: 'delete_without_reviewing' is set to 'True' in config file. So only filter mode 'AutoSmart' allowed..\n", file=sys.stderr)
           print("Next time use one of those filter modes, or set 'delete_without_reviewing' to 'False'.")
           print("    > For this run, you will be asked to confirm removal of spam comments.")
           input("\nPress Enter to Continue...")
           confirmDelete = None
           deletionEnabled = "Allowed"
       else:
-        print("Error Code C-6: 'delete_without_reviewing' is set to 'True' in config file. So 'removal_type' must be either 'heldForReview' or 'reportSpam'.\n")
+        print("Error Code C-6: 'delete_without_reviewing' is set to 'True' in config file. So 'removal_type' must be either 'heldForReview' or 'reportSpam'.\n", file=sys.stderr)
         print("Next time, either set one of those removal types, or set 'delete_without_reviewing' to 'False'.")
         print("    > For this run, you will be asked to confirm removal of spam comments.")
         input("\nPress Enter to Continue...")
@@ -1410,7 +1410,7 @@ def main():
         deletionEnabled = "Allowed"
     else:
       # Catch Invalid value
-      print("Error C-7: Invalid value for 'delete_without_reviewing' in config file. Must be 'True' or 'False':  " + config['delete_without_reviewing'])
+      print("Error C-7: Invalid value for 'delete_without_reviewing' in config file. Must be 'True' or 'False':  " + config['delete_without_reviewing'], file=sys.stderr)
       input("\nPress Enter to Exit...")
       sys.exit()
 
@@ -1531,7 +1531,7 @@ def main():
           returnToMenu = True
 
         else:
-          print(f"\n{F.LIGHTRED_EX}ERROR:{S.R} This entry was invalid or not allowed with current settings: {confirmDelete}")
+          print(f"\n{F.LIGHTRED_EX}ERROR:{S.R} This entry was invalid or not allowed with current settings: {confirmDelete}", file=sys.stderr)
           input("\nPress Enter to try again...")
           print("\n")
 
@@ -1559,10 +1559,10 @@ def main():
           if config['enable_ban'] == False:
             pass
           elif config['enable_ban'] == True:
-            print("Error Code C-8: 'enable_ban' is set to 'True' in config file. Only possible config options are 'ask' or 'False' when using config.\n")
+            print("Error Code C-8: 'enable_ban' is set to 'True' in config file. Only possible config options are 'ask' or 'False' when using config.\n", file=sys.stderr)
             input("Press Enter to Continue...")
           else:
-            print("Error Code C-9: 'enable_ban' is set to an invalid value in config file. Only possible config options are 'ask' or 'False' when using config.\n")
+            print("Error Code C-9: 'enable_ban' is set to an invalid value in config file. Only possible config options are 'ask' or 'False' when using config.\n", file=sys.stderr)
             input("Press Enter to Continue...")
         elif deletionMode == "rejected":
           print("\nAlso ban the spammer(s)?")
@@ -1720,26 +1720,26 @@ if __name__ == "__main__":
   except HttpError as hx:
     traceback.print_exc()
     print("------------------------------------------------")
-    print("Error Message: " + str(hx))
+    print("Error Message: " + str(hx), , file=sys.stderr)
     if hx.status_code:
       print("Status Code: " + str(hx.status_code))
       if hx.error_details[0]["reason"]: # If error reason is available, print it
           reason = str(hx.error_details[0]["reason"])
           utils.print_exception_reason(reason)
-      print(f"\nAn {F.LIGHTRED_EX}'HttpError'{S.R} was raised. This is sometimes caused by a remote server error. See the error info above.")
+      print(f"\nAn {F.LIGHTRED_EX}'HttpError'{S.R} was raised. This is sometimes caused by a remote server error. See the error info above.", file=sys.stderr)
       print(f"If this keeps happening, consider posting a bug report on the GitHub issues page, and include the above error info.")
       print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
       input("\nPress Enter to Exit...")
     else:
-      print(f"{F.LIGHTRED_EX}Unknown Error - Code: Z-1{S.R} occurred. If this keeps happening, consider posting a bug report on the GitHub issues page, and include the above error info.")
+      print(f"{F.LIGHTRED_EX}Unknown Error - Code: Z-1{S.R} occurred. If this keeps happening, consider posting a bug report on the GitHub issues page, and include the above error info.", file=sys.stderr)
       print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
       input("\n Press Enter to Exit...")
   except UnboundLocalError as ux:
     traceback.print_exc()
     print("------------------------------------------------")
-    print("Error Message: " + str(ux))
+    print("Error Message: " + str(ux), file=sys.stderr)
     if "referenced before assignment" in str(ux):
-      print(f"\n{F.LIGHTRED_EX}Error - Code: X-2{S.R} occurred. This is almost definitely {F.YELLOW}my fault and requires patching{S.R} (big bruh moment)")
+      print(f"\n{F.LIGHTRED_EX}Error - Code: X-2{S.R} occurred. This is almost definitely {F.YELLOW}my fault and requires patching{S.R} (big bruh moment)", file=sys.stderr)
       print(f"Please post a bug report on the GitHub issues page, and include the above error info.")
       print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
       print("    (In the mean time, try using a previous release of the program.)")
@@ -1747,7 +1747,7 @@ if __name__ == "__main__":
     else:
       traceback.print_exc()
       print("------------------------------------------------")
-      print(f"\n{F.LIGHTRED_EX}Unknown Error - Code: Z-2{S.R} occurred. If this keeps happening,")
+      print(f"\n{F.LIGHTRED_EX}Unknown Error - Code: Z-2{S.R} occurred. If this keeps happening,", file=sys.stderr)
       print("consider posting a bug report on the GitHub issues page, and include the above error info.")
       print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
       input("\n Press Enter to Exit...")
@@ -1755,18 +1755,18 @@ if __name__ == "__main__":
     traceback.print_exc()
     print("------------------------------------------------")
     if "config" in str(kx):
-      print(f"{F.LIGHTRED_EX}Unknown Error - Code: X-3{S.R}")
+      print(f"{F.LIGHTRED_EX}Unknown Error - Code: X-3{S.R}", file=sys.stderr)
       print("Are you using an outdated version of the config file? Try re-creating the config file to get the latest version.")
       print(f"{F.LIGHTYELLOW_EX}If that doesn't work{S.R}, consider posting a {F.LIGHTYELLOW_EX}bug report{S.R} on the GitHub issues page, and include the above error info.")
     else:
-      print(f"{F.RED}Unknown Error - Code: X-4{S.R} occurred. This is {F.YELLOW}probably my fault{S.R},")
+      print(f"{F.RED}Unknown Error - Code: X-4{S.R} occurred. This is {F.YELLOW}probably my fault{S.R},", file=sys.stderr)
       print(f"please post a {F.LIGHTYELLOW_EX}bug report{S.R} on the GitHub issues page, and include the above error info.")
     print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
     input("\n Press Enter to Exit...")
   except TypeError:
     traceback.print_exc()
     print("------------------------------------------------")
-    print(f"{F.RED}Unknown Error - Code: X-5{S.R} occurred. This is {F.YELLOW}probably my fault{S.R},")
+    print(f"{F.RED}Unknown Error - Code: X-5{S.R} occurred. This is {F.YELLOW}probably my fault{S.R},", file=sys.stderr)
     print(f"please post a {F.LIGHTYELLOW_EX}bug report{S.R} on the GitHub issues page, and include the above error info.")
     print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
     input("\n Press Enter to Exit...")
@@ -1776,8 +1776,8 @@ if __name__ == "__main__":
   except Exception as x:
     traceback.print_exc()
     print("------------------------------------------------")
-    print("Error Message: " + str(x))
-    print(f"\n{F.LIGHTRED_EX}Unknown Error - Code: Z-3{S.R} occurred. If this keeps happening, consider posting a bug report")
+    print("Error Message: " + str(x), file=sys.stderr)
+    print(f"\n{F.LIGHTRED_EX}Unknown Error - Code: Z-3{S.R} occurred. If this keeps happening, consider posting a bug report", file=sys.stderr)
     print("on the GitHub issues page, and include the above error info.")
     print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
     input("\n Press Enter to Exit...")
