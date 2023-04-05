@@ -2,7 +2,9 @@ FROM python:3-slim AS builder
 
 RUN apt-get update && \
     apt-get install -y gcc \
-    cmake
+    cmake \
+    python-dev \
+    build-essential
 COPY requirements.txt ./
 RUN pip install --no-cache-dir --user -r requirements.txt
 
