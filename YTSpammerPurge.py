@@ -1380,7 +1380,7 @@ def main():
 
     # User wants to automatically delete with no user intervention
     elif config['delete_without_reviewing'] == True:
-      if userNotChannelOwner == True:
+      if userNotChannelOwner == True and moderator_mode == False:
           confirmDelete = "report"
           deletionMode = "reportSpam"
           deletionEnabled = True
