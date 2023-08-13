@@ -122,14 +122,25 @@ def generate-schema [config_url: string] {
         } + (. | wrap)' --arg url $config_url --arg schema $schema $additional_jq_args
 }
 
+def warn [message: string] {
+    print $'(ansi bg_yellow)warning:(ansi reset)(ansi yellow) ($message)(ansi reset)'
+    input
+}
+
 def main [
-    --generate-schema (-g) # Whether to generate JSON schema from INI file for YAML file.
-    --rewrite-config (-r) # Whether to rewrite INI config from YAML config.
+    --schema (-s): string # Path to result JSON schema from INI file for YAML config file.
+    --config (-r): string # Path to result INI config from YAML config file.
 ] {
     let config_url = https://raw.githubusercontent.com/ThioJoe/YT-Spammer-Purge/main/assets/default_config.ini
 
-    if $generate_schema {
-        generate-schema $config_url
+    if $schema != "" {
+        if ($schema | path exists) {
+            if (warn $"'($schema)' JSON schema exists, do you want to overwrite it \(y/n)?") != "y" {
+                exit
+            }
+            
+            generate-schema $config_url | save --force $schema
+        }
     }
 }
 
