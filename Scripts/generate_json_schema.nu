@@ -23,7 +23,11 @@ def generate-schema [config_url: string] {
         { key: minimum_duplicates, minimum: 3 },
         { key: minimum_duplicate_length, minimum: 1 },
         { key: levenshtein_distance, minimum: 0, maximum: 1 },
-        { key: stolen_minimum_text_length, minimum: 1 }
+        { key: stolen_minimum_text_length, minimum: 1 },
+        { key: your_channel_id, example: UCx123-BlahBlahExampleID },
+        { key: videos_to_scan, example: xyzVidIDExample },
+        { key: channel_to_scan, example: UCx123-BlahBlahExampleID },
+        { key: channel_ids_to_filter, example: UCx123-BlahBlahExampleID }
     ]
 
     let additional_jq_args = ($non_inferred |
@@ -70,6 +74,14 @@ def generate-schema [config_url: string] {
             else
                 {}
             end;
+
+        def to_example:
+            (. + "_example") as $example |
+            if $ARGS.named[$example] != null then
+                { examples: [$ARGS.named[$example]] }
+            else
+                {}
+            end;
         
         def wrap: {
             type: "object",
@@ -90,7 +102,8 @@ def generate-schema [config_url: string] {
                         (.key | to_restrictions) +
                         {
                             default: .value
-                        })
+                        } +
+                        (.key | to_example))
                     }
                 else
                     .value = {
