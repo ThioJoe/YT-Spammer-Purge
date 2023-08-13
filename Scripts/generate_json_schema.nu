@@ -1,5 +1,6 @@
 def generate-key-arguments [key: string, restrictions: record] {
     $restrictions |
+        reject key |
         transpose |
         rename key value |
         each {|$it| $'--arg ($key)_($it.key) ($it.value)'}
@@ -26,7 +27,7 @@ def generate-schema [config_url: string] {
     ]
 
     let additional_jq_args = ($non_inferred |
-        each {|$it| generate-key-arguments $it.key ($it | reject key)} |
+        each {|$it| generate-key-arguments $it.key $it} |
         flatten |
         str replace --all ', '  ',' |
         str replace --all '\[|\]' '' |
