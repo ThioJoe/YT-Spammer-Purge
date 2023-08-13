@@ -157,6 +157,7 @@ def main [
     --yaml-config (-y): string # Path to input YAML config.
 ] {
     error-when-dependency-does-not-exist jq 'sudo apt install jq'
+    error-when-dependency-does-not-exist jc 'pip3 install jc'
     error-when-dependency-does-not-exist dv 'gem install --user-install dupervisor' "Don't forget to add ~/.gem/ruby/<version>/bin to your PATH."
 
     let config_url = https://raw.githubusercontent.com/ThioJoe/YT-Spammer-Purge/main/assets/default_config.ini
