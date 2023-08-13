@@ -122,25 +122,60 @@ def generate-schema [config_url: string] {
         } + (. | wrap)' --arg url $config_url --arg schema $schema $additional_jq_args
 }
 
+def note [message: string] {
+    print $'(ansi bg_green)note:(ansi reset)(ansi green) ($message)(ansi reset)'
+}
+
 def warn [message: string] {
     print $'(ansi bg_yellow)warning:(ansi reset)(ansi yellow) ($message)(ansi reset)'
-    input
+}
+
+def error [message: string] {
+    print $'(ansi bg_red)error:(ansi reset)(ansi red) ($message)(ansi reset)'
+}
+
+def warn-when-path-exists [path: string] {
+    warn $"'($path)' exists, do you want to overwrite it \(y/n)?"
+    if (input) != "y" {
+        exit
+    }
+}
+
+def error-when-dependency-does-not-exist [dependency: string, command: string, note?: string] {
+    if (which $dependency) == [] {
+        error $"'($dependency)' doesn't exist, to install it use '($command)'."
+        if note != null {
+            note $note
+        }
+        exit
+    }
 }
 
 def main [
     --schema (-s): string # Path to result JSON schema from INI file for YAML config file.
-    --config (-r): string # Path to result INI config from YAML config file.
+    --ini-config (-i): string # Path to result INI config from YAML config file.
+    --yaml-config (-y): string # Path to input YAML config.
 ] {
+    error-when-dependency-does-not-exist jq 'sudo apt install jq'
+    error-when-dependency-does-not-exist dv 'gem install --user-install dupervisor' "Don't forget to add ~/.gem/ruby/<version>/bin to your PATH."
+
     let config_url = https://raw.githubusercontent.com/ThioJoe/YT-Spammer-Purge/main/assets/default_config.ini
 
-    if $schema != "" {
+    if $schema != null {
         if ($schema | path exists) {
-            if (warn $"'($schema)' JSON schema exists, do you want to overwrite it \(y/n)?") != "y" {
-                exit
-            }
-            
+            warn-when-path-exists $schema
             generate-schema $config_url | save --force $schema
         }
+    }
+
+    if $ini_config != "" and $yaml_config != "" {
+        if not ($yaml_config | path exists) {
+            error $"'($yaml_config)' doesn't exist."
+            exit
+        }
+
+        warn-when-path-exists $ini_config
+        dv --ini test.yaml | save --force $ini_config
     }
 }
 
