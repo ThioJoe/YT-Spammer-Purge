@@ -1,4 +1,5 @@
-def generate-key-arguments [key: string, restrictions: record] {
+def generate-key-arguments [restrictions: record] {
+    let key = $restrictions.key
     $restrictions |
         reject key |
         transpose |
@@ -31,7 +32,7 @@ def generate-schema [config_url: string] {
     ]
 
     let additional_jq_args = ($non_inferred |
-        each {|$it| generate-key-arguments $it.key $it} |
+        each {|$it| generate-key-arguments $it} |
         flatten |
         str replace --all ', '  ',' |
         str replace --all '\[|\]' '' |
@@ -135,9 +136,11 @@ def error [message: string] {
 }
 
 def warn-when-path-exists [path: string] {
-    warn $"'($path)' exists, do you want to overwrite it \(y/n)?"
-    if (input) != "y" {
-        exit
+    if ($path | path exists) {
+        warn $"'($path)' exists, do you want to overwrite it \(y/n)?"
+        if (input) != "y" {
+            exit
+        }
     }
 }
 
@@ -163,13 +166,12 @@ def main [
     let config_url = https://raw.githubusercontent.com/ThioJoe/YT-Spammer-Purge/main/assets/default_config.ini
 
     if $schema != null {
-        if ($schema | path exists) {
-            warn-when-path-exists $schema
-            generate-schema $config_url | save --force $schema
-        }
+        warn-when-path-exists $schema
+        generate-schema $config_url | save --force $schema
+        return
     }
 
-    if $ini_config != "" and $yaml_config != "" {
+    if $ini_config != null and $yaml_config != null {
         if not ($yaml_config | path exists) {
             error $"'($yaml_config)' doesn't exist."
             exit
