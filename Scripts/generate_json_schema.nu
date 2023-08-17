@@ -9,7 +9,7 @@ def generate-key-arguments [restrictions: record] {
 
 # Generates JSON schema.
 def generate-schema [config_url: string] {
-    let schema = $"http://json-schema.org/draft-07/schema"
+    let schema = 'http://json-schema.org/draft-07/schema'
 
     let non_inferred = [
         { key: use_this_config, type: [string, boolean] },
@@ -163,7 +163,7 @@ def main [
     error-when-dependency-does-not-exist jc 'pip3 install jc'
     error-when-dependency-does-not-exist dv 'gem install --user-install dupervisor' "Don't forget to add ~/.gem/ruby/<version>/bin to your PATH."
 
-    let config_url = https://raw.githubusercontent.com/ThioJoe/YT-Spammer-Purge/main/assets/default_config.ini
+    let config_url = 'https://raw.githubusercontent.com/ThioJoe/YT-Spammer-Purge/main/assets/default_config.ini'
 
     if $schema != null {
         warn-when-path-exists $schema
@@ -178,7 +178,7 @@ def main [
         }
 
         warn-when-path-exists $ini_config
-        dv --ini test.yaml | save --force $ini_config
+        dv --ini $yaml_config | save --force $ini_config
     }
 }
 
