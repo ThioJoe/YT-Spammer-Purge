@@ -208,7 +208,7 @@ config_url='https://raw.githubusercontent.com/ThioJoe/YT-Spammer-Purge/main/asse
     generate_json_schema "$config_url" > "$in_schema"
 
     [ -n "$setup_vscode" ] && [ -n "$in_yaml_config" ] && {
-        vscode_settings='./../.vscode/settings.json'
+        vscode_settings='.vscode/settings.json'
         [ -e "$vscode_settings" ] && {
             modified_config="$(jq '.["yaml.schemas"][$ARGS.named["schema"]] = $ARGS.named["yaml_config"]' --arg schema "$in_schema" --arg yaml_config "$in_yaml_config" "$vscode_settings")"
             echo "$modified_config" > "$vscode_settings"
