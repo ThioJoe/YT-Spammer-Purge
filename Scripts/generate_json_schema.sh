@@ -162,6 +162,8 @@ error_when_dependency_does_not_exist jq 'sudo apt install jq'
 error_when_dependency_does_not_exist jc 'pip3 install jc'
 error_when_dependency_does_not_exist dv 'gem install --user-install dupervisor' "Don't forget to add ~/.gem/ruby/<version>/bin to your PATH."
 
+setup_vscode=
+
 while [ -n "$1" ]; do
     in_option="$1"
     in_argument="$2"
@@ -169,12 +171,18 @@ while [ -n "$1" ]; do
     case "$in_option" in
         --schema|-s)
             in_schema="$in_argument"
+            shift
             ;;
         --ini-config|-i)
             in_ini_config="$in_argument"
+            shift
             ;;
         --yaml-config|-y)
             in_yaml_config="$in_argument"
+            shift
+            ;;
+        --setup_vscode|-v)
+            setup_vscode=true
             ;;
         *)
             error "'$in_option' is not supported."
@@ -182,7 +190,7 @@ while [ -n "$1" ]; do
             ;;
     esac
 
-    shift 2
+    shift
 done
 
 config_url='https://raw.githubusercontent.com/ThioJoe/YT-Spammer-Purge/main/assets/default_config.ini' 2> /dev/null
@@ -190,6 +198,14 @@ config_url='https://raw.githubusercontent.com/ThioJoe/YT-Spammer-Purge/main/asse
 [ -n "$in_schema" ] && {
     warn_when_path_exists "$in_schema"
     generate_json_schema "$config_url" > "$in_schema"
+
+    [ -n "$setup_vscode" ] && [ -n "$in_yaml_config" ] && {
+        vscode_settings='./../.vscode/settings.json'
+        [ -e "$vscode_settings" ] && {
+            modified_config="$(jq '.["yaml.schemas"][$ARGS.named["schema"]] = $ARGS.named["yaml_config"]' --arg schema "$in_schema" --arg yaml_config "$in_yaml_config" "$vscode_settings")"
+            echo "$modified_config" > "$vscode_settings"
+        }
+    }
     exit
 }
 
