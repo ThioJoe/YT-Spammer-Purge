@@ -158,6 +158,7 @@ def main [
     --schema (-s): string # Path to result JSON schema from INI file for YAML config file.
     --ini-config (-i): string # Path to result INI config from YAML config file.
     --yaml-config (-y): string # Path to input YAML config.
+    --setup-vscode (-v) # Whether to add yaml.schemas entry to settings.json for Visual Studio Code while generating JSON schema.
 ] {
     error-when-dependency-does-not-exist jq 'sudo apt install jq'
     error-when-dependency-does-not-exist jc 'pip3 install jc'
@@ -168,6 +169,14 @@ def main [
     if $schema != null {
         warn-when-path-exists $schema
         generate-schema $config_url | save --force $schema
+
+        if $setup_vscode != null and $yaml_config != null {
+            let vscode_settings = './.vscode/settings.json'
+            if ($vscode_settings | path exists) {
+                let modified_config = (jq $".[\"yaml.schemas\"][\"($schema)\"] = \"($yaml_config)\"" $vscode_settings)
+                $modified_config | save --force $vscode_settings
+            }
+        }
         return
     }
 
