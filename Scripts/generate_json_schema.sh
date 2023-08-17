@@ -31,8 +31,16 @@ generate_json_schema() {
 { "key": "channel_to_scan", "example": "UCx123-BlahBlahExampleID" }
 { "key": "channel_ids_to_filter", "example": "UCx123-BlahBlahExampleID" }'
 
+    gjs_temp_script="$(mktemp)"
+    echo "#!/usr/bin/env sh
+
+in_restrictions=\"\$1\"
+
+key=\"\$(echo \"\$in_restrictions\" | jq '.key')\"
+echo \"\$in_restrictions\" | jq -r \"del(.key) | to_entries[] | . = \\\"--arg \\(\$key)_\\(.key) \\(.value)\\\"\"" > "$gjs_temp_script"
+
     gjs_additional_jq_args="$(echo "$non_infered" |
-        xargs -n 1 -d '\n' bash generate_key_arguments.sh |
+        xargs -n 1 -d '\n' sh "$gjs_temp_script" |
         sed -E 's/, /,/g
             s/\[|\]//g
             s/"//g')"
