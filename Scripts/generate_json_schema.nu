@@ -173,7 +173,7 @@ def main [
         if $setup_vscode != null and $yaml_config != null {
             let vscode_settings = './.vscode/settings.json'
             if ($vscode_settings | path exists) {
-                let modified_config = (jq $".[\"yaml.schemas\"][\"($schema)\"] = \"($yaml_config)\"" $vscode_settings)
+                let modified_config = (jq '.["yaml.schemas"][$ARGS.named["schema"]] = $ARGS.named["yaml_config"]' --arg schema $schema --arg yaml_config $yaml_config $vscode_settings)
                 $modified_config | save --force $vscode_settings
             }
         }
