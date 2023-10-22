@@ -11,4 +11,5 @@ jobs:
           identifier: Package.Identifier
           installers-regex: '\.exe$' # Only .exe files
           token: ${{ secrets.WINGET_TOKEN }}
+          version: ${{ github.event.release.tag_name }} # For tags without the 'v' prefix
           
