@@ -135,3 +135,4 @@ SpamPurgeConfig.ini
 # Ignore Resources Folders
 spam_lists/
 SpamPurge_Resources/
+.DS_Store

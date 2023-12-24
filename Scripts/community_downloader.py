@@ -74,8 +74,9 @@ def fetch_recent_community_posts(channel_id):
 
     html = response.text
     data = json.loads(regex_search(html, YT_INITIAL_DATA_RE, default=''))
-    section = next(search_dict(data, 'itemSectionRenderer'), None)
-    rawPosts = list(search_dict(section, 'backstagePostRenderer'))
+    rendererSubsection = next(search_dict(data, 'twoColumnBrowseResultsRenderer'), None)
+    itemSection = next(search_dict(rendererSubsection, 'itemSectionRenderer'), None)
+    rawPosts = list(search_dict(itemSection, 'backstagePostRenderer'))
 
     recentPostsListofDicts = [] # Use list to keep in order - Puts post ID and sample of text into dictionary keypair, strips newlines
     # Gets the Post IDs and sample of post text
