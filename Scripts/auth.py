@@ -116,7 +116,10 @@ def first_authentication():
   except Exception as e:
     if "invalid_grant" in str(e):
       print(f"{F.YELLOW}[!] Invalid token{S.R} - Requires Re-Authentication")
-      os.remove(TOKEN_FILE_NAME)
+      if os.path.exists(TOKEN_FILE_NAME):
+        os.remove(TOKEN_FILE_NAME)
+      if os.path.exists(TOKEN_ENCRYPTED_NAME):
+        os.remove(TOKEN_ENCRYPTED_NAME)
       YOUTUBE = get_authenticated_service()
     else:
       print('\n')
