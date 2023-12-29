@@ -139,6 +139,9 @@ def main():
     'Whitelist': {
       'PathWithName': whitelistPathWithName,
       'FileName': "whitelist.txt",
+    },
+    "VersionInfo": {
+      'LatestLocalSpamListVersion': "0.0.0.0",
     }
   }
 
@@ -296,6 +299,7 @@ def main():
   miscData.spamLists['spamDomainsList'] = spamListDict['Lists']['Domains']['FilterContents']
   miscData.spamLists['spamAccountsList'] = spamListDict['Lists']['Accounts']['FilterContents']
   miscData.spamLists['spamThreadsList'] = spamListDict['Lists']['Threads']['FilterContents']
+  miscData.spamLists['latestLocalVersion'] = spamListDict['Meta']['VersionInfo']['LatestLocalVersion']
 
 
   # Create Whitelist if it doesn't exist,

@@ -270,10 +270,13 @@ def prepare_filter_mode_non_ascii(scanMode, config):
 
 # Auto smart mode
 def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
+  # Get spam lists and version info
   rootDomainList = miscData.resources['rootDomainList']
   spamDomainsList = miscData.spamLists['spamDomainsList'] # List of domains from crowd sourced list
   spamThreadsList = miscData.spamLists['spamThreadsList'] # List of filters associated with spam threads from crowd sourced list
   spamAccountsList = miscData.spamLists['spamAccountsList'] # List of mentioned instagram/telegram scam accounts from crowd sourced list
+  spamListsVersion = miscData.spamLists['latestLocalVersion']
+  
   utf_16 = "utf-8"
   if config['filter_mode'] == "autosmart":
     pass
@@ -401,18 +404,34 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
 
   spamListExpressionsList = []
   spamThreadsExpressionsList = []
-  # Prepare spam domain regex
-  for domain in spamDomainsList:
-    spamListExpressionsList.append(confusable_regex(domain.upper().replace(".", "⚫"), include_character_padding=False).replace("(?:⚫)", "(?:[^a-zA-Z0-9 ]{1,2})"))
-  for account in spamAccountsList:
-    spamListExpressionsList.append(confusable_regex(account.upper(), include_character_padding=True).replace(m, a))
-  for spamName in spamThreadsList:
-    #spamListExpressionsList.append(confusable_regex(thread.upper(), include_character_padding=True).replace(m, a)) #With Confusables
-    spamThreadsExpressionsList.append(re.escape(spamName.lower())) #Exact lowercase match
-  print("  Loading Filters  [======================        ]", end="\r")
-  spamListCombinedRegex = re.compile('|'.join(spamListExpressionsList))
-  print("  Loading Filters  [=========================     ]", end="\r")
-  spamThreadsRegex = re.compile('|'.join(spamThreadsExpressionsList))
+  combinedCompiledFilename = "spamListCombinedRegex"
+  threadsCompiledFilename = "spamThreadsRegex"
+  
+  ### Prepare spam lists ###
+  
+  # Get compiled regex from files if available
+  spamListCombinedRegex = files.read_compiled_regex_pickle(fileNameBase=combinedCompiledFilename, latestListVersion = spamListsVersion)
+  spamThreadsRegex = files.read_compiled_regex_pickle(fileNameBase=threadsCompiledFilename, latestListVersion = spamListsVersion)
+  
+  # If no pre-compiled regex available, compile it and save to file for later
+  if not spamListCombinedRegex:
+    print("  Compiling domain and account lists, this only needs to be done after lists are updated...")
+    print("  Loading Filters  [=======================       ]", end="\r")
+    for domain in spamDomainsList:
+      spamListExpressionsList.append(confusable_regex(domain.upper().replace(".", "⚫"), include_character_padding=False).replace("(?:⚫)", "(?:[^a-zA-Z0-9 ]{1,2})"))
+    for account in spamAccountsList:
+      spamListExpressionsList.append(confusable_regex(account.upper(), include_character_padding=True).replace(m, a))
+    spamListCombinedRegex = re.compile('|'.join(spamListExpressionsList))
+    files.save_compiled_regex_pickle(compiled_input=spamListCombinedRegex, latestListVersion=spamListsVersion, fileNameBase="spamListCombinedRegex")
+    
+  if not spamThreadsRegex:
+    print("  Compiling spam thread lists, this only needs to be done after lists are updated...")
+    print("  Loading Filters  [==========================    ]", end="\r")
+    for spamName in spamThreadsList:
+      #spamListExpressionsList.append(confusable_regex(thread.upper(), include_character_padding=True).replace(m, a)) #With Confusables
+      spamThreadsExpressionsList.append(re.escape(spamName.lower())) #Exact lowercase match
+      spamThreadsRegex = re.compile('|'.join(spamThreadsExpressionsList))
+    files.save_compiled_regex_pickle(compiled_input=spamThreadsRegex, latestListVersion=spamListsVersion, fileNameBase="spamThreadsRegex")
 
   # Prepare Multi Language Detection
   turkish = 'ÇçŞşĞğİ'
