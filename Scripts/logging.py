@@ -795,6 +795,11 @@ def sort_samples(current):
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 def mark_possible_false_positive(current, authorID, text, matchReason):
+  
+  # NOTE - This isn't really working so I'm just marking everything as false
+  current.matchSamplesDict[authorID]['possibleFalsePositive'] = False
+  return current
+
   if matchReason != 'Filter Match':
     current.matchSamplesDict[authorID]['possibleFalsePositive'] = False
     return current
