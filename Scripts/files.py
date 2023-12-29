@@ -177,7 +177,7 @@ def check_for_filter_update(filterListDict, silentCheck = False):
     else:
       if "WinError 10013" in str(ox):
         print(f"{B.RED}{F.WHITE}WinError 10013:{S.R} The OS blocked the connection to GitHub. Check your firewall settings.\n")
-        return False, filterListDict
+      return False, filterListDict
   except:
     if silentCheck == True:
       return False, filterListDict
@@ -202,6 +202,8 @@ def check_for_filter_update(filterListDict, silentCheck = False):
       filterListDict['LocalVersion'] = latestFilterVersion
       print(f"{F.LIGHTGREEN_EX}Filter variables file updated.{S.R}\n")
       return True, filterListDict
+    else:
+      return False, filterListDict
 
 
 ############################# Check For App Update ##############################
