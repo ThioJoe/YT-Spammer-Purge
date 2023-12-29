@@ -66,8 +66,7 @@ print("Importing Third-Party Modules...")
 # Other Libraries
 from googleapiclient.errors import HttpError
 
-# Check for encrypted token file
-#auth.initialize
+utils.clear_terminal()
 
 ##########################################################################################
 ##########################################################################################
@@ -216,6 +215,7 @@ def main():
   # Get current version of filter_variables.py that is in the SpamPurge_Resources/Filters folder
   filterVersion = files.get_current_filter_version(filterListDict)
   filterListDict['LocalVersion'] = filterVersion
+  filterListDict['LatestVersion'] = filterVersion # Set it to the current version, will be updated if newer version found
 
   # Check for primary config file, load into dictionary 'config'. If no config found, loads data from default config in assets folder
   utils.clear_terminal()
@@ -258,7 +258,7 @@ def main():
     # Only check for updates once a day, compare current date to last checked date
     if datetime.today() > datetime.strptime(spamListDict['Meta']['VersionInfo']['LastChecked'], '%Y.%m.%d.%H.%M')+timedelta(days=1):
       # Check for update to filter variables file
-      files.check_for_filter_update(filterListDict, silentCheck=True)
+      filterFileUpdated, filterListDict = files.check_for_filter_update(filterListDict, silentCheck=True)
       # Check spam lists if today or tomorrow's date is later than the last update date (add day to account for time zones)
       if datetime.today()+timedelta(days=1) >= datetime.strptime(spamListDict['Meta']['VersionInfo']['LatestLocalVersion'], '%Y.%m.%d'):
         spamListDict = files.check_lists_update(spamListDict, silentCheck=True)        

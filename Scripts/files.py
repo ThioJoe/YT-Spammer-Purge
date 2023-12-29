@@ -169,21 +169,21 @@ def check_for_filter_update(filterListDict, silentCheck = False):
     if matchItem:
       latestFilterVersion = str(matchItem.group(0))
     else:
-      return False
+      return False, filterListDict
       
   except OSError as ox:
     if silentCheck == True:
-      return False
+      return False, filterListDict
     else:
       if "WinError 10013" in str(ox):
         print(f"{B.RED}{F.WHITE}WinError 10013:{S.R} The OS blocked the connection to GitHub. Check your firewall settings.\n")
-        return False
+        return False, filterListDict
   except:
     if silentCheck == True:
-      return False
+      return False, filterListDict
     else:
       print("Error: Could not get latest release info from GitHub. Please try again later.")
-      return False
+      return False, filterListDict
 
   if parse_version(localVersion) < parse_version(latestFilterVersion):
     print("\n>  A new filter variables update is available. Downloading...")
@@ -195,12 +195,13 @@ def check_for_filter_update(filterListDict, silentCheck = False):
     except:
       print(f" > {F.RED}Error:{S.R} Could not create backup of filter_variables.py file. Please check permissions and try again. Or just rename the file manually.")
       input("\nPress Enter to Continue With Current Filter Version...")
-      return False
+      return False, filterListDict
     
     filedownloadResult = getRemoteFile(latestFilterURL, filterFilePath, description="filter variables file")
     if filedownloadResult == True:
+      filterListDict['LocalVersion'] = latestFilterVersion
       print(f"{F.LIGHTGREEN_EX}Filter variables file updated.{S.R}\n")
-      return True
+      return True, filterListDict
 
 
 ############################# Check For App Update ##############################
