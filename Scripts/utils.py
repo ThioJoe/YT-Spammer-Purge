@@ -4,6 +4,7 @@ from Scripts.shared_imports import *
 import Scripts.validation as validation
 import Scripts.auth as auth
 from googleapiclient.errors import HttpError
+from html import unescape
 
 ##########################################################################################
 ############################## UTILITY FUNCTIONS #########################################
@@ -37,7 +38,7 @@ def get_video_title(current, video_id):
       return "[Unavailable]"
 
     if results['items']:
-      title = results["items"][0]["snippet"]["title"]
+      title = unescape(results["items"][0]["snippet"]["title"])
       current.vidTitleDict[video_id] = title
     elif (len(video_id) == 26 or len(video_id) == 36) and video_id[0:2] == "Ug":
       title = "[Community Post - No Title]"

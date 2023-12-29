@@ -3,6 +3,7 @@
 from Scripts.shared_imports import *
 import Scripts.auth as auth
 import Scripts.utils as utils
+from html import unescape
 
 from urllib.parse import urlparse
 from Scripts.community_downloader import get_post_channel_url
@@ -46,7 +47,7 @@ def validate_video_id(video_url_or_id, silent=False, pass_exception=False, basic
         if possibleVideoID == result['items'][0]['id']:
           channelID = result['items'][0]['snippet']['channelId']
           channelTitle = result["items"][0]["snippet"]["channelTitle"]
-          videoTitle = result["items"][0]["snippet"]["title"]
+          videoTitle = unescape(result["items"][0]["snippet"]["title"])
           # When comments are disabled, the commentCount is not included in the response, requires catching KeyError
           try:
             commentCount = result['items'][0]['statistics']['commentCount']

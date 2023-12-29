@@ -6,6 +6,7 @@ import Scripts.utils as utils
 import Scripts.auth as auth
 import Scripts.validation as validation
 from Scripts.utils import choice
+from html import unescape
 
 import unicodedata
 import time
@@ -1416,7 +1417,7 @@ def get_recent_videos(current, channel_id, numVideosTotal):
 
     for item in result['items']:
       videoID = str(item['snippet']['resourceId']['videoId'])
-      videoTitle = str(item['snippet']['title']).replace("&quot;", "\"").replace("&#39;", "'")
+      videoTitle = unescape(str(item['snippet']['title']))
       commentCount = validation.validate_video_id(videoID, pass_exception = True)[3]
       #Skips over video if comment count is zero, or comments disabled / is live stream
       if str(commentCount) == '0' or commentCount == None:
