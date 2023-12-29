@@ -18,7 +18,7 @@ import io
 import json
 from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
 from cryptography.fernet import Fernet
-from getpass import getpass
+from pwinput import pwinput
 
 
 TOKEN_FILE_NAME = 'token.pickle'
@@ -80,8 +80,10 @@ def get_authenticated_service():
 
   # If there are no (valid) credentials available, make the user log in.
   if not creds or not creds.valid:
+    refreshed = False
     if creds and creds.expired and creds.refresh_token:
       creds.refresh(Request())
+      refreshed = True
     else:
       print(f"\nPlease {F.YELLOW}login using the browser window{S.R} that opened just now.\n")
       flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRETS_FILE, scopes=YOUTUBE_READ_WRITE_SSL_SCOPE)
@@ -94,7 +96,7 @@ def get_authenticated_service():
       # Convert Dict to bytes
       tokenData = json.dumps(tokenData).encode()
       # Encrypt the token data
-      encrypt_file(fileData=tokenData)
+      encrypt_file(fileData=tokenData, refreshed=refreshed)
     else:
       with open(TOKEN_FILE_NAME, 'w') as token:
         token.write(creds.to_json())
@@ -239,12 +241,16 @@ def derive_key_from_password(password, salt):
   key = kdf.derive(password.encode())
   return base64.urlsafe_b64encode(key)
 
-def encrypt_file(fileName=None, fileData=None):
+def encrypt_file(fileName=None, fileData=None, refreshed=False):
   # Use 64 Bytes (512 bits) of salt (random data) - Unless changed above
   salt = os.urandom(SALT_BYTES)
 
-  print(f"\n{F.LIGHTGREEN_EX}Choose a password{S.R} to encrypt the login credential file (token.pickle). {F.YELLOW}NOTE: No characters will be displayed while typing.{S.R}")
-  password = getpass('Password: ')
+  if refreshed == False:
+    print(f"\n{F.LIGHTGREEN_EX}Choose a password{S.R} to encrypt the login credential file (token.pickle).")
+    password = pwinput(prompt='Password: ', mask='*')
+  else:
+    print(f"\nLogin credential refreshed -- {F.LIGHTGREEN_EX}Re-Enter your password{S.R} to re-encrypt the updated credential file (token.pickle).")
+    password = pwinput(prompt='Password: ', mask='*')
 
   key = derive_key_from_password(password, salt)
   fernet = Fernet(key)
@@ -278,8 +284,8 @@ def decrypt_file(filename):
   # Loop until password is correct
   while success==False:
     try:
-      print(f"\n{F.LIGHTRED_EX}Enter your password{S.R} to decrypt the login credential file (token.pickle.encrypted) {F.YELLOW}NOTE: No characters will be displayed while typing.{S.R}")
-      password = getpass('Password: ')
+      print(f"\n{F.LIGHTRED_EX}Enter your password{S.R} to decrypt the login credential file (token.pickle.encrypted)")
+      password = pwinput(prompt='Password: ', mask='*')
 
       with open(filename, 'rb') as encrypted_file:
         salt = encrypted_file.read(SALT_BYTES)
@@ -305,8 +311,8 @@ def initialize():
     tokenData = convert_iobytes_to_dict(tokenData)
 
     if encrypt_config == True:
-      # Convet dict to bytes
-      encrypt_file(fileName=TOKEN_FILE_NAME)
+      # Convert dict to bytes
+      encrypt_file(fileName=TOKEN_FILE_NAME, refreshed=False)
 
   elif os.path.exists(TOKEN_ENCRYPTED_NAME) == True:
     # Decrypt token file
