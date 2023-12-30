@@ -72,7 +72,7 @@ def get_authenticated_service():
       # Save the credentials for the next run
     with open(TOKEN_FILE_NAME, 'w') as token:
       token.write(creds.to_json())
-  YOUTUBE = build(API_SERVICE_NAME, API_VERSION, credentials=creds, discoveryServiceUrl=DISCOVERY_SERVICE_URL)
+  YOUTUBE = build(API_SERVICE_NAME, API_VERSION, credentials=creds, discoveryServiceUrl=DISCOVERY_SERVICE_URL, cache_discovery=False, cache=None)
   return YOUTUBE
 
 
