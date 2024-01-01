@@ -84,8 +84,18 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
     authorID = value['authorID']
     nameAndText = value['nameAndText']
     nameAndTextColorized = value['nameAndTextColorized']
+    
+    # Whether to use colorized text and index
+    if nameAndTextColorized == None:
+      nameAndTextColorized = nameAndText
+      printIndexString = indexString
+    else:
+      # Colorize with colorama
+      printIndexString =  colorize_text(indexString, indexString, F.RED) # Want to colorize the whole thing, so match itself
+      
+    
     if doWritePrint:
-      printValues = printValues + indexString + countString + f"{str(nameAndTextColorized)}\n"
+      printValues = printValues + printIndexString + countString + f"{str(nameAndTextColorized)}\n"
     # After making print values, remove the ANSI escape / color codes used, so they won't be written to file
     indexString = indexString.replace(u"\u001b[32m", "").replace(u"\u001b[0m", "")
     countString = countString.replace(u"\u001b[32m", "").replace(u"\u001b[0m", "")
@@ -776,7 +786,7 @@ def add_sample(current, authorID, authorNameRaw, commentText, matchReason, match
     if matchedText:
       nameAndTextColorized = colorize_text(nameAndText, matchedText, F.LIGHTRED_EX)
     else:
-      nameAndTextColorized = nameAndText
+      nameAndTextColorized = None
 
     # Add comment sample, author ID, name, and counter
     current.matchSamplesDict[authorID] = {
