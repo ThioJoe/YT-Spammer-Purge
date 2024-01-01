@@ -83,8 +83,9 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
     countString = value['cString']
     authorID = value['authorID']
     nameAndText = value['nameAndText']
+    nameAndTextColorized = value['nameAndTextColorized']
     if doWritePrint:
-      printValues = printValues + indexString + countString + f"{str(nameAndText)}\n"
+      printValues = printValues + indexString + countString + f"{str(nameAndTextColorized)}\n"
     # After making print values, remove the ANSI escape / color codes used, so they won't be written to file
     indexString = indexString.replace(u"\u001b[32m", "").replace(u"\u001b[0m", "")
     countString = countString.replace(u"\u001b[32m", "").replace(u"\u001b[0m", "")
@@ -224,6 +225,7 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+
 # Uses comments.list YouTube API Request to get text and author of specific set of comments, based on comment ID
 def print_prepared_comments(current, commentsContents, scanVideoID, comments, j, loggingEnabled, scanMode, logMode, doWritePrint, matchReason):
 
@@ -265,6 +267,7 @@ def print_prepared_comments(current, commentsContents, scanVideoID, comments, j,
     # -----------------------------------------------------------------
     
   # First get longest author name length from the comments to format sample list
+  listOfCommentsDicts = [current.matchedCommentsDict, current.duplicateCommentsDict, current.otherCommentsByMatchedAuthorsDict, current.spamThreadsDict, current.repostedCommentsDict]
   longestAuthorNameLength = 0
   for commentDict in current.matchedCommentsDict.values():
     if len(commentDict['authorName']) > longestAuthorNameLength:
@@ -293,6 +296,7 @@ def print_prepared_comments(current, commentsContents, scanVideoID, comments, j,
     matchReason = metadata['matchReason']
     originalCommentID = metadata['originalCommentID']
     timestamp = metadata['timestamp']
+    matchedText = metadata['matchedText']
 
     # Convert timestamp to readable format. First parses, then reconverts to new string
     if timestamp != "Unavailable":
@@ -309,7 +313,7 @@ def print_prepared_comments(current, commentsContents, scanVideoID, comments, j,
 
     # Add one sample from each matching author to current.matchSamplesDict, containing author ID, name, and text
     if matchReason != "Also By Matched Author" and author_id_local not in current.matchSamplesDict.keys():
-      add_sample(current, author_id_local, author, text, matchReason, longestAuthorNameLength)
+      add_sample(current, author_id_local, author, text, matchReason, matchedText, longestAuthorNameLength)
     mark_possible_false_positive(current, author_id_local, text, matchReason)
 
     # Build comment direct link
@@ -729,9 +733,15 @@ def download_profile_pictures(pictureUrlsDict, jsonSettingsDict):
           break 
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Colorize the matched text within a string using colorama. Matches using regex to account for case insensitivity
+def colorize_text(originalString, matchedText, color):
+  escapedMatchedText = re.escape(matchedText)
+  colorizedString = re.sub(escapedMatchedText, f"{color}{matchedText}{S.R}", originalString, flags=re.I)
+  # colorizedString = originalString.replace(matchedText, f"{color}{matchedText}{S.R}")
+  return colorizedString
 
 # Adds a sample to current.matchSamplesDict and preps formatting
-def add_sample(current, authorID, authorNameRaw, commentText, matchReason, longestAuthorNameLength):
+def add_sample(current, authorID, authorNameRaw, commentText, matchReason, matchedText, longestAuthorNameLength):
     def remove_unicode_categories(string):
         unicodeStrip = ["Mn", "Cc", "Cf", "Cs", "Co", "Cn", "Sk"]
         return "".join(char for char in string if unicode_category(char) not in unicodeStrip)
@@ -758,6 +768,15 @@ def add_sample(current, authorID, authorNameRaw, commentText, matchReason, longe
     if len(commentText) > commentSpace:
         commentText = commentText[:commentSpace-3] + "..."
     commentText = commentText.ljust(commentSpace)
+    
+    # Combine author name and comment text to single line string
+    nameAndText = authorName + commentText
+    
+    # Colorize any matched text
+    if matchedText:
+      nameAndTextColorized = colorize_text(nameAndText, matchedText, F.LIGHTRED_EX)
+    else:
+      nameAndTextColorized = nameAndText
 
     # Add comment sample, author ID, name, and counter
     current.matchSamplesDict[authorID] = {
@@ -765,7 +784,8 @@ def add_sample(current, authorID, authorNameRaw, commentText, matchReason, longe
         'count': current.authorMatchCountDict[authorID], 
         'authorID': authorID, 
         'authorName': authorNameRaw, 
-        'nameAndText': authorName + commentText, 
+        'nameAndText': nameAndText,
+        'nameAndTextColorized': nameAndTextColorized,
         'matchReason': matchReason
     }
 

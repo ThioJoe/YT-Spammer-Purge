@@ -513,7 +513,7 @@ def make_community_thread_dict(commentID, allCommunityCommentsDict):
 # If the comment/username matches criteria based on mode, add key/value pair of comment ID and author ID to current.matchedCommentsDict
 # Also add key-value pair of comment ID and video ID to dictionary
 # Also count how many spam comments for each author
-def add_spam(current, config, miscData, currentCommentDict, videoID, matchReason="Filter Match"):
+def add_spam(current, config, miscData, currentCommentDict, videoID, matchReason="Filter Match", matchedText=None):
   if matchReason == "Filter Match":
     dictToUse = current.matchedCommentsDict
   elif matchReason == "Duplicate":
@@ -541,7 +541,7 @@ def add_spam(current, config, miscData, currentCommentDict, videoID, matchReason
   else:
     timestamp = "Unavailable"
 
-  dictToUse[commentID] = {'text':commentText, 'textUnsanitized':commentTextRaw, 'authorName':authorChannelName, 'authorID':authorChannelID, 'videoID':videoID, 'matchReason':matchReason, 'originalCommentID':originalCommentID, 'timestamp':timestamp}
+  dictToUse[commentID] = {'text':commentText, 'textUnsanitized':commentTextRaw, 'authorName':authorChannelName, 'authorID':authorChannelID, 'videoID':videoID, 'matchReason':matchReason, 'originalCommentID':originalCommentID, 'timestamp':timestamp, 'matchedText':matchedText}
   current.vidIdDict[commentID] = videoID # Probably remove this later, but still being used for now
 
   # Count of comments per author
@@ -730,6 +730,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
   parentAuthorChannelID = currentCommentDict['parentAuthorChannelID']
   commentTextRaw = str(currentCommentDict['commentText']) # Use str() to ensure not pointing to same place in memory
   commentText = str(currentCommentDict['commentText']).replace("\r", "")
+  matchedText = None # May be used for getting actual matched text for certain filters
 
   # #Debugging
   # print(f"{F.LIGHTRED_EX}DEBUG MODE{S.R} - If you see this, I forgot to disable it before release, oops. \n Please report here: {F.YELLOW}TJoe.io/bug-report{S.R}")
@@ -940,8 +941,9 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
       upLowTextSet = set(processedText)
 
       # Run Spam Thread specific check first
-      if spamThreadsRegex.search(commentTextNormalized.lower()):
-        add_spam(current, config, miscData, currentCommentDict, videoID)
+      # Simultaneously checks elif statement and assigns matchedText variable using walrus operator
+      if (matchedText := spamThreadsRegex.search(commentTextNormalized.lower())) is not None:
+        add_spam(current, config, miscData, currentCommentDict, videoID, matchedText=matchedText.group(0))
 
       # Run Checks
       if authorChannelID == parentAuthorChannelID:
@@ -973,8 +975,9 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
         add_spam(current, config, miscData, currentCommentDict, videoID)
       elif any(findObf(expressionPair[0], expressionPair[1], authorChannelName) for expressionPair in compiledObfuRegexDict['usernameObfuBlackWords']):  
         add_spam(current, config, miscData, currentCommentDict, videoID)
-      elif spamListCombinedRegex.search(combinedStringNormalized.lower()):
-        add_spam(current, config, miscData, currentCommentDict, videoID)
+      # Simultaneously checks elif statement and assigns matchedText variable using walrus operator
+      elif (matchedText := spamListCombinedRegex.search(combinedStringNormalized.lower())) is not None:
+        add_spam(current, config, miscData, currentCommentDict, videoID, matchedText=matchedText.group(0))
       elif config['detect_link_spam'] and check_if_only_link(commentTextNormalized.strip()):
         add_spam(current, config, miscData, currentCommentDict, videoID)
       elif find_accompanying_link_spam(commentTextNormalized.lower()):
