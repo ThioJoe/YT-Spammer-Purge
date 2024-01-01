@@ -900,7 +900,7 @@ def prepare_logFile_settings(current, config, miscData, jsonSettingsDict, filter
     print(f"Log file will be called {F.YELLOW}" + current.logFileName + f"{S.R}\n")
 
   if bypass == False:
-    input(f"Press {F.YELLOW}Enter{S.R} to display comments...")
+    input(f"Press {F.YELLOW}Enter{S.R} to display comments...     {B.LIGHTCYAN_EX}{F.BLACK} TIP: {S.R} Widen this window now, and more comment sample text will be visible next!")
 
   # Write heading info to log file
   write_log_heading(current, logMode, filtersDict)
