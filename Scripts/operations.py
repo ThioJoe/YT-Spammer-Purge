@@ -976,7 +976,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
       elif any(findObf(expressionPair[0], expressionPair[1], authorChannelName) for expressionPair in compiledObfuRegexDict['usernameObfuBlackWords']):  
         add_spam(current, config, miscData, currentCommentDict, videoID)
       # Simultaneously checks elif statement and assigns matchedText variable using walrus operator
-      elif (matchedText := spamListCombinedRegex.search(combinedStringNormalized.lower())) is not None:
+      elif (matchedText := spamListCombinedRegex.search(combinedStringNormalized)) is not None: # Used to do .lower() but took it out to be able to use matched text later
         add_spam(current, config, miscData, currentCommentDict, videoID, matchedText=matchedText.group(0))
       elif config['detect_link_spam'] and check_if_only_link(commentTextNormalized.strip()):
         add_spam(current, config, miscData, currentCommentDict, videoID)

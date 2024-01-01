@@ -45,14 +45,18 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
       write_plaintext_log(current.logFileName, commentsContents)
     print("                                             ")
 
-  # Check if any flagged as possible false positives
+  # Check if any flagged as possible false positives or any matched from spam lists
   possibleFalsePositive = False
-  for author in current.matchSamplesDict.values():
-    if author['possibleFalsePositive'] == True:
+  knownSpamListMatch = False
+  for sample in current.matchSamplesDict.values():
+    if sample['possibleFalsePositive'] == True:
       possibleFalsePositive = True
       break
-    
-
+  for sample in current.matchSamplesDict.values():
+    if sample['nameAndTextColorized'] is not None:
+      knownSpamListMatch = True
+      break
+  
   # Print Sample Match List
   valuesPreparedToWrite = ""
   valuesPreparedToPrint = ""
@@ -112,6 +116,8 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
     print(f"{F.LIGHTMAGENTA_EX}============================ Match Samples: One comment per matched-comment author ============================{S.R}")
     if possibleFalsePositive:
       print(f"{F.GREEN}======= {B.GREEN}{F.BLACK} NOTE: {S.R}{F.GREEN} Possible false positives marked with * and highlighted in green. Check them extra well! ======={S.R}")
+    if knownSpamListMatch:
+      print(f"{F.RED}*NOTE: Specific matches from known spam lists are highlighted in red.{S.R}")
   for value in current.matchSamplesDict.values():
     if value['matchReason'] != "Duplicate" and value['matchReason'] != "Spam Bot Thread" and value['matchReason'] != "Repost":
       valuesPreparedToWrite, valuesPreparedToPrint = print_and_write(value, valuesPreparedToWrite, valuesPreparedToPrint)
@@ -745,10 +751,14 @@ def download_profile_pictures(pictureUrlsDict, jsonSettingsDict):
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Colorize the matched text within a string using colorama. Matches using regex to account for case insensitivity
 def colorize_text(originalString, matchedText, color):
-  escapedMatchedText = re.escape(matchedText)
-  colorizedString = re.sub(escapedMatchedText, f"{color}{matchedText}{S.R}", originalString, flags=re.I)
-  # colorizedString = originalString.replace(matchedText, f"{color}{matchedText}{S.R}")
-  return colorizedString
+    escapedMatchedText = re.escape(matchedText)
+
+    def replace_with_color(match):
+        return f"{color}{match.group(0)}{S.R}"
+
+    colorizedString = re.sub(escapedMatchedText, replace_with_color, originalString, flags=re.I)
+    return colorizedString
+  
 
 # Adds a sample to current.matchSamplesDict and preps formatting
 def add_sample(current, authorID, authorNameRaw, commentText, matchReason, matchedText, longestAuthorNameLength):
