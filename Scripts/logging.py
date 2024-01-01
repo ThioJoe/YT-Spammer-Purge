@@ -263,6 +263,12 @@ def print_prepared_comments(current, commentsContents, scanVideoID, comments, j,
     elif logMode == "plaintext":
       commentsContents = commentsContents + f"\n{dividerString}\n\n"
     # -----------------------------------------------------------------
+    
+  # First get longest author name length from the comments to format sample list
+  longestAuthorNameLength = 0
+  for commentDict in current.matchedCommentsDict.values():
+    if len(commentDict['authorName']) > longestAuthorNameLength:
+      longestAuthorNameLength = len(commentDict['authorName'])
 
   for comment in comments:
     isRepost = False
@@ -303,7 +309,7 @@ def print_prepared_comments(current, commentsContents, scanVideoID, comments, j,
 
     # Add one sample from each matching author to current.matchSamplesDict, containing author ID, name, and text
     if matchReason != "Also By Matched Author" and author_id_local not in current.matchSamplesDict.keys():
-      add_sample(current, author_id_local, author, text, matchReason)
+      add_sample(current, author_id_local, author, text, matchReason, longestAuthorNameLength)
     mark_possible_false_positive(current, author_id_local, text, matchReason)
 
     # Build comment direct link
@@ -725,33 +731,43 @@ def download_profile_pictures(pictureUrlsDict, jsonSettingsDict):
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 # Adds a sample to current.matchSamplesDict and preps formatting
-def add_sample(current, authorID, authorNameRaw, commentText, matchReason):
-  def remove_unicode_categories(string):
-    unicodeStrip = ["Mn", "Cc", "Cf", "Cs", "Co", "Cn", "Sk"]
-    return "".join(char for char in string if unicode_category(char) not in unicodeStrip)
+def add_sample(current, authorID, authorNameRaw, commentText, matchReason, longestAuthorNameLength):
+    def remove_unicode_categories(string):
+        unicodeStrip = ["Mn", "Cc", "Cf", "Cs", "Co", "Cn", "Sk"]
+        return "".join(char for char in string if unicode_category(char) not in unicodeStrip)
+    
+    consoleWidth = utils.get_terminal_size()
 
-  # Make index number and string formatted version
-  # index = len(current.matchSamplesDict) + 1
-  # iString = f"{str(index)}. ".ljust(4)
-  authorNumComments = current.authorMatchCountDict[authorID]
-  cString = f"[x{str(authorNumComments)}] ".ljust(7)
+    # Fixed width for comment counter
+    cString = f"[x{str(current.authorMatchCountDict[authorID])}] ".ljust(7)
 
-  # Left Justify Author Name and Comment Text
-  authorName = remove_unicode_categories(authorNameRaw)
-  if len(authorName) > 20:
-    authorName = authorName[0:17] + "..."
-    authorName = authorName[0:20].ljust(20)+": "
-  else: 
-    authorName = authorNameRaw[0:20].ljust(20)+": "
+    authorNameSpace = longestAuthorNameLength + 3  # Additional space for ellipsis and padding
 
-  commentText = str(commentText).replace("\n", " ").replace("\r", " ")
-  commentText = remove_unicode_categories(commentText)
-  if len(commentText) > 82:
-    commentText = commentText[0:79] + "..."
-  commentText = commentText[0:82].ljust(82)
+    # Calculate remaining space for comment
+    commentSpace = consoleWidth - len(cString) - authorNameSpace - 2 - 5 # -2 for ": " separator, -5 for extra buffer
 
-  # Add comment sample, author ID, name, and counter
-  current.matchSamplesDict[authorID] = {'cString':cString, 'count':authorNumComments, 'authorID':authorID, 'authorName':authorNameRaw, 'nameAndText':authorName + commentText, 'matchReason':matchReason}
+    # Format author name
+    authorName = remove_unicode_categories(authorNameRaw)
+    if len(authorName) > longestAuthorNameLength:
+        authorName = authorName[:longestAuthorNameLength-3] + "..."
+    authorName = authorName.ljust(longestAuthorNameLength) + ": "
+
+    # Format comment text
+    commentText = str(commentText).replace("\n", " ").replace("\r", " ")
+    commentText = remove_unicode_categories(commentText)
+    if len(commentText) > commentSpace:
+        commentText = commentText[:commentSpace-3] + "..."
+    commentText = commentText.ljust(commentSpace)
+
+    # Add comment sample, author ID, name, and counter
+    current.matchSamplesDict[authorID] = {
+        'cString': cString, 
+        'count': current.authorMatchCountDict[authorID], 
+        'authorID': authorID, 
+        'authorName': authorNameRaw, 
+        'nameAndText': authorName + commentText, 
+        'matchReason': matchReason
+    }
 
 # Sort match samples by count per author
 def sort_samples(current):

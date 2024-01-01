@@ -164,7 +164,17 @@ def choice(message="", bypass=False):
     elif response == "X" or response == "x":
       return None
     else:
-      print("\nInvalid Input. Enter Y or N  --  Or enter X to return to main menu.")  
+      print("\nInvalid Input. Enter Y or N  --  Or enter X to return to main menu.")
+      
+########################## Get Console Window Width #############################
+# To determine how many characters to print in a line
+def get_terminal_size():
+    # For Windows
+    if os.name == 'nt':
+        return os.get_terminal_size().columns
+    # For Unix-based systems
+    else:
+        return shutil.get_terminal_size().columns
 
 
 ############################### ERROR HANDLING MESSAGES #################################
