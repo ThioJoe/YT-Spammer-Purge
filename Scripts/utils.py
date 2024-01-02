@@ -88,7 +88,16 @@ def check_list_against_string(listInput, stringInput, caseSensitive=False):
     return True
   else:
     return False
-
+  
+######################### Clear multiple previous lines #########################
+def clear_lines(up, down=0):
+    LINE_UP = '\033[1A'
+    LINE_CLEAR = '\x1b[2K'
+    print(LINE_CLEAR, end="")
+    for i in range(up):
+        print(LINE_UP, end=LINE_CLEAR)
+    if down > 0:
+        print("\n"*down, end="\r")
 
 ################### Process Comma-Separated String to List ####################
 # Take in string, split by commas, remove whitespace and empty items, and return list

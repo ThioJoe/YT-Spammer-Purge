@@ -1147,7 +1147,7 @@ def main():
         authorKeyAllCommentsDict = {}
         allCommunityCommentsDict = get_community_comments(communityPostID=communityPostID, limit=limit, postScanProgressDict=postScanProgressDict, postText=postText)
         retrievedCount = len(allCommunityCommentsDict)
-        print(f"\nRetrieved {retrievedCount} comments from post.\n")
+        print(f"Retrieved {retrievedCount} comments from post.")
         scannedCount = 0
         threadDict = {}
 
@@ -1183,7 +1183,7 @@ def main():
           percent = ((scannedCount / retrievedCount) * 100)
           progressStats = f"[ {str(scannedCount)} / {str(retrievedCount)} ]".ljust(15, " ") + f" ({percent:.2f}%)"
           print(f'  {progressStats}  -  Analyzing Comments For Spam ', end='\r')
-        print("                                                                                        ")
+        print("                                                                                        ", end='\r')
 
         dupeCheckModes = utils.string_to_list(config['duplicate_check_modes'])
         if filtersDict['filterMode'].lower() in dupeCheckModes:
@@ -1191,7 +1191,7 @@ def main():
         # repostCheckModes = utils.string_to_list(config['stolen_comments_check_modes'])
         # if filtersDict['filterMode'].lower() in repostCheckModes:
         #   operations.check_reposts(current, config, miscData, allCommunityCommentsDict, communityPostID)
-          print("                                                                                                                       ")
+          print("                                                                                                                       ", end='\r')
 
       if scanMode == "communityPost":
         scan_community_post(current, config, communityPostID, maxScanNumber)
@@ -1213,16 +1213,10 @@ def main():
       # Goes to get comments for first page
       print("\n------------------------------------------------------------------------------")
       print("(Note: If the program appears to freeze, try right clicking within the window)\n")
-      print("                          --- Scanning --- \n")
+      print("                          --- Scanning --- \n\n")
 
       # ----------------------------------------------------------------------------------------------------------------------
       def scan_video(miscData, config, filtersDict, scanVideoID, videosToScan=None, currentVideoDict=None, videoTitle=None, showTitle=False, i=1):
-        if currentVideoDict is None:
-          currentVideoDict = {}
-        nextPageToken, currentVideoDict = operations.get_comments(current, filtersDict, miscData, config, currentVideoDict, scanVideoID, videosToScan=videosToScan)
-        if nextPageToken == "Error":
-            return "Error"
-
         if showTitle == True and len(videosToScan) > 0:
           # Prints video title, progress count, adds enough spaces to cover up previous stat print line
           offset = 95 - len(videoTitle)
@@ -1230,7 +1224,14 @@ def main():
             spacesStr = " " * offset
           else:
             spacesStr = ""
+          utils.clear_lines(up=1, down=0)
           print(f"Scanning {i}/{len(videosToScan)}: " + videoTitle + spacesStr + "\n")
+          
+        if currentVideoDict is None:
+          currentVideoDict = {}
+        nextPageToken, currentVideoDict = operations.get_comments(current, filtersDict, miscData, config, currentVideoDict, scanVideoID, videosToScan=videosToScan)
+        if nextPageToken == "Error":
+            return "Error"
 
         operations.print_count_stats(current, miscData, videosToScan, final=False)  # Prints comment scan stats, updates on same line
         # After getting first page, if there are more pages, goes to get comments for next page

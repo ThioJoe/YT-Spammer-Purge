@@ -205,7 +205,7 @@ def main(communityPostID=None, limit=1000, sort=SORT_BY_RECENT, language=None, p
     if postScanProgressDict:
         i = postScanProgressDict['scanned']
         j = postScanProgressDict['total']
-        print(f'\n\n [{i}/{j}] Post ID: {communityPostID}')
+        print(f'[{i}/{j}] Post ID: {communityPostID}')
     else:
         print(f'\n Loading Comments For Post: {communityPostID}')
 

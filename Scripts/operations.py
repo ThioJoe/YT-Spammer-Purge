@@ -153,12 +153,12 @@ def get_comments(current, filtersDict, miscData, config, allVideoCommentsDict, s
     if filtersDict['filterMode'].lower() in dupeCheckModes:
       print(" Analyzing For Duplicates                                                                                        ", end="\r")
       check_duplicates(current, config, miscData, allVideoCommentsDict, scanVideoID)
-      print("                                                                                                                       ")
+      print("                                                                                                                       ", end="\r")
     repostCheckModes = utils.string_to_list(config['stolen_comments_check_modes'])
     if filtersDict['filterMode'].lower() in repostCheckModes:
       print(" Analyzing For Reposts                                                                                           ", end="\r")
       check_reposts(current, config, miscData, allVideoCommentsDict, scanVideoID)
-      print("                                                                                                                       ")
+      print("                                                                                                                       ", end="\r")
 
   current.allScannedCommentsDict.update(allVideoCommentsDict)
   return RetrievedNextPageToken, allVideoCommentsDict
@@ -649,7 +649,7 @@ def check_duplicates(current, config, miscData, allVideoCommentsDict, videoID):
       scannedCount +=1
       print(f" Analyzing For Duplicates: [ {scannedCount/authorCount*100:.2f}% ]   (Can be Disabled & Customized With Config File)".ljust(75, " "), end="\r")
 
-  print("".ljust(110, " ")) # Erase line
+  print("".ljust(110, " "), end='\r') # Erase line
 
 
 ############################# Check Text Reposts #####################################
@@ -1492,7 +1492,7 @@ def print_count_stats(current, miscData, videosToScan, final):
   matchCount = str(len(current.matchedCommentsDict) + len(current.spamThreadsDict))
 
   if final == True:
-    print(f" {progress} Comments Scanned: {F.YELLOW}{comScanned}{S.R} | Replies Scanned: {F.YELLOW}{repScanned}{S.R} | Matches Found So Far: {F.LIGHTRED_EX}{matchCount}{S.R}\n")
+    print(f" {progress} Comments Scanned: {F.YELLOW}{comScanned}{S.R} | Replies Scanned: {F.YELLOW}{repScanned}{S.R} | Matches Found So Far: {F.LIGHTRED_EX}{matchCount}{S.R}", end = "\r")
   else:
     print(f" {progress} Comments Scanned: {F.YELLOW}{comScanned}{S.R} | Replies Scanned: {F.YELLOW}{repScanned}{S.R} | Matches Found So Far: {F.LIGHTRED_EX}{matchCount}{S.R}", end = "\r")
   
