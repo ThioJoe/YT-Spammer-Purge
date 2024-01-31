@@ -608,7 +608,7 @@ def main():
             if miscData.totalCommentCount >= 100000:
               print(f"\n{B.YELLOW}{F.BLACK} WARNING: {S.R} You have chosen to scan a large amount of comments. The default API quota limit ends up")
               print(f" around {F.YELLOW}10,000 comment deletions per day{S.R}. If you find more spam than that you will go over the limit.")
-              print(f"        > Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
+              print(f"        > Read more about the quota limits for this app here: {F.YELLOW}https://TJoe.io/api-limit-info{S.R}")
               if userNotChannelOwner == False or moderator_mode == True:
                 print(f"{F.LIGHTCYAN_EX}> Note:{S.R} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")
             confirm = choice("Is this video list correct?", bypass=validConfigSetting)
@@ -687,7 +687,7 @@ def main():
         if validEntry == True and numVideos >= 1000:
           print(f"\n{B.YELLOW}{F.BLACK} WARNING: {S.R} You have chosen to scan a large amount of videos. With the default API quota limit,")
           print(f" every 1000 videos will use up 20% of the quota {F.YELLOW}just from listing the videos alone, before any comment scanning.{S.R}")
-          print(f"        > Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
+          print(f"        > Read more about the quota limits for this app here: {F.YELLOW}https://TJoe.io/api-limit-info{S.R}")
 
         if validEntry == True:
           # Fetch recent videos and print titles to user for confirmation
@@ -734,7 +734,7 @@ def main():
             if miscData.totalCommentCount >= 100000:
               print(f"\n{B.YELLOW}{F.BLACK} WARNING: {S.R} You have chosen to scan a large amount of comments. The default API quota limit ends up")
               print(f" around {F.YELLOW}10,000 comment deletions per day{S.R}. If you find more spam than that you will go over the limit.")
-              print(f"        > Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
+              print(f"        > Read more about the quota limits for this app here: {F.YELLOW}https://TJoe.io/api-limit-info{S.R}")
               if userNotChannelOwner == True or moderator_mode == True:
                 print(f"{F.LIGHTCYAN_EX}> Note:{S.R} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")
             confirm = choice("Is everything correct?", bypass=config['skip_confirm_video'])
@@ -765,7 +765,7 @@ def main():
             if maxScanNumber >= 100000:
               print(f"\n{B.YELLOW}{F.BLACK} WARNING: {S.R} You have chosen to scan a large amount of comments. The default API quota limit ends up")
               print(f" around {F.YELLOW}10,000 comment deletions per day{S.R}. If you find more spam than that you will go over the limit.")
-              print(f"        > Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
+              print(f"        > Read more about the quota limits for this app here: {F.YELLOW}https://TJoe.io/api-limit-info{S.R}")
               if userNotChannelOwner == True or moderator_mode == True:
                 print(f"{F.LIGHTCYAN_EX}> Note:{S.R} You may want to disable 'check_deletion_success' in the config, as this doubles the API cost! (So a 5K limit)")
               userChoice = choice("Do you still want to continue?")
@@ -1274,7 +1274,7 @@ def main():
     # Counts number of found spam comments and prints list
     if not current.matchedCommentsDict and not current.duplicateCommentsDict and not current.spamThreadsDict and not current.repostedCommentsDict: # If no spam comments found, exits
       print(f"{B.RED}{F.BLACK} No matched comments or users found! {F.R}{B.R}{S.R}\n")
-      print(f"If you see missed spam or false positives, you can submit a filter suggestion here: {F.YELLOW}TJoe.io/filter-feedback{S.R}")
+      print(f"If you see missed spam or false positives, you can submit a filter suggestion here: {F.YELLOW}https://TJoe.io/filter-feedback{S.R}")
 
       # Can still log to json even though no comments
       if config['json_log_all_comments'] and config['json_log'] and config['enable_logging'] != False:
@@ -1327,7 +1327,7 @@ def main():
     logFileContents, logMode = logging.print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMode)
 
     print(f"\n{F.WHITE}{B.RED} NOTE: {S.R} Check that all comments listed above are indeed spam.")
-    print(f" > If you see missed spam or false positives, you can submit a filter suggestion here: {F.YELLOW}TJoe.io/filter-feedback{S.R}")
+    print(f" > If you see missed spam or false positives, you can submit a filter suggestion here: {F.YELLOW}https://TJoe.io/filter-feedback{S.R}")
     print()
 
     ### ---------------- Decide whether to skip deletion ----------------
@@ -1418,7 +1418,7 @@ def main():
     if returnToMenu == False and deletionEnabled != "Allowed" and deletionEnabled != True:
         print("\nThe deletion functionality was not enabled. Cannot delete or report comments.")
         print("Possible Cause: You're scanning someone else's video with a non-supported filter mode.\n")
-        print(f"If you think this is a bug, you may report it on this project's GitHub page: {F.YELLOW}TJoe.io/bug-report{S.R}")
+        print(f"If you think this is a bug, you may report it on this project's GitHub page: {F.YELLOW}https://TJoe.io/bug-report{S.R}")
         if config['auto_close'] == True:
           print("\nAuto-close enabled in config. Exiting in 5 seconds...")
           time.sleep(5)
@@ -1728,11 +1728,11 @@ if __name__ == "__main__":
           utils.print_exception_reason(reason)
       print(f"\nAn {F.LIGHTRED_EX}'HttpError'{S.R} was raised. This is sometimes caused by a remote server error. See the error info above.")
       print(f"If this keeps happening, consider posting a bug report on the GitHub issues page, and include the above error info.")
-      print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+      print(f"Short Link: {F.YELLOW}https://TJoe.io/bug-report{S.R}")
       input("\nPress Enter to Exit...")
     else:
       print(f"{F.LIGHTRED_EX}Unknown Error - Code: Z-1{S.R} occurred. If this keeps happening, consider posting a bug report on the GitHub issues page, and include the above error info.")
-      print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+      print(f"Short Link: {F.YELLOW}https://TJoe.io/bug-report{S.R}")
       input("\n Press Enter to Exit...")
   except UnboundLocalError as ux:
     traceback.print_exc()
@@ -1741,7 +1741,7 @@ if __name__ == "__main__":
     if "referenced before assignment" in str(ux):
       print(f"\n{F.LIGHTRED_EX}Error - Code: X-2{S.R} occurred. This is almost definitely {F.YELLOW}my fault and requires patching{S.R} (big bruh moment)")
       print(f"Please post a bug report on the GitHub issues page, and include the above error info.")
-      print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+      print(f"Short Link: {F.YELLOW}https://TJoe.io/bug-report{S.R}")
       print("    (In the mean time, try using a previous release of the program.)")
       input("\n Press Enter to Exit...")
     else:
@@ -1749,7 +1749,7 @@ if __name__ == "__main__":
       print("------------------------------------------------")
       print(f"\n{F.LIGHTRED_EX}Unknown Error - Code: Z-2{S.R} occurred. If this keeps happening,")
       print("consider posting a bug report on the GitHub issues page, and include the above error info.")
-      print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+      print(f"Short Link: {F.YELLOW}https://TJoe.io/bug-report{S.R}")
       input("\n Press Enter to Exit...")
   except KeyError as kx:
     traceback.print_exc()
@@ -1761,14 +1761,14 @@ if __name__ == "__main__":
     else:
       print(f"{F.RED}Unknown Error - Code: X-4{S.R} occurred. This is {F.YELLOW}probably my fault{S.R},")
       print(f"please post a {F.LIGHTYELLOW_EX}bug report{S.R} on the GitHub issues page, and include the above error info.")
-    print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+    print(f"Short Link: {F.YELLOW}https://TJoe.io/bug-report{S.R}")
     input("\n Press Enter to Exit...")
   except TypeError:
     traceback.print_exc()
     print("------------------------------------------------")
     print(f"{F.RED}Unknown Error - Code: X-5{S.R} occurred. This is {F.YELLOW}probably my fault{S.R},")
     print(f"please post a {F.LIGHTYELLOW_EX}bug report{S.R} on the GitHub issues page, and include the above error info.")
-    print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+    print(f"Short Link: {F.YELLOW}https://TJoe.io/bug-report{S.R}")
     input("\n Press Enter to Exit...")
   except KeyboardInterrupt:
     print("\n\nProcess Cancelled via Keyboard Shortcut")
@@ -1779,7 +1779,7 @@ if __name__ == "__main__":
     print("Error Message: " + str(x))
     print(f"\n{F.LIGHTRED_EX}Unknown Error - Code: Z-3{S.R} occurred. If this keeps happening, consider posting a bug report")
     print("on the GitHub issues page, and include the above error info.")
-    print(f"Short Link: {F.YELLOW}TJoe.io/bug-report{S.R}")
+    print(f"Short Link: {F.YELLOW}https://TJoe.io/bug-report{S.R}")
     input("\n Press Enter to Exit...")
   else:
     print("\nFinished Executing.")

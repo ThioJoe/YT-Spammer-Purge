@@ -636,7 +636,7 @@ def delete_comment_list(config):
         if countChoice > 0 and countChoice <= quotaLimit:
           validInput = True
         elif countChoice >= quotaLimit:
-          print(f"\n{F.LIGHTRED_EX}Error:{S.R} {countChoice} is too many comments, you'll run out of API Quota. Read Here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
+          print(f"\n{F.LIGHTRED_EX}Error:{S.R} {countChoice} is too many comments, you'll run out of API Quota. Read Here: {F.YELLOW}https://TJoe.io/api-limit-info{S.R}")
         else:
           print(f"Invalid input, must be 'all' or a whole number from 1 to {str(quotaLimit)}.")
     except:

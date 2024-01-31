@@ -277,9 +277,9 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
     if silentCheck == False:
       print("------------------------------------------------------------------------------------------")
       if isBeta == True:
-        print(f" {F.YELLOW}A new {F.LIGHTGREEN_EX}beta{F.YELLOW} version{S.R} is available! Visit {F.YELLOW}TJoe.io/latest{S.R} to see what's new.")
+        print(f" {F.YELLOW}A new {F.LIGHTGREEN_EX}beta{F.YELLOW} version{S.R} is available! Visit {F.YELLOW}https://TJoe.io/latest{S.R} to see what's new.")
       else:
-        print(f" A {F.LIGHTGREEN_EX}new version{S.R} is available! Visit {F.YELLOW}TJoe.io/latest{S.R} to see what's new.")
+        print(f" A {F.LIGHTGREEN_EX}new version{S.R} is available! Visit {F.YELLOW}https://TJoe.io/latest{S.R} to see what's new.")
       print(f"   > Current Version: {currentVersion}")
       print(f"   > Latest Version: {F.LIGHTGREEN_EX}{latestVersion}{S.R}")
       if isBeta == True:
@@ -387,7 +387,7 @@ def check_for_update(currentVersion, updateReleaseChannel, silentCheck=False):
             print("\nYou can now delete the old version. (Or keep it around in case you encounter any issues with the new version)")
           else:
             print(f"\n{F.LIGHTYELLOW_EX}NOTE:{S.R} Because this is a {F.CYAN}beta release{S.R}, you should keep the old version around in case you encounter any issues")
-            print(f" > And don't forget to report any problems you encounter here: {F.YELLOW}TJoe.io/bug-report{S.R}")
+            print(f" > And don't forget to report any problems you encounter here: {F.YELLOW}https://TJoe.io/bug-report{S.R}")
           input("\nPress Enter to Exit...")
           sys.exit()
         elif os.name == "posix":

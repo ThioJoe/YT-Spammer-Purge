@@ -731,7 +731,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
   commentText = str(currentCommentDict['commentText']).replace("\r", "")
 
   # #Debugging
-  # print(f"{F.LIGHTRED_EX}DEBUG MODE{S.R} - If you see this, I forgot to disable it before release, oops. \n Please report here: {F.YELLOW}TJoe.io/bug-report{S.R}")
+  # print(f"{F.LIGHTRED_EX}DEBUG MODE{S.R} - If you see this, I forgot to disable it before release, oops. \n Please report here: {F.YELLOW}https://TJoe.io/bug-report{S.R}")
   # print("Comment ID: " + commentID)
   # debugSingleComment = True #Debug usage
   # if debugSingleComment == True:

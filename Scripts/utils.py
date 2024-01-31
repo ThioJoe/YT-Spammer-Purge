@@ -181,7 +181,7 @@ def print_exception_reason(reason):
     print(" > There is a daily limit of 10,000 units/day, which works out to around reporting 10,000 comments/day.")
     print(" > You can check your quota by searching 'quota' in the Google Cloud console.")
     print(f"{F.YELLOW}Solutions: Either wait until tomorrow, or create additional projects in the cloud console.{S.R}")
-    print(f"  > Read more about the quota limits for this app here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
+    print(f"  > Read more about the quota limits for this app here: {F.YELLOW}https://TJoe.io/api-limit-info{S.R}")
 
 def print_http_error_during_scan(hx):
   print("------------------------------------------------")

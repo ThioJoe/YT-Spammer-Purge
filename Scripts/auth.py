@@ -49,7 +49,7 @@ def get_authenticated_service():
     else:
       print(f"\n         ----- {F.WHITE}{B.RED}[!] Error:{S.R} client_secrets.json file not found -----")
       print(f" ----- Did you create a {F.YELLOW}Google Cloud Platform Project{S.R} to access the API? ----- ")
-      print(f"  > For instructions on how to get an API key, visit: {F.YELLOW}TJoe.io/api-setup{S.R}")
+      print(f"  > For instructions on how to get an API key, visit: {F.YELLOW}https://TJoe.io/api-setup{S.R}")
       print(f"\n  > (Non-shortened Link: https://github.com/ThioJoe/YT-Spammer-Purge/wiki/Instructions:-Obtaining-an-API-Key)")
       input("\nPress Enter to Exit...")
       sys.exit()

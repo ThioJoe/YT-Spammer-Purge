@@ -204,7 +204,7 @@ update () {
 
     echo "--------------------------"
     echo "Updated!"
-    echo "Report any bugs to TJoe.io/bug-report"
+    echo "Report any bugs to https://TJoe.io/bug-report"
     exit 0
 }
 
