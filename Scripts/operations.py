@@ -608,7 +608,7 @@ def check_duplicates(current, config, miscData, allVideoCommentsDict, videoID):
     else:
       numDupes = 0
       commentTextList = []
-      matchedIndexes = []
+      matchedIndexes = set()
       for commentDict in authorCommentsList:
         # Adding to use as lower case, because levenshtein is case sensitive. Also, root domain list is ingested as lower case, so necessary to compare
         commentTextList.append(commentDict['commentText'].lower())
@@ -622,24 +622,21 @@ def check_duplicates(current, config, miscData, allVideoCommentsDict, videoID):
               y = commentTextList[j]
               # If Levenshtein distance is 1.0, then only check if comment text is exactly the same
               if levenshtein == 1.0 and x == y: 
-                matchedIndexes.append(i)
-                matchedIndexes.append(j)
+                matchedIndexes.update([i, j])
                 break
               # If Levenshtein distance is 0, don't check at all, just count number of comments by user
               elif levenshtein == 0.0:
-                matchedIndexes.append(i)
-                matchedIndexes.append(j)
+                matchedIndexes.update([i, j])
                 break
               elif fuzz.ratio(x,y) / 100 > levenshtein:
                 # List the indexes of the matched comments in the list
-                matchedIndexes.append(i)
-                matchedIndexes.append(j)
+                matchedIndexes.update([i, j])
                 break
           else:
             break
         
         # Only count each comment once by counting number of unique indexes in matchedIndexes
-        uniqueMatches = len(set(matchedIndexes))
+        uniqueMatches = len(matchedIndexes)
         if uniqueMatches >= minimum_duplicates:
           numDupes += uniqueMatches
       if numDupes > 0:
