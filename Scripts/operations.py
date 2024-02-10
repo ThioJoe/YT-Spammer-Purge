@@ -744,7 +744,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
     if "@" in commentText:
       # Logic to avoid false positives from replies to spammers
       if allThreadAuthorNames and (filtersDict['filterMode'] == "AutoSmart" or filtersDict['filterMode'] == "NameAndText"):
-        for name in allThreadAuthorNames:
+        for name in set(allThreadAuthorNames):
           if "@"+str(name) in commentText:
             commentText = commentText.replace("@"+str(name), "")
       # Extra logic to detect false positive if spammer's comment already deleted, but someone replied
