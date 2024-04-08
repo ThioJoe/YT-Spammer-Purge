@@ -580,7 +580,7 @@ def get_all_author_comments(current, config, miscData, allCommentsDict):
 
 ############################## Check Duplicates ######################################
 def check_duplicates(current, config, miscData, allVideoCommentsDict, videoID):
-  domainList =  miscData.resources['rootDomainList']
+  domainList =  [f".{domain}" for domain in miscData.resources['rootDomainList']]
 
   # Get Lenvenshtein Distance Setting - Does not need to be validated here, because that happens at beginning of program
   levenshtein = float(config['levenshtein_distance'])
@@ -617,7 +617,7 @@ def check_duplicates(current, config, miscData, allVideoCommentsDict, videoID):
       if len(commentTextList) > 1:
         for i,x in enumerate(commentTextList):
           # Check length of comment against minimum, but override if a domain is detected
-          if len(x) >= minimum_duplicate_length or (len(x) >= 6 and any(f".{domain}" in x for domain in domainList)):
+          if len(x) >= minimum_duplicate_length or (len(x) >= 6 and any(domain} in x for domain in domainList)):
             for j in range(i+1,len(commentTextList)):
               y = commentTextList[j]
               # If Levenshtein distance is 1.0, then only check if comment text is exactly the same
