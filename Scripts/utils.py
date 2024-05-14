@@ -17,7 +17,7 @@ def get_video_title(current, video_id):
     title = current.vidTitleDict[video_id]
   elif current.errorOccurred == False:
     try:
-      results = auth.YOUTUBE.videos().list(
+      results = auth.YOUTUBE[0].videos().list(
         part="snippet",
         id=video_id,
         fields="items/snippet/title",
