@@ -151,6 +151,7 @@ def get_comments(current, filtersDict, miscData, config, allVideoCommentsDict, s
 
   theRange = int(len(results["items"])/2)
 
+  # the reason that the second element of YOUTUBE is only used here is for readabity and the program crashes if used outside of multithreading
   thread1 = multiprocessing.Process(target=getAllCommentsThreadsForPage, args=(current, filtersDict, miscData, config, allVideoCommentsDict, results["items"][:theRange], 1, False))
   thread1.start()
 
