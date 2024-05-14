@@ -101,6 +101,8 @@ def get_authenticated_service():
     else:
       with open(TOKEN_FILE_NAME, 'w') as token:
         token.write(creds.to_json())
+
+  # the program crashes if i used the same build for multithreading so i made a list of 2
   YOUTUBE[0] = build(API_SERVICE_NAME, API_VERSION, credentials=creds, discoveryServiceUrl=DISCOVERY_SERVICE_URL, cache_discovery=False, cache=None)
   YOUTUBE[1] = build(API_SERVICE_NAME, API_VERSION, credentials=creds, discoveryServiceUrl=DISCOVERY_SERVICE_URL, cache_discovery=False, cache=None)
   return YOUTUBE
