@@ -33,7 +33,7 @@ def validate_video_id(video_url_or_id, silent=False, pass_exception=False, basic
     else:
       try:
         possibleVideoID = match.group('video_id')
-        result = auth.YOUTUBE.videos().list(
+        result = auth.YOUTUBE[0].videos().list(
           part="snippet,id,statistics",
           id=possibleVideoID,
           fields='items/id,items/snippet/channelId,items/snippet/channelTitle,items/statistics/commentCount,items/snippet/title',
@@ -148,7 +148,7 @@ def validate_channel_id(inputted_channel):
 
     if startIndex < endIndex and endIndex <= len(inputted_channel):
       customURL = inputted_channel[startIndex:endIndex]
-      response = auth.YOUTUBE.search().list(part="snippet",q=customURL, maxResults=1, type="channel").execute()
+      response = auth.YOUTUBE[0].search().list(part="snippet",q=customURL, maxResults=1, type="channel").execute()
       if response.get("items"):
         isolatedChannelID = response.get("items")[0]["snippet"]["channelId"] # Get channel ID from custom channel URL username
       else:
@@ -167,7 +167,7 @@ def validate_channel_id(inputted_channel):
         print(f"{F.LIGHTRED_EX}Invalid Channel ID / Link!{S.R} Did you enter a video ID / link by mistake?")
         return False, None, None
 
-      response = auth.YOUTUBE.search().list(part="snippet",q=customURL, maxResults=1, type="channel").execute()
+      response = auth.YOUTUBE[0].search().list(part="snippet",q=customURL, maxResults=1, type="channel").execute()
       if response.get("items"):
         isolatedChannelID = response.get("items")[0]["snippet"]["channelId"] # Get channel ID from custom channel URL username
       else:
@@ -179,7 +179,7 @@ def validate_channel_id(inputted_channel):
     # Check for handle validity: Only letters and numbers, periods, underscores, and hyphens, and between 3 and 30 characters
     if re.match(r'^[a-zA-Z0-9._-]{3,30}$', inputted_channel[1:]):
       # Does a search for the handle and gets the channel ID from first response
-      response = auth.YOUTUBE.search().list(part="snippet",q=inputted_channel, maxResults=1, type="channel").execute()
+      response = auth.YOUTUBE[0].search().list(part="snippet",q=inputted_channel, maxResults=1, type="channel").execute()
       if response.get("items"):
         isolatedChannelID = response.get("items")[0]["snippet"]["channelId"]
       else:
@@ -199,7 +199,7 @@ def validate_channel_id(inputted_channel):
     return False, None, None
 
   if len(isolatedChannelID) == 24 and isolatedChannelID[0:2] == "UC":
-    response = auth.YOUTUBE.channels().list(part="snippet", id=isolatedChannelID).execute()
+    response = auth.YOUTUBE[0].channels().list(part="snippet", id=isolatedChannelID).execute()
     if response.get('items'):
       channelTitle = response['items'][0]['snippet']['title']
       return True, isolatedChannelID, channelTitle
