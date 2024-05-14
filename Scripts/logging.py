@@ -656,7 +656,7 @@ def get_extra_json_data(channelIDs, jsonSettingsDict):
 
   def fetch_data(channelIdGroup):
     try:
-      response = auth.YOUTUBE.channels().list(part="snippet,statistics", id=channelIdGroup, fields=fieldsToFetch).execute()
+      response = auth.YOUTUBE[0].channels().list(part="snippet,statistics", id=channelIdGroup, fields=fieldsToFetch).execute()
       if response['items']:
         for infoDict in response['items']:
           tempDict = {}
@@ -687,7 +687,7 @@ def get_extra_json_data(channelIDs, jsonSettingsDict):
     pass
   
   # Get info about uploader
-  response = auth.YOUTUBE.channels().list(part="snippet,statistics", id=channelOwnerID, fields=fieldsToFetch).execute()
+  response = auth.YOUTUBE[0].channels().list(part="snippet,statistics", id=channelOwnerID, fields=fieldsToFetch).execute()
   if response['items']:
     tempDict = {}
     tempDict['PublishedAt'] = response['items'][0]['snippet']['publishedAt']
