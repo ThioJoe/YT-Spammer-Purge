@@ -30,6 +30,7 @@ encrypt_config = load_config_file(onlyGetSettings=True, configVersion=configVers
 SALT_BYTES = 64
 SCRYPT_N = 2**18
 
+# the second element will be used for multithreading only
 YOUTUBE = [None, None]
 CURRENTUSER = None
 
