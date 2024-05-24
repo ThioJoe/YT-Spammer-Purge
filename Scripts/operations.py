@@ -65,11 +65,10 @@ def get_comments(current, filtersDict, miscData, config, allVideoCommentsDict, s
   # Get token for next page. If no token, sets to 'End'
   RetrievedNextPageToken = results.get("nextPageToken", "End")
   
-  # After getting all comments threads for page, extracts data for each and stores matches in current.matchedCommentsDict
+  # After getting all comments threads for page, extracts data for each and stores matches in current["matchedCommentsDict"]
   # Also goes through each thread and executes get_replies() to get reply content and matches
   def getAllCommentsThreadsForPage(filtersDict, miscData, config, items, shared_Dict=None, thread=0):
     current = shared_Dict["current"]
-    allVideoCommentsDict = shared_Dict["allVideoCommentsDict"]
 
     for item in items:
       comment = item["snippet"]["topLevelComment"]
@@ -126,10 +125,10 @@ def get_comments(current, filtersDict, miscData, config, allVideoCommentsDict, s
 
       #Log All Comments
       try:
-        if parentAuthorChannelID in allVideoCommentsDict:
-          allVideoCommentsDict[parentAuthorChannelID].append(currentCommentDict)
+        if parentAuthorChannelID in shared_Dict["allVideoCommentsDict"]:
+          shared_Dict["allVideoCommentsDict"][parentAuthorChannelID].append(currentCommentDict)
         else:
-          allVideoCommentsDict[parentAuthorChannelID] = [currentCommentDict]
+          shared_Dict["allVideoCommentsDict"][parentAuthorChannelID] = [currentCommentDict]
       except TypeError: # This might not be necessary, might remove later if not
         pass
   
@@ -140,25 +139,23 @@ def get_comments(current, filtersDict, miscData, config, allVideoCommentsDict, s
 
       # If there are more replies than in the limited list
       if numReplies > 0 and len(limitedRepliesList) < numReplies:
-        allVideoCommentsDict = get_replies(current, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, allVideoCommentsDict, parentCommentDict=parentCommentDict, thread=thread)
-        if allVideoCommentsDict == "Error":
+        shared_Dict["allVideoCommentsDict"] = get_replies(current, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, shared_Dict["allVideoCommentsDict"], parentCommentDict=parentCommentDict, thread=thread)
+        if shared_Dict["allVideoCommentsDict"] == "Error":
           return "Error", None
 
       # If all the replies are in the limited list
       elif numReplies > 0 and len(limitedRepliesList) == numReplies: # limitedRepliesList can never be more than numReplies
-        allVideoCommentsDict = get_replies(current, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, allVideoCommentsDict, repliesList=limitedRepliesList, parentCommentDict=parentCommentDict, thread=thread)
-        if allVideoCommentsDict == "Error":
+        shared_Dict["allVideoCommentsDict"] = get_replies(current, filtersDict, miscData, config, parent_id, videoID, parentAuthorChannelID, videosToScan, shared_Dict["allVideoCommentsDict"], repliesList=limitedRepliesList, parentCommentDict=parentCommentDict, thread=thread)
+        if shared_Dict["allVideoCommentsDict"] == "Error":
           return "Error", None
       elif thread == 0:
         print_count_stats(current, miscData, videosToScan, final=False)  # Updates displayed stats if no replies
 
-    # updates shared_Dict
-    placeholderDict = {"current": shared_Dict["current"], "allVideoCommentsDict": shared_Dict["allVideoCommentsDict"]}
-    placeholderDict["allVideoCommentsDict"].update(allVideoCommentsDict)
-    placeholderDict["current"].update(current)
-    shared_Dict["allVideoCommentsDict"] = placeholderDict["allVideoCommentsDict"]
-    shared_Dict["current"] = placeholderDict["current"]
-    otherPlaceholderDict = shared_Dict
+      # updates shared_Dict
+      placeholderDict = {"current": shared_Dict["current"]}
+      placeholderDict["current"].update(current)
+      shared_Dict["current"] = placeholderDict["current"]
+      otherplaceholderDict = shared_Dict
 
   # the reason that the second element of YOUTUBE is only used here is for readabity and the program crashes if used outside of multithreading
   shared_memory_manager = multiprocessing.Manager()
@@ -169,9 +166,7 @@ def get_comments(current, filtersDict, miscData, config, allVideoCommentsDict, s
         "duplicateCommentsDict": current.duplicateCommentsDict, 
         "repostedCommentsDict": current.repostedCommentsDict, 
         "otherCommentsByMatchedAuthorsDict": current.otherCommentsByMatchedAuthorsDict, 
-        "scannedThingsList": current.scannedThingsList, 
         "spamThreadsDict": current.spamThreadsDict,
-        "allScannedCommentsDict": current.allScannedCommentsDict,
         "vidIdDict": current.vidIdDict,
         "vidTitleDict": current.vidTitleDict,
         "matchSamplesDict": current.matchSamplesDict,
@@ -198,9 +193,7 @@ def get_comments(current, filtersDict, miscData, config, allVideoCommentsDict, s
   current.duplicateCommentsDict.update(shared_Dict["current"]["duplicateCommentsDict"])
   current.repostedCommentsDict.update(shared_Dict["current"]["repostedCommentsDict"])
   current.otherCommentsByMatchedAuthorsDict.update(shared_Dict["current"]["otherCommentsByMatchedAuthorsDict"])
-  current.scannedThingsList.extend(shared_Dict["current"]["scannedThingsList"])
   current.spamThreadsDict.update(shared_Dict["current"]["spamThreadsDict"])
-  current.allScannedCommentsDict.update(shared_Dict["current"]["allScannedCommentsDict"])
   current.vidIdDict.update(shared_Dict["current"]["vidIdDict"])
   current.vidTitleDict.update(shared_Dict["current"]["vidTitleDict"])
   current.matchSamplesDict.update(shared_Dict["current"]["matchSamplesDict"])
@@ -564,7 +557,7 @@ def make_community_thread_dict(commentID, allCommunityCommentsDict):
 
 ###################################### ADD SPAM #####################################################
 
-# If the comment/username matches criteria based on mode, add key/value pair of comment ID and author ID to current.matchedCommentsDict
+# If the comment/username matches criteria based on mode, add key/value pair of comment ID and author ID to current["matchedCommentsDict"]
 # Also add key-value pair of comment ID and video ID to dictionary
 # Also count how many spam comments for each author
 def add_spam(current, config, miscData, currentCommentDict, videoID, matchReason="Filter Match", matchedText=None):
