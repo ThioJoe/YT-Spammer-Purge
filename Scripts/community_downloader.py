@@ -231,7 +231,7 @@ def main(communityPostID=None, limit=1000, sort=SORT_BY_RECENT, language=None, p
         if comment['totalPostComments']:
             totalComments = comment['totalPostComments']
         
-        if totalComments >= 0:
+        if totalComments >= 1:
             percent = ((count / totalComments) * 100)
             progressStats = f"[ {str(count)} / {str(totalComments)} ]".ljust(15, " ") + f" ({percent:.2f}%)"
             print(f'    >  Retrieving Post Comments - {progressStats}', end='\r')
