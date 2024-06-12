@@ -1345,9 +1345,9 @@ def main():
     deletionMode = None # Should be changed later, but if missed it will default to heldForReview
     confirmDelete = None # If None, will later cause user to be asked to delete
     if moderator_mode == False:
-      filterModesAllowedforNonOwners = ["AutoSmart", "SensitiveSmart"]
+      filterModesAllowedforNonOwners = ["AutoSmart", "SensitiveSmart", "Text"]
     elif moderator_mode == True:
-      filterModesAllowedforNonOwners = ["AutoSmart", "SensitiveSmart", 'ID']
+      filterModesAllowedforNonOwners = ["AutoSmart", "SensitiveSmart", "Text", 'ID']
 
     # If user isn't channel owner and not using allowed filter mode, skip deletion
     if userNotChannelOwner == True and filterMode not in filterModesAllowedforNonOwners:
