@@ -136,3 +136,10 @@ SpamPurgeConfig.ini
 spam_lists/
 SpamPurge_Resources/
 .DS_Store
+
+# do_type_checking.py files
+pyright_results.txt
+ruff_results.txt
+
+# others
+poetry.lock

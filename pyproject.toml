@@ -1,0 +1,72 @@
+[tool.poetry]
+name = "YT-Spammer-Purge"
+version = "2.18.0"
+description = "Allows you to scan for spam comments with multiple methods, and delete them all at once"
+authors = ["Your Name <you@example.com>"]
+license = "GPL-3.0"
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.9"
+google-api-python-client = ">=2.41.0"
+google-auth-oauthlib = ">=0.5.1"
+protobuf = ">=4.21.11"
+colorama = "0.4.4"
+rtfunicode = "2.0"
+certifi = ">=2021.10.8"
+six = ">=1.16.0"
+regex = ">=2022.3.15"
+rapidfuzz = ">=2.0.7"
+cryptography = ">=39.0.2"
+pwinput = ">=1.0.3"
+
+
+[tool.poetry.group.benchmark-distance.dependencies]
+levenshtein = ">=0.20.9"
+numpy = "^2.0.0"
+
+
+[tool.poetry.group.type-checking.dependencies]
+ruff = "^0.5.0"
+pyright = "^1.1.369"
+
+
+[tool.ruff]
+indent-width = 4 # Force 4 spaces per indentation level
+exclude = [
+    "Scripts/filter_variables.py",
+    "SpamPurge_Resources/*",
+    "Scripts/confusablesCustom/*",
+]
+
+[tool.ruff.lint]
+# List of error codes to ignore
+# Select specific classes of rules to apply
+select = ["E", "W", "F", "I", "B", "C4", "ARG", "SIM", "PTH", "PL"]
+ignore = [
+    "W291",    # Trailing whitespace
+    "E501",    # Line too long
+    "W292",    # No newline at end of file
+    "W293",    # Blank line contains whitespace
+    "PLR0912", # Too many branches
+    "PLR2004", # Magic values
+    "PLR0915", # Too many statements
+    "PLW0603", # Global statement
+]
+
+[tool.pyright]
+# strict for absoulte clean code™
+typeCheckingMode = "strict"
+# Exclude filter files and vendor code (confusablesCustom)
+ignore = [
+    "Scripts/filter_variables.py",
+    "SpamPurge_Resources/*",
+    "Scripts/confusablesCustom/*",
+]
+reportUnknownMemberType = "none"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
