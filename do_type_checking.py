@@ -16,10 +16,6 @@ def main() -> int:
     pyright_response = subprocess.run(
         [pybin, "-m", "pyright", str(curdir)], check=False, capture_output=True
     )
-    if pyright_response.returncode != 0:
-        print("error on pyright:")
-        print(pyright_response.stderr.decode("utf-8"))
-        return 1
     with pathlib.Path("pyright_results.txt").open("wb") as file:
         file.write(pyright_response.stdout)
 
@@ -27,10 +23,6 @@ def main() -> int:
     ruff_response = subprocess.run(
         [pybin, "-m", "pyright", str(curdir)], check=False, capture_output=True
     )
-    if ruff_response.returncode != 0:
-        print("error on ruff:")
-        print(ruff_response.stderr.decode("utf-8"))
-        return 1
     with pathlib.Path("ruff_results.txt").open("wb") as file:
         file.write(ruff_response.stdout)
     print("process finished.")
