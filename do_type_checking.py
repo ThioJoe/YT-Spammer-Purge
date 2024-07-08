@@ -21,7 +21,7 @@ def main() -> int:
 
     print("running ruff...")
     ruff_response = subprocess.run(
-        [pybin, "-m", "pyright", str(curdir)], check=False, capture_output=True
+        [pybin, "-m", "ruff", str(curdir)], check=False, capture_output=True
     )
     with pathlib.Path("ruff_results.txt").open("wb") as file:
         file.write(ruff_response.stdout)
