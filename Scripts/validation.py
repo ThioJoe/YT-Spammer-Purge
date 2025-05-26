@@ -83,6 +83,8 @@ def validate_video_id(video_url_or_id, silent=False, pass_exception=False, basic
 
 ############################### VALIDATE COMMUNITY POST ID #################################
 def validate_post_id(post_url):
+  isolatedPostID = ""
+  
   if "/post/" in post_url:
     startIndex = post_url.rindex("/") + 1
     endIndex = len(post_url)
@@ -90,12 +92,14 @@ def validate_post_id(post_url):
     startIndex = post_url.rindex("lb=") + 3
     endIndex = len(post_url)
   else:
-    isolatedPostId = post_url
-  try:
-    if startIndex < endIndex and endIndex <= len(post_url):
-      isolatedPostID = post_url[startIndex:endIndex]
-  except:
-    return False, None, None, None, None
+    isolatedPostID = post_url
+    
+  if isolatedPostID == "":
+    try:
+      if startIndex < endIndex and endIndex <= len(post_url):
+        isolatedPostID = post_url[startIndex:endIndex]
+    except:
+      return False, None, None, None, None
 
   # Post IDs used to be shorter, but apparently now have a longer format
   if len(isolatedPostID) == 26 or len(isolatedPostID) == 36:
