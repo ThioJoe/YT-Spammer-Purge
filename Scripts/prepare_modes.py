@@ -8,9 +8,16 @@ import Scripts.validation as validation
 import Scripts.auth as auth
 import Scripts.operations as operations
 import Scripts.files as files
-import SpamPurge_Resources.Filters.filter_variables as filter
 
 from Scripts.confusablesCustom import confusable_regex
+
+# We'll need to dynamically import the filter variables module. We'll use the full path so it works with the exe pyinstaller version too.
+import importlib
+filterPath = os.path.join(os.getcwd(), "SpamPurge_Resources", "Filters", "filter_variables.py")
+spec = importlib.util.spec_from_file_location("filter", filterPath)
+filter = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(filter)
+
 
 
 ##########################################################################################
@@ -295,6 +302,7 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
       print(f" > {F.LIGHTRED_EX}NOTE:{S.R} In sensitive mode, {F.LIGHTRED_EX}expect more false positives{S.R}. Recommended to run this AFTER regular Auto Smart Mode.\n")
     input("Press Enter to Begin Scanning...")
     print ("\033[A                                     \033[A") # Erases previous line
+    
   print("  Loading Filters  [                              ]", end="\r")
 
   # Create Variables

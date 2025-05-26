@@ -36,7 +36,7 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.18.0-Beta3"
+version = "2.18.0-Beta4"
 configVersion = 33
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 print("Importing Script Modules...")
@@ -61,6 +61,7 @@ from datetime import datetime, timedelta
 from collections import namedtuple
 import json, ast
 from pkg_resources import parse_version
+from importlib import reload
 
 print("Importing Third-Party Modules...")
 # Other Libraries
@@ -466,7 +467,7 @@ def main():
         sys.exit()
 
       # Set scanMode Variable Names
-      validModeValues = ['1', '2', '3', '4', '5', '6', '7', '8', '9','10', 'chosenvideos', 'recentvideos', 'entirechannel', 'communitypost', 'commentlist', 'recentcommunityposts']
+      validModeValues = ['1', '2', '3', '4', '5', '6', '7', '8', '9','10', 'chosenvideos', 'recentvideos', 'entirechannel', 'communitypost', 'commentlist', 'recentcommunityposts', 'debug']
       if scanMode in validModeValues:
         validMode = True
         if scanMode == "1" or scanMode == "chosenvideos":
@@ -489,6 +490,8 @@ def main():
           scanMode = "checkUpdates"
         elif scanMode == "10":
           scanMode = "tools"
+        elif scanMode == "debug":
+          scanMode = "showDebugInfo"
       else:
         print(f"\nInvalid choice: {scanMode} - Enter a number from 1 to 10")
         validConfigSetting = False
@@ -936,7 +939,8 @@ def main():
       files.check_lists_update(spamListDict)
       files.check_for_update(version, updateReleaseChannel)
       files.check_for_filter_update(filterListDict, silentCheck=True)
-      input("\nPress Enter to return to main menu...")
+      # Update imported list
+      reload(modes)
       return True
 
     # Recove deleted comments mode
@@ -954,6 +958,30 @@ def main():
       result = user_tools.user_tools_menu(config)
       if str(result) == "MainMenu":
         return True
+      
+    elif scanMode == "showDebugInfo":
+      # Print info about the current instance
+      print(f"\n{F.YELLOW}Debug Info:{S.R}")
+      print(f"  - Current User ID: {CURRENTUSER.id}")
+      print(f"  - Current User Name: {CURRENTUSER.name}")
+      print(f"  - Current Version: {version}")
+      print(f"  - Update Release Channel: {updateReleaseChannel}")
+      print(f"  - Update Available: {updateAvailable}")
+      print(f"  - Moderator Mode: {moderator_mode}")
+      print(f"  - User Not Channel Owner: {userNotChannelOwner}")
+      # Path to filter_variables.py
+      filterFileName = filterListDict['Files']['FilterVariables']['FileName']
+      filterFilePath = os.path.join(filterListDict['ResourcePath'], filterFileName)
+      localVersion = filterListDict['LocalVersion']
+      print(f"  - Filter Variables File Path: {filterFilePath}")
+      print(f"  - Filter Variables Local Version: {localVersion}")
+      print(f"  - Current Working Directory: " + os.getcwd())
+      if hasattr(sys, '_MEIPASS'): # If running as a pyinstaller bundle
+        print(f"  - Running as pyinstaller. Path: " + sys._MEIPASS)
+      
+      input("\nPress Enter to return to main menu...")
+      return True
+      
 
 # ====================================================================================================================================================================================================
 # ====================================================================================================================================================================================================
