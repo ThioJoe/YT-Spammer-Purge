@@ -1,5 +1,3 @@
-version: '3.7'
-
 services:
   yt-spammer-purge:
     image: ghcr.io/thiojoe/yt-spammer-purge:latest
