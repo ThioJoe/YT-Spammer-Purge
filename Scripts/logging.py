@@ -45,14 +45,18 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
       write_plaintext_log(current.logFileName, commentsContents)
     print("                                             ")
 
-  # Check if any flagged as possible false positives
+  # Check if any flagged as possible false positives or any matched from spam lists
   possibleFalsePositive = False
-  for author in current.matchSamplesDict.values():
-    if author['possibleFalsePositive'] == True:
+  knownSpamListMatch = False
+  for sample in current.matchSamplesDict.values():
+    if sample['possibleFalsePositive'] == True:
       possibleFalsePositive = True
       break
-    
-
+  for sample in current.matchSamplesDict.values():
+    if sample['nameAndTextColorized'] is not None:
+      knownSpamListMatch = True
+      break
+  
   # Print Sample Match List
   valuesPreparedToWrite = ""
   valuesPreparedToPrint = ""
@@ -83,8 +87,19 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
     countString = value['cString']
     authorID = value['authorID']
     nameAndText = value['nameAndText']
+    nameAndTextColorized = value['nameAndTextColorized']
+    
+    # Whether to use colorized text and index
+    if nameAndTextColorized == None:
+      nameAndTextColorized = nameAndText
+      printIndexString = indexString
+    else:
+      # Colorize with colorama
+      printIndexString =  colorize_text(indexString, indexString, F.RED) # Want to colorize the whole thing, so match itself
+      
+    
     if doWritePrint:
-      printValues = printValues + indexString + countString + f"{str(nameAndText)}\n"
+      printValues = printValues + printIndexString + countString + f"{str(nameAndTextColorized)}\n"
     # After making print values, remove the ANSI escape / color codes used, so they won't be written to file
     indexString = indexString.replace(u"\u001b[32m", "").replace(u"\u001b[0m", "")
     countString = countString.replace(u"\u001b[32m", "").replace(u"\u001b[0m", "")
@@ -101,6 +116,8 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
     print(f"{F.LIGHTMAGENTA_EX}============================ Match Samples: One comment per matched-comment author ============================{S.R}")
     if possibleFalsePositive:
       print(f"{F.GREEN}======= {B.GREEN}{F.BLACK} NOTE: {S.R}{F.GREEN} Possible false positives marked with * and highlighted in green. Check them extra well! ======={S.R}")
+    if knownSpamListMatch:
+      print(f"{F.RED}*NOTE: Specific matches from known spam lists are highlighted in red.{S.R}")
   for value in current.matchSamplesDict.values():
     if value['matchReason'] != "Duplicate" and value['matchReason'] != "Spam Bot Thread" and value['matchReason'] != "Repost":
       valuesPreparedToWrite, valuesPreparedToPrint = print_and_write(value, valuesPreparedToWrite, valuesPreparedToPrint)
@@ -224,6 +241,7 @@ def print_comments(current, config, scanVideoID, loggingEnabled, scanMode, logMo
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+
 # Uses comments.list YouTube API Request to get text and author of specific set of comments, based on comment ID
 def print_prepared_comments(current, commentsContents, scanVideoID, comments, j, loggingEnabled, scanMode, logMode, doWritePrint, matchReason):
 
@@ -263,6 +281,13 @@ def print_prepared_comments(current, commentsContents, scanVideoID, comments, j,
     elif logMode == "plaintext":
       commentsContents = commentsContents + f"\n{dividerString}\n\n"
     # -----------------------------------------------------------------
+    
+  # First get longest author name length from the comments to format sample list
+  listOfCommentsDicts = [current.matchedCommentsDict, current.duplicateCommentsDict, current.otherCommentsByMatchedAuthorsDict, current.spamThreadsDict, current.repostedCommentsDict]
+  longestAuthorNameLength = 0
+  for commentDict in current.matchedCommentsDict.values():
+    if len(commentDict['authorName']) > longestAuthorNameLength:
+      longestAuthorNameLength = len(commentDict['authorName'])
 
   for comment in comments:
     isRepost = False
@@ -287,6 +312,7 @@ def print_prepared_comments(current, commentsContents, scanVideoID, comments, j,
     matchReason = metadata['matchReason']
     originalCommentID = metadata['originalCommentID']
     timestamp = metadata['timestamp']
+    matchedText = metadata['matchedText']
 
     # Convert timestamp to readable format. First parses, then reconverts to new string
     if timestamp != "Unavailable":
@@ -303,7 +329,7 @@ def print_prepared_comments(current, commentsContents, scanVideoID, comments, j,
 
     # Add one sample from each matching author to current.matchSamplesDict, containing author ID, name, and text
     if matchReason != "Also By Matched Author" and author_id_local not in current.matchSamplesDict.keys():
-      add_sample(current, author_id_local, author, text, matchReason)
+      add_sample(current, author_id_local, author, text, matchReason, matchedText, longestAuthorNameLength)
     mark_possible_false_positive(current, author_id_local, text, matchReason)
 
     # Build comment direct link
@@ -723,35 +749,65 @@ def download_profile_pictures(pictureUrlsDict, jsonSettingsDict):
           break 
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Colorize the matched text within a string using colorama. Matches using regex to account for case insensitivity
+def colorize_text(originalString, matchedText, color):
+    escapedMatchedText = re.escape(matchedText)
+
+    def replace_with_color(match):
+        return f"{color}{match.group(0)}{S.R}"
+
+    colorizedString = re.sub(escapedMatchedText, replace_with_color, originalString, flags=re.I)
+    return colorizedString
+  
 
 # Adds a sample to current.matchSamplesDict and preps formatting
-def add_sample(current, authorID, authorNameRaw, commentText, matchReason):
-  def remove_unicode_categories(string):
-    unicodeStrip = ["Mn", "Cc", "Cf", "Cs", "Co", "Cn", "Sk"]
-    return "".join(char for char in string if unicode_category(char) not in unicodeStrip)
+def add_sample(current, authorID, authorNameRaw, commentText, matchReason, matchedText, longestAuthorNameLength):
+    def remove_unicode_categories(string):
+        unicodeStrip = ["Mn", "Cc", "Cf", "Cs", "Co", "Cn", "Sk"]
+        return "".join(char for char in string if unicode_category(char) not in unicodeStrip)
+    
+    consoleWidth = utils.get_terminal_size()
 
-  # Make index number and string formatted version
-  # index = len(current.matchSamplesDict) + 1
-  # iString = f"{str(index)}. ".ljust(4)
-  authorNumComments = current.authorMatchCountDict[authorID]
-  cString = f"[x{str(authorNumComments)}] ".ljust(7)
+    # Fixed width for comment counter
+    cString = f"[x{str(current.authorMatchCountDict[authorID])}] ".ljust(7)
 
-  # Left Justify Author Name and Comment Text
-  authorName = remove_unicode_categories(authorNameRaw)
-  if len(authorName) > 20:
-    authorName = authorName[0:17] + "..."
-    authorName = authorName[0:20].ljust(20)+": "
-  else: 
-    authorName = authorNameRaw[0:20].ljust(20)+": "
+    authorNameSpace = longestAuthorNameLength + 3  # Additional space for ellipsis and padding
 
-  commentText = str(commentText).replace("\n", " ").replace("\r", " ")
-  commentText = remove_unicode_categories(commentText)
-  if len(commentText) > 82:
-    commentText = commentText[0:79] + "..."
-  commentText = commentText[0:82].ljust(82)
+    # Calculate remaining space for comment
+    commentSpace = consoleWidth - len(cString) - authorNameSpace - 2 - 5 # -2 for ": " separator, -5 for extra buffer
 
-  # Add comment sample, author ID, name, and counter
-  current.matchSamplesDict[authorID] = {'cString':cString, 'count':authorNumComments, 'authorID':authorID, 'authorName':authorNameRaw, 'nameAndText':authorName + commentText, 'matchReason':matchReason}
+    # Format author name
+    authorName = remove_unicode_categories(authorNameRaw)
+    if len(authorName) > longestAuthorNameLength:
+        authorName = authorName[:longestAuthorNameLength-3] + "..."
+    authorName = authorName.ljust(longestAuthorNameLength) + ": "
+
+    # Format comment text
+    commentText = str(commentText).replace("\n", " ").replace("\r", " ")
+    commentText = remove_unicode_categories(commentText)
+    if len(commentText) > commentSpace:
+        commentText = commentText[:commentSpace-3] + "..."
+    commentText = commentText.ljust(commentSpace)
+    
+    # Combine author name and comment text to single line string
+    nameAndText = authorName + commentText
+    
+    # Colorize any matched text
+    if matchedText:
+      nameAndTextColorized = colorize_text(nameAndText, matchedText, F.LIGHTRED_EX)
+    else:
+      nameAndTextColorized = None
+
+    # Add comment sample, author ID, name, and counter
+    current.matchSamplesDict[authorID] = {
+        'cString': cString, 
+        'count': current.authorMatchCountDict[authorID], 
+        'authorID': authorID, 
+        'authorName': authorNameRaw, 
+        'nameAndText': nameAndText,
+        'nameAndTextColorized': nameAndTextColorized,
+        'matchReason': matchReason
+    }
 
 # Sort match samples by count per author
 def sort_samples(current):
@@ -795,6 +851,11 @@ def sort_samples(current):
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 def mark_possible_false_positive(current, authorID, text, matchReason):
+  
+  # NOTE - This isn't really working so I'm just marking everything as false
+  current.matchSamplesDict[authorID]['possibleFalsePositive'] = False
+  return current
+
   if matchReason != 'Filter Match':
     current.matchSamplesDict[authorID]['possibleFalsePositive'] = False
     return current
@@ -879,7 +940,7 @@ def prepare_logFile_settings(current, config, miscData, jsonSettingsDict, filter
     print(f"Log file will be called {F.YELLOW}" + current.logFileName + f"{S.R}\n")
 
   if bypass == False:
-    input(f"Press {F.YELLOW}Enter{S.R} to display comments...")
+    input(f"Press {F.YELLOW}Enter{S.R} to display comments...     {B.LIGHTCYAN_EX}{F.BLACK} TIP: {S.R} Widen this window now, and more comment sample text will be visible next!")
 
   # Write heading info to log file
   write_log_heading(current, logMode, filtersDict)

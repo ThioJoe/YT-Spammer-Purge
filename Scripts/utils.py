@@ -4,6 +4,7 @@ from Scripts.shared_imports import *
 import Scripts.validation as validation
 import Scripts.auth as auth
 from googleapiclient.errors import HttpError
+from html import unescape
 
 ##########################################################################################
 ############################## UTILITY FUNCTIONS #########################################
@@ -37,7 +38,7 @@ def get_video_title(current, video_id):
       return "[Unavailable]"
 
     if results['items']:
-      title = results["items"][0]["snippet"]["title"]
+      title = unescape(results["items"][0]["snippet"]["title"])
       current.vidTitleDict[video_id] = title
     elif (len(video_id) == 26 or len(video_id) == 36) and video_id[0:2] == "Ug":
       title = "[Community Post - No Title]"
@@ -87,7 +88,16 @@ def check_list_against_string(listInput, stringInput, caseSensitive=False):
     return True
   else:
     return False
-
+  
+######################### Clear multiple previous lines #########################
+def clear_lines(up, down=0):
+    LINE_UP = '\033[1A'
+    LINE_CLEAR = '\x1b[2K'
+    print(LINE_CLEAR, end="")
+    for i in range(up):
+        print(LINE_UP, end=LINE_CLEAR)
+    if down > 0:
+        print("\n"*down, end="\r")
 
 ################### Process Comma-Separated String to List ####################
 # Take in string, split by commas, remove whitespace and empty items, and return list
@@ -163,7 +173,17 @@ def choice(message="", bypass=False):
     elif response == "X" or response == "x":
       return None
     else:
-      print("\nInvalid Input. Enter Y or N  --  Or enter X to return to main menu.")  
+      print("\nInvalid Input. Enter Y or N  --  Or enter X to return to main menu.")
+      
+########################## Get Console Window Width #############################
+# To determine how many characters to print in a line
+def get_terminal_size():
+    # For Windows
+    if os.name == 'nt':
+        return os.get_terminal_size().columns
+    # For Unix-based systems
+    else:
+        return shutil.get_terminal_size().columns
 
 
 ############################### ERROR HANDLING MESSAGES #################################

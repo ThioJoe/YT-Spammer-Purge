@@ -2,6 +2,7 @@
 # -*- coding: UTF-8 -*-
 from Scripts.shared_imports import *
 import Scripts.validation as validation
+from Scripts.files import load_config_file
 
 # Google Authentication Modules
 from googleapiclient.discovery import build
@@ -10,13 +11,28 @@ from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from json import JSONDecodeError
 
+# Other Modules
+import os
+import base64
+import io
+import json
+from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
+from cryptography.fernet import Fernet
+from pwinput import pwinput
+
+
 TOKEN_FILE_NAME = 'token.pickle'
+TOKEN_ENCRYPTED_NAME = 'token.pickle.encrypted'
+from YTSpammerPurge import configVersion
+encrypt_config = load_config_file(onlyGetSettings=True, configVersion=configVersion)['encrypt_token_file']
+
+# Encryption Settings
+SALT_BYTES = 64
+SCRYPT_N = 2**18
 
 YOUTUBE = None
 CURRENTUSER = None
 
-def initialize():
-  pass
 
 ##########################################################################################
 ################################## AUTHORIZATION #########################################
@@ -55,23 +71,35 @@ def get_authenticated_service():
       sys.exit()
 
   creds = None
-  # The file token.pickle stores the user's access and refresh tokens, and is
-  # created automatically when the authorization flow completes for the first time.
-  if os.path.exists(TOKEN_FILE_NAME):
-    creds = Credentials.from_authorized_user_file(TOKEN_FILE_NAME, scopes=YOUTUBE_READ_WRITE_SSL_SCOPE)
+  global tokenData
+  # The file token.pickle stores the user's access and refresh tokens, and is created automatically when the authorization flow completes for the first time.
+  # First check if token.pickle exists, or if it is an IOBytes virtual file
+  if os.path.exists(TOKEN_FILE_NAME) or os.path.exists(TOKEN_ENCRYPTED_NAME):
+    #creds = Credentials.from_authorized_user_file(TOKEN_FILE_NAME, scopes=YOUTUBE_READ_WRITE_SSL_SCOPE)
+    creds = Credentials.from_authorized_user_info(tokenData, scopes=YOUTUBE_READ_WRITE_SSL_SCOPE)
 
   # If there are no (valid) credentials available, make the user log in.
   if not creds or not creds.valid:
+    refreshed = False
     if creds and creds.expired and creds.refresh_token:
       creds.refresh(Request())
+      refreshed = True
     else:
       print(f"\nPlease {F.YELLOW}login using the browser window{S.R} that opened just now.\n")
       flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRETS_FILE, scopes=YOUTUBE_READ_WRITE_SSL_SCOPE)
       creds = flow.run_local_server(port=0, authorization_prompt_message="Waiting for authorization. See message above.")
       print(f"{F.GREEN}[OK] Authorization Complete.{S.R}")
-      # Save the credentials for the next run
-    with open(TOKEN_FILE_NAME, 'w') as token:
-      token.write(creds.to_json())
+    # Save the credentials for the next run
+    if encrypt_config == True:
+      # Extract the token data from the credentials object, and convert it to a Dict
+      tokenData = json.loads(creds.to_json())
+      # Convert Dict to bytes
+      tokenData = json.dumps(tokenData).encode()
+      # Encrypt the token data
+      encrypt_file(fileData=tokenData, refreshed=refreshed)
+    else:
+      with open(TOKEN_FILE_NAME, 'w') as token:
+        token.write(creds.to_json())
   YOUTUBE = build(API_SERVICE_NAME, API_VERSION, credentials=creds, discoveryServiceUrl=DISCOVERY_SERVICE_URL, cache_discovery=False, cache=None)
   return YOUTUBE
 
@@ -90,7 +118,10 @@ def first_authentication():
   except Exception as e:
     if "invalid_grant" in str(e):
       print(f"{F.YELLOW}[!] Invalid token{S.R} - Requires Re-Authentication")
-      os.remove(TOKEN_FILE_NAME)
+      if os.path.exists(TOKEN_FILE_NAME):
+        os.remove(TOKEN_FILE_NAME)
+      if os.path.exists(TOKEN_ENCRYPTED_NAME):
+        os.remove(TOKEN_ENCRYPTED_NAME)
       YOUTUBE = get_authenticated_service()
     else:
       print('\n')
@@ -179,6 +210,119 @@ def get_current_user(config):
 
   return channelID, channelTitle, configMatch  
 
-
+# ---------------------------- Token File Functions ----------------------------
 def remove_token():
   os.remove(TOKEN_FILE_NAME)
+
+# Convert TOKEN_FILE_NAME to IOBytes virtual file
+def convert_file_to_iobytes(file_name):
+  with open(file_name, 'rb') as f:
+    return io.BytesIO(f.read())
+  
+def convert_dict_to_iobytes(data_dict):
+  io_bytes = io.BytesIO()
+  io_bytes.write(json.dumps(data_dict).encode('utf-8'))
+  return io_bytes
+
+def convert_dict_to_bytes(data_dict):
+  return json.dumps(data_dict).encode('utf-8')
+
+# Convert IOBytes object to dictionary
+def convert_iobytes_to_dict(io_bytes):
+  io_string = io_bytes.read().decode('utf-8') # Convert to string
+  io_dict = json.loads(io_string) # Convert to dictionary
+  return io_dict
+
+# ---------------------------- Token File Encryption Functions ----------------------------
+def derive_key_from_password(password, salt):
+  # Derive a key from the password and salt
+  # n = 2**18 is 256MB of memory, r = 8 is 8 parallel threads, p = 1 is 1 iteration
+  kdf = Scrypt(salt=salt, length=32, n=SCRYPT_N, r=8, p=1)
+  key = kdf.derive(password.encode())
+  return base64.urlsafe_b64encode(key)
+
+def encrypt_file(fileName=None, fileData=None, refreshed=False):
+  # Use 64 Bytes (512 bits) of salt (random data) - Unless changed above
+  salt = os.urandom(SALT_BYTES)
+
+  if refreshed == False:
+    print(f"\n{F.LIGHTGREEN_EX}Choose a password{S.R} to encrypt the login credential file (token.pickle).")
+    password = pwinput(prompt='Password: ', mask='*')
+  else:
+    print(f"\nLogin credential refreshed -- {F.LIGHTGREEN_EX}Re-Enter your password{S.R} to re-encrypt the updated credential file (token.pickle).")
+    password = pwinput(prompt='Password: ', mask='*')
+
+  key = derive_key_from_password(password, salt)
+  fernet = Fernet(key)
+
+  if fileName:
+    with open(fileName, 'rb') as file:
+      file_data = file.read()
+
+    encrypted_data = fernet.encrypt(file_data)
+
+    with open(fileName + '.encrypted', 'wb') as encrypted_file:
+      encrypted_file.write(salt + encrypted_data)
+
+    os.remove(fileName)
+
+  elif fileData:
+    encrypted_data = fernet.encrypt(fileData)
+
+    with open(TOKEN_ENCRYPTED_NAME, 'wb') as encrypted_file:
+      encrypted_file.write(salt + encrypted_data)
+
+    return encrypted_data
+
+def decrypt_file(filename):
+  if not filename.endswith('.encrypted'):
+    print('Invalid encrypted file.')
+    return None
+
+  success = False
+
+  # Loop until password is correct
+  while success==False:
+    try:
+      print(f"\n{F.LIGHTRED_EX}Enter your password{S.R} to decrypt the login credential file (token.pickle.encrypted)")
+      password = pwinput(prompt='Password: ', mask='*')
+
+      with open(filename, 'rb') as encrypted_file:
+        salt = encrypted_file.read(SALT_BYTES)
+        encrypted_data = encrypted_file.read()
+
+      key = derive_key_from_password(password, salt)
+      fernet = Fernet(key)
+
+      decrypted_data = fernet.decrypt(encrypted_data)
+      success=True
+    except:
+      print(f"\n{F.WHITE}{B.LIGHTRED_EX} INCORRECT PASSWORD {S.R} - Try again. If you can't remember the password, delete '{TOKEN_ENCRYPTED_NAME}' and re-run the program.")
+      
+
+  return io.BytesIO(decrypted_data)
+
+
+def initialize():
+  # Check if token file exists
+  if os.path.exists(TOKEN_FILE_NAME) == True:
+    # Convert token file to IOBytes object
+    tokenData = convert_file_to_iobytes(TOKEN_FILE_NAME)
+    tokenData = convert_iobytes_to_dict(tokenData)
+
+    if encrypt_config == True:
+      # Convert dict to bytes
+      encrypt_file(fileName=TOKEN_FILE_NAME, refreshed=False)
+
+  elif os.path.exists(TOKEN_ENCRYPTED_NAME) == True:
+    # Decrypt token file
+    tokenData = decrypt_file(TOKEN_ENCRYPTED_NAME)
+    tokenData = convert_iobytes_to_dict(tokenData)
+
+  # If no token file exists, move on, creation will be handled later
+  else:
+    return False
+  
+  return tokenData
+
+tokenData = initialize()

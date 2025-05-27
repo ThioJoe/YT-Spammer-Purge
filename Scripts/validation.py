@@ -3,6 +3,7 @@
 from Scripts.shared_imports import *
 import Scripts.auth as auth
 import Scripts.utils as utils
+from html import unescape
 
 from urllib.parse import urlparse
 from Scripts.community_downloader import get_post_channel_url
@@ -46,7 +47,7 @@ def validate_video_id(video_url_or_id, silent=False, pass_exception=False, basic
         if possibleVideoID == result['items'][0]['id']:
           channelID = result['items'][0]['snippet']['channelId']
           channelTitle = result["items"][0]["snippet"]["channelTitle"]
-          videoTitle = result["items"][0]["snippet"]["title"]
+          videoTitle = unescape(result["items"][0]["snippet"]["title"])
           # When comments are disabled, the commentCount is not included in the response, requires catching KeyError
           try:
             commentCount = result['items'][0]['statistics']['commentCount']
@@ -82,6 +83,8 @@ def validate_video_id(video_url_or_id, silent=False, pass_exception=False, basic
 
 ############################### VALIDATE COMMUNITY POST ID #################################
 def validate_post_id(post_url):
+  isolatedPostID = ""
+  
   if "/post/" in post_url:
     startIndex = post_url.rindex("/") + 1
     endIndex = len(post_url)
@@ -89,12 +92,14 @@ def validate_post_id(post_url):
     startIndex = post_url.rindex("lb=") + 3
     endIndex = len(post_url)
   else:
-    isolatedPostId = post_url
-  try:
-    if startIndex < endIndex and endIndex <= len(post_url):
-      isolatedPostID = post_url[startIndex:endIndex]
-  except:
-    return False, None, None, None, None
+    isolatedPostID = post_url
+    
+  if isolatedPostID == "":
+    try:
+      if startIndex < endIndex and endIndex <= len(post_url):
+        isolatedPostID = post_url[startIndex:endIndex]
+    except:
+      return False, None, None, None, None
 
   # Post IDs used to be shorter, but apparently now have a longer format
   if len(isolatedPostID) == 26 or len(isolatedPostID) == 36:
@@ -417,6 +422,7 @@ def validate_config_settings(config):
     'moderator_mode': (True, False),
     'auto_close': (True, False),
     'colors_enabled': (True, False),
+    'encrypt_token_file': (True, False),
     'scan_mode': ('ask', 'chosenvideos', 'recentvideos', 'entirechannel', 'communitypost', 'recentcommunityposts'),
     'max_comments': ('ask'), #
     #'videos_to_scan': None,

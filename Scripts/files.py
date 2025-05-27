@@ -169,21 +169,21 @@ def check_for_filter_update(filterListDict, silentCheck = False):
     if matchItem:
       latestFilterVersion = str(matchItem.group(0))
     else:
-      return False
+      return False, filterListDict
       
   except OSError as ox:
     if silentCheck == True:
-      return False
+      return False, filterListDict
     else:
       if "WinError 10013" in str(ox):
         print(f"{B.RED}{F.WHITE}WinError 10013:{S.R} The OS blocked the connection to GitHub. Check your firewall settings.\n")
-        return False
+      return False, filterListDict
   except:
     if silentCheck == True:
-      return False
+      return False, filterListDict
     else:
       print("Error: Could not get latest release info from GitHub. Please try again later.")
-      return False
+      return False, filterListDict
 
   if parse_version(localVersion) < parse_version(latestFilterVersion):
     print("\n>  A new filter variables update is available. Downloading...")
@@ -195,12 +195,15 @@ def check_for_filter_update(filterListDict, silentCheck = False):
     except:
       print(f" > {F.RED}Error:{S.R} Could not create backup of filter_variables.py file. Please check permissions and try again. Or just rename the file manually.")
       input("\nPress Enter to Continue With Current Filter Version...")
-      return False
+      return False, filterListDict
     
     filedownloadResult = getRemoteFile(latestFilterURL, filterFilePath, description="filter variables file")
     if filedownloadResult == True:
+      filterListDict['LocalVersion'] = latestFilterVersion
       print(f"{F.LIGHTGREEN_EX}Filter variables file updated.{S.R}\n")
-      return True
+      return True, filterListDict
+    else:
+      return False, filterListDict
 
 
 ############################# Check For App Update ##############################
@@ -515,7 +518,7 @@ def getRemoteFile(url, downloadFilePath, streamChoice=True, silent=False, header
 
 ############################# Load a Config File ##############################
 # Put config settings into dictionary
-def load_config_file(configVersion=None, forceDefault=False, skipConfigChoice=False, configFileName="SpamPurgeConfig.ini", configFolder="configs"):
+def load_config_file(configVersion=None, forceDefault=False, skipConfigChoice=False, onlyGetSettings=False, configFileName="SpamPurgeConfig.ini", configFolder="configs"):
   configDict = {}
 
   def default_config_path(relative_path):
@@ -576,6 +579,11 @@ def load_config_file(configVersion=None, forceDefault=False, skipConfigChoice=Fa
         elif setting[1].lower() == "true":
           configDict[setting[0]] = True
 
+  # Skip some prompts if only getting settings, like for auth script
+  if onlyGetSettings == True:
+    configDict = check_update_config_file(configVersion, configDict, currentConfigFileNameWithPath)
+    return configDict
+  
   # Prevent prompt about config file if it's the default config file
   if default == True:
     configDict['use_this_config'] = True
@@ -1244,3 +1252,71 @@ def check_existing_save():
           savesList.extend([fileName])
 
   return savesList
+
+
+# Takes in compiled regex object and saves it to pickle file
+def save_compiled_regex_pickle(compiled_input, fileNameBase, latestListVersion, relativeFolderPath=os.path.join(RESOURCES_FOLDER_NAME, "Compiled_Regex")):
+  # Determine new file name based on base and version number
+  fileName = f"{fileNameBase}_v{latestListVersion}.pickle"
+  
+  fileNameWithPath = os.path.join(relativeFolderPath, fileName)
+  # Check if folder exists, if not create it
+  if not os.path.isdir(relativeFolderPath):
+    try:
+      os.mkdir(relativeFolderPath)
+    except:
+      print(f"Error: Could not create folder. Try creating the folder {relativeFolderPath} to continue.")
+      return False
+    
+  # Write the file
+  try:
+    with open(fileNameWithPath, 'wb') as pickleFile:
+      pickle.dump(compiled_input, pickleFile)
+      pickleFile.close()
+  except:
+    traceback.print_exc()
+    print("Error: Something went wrong when saving precompiled regex file. Continuing anyway...")
+    return False
+  
+  return True
+  
+
+def read_compiled_regex_pickle(fileNameBase, latestListVersion, relativeFolderPath=os.path.join(RESOURCES_FOLDER_NAME, "Compiled_Regex")):
+  # Find file that begins with the fileNameBase, check if the appended version compared to latestListVersion
+  fileName = None
+  if os.path.isdir(relativeFolderPath):
+    for file in os.listdir(relativeFolderPath):
+      if file.startswith(fileNameBase) and file.endswith(".pickle"):
+        if parse_version(file.split("_v")[1].split(".pickle")[0]) == parse_version(latestListVersion):
+          fileName = file
+          break
+        # Delete an old file if found
+        else:
+          try_remove_file(os.path.join(relativeFolderPath, file))
+          return None
+          
+  # Create folder if doesn't exist
+  else:
+    try:
+      os.mkdir(relativeFolderPath)
+      return None
+    except:
+      print(f"Error: Directory '{relativeFolderPath}' could not be found and could not be created. Maybe try creating the folder yourself.")
+      return False
+  
+  # If no file found, return None
+  if fileName == None:
+    return None
+  else:
+    fileNameWithPath = os.path.join(relativeFolderPath, fileName)
+    # Read the file
+    try:
+      with open(fileNameWithPath, 'rb') as pickleFile:
+        compiled_regex = pickle.load(pickleFile)
+        pickleFile.close()
+    except:
+      traceback.print_exc()
+      print(f"Error: Something went wrong when reading precompiled regex file '{fileName}. Continuing anyway...")
+      return False
+  
+  return compiled_regex

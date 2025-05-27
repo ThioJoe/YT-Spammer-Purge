@@ -36,8 +36,8 @@
 ### IMPORTANT:  I OFFER NO WARRANTY OR GUARANTEE FOR THIS SCRIPT. USE AT YOUR OWN RISK.
 ###             I tested it on my own and implemented some failsafes as best as I could,
 ###             but there could always be some kind of bug. You should inspect the code yourself.
-version = "2.17.1"
-configVersion = 32
+version = "2.18.0"
+configVersion = 33
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 print("Importing Script Modules...")
 # Import other module files
@@ -61,12 +61,13 @@ from datetime import datetime, timedelta
 from collections import namedtuple
 import json, ast
 from pkg_resources import parse_version
+from importlib import reload
 
 print("Importing Third-Party Modules...")
 # Other Libraries
 from googleapiclient.errors import HttpError
 
-
+utils.clear_terminal()
 
 ##########################################################################################
 ##########################################################################################
@@ -138,6 +139,9 @@ def main():
     'Whitelist': {
       'PathWithName': whitelistPathWithName,
       'FileName': "whitelist.txt",
+    },
+    "VersionInfo": {
+      'LatestLocalSpamListVersion': "0.0.0.0",
     }
   }
 
@@ -212,6 +216,7 @@ def main():
   # Get current version of filter_variables.py that is in the SpamPurge_Resources/Filters folder
   filterVersion = files.get_current_filter_version(filterListDict)
   filterListDict['LocalVersion'] = filterVersion
+  filterListDict['LatestVersion'] = filterVersion # Set it to the current version, will be updated if newer version found
 
   # Check for primary config file, load into dictionary 'config'. If no config found, loads data from default config in assets folder
   utils.clear_terminal()
@@ -254,6 +259,7 @@ def main():
     # Only check for updates once a day, compare current date to last checked date
     if datetime.today() > datetime.strptime(spamListDict['Meta']['VersionInfo']['LastChecked'], '%Y.%m.%d.%H.%M')+timedelta(days=1):
       # Check for update to filter variables file
+      # filterFileUpdated, filterListDict = files.check_for_filter_update(filterListDict, silentCheck=True) # Returned variables aren't used anywhere
       files.check_for_filter_update(filterListDict, silentCheck=True)
       # Check spam lists if today or tomorrow's date is later than the last update date (add day to account for time zones)
       if datetime.today()+timedelta(days=1) >= datetime.strptime(spamListDict['Meta']['VersionInfo']['LatestLocalVersion'], '%Y.%m.%d'):
@@ -295,6 +301,7 @@ def main():
   miscData.spamLists['spamDomainsList'] = spamListDict['Lists']['Domains']['FilterContents']
   miscData.spamLists['spamAccountsList'] = spamListDict['Lists']['Accounts']['FilterContents']
   miscData.spamLists['spamThreadsList'] = spamListDict['Lists']['Threads']['FilterContents']
+  miscData.spamLists['latestLocalVersion'] = spamListDict['Meta']['VersionInfo']['LatestLocalVersion']
 
 
   # Create Whitelist if it doesn't exist,
@@ -460,7 +467,7 @@ def main():
         sys.exit()
 
       # Set scanMode Variable Names
-      validModeValues = ['1', '2', '3', '4', '5', '6', '7', '8', '9','10', 'chosenvideos', 'recentvideos', 'entirechannel', 'communitypost', 'commentlist', 'recentcommunityposts']
+      validModeValues = ['1', '2', '3', '4', '5', '6', '7', '8', '9','10', 'chosenvideos', 'recentvideos', 'entirechannel', 'communitypost', 'commentlist', 'recentcommunityposts', 'debug']
       if scanMode in validModeValues:
         validMode = True
         if scanMode == "1" or scanMode == "chosenvideos":
@@ -483,6 +490,8 @@ def main():
           scanMode = "checkUpdates"
         elif scanMode == "10":
           scanMode = "tools"
+        elif scanMode == "debug":
+          scanMode = "showDebugInfo"
       else:
         print(f"\nInvalid choice: {scanMode} - Enter a number from 1 to 10")
         validConfigSetting = False
@@ -930,7 +939,8 @@ def main():
       files.check_lists_update(spamListDict)
       files.check_for_update(version, updateReleaseChannel)
       files.check_for_filter_update(filterListDict, silentCheck=True)
-      input("\nPress Enter to return to main menu...")
+      # Update imported list
+      reload(modes)
       return True
 
     # Recove deleted comments mode
@@ -948,6 +958,30 @@ def main():
       result = user_tools.user_tools_menu(config)
       if str(result) == "MainMenu":
         return True
+      
+    elif scanMode == "showDebugInfo":
+      # Print info about the current instance
+      print(f"\n{F.YELLOW}Debug Info:{S.R}")
+      print(f"  - Current User ID: {CURRENTUSER.id}")
+      print(f"  - Current User Name: {CURRENTUSER.name}")
+      print(f"  - Current Version: {version}")
+      print(f"  - Update Release Channel: {updateReleaseChannel}")
+      print(f"  - Update Available: {updateAvailable}")
+      print(f"  - Moderator Mode: {moderator_mode}")
+      print(f"  - User Not Channel Owner: {userNotChannelOwner}")
+      # Path to filter_variables.py
+      filterFileName = filterListDict['Files']['FilterVariables']['FileName']
+      filterFilePath = os.path.join(filterListDict['ResourcePath'], filterFileName)
+      localVersion = filterListDict['LocalVersion']
+      print(f"  - Filter Variables File Path: {filterFilePath}")
+      print(f"  - Filter Variables Local Version: {localVersion}")
+      print(f"  - Current Working Directory: " + os.getcwd())
+      if hasattr(sys, '_MEIPASS'): # If running as a pyinstaller bundle
+        print(f"  - Running as pyinstaller. Path: " + sys._MEIPASS)
+      
+      input("\nPress Enter to return to main menu...")
+      return True
+      
 
 # ====================================================================================================================================================================================================
 # ====================================================================================================================================================================================================
@@ -1141,7 +1175,7 @@ def main():
         authorKeyAllCommentsDict = {}
         allCommunityCommentsDict = get_community_comments(communityPostID=communityPostID, limit=limit, postScanProgressDict=postScanProgressDict, postText=postText)
         retrievedCount = len(allCommunityCommentsDict)
-        print(f"\nRetrieved {retrievedCount} comments from post.\n")
+        print(f"Retrieved {retrievedCount} comments from post.")
         scannedCount = 0
         threadDict = {}
 
@@ -1177,7 +1211,7 @@ def main():
           percent = ((scannedCount / retrievedCount) * 100)
           progressStats = f"[ {str(scannedCount)} / {str(retrievedCount)} ]".ljust(15, " ") + f" ({percent:.2f}%)"
           print(f'  {progressStats}  -  Analyzing Comments For Spam ', end='\r')
-        print("                                                                                        ")
+        print("                                                                                        ", end='\r')
 
         dupeCheckModes = utils.string_to_list(config['duplicate_check_modes'])
         if filtersDict['filterMode'].lower() in dupeCheckModes:
@@ -1185,7 +1219,7 @@ def main():
         # repostCheckModes = utils.string_to_list(config['stolen_comments_check_modes'])
         # if filtersDict['filterMode'].lower() in repostCheckModes:
         #   operations.check_reposts(current, config, miscData, allCommunityCommentsDict, communityPostID)
-          print("                                                                                                                       ")
+          print("                                                                                                                       ", end='\r')
 
       if scanMode == "communityPost":
         scan_community_post(current, config, communityPostID, maxScanNumber)
@@ -1207,16 +1241,10 @@ def main():
       # Goes to get comments for first page
       print("\n------------------------------------------------------------------------------")
       print("(Note: If the program appears to freeze, try right clicking within the window)\n")
-      print("                          --- Scanning --- \n")
+      print("                          --- Scanning --- \n\n")
 
       # ----------------------------------------------------------------------------------------------------------------------
       def scan_video(miscData, config, filtersDict, scanVideoID, videosToScan=None, currentVideoDict=None, videoTitle=None, showTitle=False, i=1):
-        if currentVideoDict is None:
-          currentVideoDict = {}
-        nextPageToken, currentVideoDict = operations.get_comments(current, filtersDict, miscData, config, currentVideoDict, scanVideoID, videosToScan=videosToScan)
-        if nextPageToken == "Error":
-            return "Error"
-
         if showTitle == True and len(videosToScan) > 0:
           # Prints video title, progress count, adds enough spaces to cover up previous stat print line
           offset = 95 - len(videoTitle)
@@ -1224,7 +1252,14 @@ def main():
             spacesStr = " " * offset
           else:
             spacesStr = ""
+          utils.clear_lines(up=1, down=0)
           print(f"Scanning {i}/{len(videosToScan)}: " + videoTitle + spacesStr + "\n")
+          
+        if currentVideoDict is None:
+          currentVideoDict = {}
+        nextPageToken, currentVideoDict = operations.get_comments(current, filtersDict, miscData, config, currentVideoDict, scanVideoID, videosToScan=videosToScan)
+        if nextPageToken == "Error":
+            return "Error"
 
         operations.print_count_stats(current, miscData, videosToScan, final=False)  # Prints comment scan stats, updates on same line
         # After getting first page, if there are more pages, goes to get comments for next page
@@ -1380,7 +1415,7 @@ def main():
 
     # User wants to automatically delete with no user intervention
     elif config['delete_without_reviewing'] == True:
-      if userNotChannelOwner == True:
+      if userNotChannelOwner == True and moderator_mode == False:
           confirmDelete = "report"
           deletionMode = "reportSpam"
           deletionEnabled = True
