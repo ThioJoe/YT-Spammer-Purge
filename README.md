@@ -161,7 +161,7 @@ If you are not sure how to install YTSpammerPurge manually, it is probably best 
 The easiest way to install YTSpammerPurge is using the install script.
 
 ```bash
-bash <(curl -s https://raw.githubusercontent.com/ThioJoe/YT-Spammer-Purge/main/install.sh)
+curl -s https://raw.githubusercontent.com/ThioJoe/YT-Spammer-Purge/main/install.sh && bash install.sh
 ```
 
 <img 
