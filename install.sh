@@ -109,7 +109,9 @@ install_macos() {
 }
 
 install_python_requirements () {
-    python3 -m pip install -q -r requirements.txt --user && \
+    python3 -m venv venv
+    source venv/bin/activate
+    python3 -m pip install -q -r requirements.txt && \
         echo "Python requirements installed." || exit 1
     # Pip should give an error if it fails.
 }
@@ -174,7 +176,7 @@ install_MAIN () {
 
     # Done!
 
-    printf "Dependencies and Program installed into .\YT-Spammer-Purge!\nNow follow these instructions to get a client_secrets.json file!\nhttps://github.com/ThioJoe/YT-Spammer-Purge/wiki/Instructions:-Obtaining-an-API-Key\n\nYou may run this script again inside your installation to update.\n"
+    printf "Dependencies and Program installed into this folder.\nYou may now follow these instructions to get a client_secrets.json file!\nhttps://github.com/ThioJoe/YT-Spammer-Purge/wiki/Instructions:-Obtaining-an-API-Key and run the ./YTSpammerPurge.sh script.\n\nYou may run this script again inside your installation to update.\n"
     exit 0
 }
 
