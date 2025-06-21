@@ -136,3 +136,5 @@ SpamPurgeConfig.ini
 spam_lists/
 SpamPurge_Resources/
 .DS_Store
+
+typings/
