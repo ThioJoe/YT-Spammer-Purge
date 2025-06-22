@@ -1,16 +1,20 @@
 import json
-from unicodedata import normalize
-import string
 import os
-from config import CUSTOM_CONFUSABLE_PATH, CONFUSABLES_PATH, CONFUSABLE_MAPPING_PATH, MAX_SIMILARITY_DEPTH
+import string
+from unicodedata import normalize
 
-def _asciify(char):
-    return normalize('NFD',char).encode('ascii', 'ignore').decode('ascii')
+from .config import CONFUSABLE_MAPPING_PATH, CONFUSABLES_PATH, CUSTOM_CONFUSABLE_PATH, MAX_SIMILARITY_DEPTH
 
-def _get_accented_characters(char):
+
+def _asciify(char: str) -> str:
+    return normalize('NFD', char).encode('ascii', 'ignore').decode('ascii')
+
+
+def _get_accented_characters(char: str):
     return [u for u in (chr(i) for i in range(137928)) if u != char and _asciify(u) == char]
 
-def _get_confusable_chars(character, unicode_confusable_map, depth):
+
+def _get_confusable_chars(character: str, unicode_confusable_map: dict[str, set[str]], depth: int):
     mapped_chars = unicode_confusable_map[character]
 
     group = set([character])
@@ -19,26 +23,27 @@ def _get_confusable_chars(character, unicode_confusable_map, depth):
             group.update(_get_confusable_chars(mapped_char, unicode_confusable_map, depth + 1))
     return group
 
-def parse_new_mapping_file():
-    unicode_confusable_map = {}
 
-    with open(os.path.join(os.path.dirname(__file__), CONFUSABLES_PATH), "r", encoding = 'utf-8') as unicode_mappings:
-        with open(os.path.join(os.path.dirname(__file__), CUSTOM_CONFUSABLE_PATH), "r", encoding = 'utf-8') as custom_mappings:
+def parse_new_mapping_file():
+    unicode_confusable_map: dict[str, set[str]] = {}
+
+    with open(os.path.join(os.path.dirname(__file__), CONFUSABLES_PATH), "r", encoding='utf-8') as unicode_mappings:
+        with open(os.path.join(os.path.dirname(__file__), CUSTOM_CONFUSABLE_PATH), "r", encoding='utf-8') as custom_mappings:
             mappings = unicode_mappings.readlines()
             mappings.extend(custom_mappings)
 
             numOfMappings = len(mappings)
             i = 0
             for mapping_line in mappings:
-                i = i+1
-                print(f"{i}/{numOfMappings} Mappings Checked", end = "\r")
+                i = i + 1
+                print(f"{i}/{numOfMappings} Mappings Checked", end="\r")
                 if not mapping_line.strip() or mapping_line[0] == '#' or mapping_line[1] == '#':
                     continue
 
                 mapping = mapping_line.split(";")[:2]
                 str1 = chr(int(mapping[0].strip(), 16))
-                mapping[1] = mapping[1].strip().split(" ")
-                mapping[1] = [chr(int(x, 16)) for x in mapping[1]]
+                mapping[1] = mapping[1].strip().split(" ")  # type: ignore
+                mapping[1] = [chr(int(x, 16)) for x in mapping[1]]  # type: ignore
                 str2 = "".join(mapping[1])
 
                 if unicode_confusable_map.get(str1):
@@ -93,14 +98,14 @@ def parse_new_mapping_file():
     numOfCharsToMap = len(characters_to_map)
     charMapProgress = 0
     for character in characters_to_map:
-        charMapProgress = charMapProgress +1
-        print(f"{charMapProgress}/{numOfCharsToMap} Characters Processed", end = "\r")
+        charMapProgress = charMapProgress + 1
+        print(f"{charMapProgress}/{numOfCharsToMap} Characters Processed", end="\r")
         char_group = _get_confusable_chars(character, unicode_confusable_map, 0)
         CONFUSABLE_MAP[character] = list(char_group)
-    print("                                                                 ")    
+    print("                                                                 ")
 
-    mapping_file = open(os.path.join(os.path.dirname(__file__), CONFUSABLE_MAPPING_PATH), "w")
-    mapping_file.write(json.dumps(CONFUSABLE_MAP))
-    mapping_file.close()
+    with open(os.path.join(os.path.dirname(__file__), CONFUSABLE_MAPPING_PATH), "w", encoding="utf-8") as mapping_file:
+        mapping_file.write(json.dumps(CONFUSABLE_MAP))
+
 
 parse_new_mapping_file()

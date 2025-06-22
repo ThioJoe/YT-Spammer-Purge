@@ -21,15 +21,15 @@ lengths = np.arange(10, 1000)
 NUM_PAIRS = 10000
 
 # Initialize string lists
-x = []
-y = []
+x: list[str] = []
+y: list[str] = []
 
 # Generate random strings
 for _ in range(NUM_PAIRS):
-    x_len = random.choice(lengths)
-    y_len = random.choice(lengths)
-    temp_x = []
-    temp_y = []
+    x_len: int = random.choice(lengths)
+    y_len: int = random.choice(lengths)
+    temp_x: list[str] = []
+    temp_y: list[str] = []
     for _ in range(x_len):
         temp_x.append(random.choice(CHARS))
     for _ in range(y_len):

@@ -1,31 +1,39 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-from Scripts.shared_imports import *
-from Scripts.gui import *
-from Scripts.utils import choice, make_char_set
-import Scripts.utils as utils
-import Scripts.validation as validation
-import Scripts.auth as auth
-import Scripts.operations as operations
-import Scripts.files as files
 
-from Scripts.confusablesCustom import confusable_regex
+import importlib.util
+import os
+import sys
+from typing import Any, Literal
+
+from .gui import take_input_gui
 
 # We'll need to dynamically import the filter variables module. We'll use the full path so it works with the exe pyinstaller version too.
-import importlib
 filterPath = os.path.join(os.getcwd(), "SpamPurge_Resources", "Filters", "filter_variables.py")
 spec = importlib.util.spec_from_file_location("filter", filterPath)
-filter = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(filter)
+if spec is None or spec.loader is None:
+  raise ModuleNotFoundError(f"Error: Could not find filter_variables.py at {filterPath}. Make sure the path is correct.")
+spec.loader.exec_module(importlib.util.module_from_spec(spec))
 
 
+import auth
+import files
+import operations
+import SpamPurge_Resources.Filters.filter_variables as filter
+import utils
+import validation
+
+from .confusablesCustom import confusable_regex
+from .shared_imports import RESOURCES_FOLDER_NAME, B, F, S
 
 ##########################################################################################
 ################################## FILTERING MODES #######################################
 ##########################################################################################
+type FilterMode = Literal["Username", "Text", "NameAndText"]
+
 
 # For scanning for individual chars
-def prepare_filter_mode_chars(scanMode, filterMode, config):
+def prepare_filter_mode_chars(_scanMode: Any, filterMode: FilterMode, config: dict[str, Any]):
   if filterMode == "Username":
     whatToScanMsg = "Usernames"
   elif filterMode == "Text":
@@ -35,7 +43,6 @@ def prepare_filter_mode_chars(scanMode, filterMode, config):
 
   if config['characters_to_filter'] != "ask":
     print("Characters to filter obtained from config file.")
-    pass
   else:
     print(f"\nNext, you will input {F.YELLOW}ONLY{S.R} any special characters / emojis you want to search for in all {whatToScanMsg}. Do not include commas or spaces!")
     print("          Note: Letters, numbers, and basic punctuation will not be included for safety purposes, even if you enter them.")
@@ -45,9 +52,9 @@ def prepare_filter_mode_chars(scanMode, filterMode, config):
 
   confirm = False
   validConfigSetting = True
-  while confirm == False:
-    if validConfigSetting == True and config and config['characters_to_filter'] != "ask":
-      inputChars = make_char_set(config['characters_to_filter'], stripLettersNumbers=True, stripKeyboardSpecialChars=False, stripPunctuation=True)
+  while not confirm:
+    if validConfigSetting and config and config['characters_to_filter'] != "ask":
+      inputChars = utils.make_char_set(config['characters_to_filter'], stripLettersNumbers=True, stripKeyboardSpecialChars=False, stripPunctuation=True)
       bypass = True
     else:
       bypass = False
@@ -55,27 +62,28 @@ def prepare_filter_mode_chars(scanMode, filterMode, config):
       try:
         # Takes in user input of characters, returns 'set' of characters stripped of specified characters
         inputChars = take_input_gui(mode="chars", stripLettersNumbers=True, stripKeyboardSpecialChars=False, stripPunctuation=True)
-      except NameError: # Catch if user closes GUI window, exit program.
+      except NameError:  # Catch if user closes GUI window, exit program.
         print("                                                                                          ") # Clears the line because of \r on previous print
         print("\nError Code G-1: Something went wrong with the input, or you closed the window improperly.")
         print("If this keeps happening inexplicably, consider filing a bug report here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
         input("Press Enter to exit...")
         sys.exit()
 
-    print(f"     {whatToScanMsg} will be scanned for {F.MAGENTA}ANY{S.R} of the characters you entered in the previous window.")
+    print(f"   {whatToScanMsg} will be scanned for {F.MAGENTA}ANY{S.R} of the characters you entered in the previous window.")
     userChoice = choice("Begin Scanning? ", bypass)
-    if userChoice == True:
+    if userChoice:
       confirm = True
-    elif userChoice == False:
+    elif not userChoice:
       confirm = False
       validConfigSetting = False
-    elif userChoice == None:
+    elif userChoice is None:
       return "MainMenu", None
 
   return inputChars, None
 
+
 # For scanning for strings
-def prepare_filter_mode_strings(scanMode, filterMode, config):
+def prepare_filter_mode_strings(_scanMode: Any, filterMode: FilterMode, config: dict[str, Any]):
   if filterMode == "Username":
     whatToScanMsg = "Usernames"
   elif filterMode == "Text":
@@ -85,16 +93,15 @@ def prepare_filter_mode_strings(scanMode, filterMode, config):
 
   if config['strings_to_filter'] != "ask":
     print("Strings to filter obtained from config file.")
-    pass
   else:
     print(f"\nPaste or type in a list of any {F.YELLOW}comma separated strings{S.R} you want to search for in {whatToScanMsg}. (Not case sensitive)")
     print("   >Note: If the text you paste includes special characters or emojis, they might not display correctly here, but it WILL still search them fine.")
-    print("          Example Input: whatsapp, whatever multiple words, investment")
+    print("      Example Input: whatsapp, whatever multiple words, investment")
 
   validEntry = False
   validConfigSetting = True
-  while validEntry == False:
-    if validConfigSetting == True and config and config['strings_to_filter'] != "ask":
+  while not validEntry:
+    if validConfigSetting and config and config['strings_to_filter'] != "ask":
       inputString = config['strings_to_filter']
       bypass = True
     else:
@@ -110,24 +117,25 @@ def prepare_filter_mode_strings(scanMode, filterMode, config):
     else:
       validConfigSetting = False
 
-    if validEntry == True:
+    if validEntry:
       if config['strings_to_filter'] != "ask":
         pass
       else:
-        print(f"     {whatToScanMsg} will be scanned for {F.MAGENTA}ANY{S.R} of the following strings:")
+        print(f"   {whatToScanMsg} will be scanned for {F.MAGENTA}ANY{S.R} of the following strings:")
         print(filterStringList)
       userChoice = choice("Begin scanning? ", bypass)
-      if userChoice == True:
+      if userChoice:
         validEntry = True
-      elif userChoice == False:
+      elif not userChoice:
         validEntry = False
-      elif userChoice == None:
+      elif userChoice is None:
         return "MainMenu", None
 
   return filterStringList, None
 
+
 # For scanning for regex expression
-def prepare_filter_mode_regex(scanMode, filterMode, config):
+def prepare_filter_mode_regex(_scanMode: int, filterMode: FilterMode, config: dict[str,str]):
   if filterMode == "Username":
     whatToScanMsg = "Usernames"
   elif filterMode == "Text":
@@ -140,12 +148,12 @@ def prepare_filter_mode_regex(scanMode, filterMode, config):
     validConfigSetting = True
   else:
     print(f"Enter any {F.YELLOW}regex expression{S.R} to search within {whatToScanMsg}.")
-    print(r"          Example Input:  [^\x00-\xFF]")
+    print(r"      Example Input:  [^\x00-\xFF]")
     validConfigSetting = False
   validExpression = False
 
-  while validExpression == False:
-    if validConfigSetting == True and config and config['regex_to_filter'] != "ask":
+  while not validExpression:
+    if validConfigSetting and config and config['regex_to_filter'] != "ask":
       inputtedExpression = config['regex_to_filter']
       bypass = True
     else:
@@ -154,46 +162,45 @@ def prepare_filter_mode_regex(scanMode, filterMode, config):
         return "MainMenu", None
       bypass = False
 
-    validationResults = validation.validate_regex(inputtedExpression) # Returns tuple of valid, and processed expression
+    validationResults = validation.validate_regex(inputtedExpression)  # Returns tuple of valid, and processed expression
     validExpression = validationResults[0]
 
-    if validExpression == True:
+    if validExpression:
       processedExpression = validationResults[1]
-      print(f"     The expression appears to be {F.GREEN}valid{S.R}!")
+      print(f"   The expression appears to be {F.GREEN}valid{S.R}!")
 
-      if validExpression == True:
+      if validExpression:
         userChoice = choice("Begin scanning? ", bypass)
-        if userChoice == True:
+        if userChoice:
           pass
-        elif userChoice == False:
+        elif not userChoice:
           validExpression = False
           validConfigSetting = False
-        elif userChoice == None:
+        elif userChoice is None:
           return "MainMenu", None
     else:
-      print(f"     {F.RED}Error{S.R}: The expression appears to be {F.RED}invalid{S.R}!")
+      print(f"   {F.RED}Error{S.R}: The expression appears to be {F.RED}invalid{S.R}!")
       validConfigSetting = False
 
   return processedExpression, None
 
+
 # Filter Mode: User manually enters ID
 # Returns inputtedSpammerChannelID
-def prepare_filter_mode_ID(scanMode, config):
-  processResult = (False, None) #Tuple, first element is status of validity of channel ID, second element is channel ID
+def prepare_filter_mode_ID(_scanMode: str, config: dict[str, str]):
+  processResult = (False, None)  # Tuple, first element is status of validity of channel ID, second element is channel ID
   validConfigSetting = True
-  while processResult[0] == False:
-    if validConfigSetting == True and config and config['channel_ids_to_filter'] != "ask":
+  while not processResult[0]:
+    if validConfigSetting and config and config['channel_ids_to_filter'] != "ask":
       inputtedSpammerChannelID = config['channel_ids_to_filter']
-      bypass = True
     else:
-      bypass = False
       inputtedSpammerChannelID = input(f"Enter the {F.LIGHTRED_EX} Channel link(s) or ID(s){S.R} of the spammer (comma separated): ")
       if str(inputtedSpammerChannelID).lower() == "x":
         return "MainMenu", None
 
     processResult = utils.process_spammer_ids(inputtedSpammerChannelID)
-    if processResult[0] == True:
-      inputtedSpammerChannelID = processResult[1] # After processing, if valid, inputtedSpammerChannelID is a list of channel IDs
+    if processResult[0]:
+      inputtedSpammerChannelID = processResult[1]  # After processing, if valid, inputtedSpammerChannelID is a list of channel IDs
     else:
       validConfigSetting = False
   print("\n")
@@ -211,22 +218,22 @@ def prepare_filter_mode_ID(scanMode, config):
 
   return inputtedSpammerChannelID, None
 
-# For Filter mode auto-ascii, user inputs nothing, program scans for non-ascii
-def prepare_filter_mode_non_ascii(scanMode, config):
 
+# For Filter mode auto-ascii, user inputs nothing, program scans for non-ascii
+def prepare_filter_mode_non_ascii(scanMode: str, config: dict[str, str]):
   print("\n-------------------------------------------------- ASCII Mode--------------------------------------------------")
   print("~~~ This mode automatically searches for usernames that contain special characters (aka not letters/numbers) ~~~\n")
   print("Choose the sensitivity level of the filter. You will be shown examples after you choose.")
-  print(f"   1. Allow {F.LIGHTMAGENTA_EX}Standard + Extended ASCII{S.R}:    Filter rare unicode & Emojis only")
+  print(f"   1. Allow {F.LIGHTMAGENTA_EX}Standard + Extended ASCII{S.R}:  Filter rare unicode & Emojis only")
   print(f"   2. Allow {F.LIGHTMAGENTA_EX}Standard ASCII only{S.R}:  Also filter semi-common foreign characters")
-  print(f"   3. {F.LIGHTRED_EX}NUKE Mode (┘°□°)┘≈ ┴──┴ :    Allow ONLY numbers, letters, and spaces{S.R}")
+  print(f"   3. {F.LIGHTRED_EX}NUKE Mode (┘°□°)┘≈ ┴──┴ :  Allow ONLY numbers, letters, and spaces{S.R}")
   print("")
 
   # Get user input for mode selection,
   confirmation = False
   validConfigSetting = True
-  while confirmation == False:
-    if validConfigSetting == True and config and config['autoascii_sensitivity'] != "ask":
+  while not confirmation:
+    if validConfigSetting and config and config['autoascii_sensitivity'] != "ask":
       selection = config['autoascii_sensitivity']
       bypass = True
     else:
@@ -237,26 +244,26 @@ def prepare_filter_mode_non_ascii(scanMode, config):
     if selection == "1":
       print(f"Searches for {F.YELLOW}usernames with emojis, unicode symbols, and rare foreign characters{S.R} such as: ✔️ ☝️ 🡆 ▲ π Ɲ Œ")
       userChoice = choice("Choose this mode?", bypass)
-      if userChoice == True:
+      if userChoice:
         regexPattern = r"[^\x00-\xFF]"
         confirmation = True
-      elif userChoice == None:
+      elif userChoice is None:
         return "MainMenu", None
     elif selection == "2":
       print(f"Searches for {F.YELLOW}usernames with anything EXCEPT{S.R} the following: {F.YELLOW}Letters, numbers, punctuation, and common special characters{S.R} you can type with your keyboard like: % * & () + ")
       userChoice = choice("Choose this mode?", bypass)
-      if userChoice == True:
+      if userChoice:
         regexPattern = r"[^\x00-\x7F]"
         confirmation = True
-      elif userChoice == None:
+      elif userChoice is None:
         return "MainMenu", None
     elif selection == "3":
       print(f"Searches for {F.YELLOW}usernames with anything EXCEPT letters, numbers, and spaces{S.R} - {B.RED}{F.WHITE} EXTREMELY LIKELY to cause collateral damage!{S.R} Recommended to just use to manually gather list of spammer IDs, then use a different mode to delete.")
       userChoice = choice("Choose this mode?", bypass)
-      if userChoice == True:
+      if userChoice:
         regexPattern = r"[^a-zA-Z0-9 ]"
         confirmation = True
-      elif userChoice == None:
+      elif userChoice is None:
         return "MainMenu", None
     else:
       print(f"Invalid input: {selection} - Must be 1, 2, or 3.")
@@ -269,41 +276,44 @@ def prepare_filter_mode_non_ascii(scanMode, config):
   elif selection == "3":
     autoModeName = "NUKE Mode (┘°□°)┘≈ ┴──┴ - Allow only letters, numbers, and spaces"
 
-  if confirmation == True:
+  if confirmation:
     return regexPattern, autoModeName
   else:
     input("How did you get here? Something very strange went wrong. Press Enter to Exit...")
     sys.exit()
 
+
+import re
+
+
 # Auto smart mode
-def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
+def prepare_filter_mode_smart(scanMode: str, config: dict[str, str], miscData: Any, sensitive: bool = False):
   # Get spam lists and version info
   rootDomainList = miscData.resources['rootDomainList']
-  spamDomainsList = miscData.spamLists['spamDomainsList'] # List of domains from crowd sourced list
-  spamThreadsList = miscData.spamLists['spamThreadsList'] # List of filters associated with spam threads from crowd sourced list
-  spamAccountsList = miscData.spamLists['spamAccountsList'] # List of mentioned instagram/telegram scam accounts from crowd sourced list
+  spamDomainsList = miscData.spamLists['spamDomainsList']  # List of domains from crowd sourced list
+  spamThreadsList = miscData.spamLists['spamThreadsList']  # List of filters associated with spam threads from crowd sourced list
+  spamAccountsList = miscData.spamLists['spamAccountsList']  # List of mentioned instagram/telegram scam accounts from crowd sourced list
   spamListsVersion = miscData.spamLists['latestLocalVersion']
-  
-  utf_16 = "utf-8"
+
   if config['filter_mode'] == "autosmart":
     pass
   else:
     if sensitive:
       print("\n----------------------------------------------- Sensitive-Smart Mode -----------------------------------------------")
-    else: # if not sensitive
+    else:  # if not sensitive
       print("\n----------------------------------------------- Auto-Smart Mode -----------------------------------------------")
     print(f"~~~ This mode is a {F.LIGHTCYAN_EX}spammer's worst nightmare{S.R}. It automatically scans for multiple spammer techniques ~~~\n")
     print(" > Extremely low (near 0%) false positives")
     print(" > Detects whatsapp scammers and '18+ spam' bots")
     print(" > Easily cuts through look-alike characters and obfuscations, including impersonating usernames")
-    if sensitive == False:
+    if not sensitive:
       print(f" > {F.LIGHTRED_EX}NOTE:{S.R} This mode prioritizes a {F.LIGHTGREEN_EX}VERY low false positive rate{S.R}, at the cost of occasionally missing some spammers.\n")
-    elif sensitive == True:
+    elif sensitive:
       print(f" > {F.LIGHTRED_EX}NOTE:{S.R} In sensitive mode, {F.LIGHTRED_EX}expect more false positives{S.R}. Recommended to run this AFTER regular Auto Smart Mode.\n")
     input("Press Enter to Begin Scanning...")
-    print ("\033[A                                     \033[A") # Erases previous line
-    
-  print("  Loading Filters  [                              ]", end="\r")
+    print("\033[A                   \033[A")  # Erases previous line
+
+  print("  Loading Filters  [                ]", end="\r")
 
   # Create Variables
   compiledRegexDict = {
@@ -323,20 +333,17 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
     'exactRedAdWords': re.compile(filter.exactRedAdWords),
   }
 
-  compiledObfuRegexDict = {
-    'textObfuBlackWords': filter.textObfuBlackWordsCompiledPairs,
-    'usernameObfuBlackWords': filter.usernameObfuBlackWordsCompiledPairs
-  }
+  compiledObfuRegexDict = {'textObfuBlackWords': filter.textObfuBlackWordsCompiledPairs, 'usernameObfuBlackWords': filter.usernameObfuBlackWordsCompiledPairs}
 
   # General Settings
-  unicodeCategoriesStrip = ["Mn", "Cc", "Cf", "Cs", "Co", "Cn", "Sk"] # Categories of unicode characters to strip during normalization
+  unicodeCategoriesStrip = ["Mn", "Cc", "Cf", "Cs", "Co", "Cn", "Sk"]  # Categories of unicode characters to strip during normalization
 
   # Create General Lists
   spamGenEmojiSet = make_char_set(filter.spamGeneralEmoji)
   lowAlSet = make_char_set('abcdefghijklmnopqrstuvwxyz')
 
   # Type 1 Spammer Criteria
-  minNumbersMatchCount = 6 # Choice of minimum number of matches from spamNums before considered spam
+  minNumbersMatchCount = 6  # Choice of minimum number of matches from spamNums before considered spam
 
   x = filter.spamNums
   y = filter.spamPlus
@@ -382,62 +389,61 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
     'videoLinkRegex': re.compile(r"((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?"),
   }
 
-  print("  Loading Filters  [======                        ]", end="\r")
+  print("  Loading Filters  [======            ]", end="\r")
 
   # Compile regex with upper case, otherwise many false positive character matches
   bufferChars = r"*_~|`[]()'-.•,"
   compiledRegexDict['bufferChars'] = bufferChars
-  bufferMatch, addBuffers = "\\*_~|`\\-\\.", re.escape(bufferChars) # Add 'buffer' chars
+  bufferMatch, addBuffers = "\\*_~|`\\-\\.", re.escape(bufferChars)  # Add 'buffer' chars
   usernameConfuseRegex = re.compile(confusable_regex(miscData.channelOwnerName))
   m = bufferMatch
   a = addBuffers
-  
 
-  print("  Loading Filters  [==============                ]", end="\r")
+  print("  Loading Filters  [==============        ]", end="\r")
 
   # Prepare All-domain Regex Expression
   prepString = "\.("
   first = True
   for extension in rootDomainList:
-    if first == True:
-        prepString += extension
-        first = False
+    if first:
+      prepString += extension
+      first = False
     else:
-        prepString = prepString + "|" + extension
+      prepString = prepString + "|" + extension
   sensitivePrepString = prepString + ")"
   prepString = prepString + ")\/"
   rootDomainRegex = re.compile(prepString)
   sensitiveRootDomainRegex = re.compile(sensitivePrepString)
-  print("  Loading Filters  [===================           ]", end="\r")
+  print("  Loading Filters  [===================       ]", end="\r")
 
   spamListExpressionsList = []
   spamThreadsExpressionsList = []
   combinedCompiledFilename = "spamListCombinedRegex"
   threadsCompiledFilename = "spamThreadsRegex"
-  
+
   ### Prepare spam lists ###
-  
+
   # Get compiled regex from files if available
-  spamListCombinedRegex = files.read_compiled_regex_pickle(fileNameBase=combinedCompiledFilename, latestListVersion = spamListsVersion)
-  spamThreadsRegex = files.read_compiled_regex_pickle(fileNameBase=threadsCompiledFilename, latestListVersion = spamListsVersion)
-  
+  spamListCombinedRegex = files.read_compiled_regex_pickle(fileNameBase=combinedCompiledFilename, latestListVersion=spamListsVersion)
+  spamThreadsRegex = files.read_compiled_regex_pickle(fileNameBase=threadsCompiledFilename, latestListVersion=spamListsVersion)
+
   # If no pre-compiled regex available, compile it and save to file for later
   if not spamListCombinedRegex:
     print("  Compiling domain and account lists, this only needs to be done after lists are updated...")
-    print("  Loading Filters  [=======================       ]", end="\r")
+    print("  Loading Filters  [=======================     ]", end="\r")
     for domain in spamDomainsList:
       spamListExpressionsList.append(confusable_regex(domain.upper().replace(".", "⚫"), include_character_padding=False).replace("(?:⚫)", "(?:[^a-zA-Z0-9 ]{1,2})"))
     for account in spamAccountsList:
       spamListExpressionsList.append(confusable_regex(account.upper(), include_character_padding=True).replace(m, a))
     spamListCombinedRegex = re.compile('|'.join(spamListExpressionsList))
     files.save_compiled_regex_pickle(compiled_input=spamListCombinedRegex, latestListVersion=spamListsVersion, fileNameBase="spamListCombinedRegex")
-    
+
   if not spamThreadsRegex:
     print("  Compiling spam thread lists, this only needs to be done after lists are updated...")
-    print("  Loading Filters  [==========================    ]", end="\r")
+    print("  Loading Filters  [==========================  ]", end="\r")
     for spamName in spamThreadsList:
-      #spamListExpressionsList.append(confusable_regex(thread.upper(), include_character_padding=True).replace(m, a)) #With Confusables
-      spamThreadsExpressionsList.append(re.escape(spamName.lower())) #Exact lowercase match
+      # spamListExpressionsList.append(confusable_regex(thread.upper(), include_character_padding=True).replace(m, a)) #With Confusables
+      spamThreadsExpressionsList.append(re.escape(spamName.lower()))  # Exact lowercase match
       spamThreadsRegex = re.compile('|'.join(spamThreadsExpressionsList))
     files.save_compiled_regex_pickle(compiled_input=spamThreadsRegex, latestListVersion=spamListsVersion, fileNameBase="spamThreadsRegex")
 
@@ -446,11 +452,10 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   germanic = 'ẞßÄä'
   cyrillic = "гджзклмнпрстфхцчшщыэюяъь"
   japanese = 'ァアィイゥウェエォオカガキギクグケゲコゴサザシジスズセゼソゾタダチヂテデトドナニヌネノハバパヒビピフブプヘベペホボポマミムメモャヤュユョヨラリルレロヮワヰヱヲンヴヵヶヷヸヹヺーヽヾヿぁあぃいぅうぇえぉおかがきぎぐけげこごさざしじすずせぜそぞただちぢっつづてでとどなにぬねのはばぱひびぴふぶぷへべぺほぼぽまみむめもゃやゅゆょよらりるれろゎわゐゑをんゔゕゖゝゞゟ'
-  languages = [['turkish', turkish, []], ['germanic', germanic, []], ['cyrillic', cyrillic, []], ['japanese', japanese, []]]
+  languages: list[tuple[str, str, set[str]]] = [['turkish', turkish, []], ['germanic', germanic, []], ['cyrillic', cyrillic, []], ['japanese', japanese, []]]
   for item in languages:
-    item[2] = make_char_set(item[1])
+    item[2] = utils.make_char_set(item[1])
   print("  Loading Filters  [============================  ]", end="\r")
-
 
   filterSettings = {
     'spammerNumbersSet': spammerNumbersSet,
@@ -485,29 +490,29 @@ def prepare_filter_mode_smart(scanMode, config, miscData, sensitive=False):
   return filterSettings, None
 
 
-
 ##########################################################################################
 ################################# LIST MODES  ############################################
 ##########################################################################################
 
 
 ################################ RECOVERY MODE ###########################################
-def recover_deleted_comments(config):
+def recover_deleted_comments(config: dict[str, str]):
   print(f"\n\n-------------------- {F.LIGHTGREEN_EX}Comment Recovery Mode{S.R} --------------------\n")
   print("> Believe it or not, the YouTube API actually allows you to re-instate \"deleted\" comments.")
   print(f"> This is {F.YELLOW}only possible if you have stored the comment IDs{S.R} of the deleted comments, \n   such as {F.YELLOW}having kept the log file{S.R} of that session.")
   print("> If you don't have the comment IDs you can't recover the comments, and there is no way to find them. \n")
 
-  recoveryList, listFileName = files.parse_comment_list(config, recovery=True)
+  recoveryList, _listFileName = files.parse_comment_list(config, recovery=True)
   if recoveryList == "MainMenu":
     return "MainMenu"
 
   operations.delete_found_comments(commentsList=recoveryList, banChoice=False, deletionMode="published", recoveryMode=True)
   operations.check_recovered_comments(commentsList=recoveryList)
 
+
 ################################ DELETE COMMENT LIST ###########################################
-def delete_comment_list(config):
-  progressDict = dict()
+def delete_comment_list(config: dict[str, Any]):
+  progressDict = {}
   progressFileFolder = os.path.join(RESOURCES_FOLDER_NAME, "Removal_List_Progress")
   print(f"\n\n-------------------- {F.LIGHTRED_EX}Delete Using a List / Log{S.R} --------------------")
   while True:
@@ -522,9 +527,9 @@ def delete_comment_list(config):
 
   if listChoice == "1":
     continued = False
-    previousRemovedComments=set()
-    remainingCommentsSet = set()
-    previousFailedComments = list()
+    previousRemovedComments: set[str] = set()
+    remainingCommentsSet: set[str] = set()
+    previousFailedComments: list[str] = []
     sessionNum = 1
 
     removalList, listFileNameBase = files.parse_comment_list(config, removal=True, returnFileName=True)
@@ -546,12 +551,12 @@ def delete_comment_list(config):
       elif len(existingSavesList) > 1:
         print("\nWhich save file would you like to use?")
         for i, save in enumerate(existingSavesList):
-          print(f"  {i+1}. {save[:-22]}")
+          print(f"  {i + 1}. {save[:-22]}")
         # Take and Validate Input
-        while valid == False:
+        while not valid:
           saveChoice = input(f"\nSelection (1-{len(existingSavesList)}): ")
           if saveChoice.isdigit() and int(saveChoice) > 0 and int(saveChoice) <= len(existingSavesList):
-            saveChoice = existingSavesList[int(saveChoice)-1]
+            saveChoice = existingSavesList[int(saveChoice) - 1]
             valid = True
           elif saveChoice.lower() == "x":
             return "MainMenu"
@@ -568,9 +573,8 @@ def delete_comment_list(config):
       input("\nPress Enter to return to Main Menu...")
       return "MainMenu"
 
-
-    while valid == False:
-      input(F"\nNext, follow the process by loading {F.YELLOW}the same comment list/log you used before{S.R}. Press Enter to Continue...")
+    while not valid:
+      input(f"\nNext, follow the process by loading {F.YELLOW}the same comment list/log you used before{S.R}. Press Enter to Continue...")
       removalList, listFileNameBase = files.parse_comment_list(config, removal=True, returnFileName=True)
       if removalList == "MainMenu":
         return "MainMenu"
@@ -590,13 +594,13 @@ def delete_comment_list(config):
     previousRemovedComments = set(progressDict[lastSessionNum]['removed'])
     remainingCommentsSet = set(progressDict[lastSessionNum]['notRemoved'])
     previousFailedComments = progressDict[lastSessionNum]['failedCommentsList']
-    sessionNum = int(len(progressDict))+1
+    sessionNum = int(len(progressDict)) + 1
 
     if removalList == "Loaded" or (len(remainingCommentsSet) + len(previousRemovedComments) + len(previousFailedComments)) == len(removalList):
       pass
     else:
       print(f"{F.LIGHTRED_EX}Error:{S.R} The length of the comment list you loaded doesn't match the comment list you saved last time.")
-      if choice(f"{F.YELLOW}Continue anyway?{S.R} (Will use previous save and ignore the file you just loaded)") != True:
+      if not choice(f"{F.YELLOW}Continue anyway?{S.R} (Will use previous save and ignore the file you just loaded)"):
         return "MainMenu"
 
     # Display status of loaded file
@@ -610,10 +614,10 @@ def delete_comment_list(config):
 
     # Set removal list based on previous save
     removalList = list(remainingCommentsSet)
-    if len(previousFailedComments)>0:
+    if len(previousFailedComments) > 0:
       print(f"{F.LIGHTRED_EX}NOTE:{S.R} During previous sessions, {F.LIGHTRED_EX}{len(previousFailedComments)} comments{S.R} failed to be deleted.")
       failChoice = choice(f"\n{F.YELLOW}Add these back into the list{S.R} to try again? (Otherwise will skip them for later) ")
-      if failChoice == True:
+      if failChoice:
         removalList = removalList + list(previousFailedComments)
         previousFailedComments = list()
       else:
@@ -627,7 +631,7 @@ def delete_comment_list(config):
   print(f"2. {F.LIGHTMAGENTA_EX}Hide{S.R} them for review")
 
   validInput = False
-  while validInput == False:
+  while not validInput:
     userChoice = input("\nSelection (1 or 2): ")
     if userChoice == "1":
       removalMode = "rejected"
@@ -636,7 +640,7 @@ def delete_comment_list(config):
       removalMode = "heldForReview"
       validInput = True
       banChoice = False
-    elif userChoice == "99": # For Testing
+    elif userChoice == "99":  # For Testing
       removalMode = "reportSpam"
       banChoice = False
       validInput = True
@@ -645,27 +649,27 @@ def delete_comment_list(config):
     else:
       print(f"{F.RED}Invalid input, try again.{S.R}")
   if removalMode == "rejected":
-    banChoice = choice(F"Also {F.RED}ban{S.R} the commenters?")
+    banChoice = choice(f"Also {F.RED}ban{S.R} the commenters?")
     if str(banChoice).lower() == "x":
       return "MainMenu"
 
   # Set limit based on quota
-  quotaLimit = int(config['quota_limit'])-100
+  quotaLimit = int(config['quota_limit']) - 100
 
   validInput = False
-  while validInput == False:
+  while not validInput:
     print(f"\n{F.YELLOW}How many comments{S.R} (out of {len(removalList)}) do you want to remove this session? (Input '0' or 'all' to do them all)")
     countChoice = input(f"\nNumber of comments (1-{str(quotaLimit)}): ")
     if countChoice.lower() == "all" or countChoice == "0":
-        countChoice = len(removalList)
+      countChoice = len(removalList)
     try:
-        countChoice = int(countChoice)
-        if countChoice > 0 and countChoice <= quotaLimit:
-          validInput = True
-        elif countChoice >= quotaLimit:
-          print(f"\n{F.LIGHTRED_EX}Error:{S.R} {countChoice} is too many comments, you'll run out of API Quota. Read Here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
-        else:
-          print(f"Invalid input, must be 'all' or a whole number from 1 to {str(quotaLimit)}.")
+      countChoice = int(countChoice)
+      if countChoice > 0 and countChoice <= quotaLimit:
+        validInput = True
+      elif countChoice >= quotaLimit:
+        print(f"\n{F.LIGHTRED_EX}Error:{S.R} {countChoice} is too many comments, you'll run out of API Quota. Read Here: {F.YELLOW}TJoe.io/api-limit-info{S.R}")
+      else:
+        print(f"Invalid input, must be 'all' or a whole number from 1 to {str(quotaLimit)}.")
     except:
       print(f"{F.RED}Invalid input, must be a whole number.{S.R} Try again.")
 
@@ -675,7 +679,7 @@ def delete_comment_list(config):
   else:
     partial = True
 
-  if partial == True:
+  if partial:
     selectedRemovalList = removalList[:countChoice]
     notRemovedList = removalList[countChoice:]
   else:
@@ -703,26 +707,29 @@ def delete_comment_list(config):
   else:
     finalRemovedSet = selectedRemovalSet
 
-  if partial == True or continued == True:
+  if partial or continued:
     print("\nSaving progress...")
     # Initialize progress dictionary
-    if continued == True:
-      progressDict[sessionNum] = {'removed': previousRemovedComments.union(finalRemovedSet), 'notRemoved': remainingCommentsSet, 'failedCommentsList': failedCommentsList+previousFailedComments}
+    if continued:
+      progressDict[sessionNum] = {
+        'removed': previousRemovedComments.union(finalRemovedSet),
+        'notRemoved': remainingCommentsSet,
+        'failedCommentsList': failedCommentsList + previousFailedComments,
+      }
     else:
-      progressDict[sessionNum] = {'removed': finalRemovedSet, 'notRemoved': remainingCommentsSet, 'failedCommentsList': failedCommentsList+previousFailedComments}
-
+      progressDict[sessionNum] = {'removed': finalRemovedSet, 'notRemoved': remainingCommentsSet, 'failedCommentsList': failedCommentsList + previousFailedComments}
 
   if not progressDict or (len(progressDict[sessionNum]['notRemoved']) == 0 and len(progressDict[sessionNum]['failedCommentsList']) == 0):
-    if continued == True:
+    if continued:
       print(f"\n{F.LIGHTGREEN_EX}Success!{S.R} All comments should be removed. {F.YELLOW}Will now remove{S.R} finished progress file. (Log file will remain)")
       files.try_remove_file(progressFileNameWithPath)
     else:
       print(f"\n{F.LIGHTGREEN_EX}Success!{S.R} All comments should be removed.")
   else:
-    #progressFileName = listFileNameBase + "_removal_progress.save"
+    # progressFileName = listFileNameBase + "_removal_progress.save"
     result = files.write_dict_pickle_file(progressDict, progressFileName, progressFileFolder, forceOverwrite=True)
-    if result == True:
-      print(f"Progress file saved.")
+    if result:
+      print("Progress file saved.")
     removed = len(progressDict[sessionNum]['removed'])
     notRemoved = len(progressDict[sessionNum]['notRemoved'])
     failed = len(progressDict[sessionNum]['failedCommentsList'])

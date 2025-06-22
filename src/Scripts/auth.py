@@ -1,37 +1,56 @@
 #!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
-from Scripts.shared_imports import *
-import Scripts.validation as validation
-from Scripts.files import load_config_file
-
-# Google Authentication Modules
-from googleapiclient.discovery import build
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.oauth2.credentials import Credentials
-from google.auth.transport.requests import Request
-from json import JSONDecodeError
-
-# Other Modules
-import os
 import base64
 import io
 import json
-from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
+import os
+import sys
+import traceback
+from json import JSONDecodeError
+from typing import Any, Literal
+
+import validation
 from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+
+# Google Authentication Modules
+from googleapiclient.discovery import build
 from pwinput import pwinput
 
+from .files import load_config_file
+from .shared_imports import B, F, S
 
 TOKEN_FILE_NAME = 'token.pickle'
 TOKEN_ENCRYPTED_NAME = 'token.pickle.encrypted'
-from YTSpammerPurge import configVersion
+from ..YTSpammerPurge import User, configVersion
+
 encrypt_config = load_config_file(onlyGetSettings=True, configVersion=configVersion)['encrypt_token_file']
 
 # Encryption Settings
 SALT_BYTES = 64
 SCRYPT_N = 2**18
 
-YOUTUBE = None
-CURRENTUSER = None
+
+class Exec:
+  def execute(self) -> dict[str, Any]: ...
+
+
+class YOUTUBE_Class:
+  class Result:
+    def list(self, **kwargs: Any) -> Exec: ...
+
+  def videos(self) -> Result: ...
+  def search(self) -> Result: ...
+  def channels(self) -> Result: ...
+  def comments(self) -> Result: ...
+  def commentThreads(self) -> Result: ...
+
+
+YOUTUBE: YOUTUBE_Class = None
+CURRENTUSER: User = None
 
 
 ##########################################################################################
@@ -48,14 +67,15 @@ CURRENTUSER = None
 # For more information about the client_secrets.json file format, see:
 #   https://developers.google.com/api-client-library/python/guide/aaa_client_secrets
 
+
 # Authorize the request and store authorization credentials.
-def get_authenticated_service():
+def get_authenticated_service() -> YOUTUBE_Class:
   global YOUTUBE
   CLIENT_SECRETS_FILE = 'client_secrets.json'
   YOUTUBE_READ_WRITE_SSL_SCOPE = ['https://www.googleapis.com/auth/youtube.force-ssl']
   API_SERVICE_NAME = 'youtube'
   API_VERSION = 'v3'
-  DISCOVERY_SERVICE_URL = "https://youtube.googleapis.com/$discovery/rest?version=v3" # If don't specify discovery URL for build, works in python but fails when running as EXE
+  DISCOVERY_SERVICE_URL = "https://youtube.googleapis.com/$discovery/rest?version=v3"  # If don't specify discovery URL for build, works in python but fails when running as EXE
 
   # Check if client_secrets.json file exists, if not give error
   if not os.path.exists(CLIENT_SECRETS_FILE):
@@ -63,10 +83,10 @@ def get_authenticated_service():
     if os.path.exists(f"{CLIENT_SECRETS_FILE}.json"):
       CLIENT_SECRETS_FILE = CLIENT_SECRETS_FILE + ".json"
     else:
-      print(f"\n         ----- {F.WHITE}{B.RED}[!] Error:{S.R} client_secrets.json file not found -----")
+      print(f"\n     ----- {F.WHITE}{B.RED}[!] Error:{S.R} client_secrets.json file not found -----")
       print(f" ----- Did you create a {F.YELLOW}Google Cloud Platform Project{S.R} to access the API? ----- ")
       print(f"  > For instructions on how to get an API key, visit: {F.YELLOW}TJoe.io/api-setup{S.R}")
-      print(f"\n  > (Non-shortened Link: https://github.com/ThioJoe/YT-Spammer-Purge/wiki/Instructions:-Obtaining-an-API-Key)")
+      print("\n  > (Non-shortened Link: https://github.com/ThioJoe/YT-Spammer-Purge/wiki/Instructions:-Obtaining-an-API-Key)")
       input("\nPress Enter to Exit...")
       sys.exit()
 
@@ -75,7 +95,7 @@ def get_authenticated_service():
   # The file token.pickle stores the user's access and refresh tokens, and is created automatically when the authorization flow completes for the first time.
   # First check if token.pickle exists, or if it is an IOBytes virtual file
   if os.path.exists(TOKEN_FILE_NAME) or os.path.exists(TOKEN_ENCRYPTED_NAME):
-    #creds = Credentials.from_authorized_user_file(TOKEN_FILE_NAME, scopes=YOUTUBE_READ_WRITE_SSL_SCOPE)
+    # creds = Credentials.from_authorized_user_file(TOKEN_FILE_NAME, scopes=YOUTUBE_READ_WRITE_SSL_SCOPE)
     creds = Credentials.from_authorized_user_info(tokenData, scopes=YOUTUBE_READ_WRITE_SSL_SCOPE)
 
   # If there are no (valid) credentials available, make the user log in.
@@ -90,7 +110,7 @@ def get_authenticated_service():
       creds = flow.run_local_server(port=0, authorization_prompt_message="Waiting for authorization. See message above.")
       print(f"{F.GREEN}[OK] Authorization Complete.{S.R}")
     # Save the credentials for the next run
-    if encrypt_config == True:
+    if encrypt_config:
       # Extract the token data from the credentials object, and convert it to a Dict
       tokenData = json.loads(creds.to_json())
       # Convert Dict to bytes
@@ -98,7 +118,7 @@ def get_authenticated_service():
       # Encrypt the token data
       encrypt_file(fileData=tokenData, refreshed=refreshed)
     else:
-      with open(TOKEN_FILE_NAME, 'w') as token:
+      with open(TOKEN_FILE_NAME, 'wb') as token:
         token.write(creds.to_json())
   YOUTUBE = build(API_SERVICE_NAME, API_VERSION, credentials=creds, discoveryServiceUrl=DISCOVERY_SERVICE_URL, cache_discovery=False, cache=None)
   return YOUTUBE
@@ -107,7 +127,7 @@ def get_authenticated_service():
 def first_authentication():
   global YOUTUBE
   try:
-    YOUTUBE = get_authenticated_service() # Create authentication object
+    YOUTUBE = get_authenticated_service()  # Create authentication object
   except JSONDecodeError as jx:
     print(f"{F.WHITE}{B.RED} [!!!] Error: {S.R}" + str(jx))
     print(f"\nDid you make the client_secrets.json file yourself by {F.LIGHTRED_EX}copying and pasting into it{S.R}, instead of {F.LIGHTGREEN_EX}downloading it{S.R}?")
@@ -125,7 +145,7 @@ def first_authentication():
       YOUTUBE = get_authenticated_service()
     else:
       print('\n')
-      traceback.print_exc() # Prints traceback
+      traceback.print_exc()  # Prints traceback
       print("----------------")
       print(f"{F.RED}[!!!] Error: {S.R}" + str(e))
       print("If you think this is a bug, you may report it on this project's GitHub page: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
@@ -139,21 +159,26 @@ def first_authentication():
 class ChannelIDError(Exception):
     pass
 # Get channel ID and channel title of the currently authorized user
-def get_current_user(config):
+def get_current_user(config: dict[str,Any]):
 
-  #Define fetch function so it can be re-used if issue and need to re-run it
-  def fetch_user():
-    results = YOUTUBE.channels().list(
-      part="snippet", #Can also add "contentDetails" or "statistics"
-      mine=True,
-      fields="items/id,items/snippet/title"
-    ).execute()
+  # Define fetch function so it can be re-used if issue and need to re-run it
+  def fetch_user() -> dict[Literal["items"], list[dict[str, str]]]:
+    results = (
+      YOUTUBE.channels()
+      .list(
+        part="snippet",  # Can also add "contentDetails" or "statistics"
+        mine=True,
+        fields="items/id,items/snippet/title",
+      )
+      .execute()
+    )
     return results
+
   results = fetch_user()
 
   # Fetch the channel ID and title from the API response
   # Catch exceptions if problems getting info
-  if len(results) == 0: # Check if results are empty
+  if len(results) == 0:  # Check if results are empty
     print("\n----------------------------------------------------------------------------------------")
     print(f"{F.YELLOW}Error Getting Current User{S.R}: The YouTube API responded, but did not provide a Channel ID.")
     print(f"{F.CYAN}Known Possible Causes:{S.R}")
@@ -165,21 +190,20 @@ def get_current_user(config):
 
     global YOUTUBE
     YOUTUBE = get_authenticated_service()
-    results = fetch_user() # Try again
+    results = fetch_user()  # Try again
 
   try:
     channelID = results["items"][0]["id"]
     IDCheck = validation.validate_channel_id(channelID)
-    if IDCheck[0] == False:
+    if not IDCheck[0]:
       raise ChannelIDError
     try:
-      channelTitle = results["items"][0]["snippet"]["title"] # If channel ID was found, but not channel title/name
+      channelTitle = results["items"][0]["snippet"]["title"]  # If channel ID was found, but not channel title/name
     except KeyError:
       print("Error Getting Current User: Channel ID was found, but channel title was not retrieved. If this occurs again, try deleting 'token.pickle' file and re-running. If that doesn't work, consider filing a bug report on the GitHub project 'issues' page.")
       print("> NOTE: The program may still work - You can try continuing. Just check the channel ID is correct: " + str(channelID))
       channelTitle = ""
       input("Press Enter to Continue...")
-      pass
   except ChannelIDError:
     traceback.print_exc()
     print("\nError: Still unable to get channel info. Big Bruh Moment. Try deleting token.pickle. The info above might help if you want to report a bug.")
@@ -191,12 +215,12 @@ def get_current_user(config):
     print("\nError: Still unable to get channel info. Big Bruh Moment. Try deleting token.pickle. The info above might help if you want to report a bug.")
     input("\nPress Enter to Exit...")
     sys.exit()
-  
-  if config == None:
-    configMatch = None # Used only if channel ID is set in the config
+
+  if config is None:
+    configMatch = None  # Used only if channel ID is set in the config
   elif config['your_channel_id'] == "ask":
     configMatch = None
-  elif validation.validate_channel_id(config['your_channel_id'])[0] == True:
+  elif validation.validate_channel_id(config['your_channel_id'])[0]:
     if config['your_channel_id'] == channelID:
       configMatch = True
     else:
@@ -208,30 +232,36 @@ def get_current_user(config):
     input("Please check the config file. Press Enter to Exit...")
     sys.exit()
 
-  return channelID, channelTitle, configMatch  
+  return channelID, channelTitle, configMatch
+
 
 # ---------------------------- Token File Functions ----------------------------
 def remove_token():
   os.remove(TOKEN_FILE_NAME)
 
+
 # Convert TOKEN_FILE_NAME to IOBytes virtual file
 def convert_file_to_iobytes(file_name):
   with open(file_name, 'rb') as f:
     return io.BytesIO(f.read())
-  
+
+
 def convert_dict_to_iobytes(data_dict):
   io_bytes = io.BytesIO()
   io_bytes.write(json.dumps(data_dict).encode('utf-8'))
   return io_bytes
 
+
 def convert_dict_to_bytes(data_dict):
   return json.dumps(data_dict).encode('utf-8')
 
+
 # Convert IOBytes object to dictionary
 def convert_iobytes_to_dict(io_bytes):
-  io_string = io_bytes.read().decode('utf-8') # Convert to string
-  io_dict = json.loads(io_string) # Convert to dictionary
+  io_string = io_bytes.read().decode('utf-8')  # Convert to string
+  io_dict = json.loads(io_string)  # Convert to dictionary
   return io_dict
+
 
 # ---------------------------- Token File Encryption Functions ----------------------------
 def derive_key_from_password(password, salt):
@@ -241,11 +271,12 @@ def derive_key_from_password(password, salt):
   key = kdf.derive(password.encode())
   return base64.urlsafe_b64encode(key)
 
+
 def encrypt_file(fileName=None, fileData=None, refreshed=False):
   # Use 64 Bytes (512 bits) of salt (random data) - Unless changed above
   salt = os.urandom(SALT_BYTES)
 
-  if refreshed == False:
+  if not refreshed:
     print(f"\n{F.LIGHTGREEN_EX}Choose a password{S.R} to encrypt the login credential file (token.pickle).")
     password = pwinput(prompt='Password: ', mask='*')
   else:
@@ -274,6 +305,7 @@ def encrypt_file(fileName=None, fileData=None, refreshed=False):
 
     return encrypted_data
 
+
 def decrypt_file(filename):
   if not filename.endswith('.encrypted'):
     print('Invalid encrypted file.')
@@ -282,7 +314,7 @@ def decrypt_file(filename):
   success = False
 
   # Loop until password is correct
-  while success==False:
+  while not success:
     try:
       print(f"\n{F.LIGHTRED_EX}Enter your password{S.R} to decrypt the login credential file (token.pickle.encrypted)")
       password = pwinput(prompt='Password: ', mask='*')
@@ -295,26 +327,25 @@ def decrypt_file(filename):
       fernet = Fernet(key)
 
       decrypted_data = fernet.decrypt(encrypted_data)
-      success=True
+      success = True
     except:
       print(f"\n{F.WHITE}{B.LIGHTRED_EX} INCORRECT PASSWORD {S.R} - Try again. If you can't remember the password, delete '{TOKEN_ENCRYPTED_NAME}' and re-run the program.")
-      
 
   return io.BytesIO(decrypted_data)
 
 
 def initialize():
   # Check if token file exists
-  if os.path.exists(TOKEN_FILE_NAME) == True:
+  if os.path.exists(TOKEN_FILE_NAME):
     # Convert token file to IOBytes object
     tokenData = convert_file_to_iobytes(TOKEN_FILE_NAME)
     tokenData = convert_iobytes_to_dict(tokenData)
 
-    if encrypt_config == True:
+    if encrypt_config:
       # Convert dict to bytes
       encrypt_file(fileName=TOKEN_FILE_NAME, refreshed=False)
 
-  elif os.path.exists(TOKEN_ENCRYPTED_NAME) == True:
+  elif os.path.exists(TOKEN_ENCRYPTED_NAME):
     # Decrypt token file
     tokenData = decrypt_file(TOKEN_ENCRYPTED_NAME)
     tokenData = convert_iobytes_to_dict(tokenData)
@@ -322,7 +353,8 @@ def initialize():
   # If no token file exists, move on, creation will be handled later
   else:
     return False
-  
+
   return tokenData
+
 
 tokenData = initialize()

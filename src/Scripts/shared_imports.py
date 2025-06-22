@@ -1,15 +1,34 @@
-import os
-import sys
-import traceback
-import regex as re
+import re
 
-from colorama import init, Fore as F, Back as B, Style as S
+from colorama import init
+from colorama.ansi import AnsiBack, AnsiFore, AnsiStyle
 
-S.R = S.RESET_ALL
-F.R = F.RESET
-B.R = B.RESET
+
+class Back(AnsiBack):
+    R: str = AnsiBack.RESET
+
+
+class Fore(AnsiFore):
+    R: str = AnsiFore.RESET
+
+
+class Style(AnsiStyle):
+    R: str = AnsiStyle.RESET_ALL
+
+
+S = Style()
+F = Fore()
+B = Back()
+
 
 # Global Hardcoded Constants
 RESOURCES_FOLDER_NAME = "SpamPurge_Resources"
 
-__all__ = ['os', 'sys', 're', 'traceback', 'F', 'B', 'S', 'init', 'RESOURCES_FOLDER_NAME']
+__all__ = [
+    "re",
+    "F",
+    "B",
+    "S",
+    "init",
+    "RESOURCES_FOLDER_NAME",
+]
