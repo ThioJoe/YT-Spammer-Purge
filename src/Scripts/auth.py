@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: UTF-8 -*-
 import base64
 import io
 import json
@@ -9,7 +8,6 @@ import traceback
 from json import JSONDecodeError
 from typing import Any, Literal
 
-import validation
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
 from google.auth.transport.requests import Request
@@ -20,12 +18,14 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from pwinput import pwinput
 
+from YTSpammerPurge import User, configVersion
+
+from . import validation
 from .files import load_config_file
 from .shared_imports import B, F, S
 
 TOKEN_FILE_NAME = 'token.pickle'
 TOKEN_ENCRYPTED_NAME = 'token.pickle.encrypted'
-from ..YTSpammerPurge import User, configVersion
 
 encrypt_config = load_config_file(onlyGetSettings=True, configVersion=configVersion)['encrypt_token_file']
 
@@ -273,7 +273,7 @@ def derive_key_from_password(password, salt):
     return base64.urlsafe_b64encode(key)
 
 
-def encrypt_file(fileName=None, fileData=None, refreshed=False):
+def encrypt_file(fileName: str | None = None, fileData: bytes | None = None, refreshed: bool = False):
     # Use 64 Bytes (512 bits) of salt (random data) - Unless changed above
     salt = os.urandom(SALT_BYTES)
 

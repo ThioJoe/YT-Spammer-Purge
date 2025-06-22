@@ -5,7 +5,7 @@ description = "YouTube spam comment deleter and filter"
 authors = [{name = "ThioJoe", email = "thiojoe@gmail.com"}]
 requires-python = ">=3.12"
 dependencies = [
-    "google-api-python-client>=2.170.0",
+    "google-api-python-client>=2.173.0",
     "google-auth-oauthlib>=1.2.2",
     "protobuf>=6.3.0",
     "colorama>=0.4.6",
@@ -13,12 +13,11 @@ dependencies = [
     "certifi>=2025.0.0",
     "levenshtein>=0.27.1",
     "rapidfuzz>=3.13.0",
-    "numpy",
-    "setuptools>=80.9.0",
+    "numpy>=2.2.2",
+    "setuptools>=80",
     "pwinput>=1.0.3",
     "cryptography>=45.0.4",
-    "google-api-python-client-stubs>=1.29.0", # these 2 are getting the type stubs since google doesn't provide them
-    "google-auth-oauthlib-stubs>=1.2.0", # ideally these should be removed when google provides their own type stubs
+    "packaging>=25.0",
 ]
 classifiers = [
     "Operating System :: MacOS",

@@ -21,7 +21,7 @@ from typing import Any, Literal, Mapping
 
 import requests
 import urllib3
-from pkg_resources import parse_version
+from packaging.version import Version as parse_version
 
 from .shared_imports import RESOURCES_FOLDER_NAME, B, F, S
 from .utils import choice

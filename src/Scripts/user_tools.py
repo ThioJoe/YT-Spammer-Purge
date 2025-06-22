@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 from typing import Any
 
-import validation
-
+from . import validation
 from .shared_imports import B, F, S
 
 

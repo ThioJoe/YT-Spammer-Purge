@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: UTF-8 -*-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 #######################################################################################################
 ################################# YOUTUBE SPAM COMMENT DELETER ########################################
@@ -48,6 +47,7 @@ from typing import Any, NamedTuple
 from Scripts import auth, community_downloader, files, logging, operations, user_tools, utils, validation
 from Scripts.community_downloader import main as get_community_comments  # Args = post's ID, comment limit
 from Scripts.shared_imports import RESOURCES_FOLDER_NAME, B, F, S, init
+from Scripts.types import ScanInstance
 from Scripts.utils import choice
 
 print("Importing Standard Libraries...")
@@ -59,34 +59,13 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from importlib import reload
 
-from pkg_resources import parse_version
+from packaging.version import Version as parse_version
 
 print("Importing Third-Party Modules...")
 # Other Libraries
 from googleapiclient.errors import HttpError
 
 utils.clear_terminal()
-
-
-# Declare Classes
-@dataclass
-class ScanInstance:
-    matchedCommentsDict: dict[str, str]  # Comments flagged by the filter
-    duplicateCommentsDict: dict[str, str]  # Comments flagged as duplicates
-    repostedCommentsDict: dict[str, str]  # Comments stolen from other users
-    otherCommentsByMatchedAuthorsDict: dict[str, str]  # Comments not matched, but are by a matched author
-    scannedThingsList: list[str]  # List of posts or videos that were scanned
-    spamThreadsDict: dict[str, str]  # Comments flagged as parent of spam threads
-    allScannedCommentsDict: dict[str, str]  # All comments scanned for this instance
-    vidIdDict: dict[str, str]  # Contains the video ID on which each comment is found
-    vidTitleDict: dict[str, str]  # Contains the titles of each video ID
-    matchSamplesDict: dict[str, dict[str, str | None]]  # Contains sample info for every flagged comment of all types
-    authorMatchCountDict: dict[str, str]  # The number of flagged comments per author
-    scannedRepliesCount: int  # The current number of replies scanned so far
-    scannedCommentsCount: int  # The current number of comments scanned so far
-    logTime: str  # The time at which the scan was started
-    logFileName: str | None  # Contains a string of the current date/time to be used as a log file name or anything else
-    errorOccurred: bool  # True if an error occurred during the scan
 
 
 ##########################################################################################

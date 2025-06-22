@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: UTF-8 -*-
 import os
 import re
 import sys
@@ -7,12 +6,11 @@ import traceback
 from html import unescape
 from typing import Any
 
-import auth
-import validation
 from googleapiclient.errors import HttpError
 
-from ..YTSpammerPurge import ScanInstance
+from . import auth, validation
 from .shared_imports import B, F, S
+from .types import ScanInstance
 
 ##########################################################################################
 ############################## UTILITY FUNCTIONS #########################################

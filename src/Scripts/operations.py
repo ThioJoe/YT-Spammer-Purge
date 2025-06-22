@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: UTF-8 -*-
 
 import itertools
 import re
@@ -9,15 +8,12 @@ import unicodedata
 from datetime import datetime
 from html import unescape
 
-import auth
-import utils
-import validation
 from googleapiclient.errors import HttpError
 from rapidfuzz import fuzz
 
-from ..YTSpammerPurge import ScanInstance
+from . import auth, utils, validation
 from .shared_imports import B, F, S
-from .utils import choice
+from .utils import ScanInstance, choice
 
 ##########################################################################################
 ############################## GET COMMENT THREADS #######################################

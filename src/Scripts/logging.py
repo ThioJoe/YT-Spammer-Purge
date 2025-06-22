@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: UTF-8 -*-
 import json
 import os
 import shutil
@@ -7,12 +6,11 @@ from datetime import datetime
 from typing import Any
 from unicodedata import category as unicode_category
 
-import auth
 import requests
-import utils
 
+from . import auth, utils
 from .shared_imports import B, F, S
-from .utils import choice
+from .utils import ScanInstance, choice
 
 ##########################################################################################
 ############################### PRINT SPECIFIC COMMENTS ##################################
@@ -237,7 +235,6 @@ def print_comments(current: 'ScanInstance', config: dict[str, str], scanVideoID:
 
 
 # -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-from ..YTSpammerPurge import ScanInstance
 
 
 # Uses comments.list YouTube API Request to get text and author of specific set of comments, based on comment ID

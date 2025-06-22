@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: UTF-8 -*-
 import codecs
 import os
 import re
@@ -9,9 +8,7 @@ from html import unescape
 from typing import Any, Literal, TypedDict
 from urllib.parse import urlparse
 
-import auth
-import utils
-
+from . import auth, utils
 from .community_downloader import get_post_channel_url
 from .shared_imports import B, F, S
 
