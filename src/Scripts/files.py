@@ -22,6 +22,7 @@ import regex as re
 import requests
 import urllib3
 from packaging.version import Version as parse_version
+from regex import Pattern
 
 from .shared_imports import RESOURCES_FOLDER_NAME, B, F, S
 from .utils import choice
@@ -55,42 +56,38 @@ def check_lists_update(spamListDict: dict[str, Any], silentCheck: bool = False):
             print("Error: Could not create folder. Try creating a folder called 'spam_lists' to update the spam lists.")
 
     try:
-        response = requests.get("https://api.github.com/repos/ThioJoe/YT-Spam-Domains-List/releases/latest")
+        response = requests.get("https://api.github.com/repos/ThioJoe/YT-Spam-Domains-List/releases/latest", timeout=10)
         if response.status_code != 200:
             if response.status_code == 403:
-                if not silentCheck:
-                    print(f"\n{B.RED}{F.WHITE}Error [U-4L]:{S.R} Got an 403 (ratelimit_reached) when attempting to check for spam list update.")
-                    print(f"This means you have been {F.YELLOW}rate limited by github.com{S.R}. Please try again in a while.\n")
-                    return False
-
-                return spamListDict
-            else:
-                if not silentCheck:
-                    print(f"{B.RED}{F.WHITE}Error [U-3L]:{S.R} Got non 200 status code (got: {response.status_code}) when attempting to check for spam list update.\n")
-                    print("If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
-                    if not silentCheck:
-                        return False
-                else:
+                if silentCheck:
                     return spamListDict
+                print(f"\n{B.RED}{F.WHITE}Error [U-4L]:{S.R} Got an 403 (ratelimit_reached) when attempting to check for spam list update.")
+                print(f"This means you have been {F.YELLOW}rate limited by github.com{S.R}. Please try again in a while.\n")
+                return False
+
+            if silentCheck:
+                return spamListDict
+            print(f"{B.RED}{F.WHITE}Error [U-3L]:{S.R} Got non 200 status code (got: {response.status_code}) when attempting to check for spam list update.\n")
+            print("If this keeps happening, you may want to report the issue here: https://github.com/ThioJoe/YT-Spammer-Purge/issues")
+            if not silentCheck:
+                return False
+
         latestRelease = response.json()["tag_name"]
     except OSError as ox:
         if silentCheck:
             return spamListDict
-        else:
-            if "WinError 10013" in str(ox):
-                print(f"{B.RED}{F.WHITE}WinError 10013:{S.R} The OS blocked the connection to GitHub. Check your firewall settings.\n")
-                return False
-            else:
-                print(str(ox))
-                print(f"{B.RED}{F.WHITE}\n Unexpected OS Error {S.R} See error details above.\n")
-                return False
+        if "WinError 10013" in str(ox):
+            print(f"{B.RED}{F.WHITE}WinError 10013:{S.R} The OS blocked the connection to GitHub. Check your firewall settings.\n")
+            return False
+        print(str(ox))
+        print(f"{B.RED}{F.WHITE}\n Unexpected OS Error {S.R} See error details above.\n")
+        return False
 
     except:
         if silentCheck:
             return spamListDict
-        else:
-            print("Error: Could not get latest release info from GitHub. Please try again later.")
-            return False
+        print("Error: Could not get latest release info from GitHub. Please try again later.")
+        return False
 
     # If update available
     if currentListVersion is None or (parse_version(latestRelease) > parse_version(currentListVersion)):
@@ -529,7 +526,7 @@ def load_config_file(
     configFileName: str = "SpamPurgeConfig.ini",
     configFolder: str = "configs",
 ):
-    configDict: dict[str, Any] = {}
+    configDict: dict[str, str] = {}
 
     def default_config_path(relative_path: str):
         if hasattr(sys, '_MEIPASS'):  # If running as a pyinstaller bundle
@@ -868,61 +865,57 @@ def copy_asset_file(fileName: str, destination: str):
 def copy_scripts_file(fileName: str, destination: str):
     def assetFilesPath(relative_path: str):
         if hasattr(sys, '_MEIPASS'):  # If running as a pyinstaller bundle
-            return os.path.join(sys._MEIPASS, "src", relative_path) # type: ignore
+            return os.path.join(sys._MEIPASS, "src", relative_path)  # type: ignore
         return os.path.join(os.path.abspath("src/Scripts"), relative_path)  # If running as script, specifies resource folder as /assets
 
-    source = os.path.join(assetFilesPath(""+fileName))
+    source = os.path.join(assetFilesPath("" + fileName))
     destination = os.path.abspath(destination)
     copyfile(source, destination)
 
 
-def ingest_list_file(relativeFilePath: str, keepCase:bool=True):
-    if os.path.exists(relativeFilePath):
-        with open(relativeFilePath, 'r', encoding="utf-8") as listFile:
-            # If file doesn't end with newline, add one
-            listData = listFile.readlines()
-            lastline = listData[-1]
-
-        with open(relativeFilePath, 'a', encoding="utf-8") as listFile:
-            if not lastline.endswith('\n'):
-                listFile.write('\n')
-
-        processedList = []
-        for line in listData:
-            line = line.strip()
-            if not line.startswith('#') and line != "":
-                if not keepCase:
-                    processedList.append(line.lower())
-                else:
-                    processedList.append(line)
-        return processedList
-    else:
+def ingest_list_file(relativeFilePath: str, keepCase: bool = True):
+    if not os.path.exists(relativeFilePath):
         return None
+    with open(relativeFilePath, 'r', encoding="utf-8") as listFile:
+        # If file doesn't end with newline, add one
+        listData = listFile.readlines()
+        lastline = listData[-1]
+    with open(relativeFilePath, 'a', encoding="utf-8") as listFile:
+        if not lastline.endswith('\n'):
+            listFile.write('\n')
+    processedList: list[str] = []
+    for line in listData:
+        line = line.strip()
+        if not line.startswith('#') and line != "":
+            if not keepCase:
+                processedList.append(line.lower())
+            else:
+                processedList.append(line)
+    return processedList
 
 
 def get_list_file_version(relativeFilePath: str):
     listVersion = None
-    if os.path.exists(relativeFilePath):
-        matchBetweenBrackets = '(?<=\[)(.*?)(?=\])'  # Matches text between first set of two square brackets
-        with open(relativeFilePath, 'r', encoding="utf-8") as file:
-            for line in islice(file, 0, 5):
-                try:
-                    matchItem = re.search(matchBetweenBrackets, line)
-                    if matchItem:
-                        listVersion = str(matchItem.group(0))
-                        break
-                except AttributeError:
-                    pass
-            return listVersion
-    else:
+    if not os.path.exists(relativeFilePath):
         return None
+    matchBetweenBrackets = r'(?<=\[)(.*?)(?=\])'  # Matches text between first set of two square brackets
+    with open(relativeFilePath, 'r', encoding="utf-8") as file:
+        for line in islice(file, 0, 5):
+            try:
+                matchItem = re.search(matchBetweenBrackets, line)
+                if matchItem:
+                    listVersion = str(matchItem.group(0))
+                    break
+            except AttributeError:
+                pass
+        return listVersion
 
 
 ############################# CONFIG FILE FUNCTIONS ##############################
-def create_config_file(updating=False, dontWarn=False, configFileName="SpamPurgeConfig.ini", configDict=None):
+def create_config_file(updating: bool = False, dontWarn: bool = False, configFileName: str = "SpamPurgeConfig.ini", configDict: dict[str, str] | None = None):
     def config_path(relative_path: str):
         if hasattr(sys, '_MEIPASS'):  # If running as a pyinstaller bundle
-            return os.path.join(sys._MEIPASS, relative_path)
+            return os.path.join(sys._MEIPASS, relative_path)  # type: ignore
         return os.path.join(os.path.abspath("assets"), relative_path)  # If running as script, specifies resource folder as /assets
 
     dirPath = ""
@@ -1029,12 +1022,12 @@ def create_config_file(updating=False, dontWarn=False, configFileName="SpamPurge
                     print(f"\nYou can now edit the file to your liking. You can also {F.YELLOW}create additional{S.R} configs using this same menu.\n")
                     input("Press Enter to return to main menu...")
                     return "MainMenu"
-                else:
-                    return True
-            else:
-                print("Something might have gone wrong. Check if SpamPurgeConfig.ini file exists and has contents.")
-                input("Press Enter to Exit...")
-                sys.exit()
+
+                return True
+
+            print("Something might have gone wrong. Check if SpamPurgeConfig.ini file exists and has contents.")
+            input("Press Enter to Exit...")
+            sys.exit()
         except:
             traceback.print_exc()
             print("Something went wrong when checking the created file. Check if SpamPurgeConfig.ini exists and has text. The info above may help if it's a bug.")
@@ -1052,6 +1045,8 @@ def parse_comment_list(config: dict[str, str], recovery: bool = False, removal: 
     elif removal:
         actionVerb = "remove"
         actionNoun = "removal"
+    else:
+        raise ValueError("Invalid action type specified. Must be either 'recovery' or 'removal'.")
 
     validFile = False
     manuallyEnter = False
@@ -1135,7 +1130,7 @@ def parse_comment_list(config: dict[str, str], recovery: bool = False, removal: 
     # Check for valid comment IDs
     validCount = 0
     notValidCount = 0
-    notValidList = []
+    notValidList: list[str] = []
     for id in resultList:
         if id[0:2] == "Ug":
             validCount += 1
@@ -1157,15 +1152,13 @@ def parse_comment_list(config: dict[str, str], recovery: bool = False, removal: 
         input(f"Press Enter to try {actionNoun} anyway...\n")
     if not returnFileName:
         return resultList, None
-    else:
-        if listFileName:
-            return resultList, pathlib.Path(os.path.relpath(listFileName)).stem
-        else:
-            return resultList, "Entered_List" + str(randrange(999))
+    if listFileName:
+        return resultList, pathlib.Path(os.path.relpath(listFileName)).stem
+    return resultList, "Entered_List" + str(randrange(999))
 
 
 ######################################### Read & Write Dict to Pickle File #########################################
-def write_dict_pickle_file(dictToWrite, fileName: str, relativeFolderPath=RESOURCES_FOLDER_NAME, forceOverwrite: bool = False):
+def write_dict_pickle_file(dictToWrite: object, fileName: str, relativeFolderPath: str = RESOURCES_FOLDER_NAME, forceOverwrite: bool = False):
     fileNameWithPath = os.path.join(relativeFolderPath, fileName)
 
     success = False
@@ -1209,13 +1202,13 @@ def write_dict_pickle_file(dictToWrite, fileName: str, relativeFolderPath=RESOUR
     return True
 
 
-def read_dict_pickle_file(fileNameNoPath: str, relativeFolderPath=RESOURCES_FOLDER_NAME):
+def read_dict_pickle_file(fileNameNoPath: str, relativeFolderPath: str = RESOURCES_FOLDER_NAME):
     failedAttemptCount = 0
     fileNameWithPath = os.path.join(relativeFolderPath, fileNameNoPath)
-    while True and not failedAttemptCount > 2:
+    while failedAttemptCount <= 2:
         if os.path.exists(fileNameWithPath):
             failedAttemptCount = 0
-            while True and not failedAttemptCount > 2:
+            while failedAttemptCount <= 2:
                 try:
                     with open(fileNameWithPath, 'rb') as pickleFile:
                         # dictToRead = json.load(jsonFile)
@@ -1231,10 +1224,9 @@ def read_dict_pickle_file(fileNameNoPath: str, relativeFolderPath=RESOURCES_FOLD
                     failedAttemptCount += 1
             return False
 
-        else:
-            print(f"\nFile '{fileNameNoPath}' not found! Try entering the name manually.")
-            input(f"\nPress Enter to try loading file again: {fileNameWithPath}")
-            failedAttemptCount += 1
+        print(f"\nFile '{fileNameNoPath}' not found! Try entering the name manually.")
+        input(f"\nPress Enter to try loading file again: {fileNameWithPath}")
+        failedAttemptCount += 1
 
     return False
 
@@ -1256,9 +1248,9 @@ def try_remove_file(fileNameWithPath: str):
 
 def check_existing_save():
     relativeSaveDir = Path(RESOURCES_FOLDER_NAME) / "Removal_List_Progress"
-    savesList = list()
+    savesList: list[str] = []
     if relativeSaveDir.is_dir():
-        fileList = list()
+        fileList: list[str] = []
         for file in relativeSaveDir.rglob("*"):
             if file.is_file():
                 fileList.append(file.name)
@@ -1270,7 +1262,7 @@ def check_existing_save():
 
 
 # Takes in compiled regex object and saves it to pickle file
-def save_compiled_regex_pickle(compiled_input, fileNameBase, latestListVersion, relativeFolderPath=Path(RESOURCES_FOLDER_NAME) / "Compiled_Regex"):
+def save_compiled_regex_pickle(compiled_input: Pattern[str], fileNameBase: str, latestListVersion: str, relativeFolderPath: Path = Path(RESOURCES_FOLDER_NAME) / "Compiled_Regex"):
     # Determine new file name based on base and version number
     fileName = f"{fileNameBase}_v{latestListVersion}.pickle"
     fileNameWithPath = Path(relativeFolderPath) / fileName
@@ -1293,7 +1285,7 @@ def save_compiled_regex_pickle(compiled_input, fileNameBase, latestListVersion, 
     return True
 
 
-def read_compiled_regex_pickle(fileNameBase: str, latestListVersion, relativeFolderPath=Path(RESOURCES_FOLDER_NAME) / "Compiled_Regex"):
+def read_compiled_regex_pickle(fileNameBase: str, latestListVersion: str, relativeFolderPath: Path = Path(RESOURCES_FOLDER_NAME) / "Compiled_Regex"):
     # Find file that begins with the fileNameBase, check if the appended version compared to latestListVersion
     fileName = None
     relativeFolderPath = Path(relativeFolderPath)

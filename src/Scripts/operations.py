@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
 
 import itertools
+import sys
 import time
 import traceback
 import unicodedata
 from datetime import datetime
 from html import unescape
+from typing import Any
 
 import regex as re
 from googleapiclient.errors import HttpError
 from rapidfuzz import fuzz
+from regex import Match, Pattern
 
 from . import auth, utils, validation
-from .shared_imports import B, F, S
-from .utils import ScanInstance, choice
+from .shared_imports import B, F, S, ScanInstance
 
 ##########################################################################################
 ############################## GET COMMENT THREADS #######################################
@@ -21,7 +23,9 @@ from .utils import ScanInstance, choice
 
 
 # Call the API's commentThreads.list method to list the existing comments.
-def get_comments(current: ScanInstance, filtersDict: dict, miscData: dict, config: dict, allVideoCommentsDict: dict, scanVideoID: str | None = None, nextPageToken: str = None, videosToScan=None):  # None are set as default if no parameters passed into function
+def get_comments(
+    current: ScanInstance, filtersDict: dict[str, str], miscData: object, config: dict[str, str], allVideoCommentsDict: dict[str, list[dict[str, Any]]], scanVideoID: str | None = None, nextPageToken: str | None = None, videosToScan=None
+):  # None are set as default if no parameters passed into function
     # Initialize some variables
     authorChannelName = None
     commentText = None
@@ -62,7 +66,7 @@ def get_comments(current: ScanInstance, filtersDict: dict, miscData: dict, confi
 
         # In case there are no replies
         if 'replies' in item and 'comments' in item["replies"]:
-            limitedRepliesList = item["replies"]["comments"]  # API will return a limited number of replies (~5), but to get all, need to make separate call
+            limitedRepliesList: list[str] = item["replies"]["comments"]  # API will return a limited number of replies (~5), but to get all, need to make separate call
         else:
             limitedRepliesList = []
 
@@ -168,7 +172,7 @@ def get_comments(current: ScanInstance, filtersDict: dict, miscData: dict, confi
 
 
 # Call the API's comments.list method to list the existing comment replies.
-def get_replies(current: ScanInstance, filtersDict, miscData, config, parent_id: str, videoID: str, parentAuthorChannelID: str, videosToScan, allVideoCommentsDict, parentCommentDict=None, repliesList=None):
+def get_replies(current: ScanInstance, filtersDict: dict[str, str], miscData: object, config: dict[str, str], parent_id: str, videoID: str, parentAuthorChannelID: str, videosToScan, allVideoCommentsDict, parentCommentDict=None, repliesList: list[dict[str, Any]] | None = None):
     # Initialize some variables
     authorChannelName = None
     commentText = None
@@ -176,7 +180,7 @@ def get_replies(current: ScanInstance, filtersDict, miscData, config, parent_id:
 
     if repliesList is None:
         fieldsToFetch = "nextPageToken,items/snippet/authorChannelId/value,items/id,items/snippet/authorDisplayName,items/snippet/textDisplay,items/snippet/publishedAt"
-        replies = []
+        replies: list[dict[str, Any]] = []
         replyPageToken = None
 
         while replyPageToken != "End":
@@ -205,7 +209,7 @@ def get_replies(current: ScanInstance, filtersDict, miscData, config, parent_id:
         replies = repliesList
 
     # Create list of author names in current thread, add into list - Only necessary when scanning comment text
-    allThreadAuthorNames = []
+    allThreadAuthorNames: list[str] = []
 
     # Iterates through items in results
     # Need to be able to catch exceptions because sometimes the API will return a comment from non-existent / deleted channel
@@ -277,7 +281,7 @@ def get_replies(current: ScanInstance, filtersDict, miscData, config, parent_id:
 
 
 #####################################################################################################
-def check_spam_threads(current, filtersDict, miscData, config, parentCommentDict, threadDict):
+def check_spam_threads(current: ScanInstance, filtersDict: dict[str, Any], miscData: object, config: dict[str, str], parentCommentDict: dict[str, str], threadDict: dict[str, dict[str, Any]]):
     # Note For Debugging: Parent Comment Author ID = parentCommentDict['authorChannelID']
     threadWordsRegex = filtersDict['CustomCommentTextFilter']['threadFiltersDict']['threadWordsRegex']
     threadPhrasesRegex = filtersDict['CustomCommentTextFilter']['threadFiltersDict']['threadPhrasesRegex']
@@ -288,9 +292,11 @@ def check_spam_threads(current, filtersDict, miscData, config, parentCommentDict
     salutationRegex = filtersDict['CustomCommentTextFilter']['threadFiltersDict']['salutationRegex']
     ignoreList = ['earn', 'trade', 'invest', 'signal', 'crypto', ' is', ' she', ' he']
     spam = False
-    threadAnalysisDict = {}
+    threadAnalysisDict: dict[str, str] = {}
     preliminaryCount, redCount, yellowCount, nameCount, fullNameCount, partialNameCount, susMentionCount = 0, 0, 0, 0, 0, 0, 0
-    nameList, partialNameList, fullNameList = [], [], []
+    nameList: list[str] = []
+    partialNameList: list[str] = []
+    fullNameList: list[str] = []
     name, partialName, fullName = "", "", ""
     minReplies = 5
 
@@ -319,7 +325,7 @@ def check_spam_threads(current, filtersDict, miscData, config, parentCommentDict
     threadAnalysisList = list(threadAnalysisDict.values())
 
     # -------------------------------------------------------------------------------
-    def processResult(regResult, naked):
+    def processResult(regResult: Match[str], naked: bool):
         if naked:
             g1 = 1
             g2 = 20
@@ -353,7 +359,7 @@ def check_spam_threads(current, filtersDict, miscData, config, parentCommentDict
         return name, partialName, fullName
 
     # -------------------------------------------------------------------------------
-    def regexSearchNames(regex, name, partialName, fullName, naked=False):
+    def regexSearchNames(regex: str, name: list[str], partialName: list[str], fullName: list[str], naked: bool = False):
         # Get Potential Names
         for comment in threadAnalysisList:
             regResult = re.search(regex, comment)
@@ -376,8 +382,8 @@ def check_spam_threads(current, filtersDict, miscData, config, parentCommentDict
         return name, partialName, fullName
 
     # -------------------------------------------------------------------------------
-    def remove_ignore(nameList):
-        removeList = []
+    def remove_ignore(nameList: list[str]):
+        removeList: list[str] = []
         for n in nameList:
             for word in ignoreList:
                 if word in n:
@@ -493,8 +499,8 @@ def check_spam_threads(current, filtersDict, miscData, config, parentCommentDict
 
 
 ###################################### Community Post Thread Dict Maker #####################################################
-def make_community_thread_dict(commentID, allCommunityCommentsDict):
-    threadDict = {}
+def make_community_thread_dict(commentID: str, allCommunityCommentsDict: dict[str, Any]):
+    threadDict: dict[str, Any] = {}
     if "." not in commentID:  # Checks if is top level comment or reply
         for id in allCommunityCommentsDict.keys():
             if commentID in id and commentID != id:
@@ -509,7 +515,7 @@ def make_community_thread_dict(commentID, allCommunityCommentsDict):
 # If the comment/username matches criteria based on mode, add key/value pair of comment ID and author ID to current.matchedCommentsDict
 # Also add key-value pair of comment ID and video ID to dictionary
 # Also count how many spam comments for each author
-def add_spam(current: ScanInstance, config, miscData, currentCommentDict, videoID: str, matchReason="Filter Match", matchedText=None):
+def add_spam(current: ScanInstance, config: dict[str, str], miscData: object, currentCommentDict: dict[str, str], videoID: str, matchReason="Filter Match", matchedText=None):
     if matchReason == "Filter Match":
         dictToUse = current.matchedCommentsDict
     elif matchReason == "Duplicate":
@@ -563,7 +569,7 @@ def add_spam(current: ScanInstance, config, miscData, currentCommentDict, videoI
         dictToUse[commentID]['videoTitle'] = utils.get_video_title(current, videoID)
 
 
-def get_all_author_comments(current, config, miscData, allCommentsDict):
+def get_all_author_comments(current: ScanInstance, config: dict[str, str], miscData: object, allCommentsDict: dict[str, list[dict[str, Any]]]):
     # Make set of all matched author IDs
     print(" Finding all other comments by authors...", end="\r")
     totalCommentsAmount = len(allCommentsDict)
@@ -586,7 +592,7 @@ def get_all_author_comments(current, config, miscData, allCommentsDict):
 
 
 ############################## Check Duplicates ######################################
-def check_duplicates(current, config, miscData, allVideoCommentsDict, videoID):
+def check_duplicates(current: ScanInstance, config: dict[str, str], miscData: object, allVideoCommentsDict: dict[str, str], videoID: str):
     domainList = miscData.resources['rootDomainList']
 
     # Get Lenvenshtein Distance Setting - Does not need to be validated here, because that happens at beginning of program
@@ -614,8 +620,8 @@ def check_duplicates(current, config, miscData, allVideoCommentsDict, videoID):
             print(f" Analyzing For Duplicates: [ {scannedCount / authorCount * 100:.2f}% ]   (Can be Disabled & Customized With Config File)".ljust(75, " "), end="\r")
         else:
             numDupes = 0
-            commentTextList = []
-            matchedIndexes = []
+            commentTextList: list[str] = []
+            matchedIndexes: list[int] = []
             for commentDict in authorCommentsList:
                 # Adding to use as lower case, because levenshtein is case sensitive. Also, root domain list is ingested as lower case, so necessary to compare
                 commentTextList.append(commentDict['commentText'].lower())
@@ -659,7 +665,7 @@ def check_duplicates(current, config, miscData, allVideoCommentsDict, videoID):
 
 
 ############################# Check Text Reposts #####################################
-def check_reposts(current, config, miscData, allVideoCommentsDict, videoID):
+def check_reposts(current: ScanInstance, config: dict[str, str], miscData: object, allVideoCommentsDict: dict[str, str], videoID: str):
     # Get Lenvenshtein Distance Setting
     if config['fuzzy_stolen_comment_detection']:
         try:
@@ -688,7 +694,7 @@ def check_reposts(current, config, miscData, allVideoCommentsDict, videoID):
         print("\nError: stolen_minimum_text_length config setting is invalid. Defaulting to 25.")
         input("\nPress Enter to Continue...")
 
-    flatCommentList = []
+    flatCommentList: list[str] = []
 
     # Calculate number of authors to check, for progress
     scannedCount = 0
@@ -729,7 +735,7 @@ def check_reposts(current, config, miscData, allVideoCommentsDict, videoID):
 
 
 # The basic logic that actually checks each comment against filter criteria
-def check_against_filter(current: ScanInstance, filtersDict, miscData, config, currentCommentDict, videoID, allThreadAuthorNames=None):
+def check_against_filter(current: ScanInstance, filtersDict: dict[str, str], miscData: object, config: dict[str, str], currentCommentDict: dict[str, str], videoID: str, allThreadAuthorNames: list[str] = None):
     # Retrieve Data from currentCommentDict
     _commentID = currentCommentDict['commentID']
     authorChannelName = currentCommentDict['authorChannelName']
@@ -758,7 +764,7 @@ def check_against_filter(current: ScanInstance, filtersDict, miscData, config, c
                         commentText = commentText.replace("@" + str(name), "")
             # Extra logic to detect false positive if spammer's comment already deleted, but someone replied
             if current.matchedCommentsDict and filtersDict['filterMode'] == "AutoSmart":
-                for key, value in current.matchedCommentsDict.items():
+                for value in current.matchedCommentsDict.values():
                     if "@" + str(value['authorName']) in commentText:
                         remove = True
                         for key2, value2 in current.matchedCommentsDict.items():
@@ -864,7 +870,7 @@ def check_against_filter(current: ScanInstance, filtersDict, miscData, config, c
                 rootDomainRegex = smartFilter['sensitiveRootDomainRegex']
 
             # Functions --------------------------------------------------------------
-            def findObf(expression, chars, stringToSearch, findall=True, phone=False):
+            def findObf(expression: Pattern[str], chars: str, stringToSearch: str, findall: bool = True, phone: bool = False):
                 # Confusable thinks s and f look similar, have to compensate to avoid false positive
                 ignoredConfusablesConverter = {ord('f'): ord('s'), ord('s'): ord('f')}
                 if findall:
@@ -873,26 +879,25 @@ def check_against_filter(current: ScanInstance, filtersDict, miscData, config, c
                     result = expression.search(stringToSearch.lower())
                 if not result:
                     return False
-                else:
-                    for match in result:
-                        if match != '':
-                            if not phone or (phone and not bigNumCheckRegexCompiled.search(match)):
-                                lowerChars = chars.lower()
-                                # Strips off buffer characters and specified unicode categories
-                                while match[0] in compiledRegexDict['bufferChars'] or match[-1] in compiledRegexDict['bufferChars']:
-                                    for bufferChar in compiledRegexDict['bufferChars']:
-                                        match = match.strip(bufferChar)
-                                while unicodedata.category(match[0]) in smartFilter['unicodeCategoriesStrip']:
-                                    match = match[1:]
-                                while unicodedata.category(match[-1]) in smartFilter['unicodeCategoriesStrip']:
-                                    match = match[:-1]
-                                if any(char not in lowerChars for char in match) and any(char not in lowerChars.translate(ignoredConfusablesConverter) for char in match):
-                                    return True
+                for match in result:
+                    if match != '':
+                        if not phone or (phone and not bigNumCheckRegexCompiled.search(match)):
+                            lowerChars = chars.lower()
+                            # Strips off buffer characters and specified unicode categories
+                            while match[0] in compiledRegexDict['bufferChars'] or match[-1] in compiledRegexDict['bufferChars']:
+                                for bufferChar in compiledRegexDict['bufferChars']:
+                                    match = match.strip(bufferChar)
+                            while unicodedata.category(match[0]) in smartFilter['unicodeCategoriesStrip']:
+                                match = match[1:]
+                            while unicodedata.category(match[-1]) in smartFilter['unicodeCategoriesStrip']:
+                                match = match[:-1]
+                            if any(char not in lowerChars for char in match) and any(char not in lowerChars.translate(ignoredConfusablesConverter) for char in match):
+                                return True
 
-            def remove_unicode_categories(string):
+            def remove_unicode_categories(string: str):
                 return "".join(char for char in string if unicodedata.category(char) not in smartFilter['unicodeCategoriesStrip'])
 
-            def check_if_only_link(string):
+            def check_if_only_link(string: str):
                 result = re.match(compiledRegexDict['onlyVideoLinkRegex'], string)
                 if not result:
                     return False
@@ -901,7 +906,7 @@ def check_against_filter(current: ScanInstance, filtersDict, miscData, config, c
                 else:
                     return False
 
-            def find_accompanying_link_spam(string):
+            def find_accompanying_link_spam(string: str):
                 linkResult = re.search(accompanyingLinkSpamDict['videoLinkRegex'], string)
                 if not linkResult:
                     return False
@@ -916,7 +921,7 @@ def check_against_filter(current: ScanInstance, filtersDict, miscData, config, c
                     else:
                         return False
 
-            def multiVarDetect(text, username):
+            def multiVarDetect(_text: str, username: str):
                 multiUsernameAllList = comboDict['multiUsernameAllList']
                 for checkList in multiUsernameAllList:
                     if all(word in username for word in checkList):
@@ -1074,7 +1079,7 @@ def check_against_filter(current: ScanInstance, filtersDict, miscData, config, c
 
 
 # Takes in list of comment IDs to delete, breaks them into 50-comment chunks, and deletes them in groups
-def delete_found_comments(commentsList, banChoice, deletionMode, recoveryMode=False, skipCheck=False):
+def delete_found_comments(commentsList: list[dict[str, str]], banChoice, deletionMode: str, recoveryMode: bool = False, skipCheck: bool = False):
     print("\n")
     if deletionMode == "rejected":
         actionPresent = "Deleting"
@@ -1092,7 +1097,7 @@ def delete_found_comments(commentsList, banChoice, deletionMode, recoveryMode=Fa
     failedComments = []
 
     # Local Functions
-    def setStatus(commentIDs, failedComments):  # Does the actual deletion
+    def setStatus(commentIDs: list[str], failedComments: list[str]):  # Does the actual deletion
         if deletionMode == "reportSpam":
             result = auth.YOUTUBE.comments().markAsSpam(id=commentIDs).execute()
             if len(result) > 0:
@@ -1157,15 +1162,15 @@ class CommentFoundError(Exception):
 
 
 # Takes in list of comment IDs and video IDs, and checks if comments still exist individually
-def check_deleted_comments(commentInput):
+def check_deleted_comments(commentInput: list[str] | dict[str, dict[str, str]]):
     i = 0  # Count number of remaining comments
     j = 1  # Count number of checked
     total = len(commentInput)
-    commentList = []
+    commentList: list[str] = []
 
-    if type(commentInput) == list:
+    if isinstance(commentInput, list):
         commentList = commentInput
-    elif type(commentInput) == dict:
+    else:
         commentList = list(commentInput.keys())
 
     # Wait 2 seconds so YouTube API has time to update comment status
@@ -1195,35 +1200,32 @@ def check_deleted_comments(commentInput):
 
         # If comment is found and possibly not deleted, print out video ID and comment ID
         except CommentFoundError:
-            if type(commentInput) == dict:
-                print("Possible Issue Deleting Comment: " + str(commentID) + " |  Check Here: " + "https://www.youtube.com/watch?v=" + str(commentInput[commentID]['videoID']) + "&lc=" + str(commentID))
-            elif type(commentInput) == list:
-                print("Possible Issue Deleting Comment: " + str(commentID))
+            if isinstance(commentInput, dict):
+                print(f"Possible Issue Deleting Comment: {commentID} |  Check Here: https://www.youtube.com/watch?v=" + str(commentInput[commentID]['videoID']) + "&lc={commentID}")
+            else:
+                print(f"Possible Issue Deleting Comment: {commentID}")
             i += 1
-            pass
         except HttpError as hx:
             try:
                 reason = str(hx.error_details[0]["reason"])
             except:
                 reason = "Not Given"
-            if type(commentInput) == dict:
-                print(f"HttpError '{reason}' While Deleting Comment: {commentID} |  Check Here: " + f"https://www.youtube.com/watch?v={commentInput[commentID]['videoID']}&lc={commentID}")
-            elif type(commentInput) == list:
-                print(f"HttpError '{reason}' While Deleting Comment: " + str(commentID))
+            if isinstance(commentInput, dict):
+                print(f"HttpError '{reason}' While Deleting Comment: {commentID} |  Check Here: https://www.youtube.com/watch?v={commentInput[commentID]['videoID']}&lc={commentID}")
+            else:
+                print(f"HttpError '{reason}' While Deleting Comment: {commentID}")
             i += 1
-            pass
         except Exception:
-            if type(commentInput) == dict:
-                print("Unhandled Exception While Deleting Comment: " + str(commentID) + " |  Check Here: " + "https://www.youtube.com/watch?v=" + str(commentInput[commentID]['videoID']) + "&lc=" + str(commentID))
-            elif type(commentInput) == list:
-                print("Unhandled Exception While Deleting Comment: " + str(commentID))
+            if isinstance(commentInput, dict):
+                print(f"Unhandled Exception While Deleting Comment: {commentID} |  Check Here: https://www.youtube.com/watch?v=" + str(commentInput[commentID]['videoID']) + "&lc={commentID}")
+            else:
+                print(f"Unhandled Exception While Deleting Comment: {commentID}")
             i += 1
-            pass
 
     if i == 0:
         print("\n\nSuccess: All comments should be gone.")
     elif i > 0:
-        print("\n\nWarning: " + str(i) + " comments may remain. Check links above or try running the program again. An error log file has been created: 'Deletion_Error_Log.txt'")
+        print(f"\n\nWarning: {i} comments may remain. Check links above or try running the program again. An error log file has been created: 'Deletion_Error_Log.txt'")
     else:
         print("\n\nSomething strange happened... The comments may or may have not been deleted.")
 
@@ -1235,11 +1237,11 @@ class CommentNotFoundError(Exception):
     pass
 
 
-def check_recovered_comments(commentsList):
+def check_recovered_comments(commentsList: list[str]):
     i = 0  # Count number of remaining comments
     j = 1  # Count number of checked
     total = len(commentsList)
-    unsuccessfulResults = []
+    unsuccessfulResults: list[str] = []
 
     for comment in commentsList:
         try:
@@ -1279,7 +1281,7 @@ def check_recovered_comments(commentsList):
 
 
 # Removes comments by user-selected authors from list of comments to delete
-def exclude_authors(current: ScanInstance, config, miscData, excludedCommentsDict, authorsToExcludeSet, commentIDExcludeSet, displayString, inputtedString, logInfo=None, only=False):
+def exclude_authors(current: ScanInstance, config: dict[str, str], miscData: object, excludedCommentsDict: dict[str, str], authorsToExcludeSet: dict[str, str], commentIDExcludeSet: dict[str, str], displayString: str, inputtedString: str, logInfo: None = None, only: bool = False):
     plaintextFormattedExcludes = ""
     rtfFormattedExcludes = ""
 
@@ -1395,7 +1397,7 @@ def exclude_authors(current: ScanInstance, config, miscData, excludedCommentsDic
 
     if config['whitelist_excluded'] == 'ask':
         print(f"\nAdd these {F.LIGHTGREEN_EX}excluded{S.R} users to the {F.LIGHTGREEN_EX}whitelist{S.R} for future scans?")
-        addWhitelist = choice("Whitelist Users?")
+        addWhitelist = utils.choice("Whitelist Users?")
     elif config['whitelist_excluded']:
         addWhitelist = True
     elif not config['whitelist_excluded']:
@@ -1417,8 +1419,8 @@ def exclude_authors(current: ScanInstance, config, miscData, excludedCommentsDic
 
 ################################# Get Most Recent Videos #####################################
 # Returns a list of lists
-def get_recent_videos(current: ScanInstance, channel_id, numVideosTotal):
-    def get_block_of_videos(nextPageToken, j, k, numVideosBlock=50):
+def get_recent_videos(current: ScanInstance, channel_id: str, numVideosTotal: int):
+    def get_block_of_videos(nextPageToken: str, j: int, k: int, numVideosBlock: int = 50):
         # fetch the channel resource
         channel = auth.YOUTUBE.channels().list(part="contentDetails", id=channel_id).execute()
 

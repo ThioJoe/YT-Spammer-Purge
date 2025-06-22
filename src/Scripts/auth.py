@@ -41,12 +41,15 @@ class Exec:
 class YOUTUBE_Class:  # can I rename this class to YOUTUBE? not sure
     class Result:
         def list(self, **kwargs: Any) -> Exec: ...
+        def markAsSpam(self, **kwargs: Any) -> Exec: ...
+        def setModerationStatus(self, **kwargs: Any) -> Exec: ...
 
     def videos(self) -> Result: ...
     def search(self) -> Result: ...
     def channels(self) -> Result: ...
     def comments(self) -> Result: ...
     def commentThreads(self) -> Result: ...
+    def playlistItems(self) -> Result: ...
 
 
 YOUTUBE: YOUTUBE_Class = None
@@ -161,7 +164,7 @@ class ChannelIDError(Exception):
 
 
 # Get channel ID and channel title of the currently authorized user
-def get_current_user(config: dict[str, str]):
+def get_current_user(config: dict[str, str] | None):
     # Define fetch function so it can be re-used if issue and need to re-run it
     def fetch_user() -> dict[Literal["items"], list[dict[str, str]]]:
         results = (
@@ -202,13 +205,13 @@ def get_current_user(config: dict[str, str]):
             channelTitle = results["items"][0]["snippet"]["title"]  # If channel ID was found, but not channel title/name
         except KeyError:
             print("Error Getting Current User: Channel ID was found, but channel title was not retrieved. If this occurs again, try deleting 'token.pickle' file and re-running. If that doesn't work, consider filing a bug report on the GitHub project 'issues' page.")
-            print("> NOTE: The program may still work - You can try continuing. Just check the channel ID is correct: " + str(channelID))
+            print(f"> NOTE: The program may still work - You can try continuing. Just check the channel ID is correct: {channelID}")
             channelTitle = ""
             input("Press Enter to Continue...")
     except ChannelIDError:
         traceback.print_exc()
         print("\nError: Still unable to get channel info. Big Bruh Moment. Try deleting token.pickle. The info above might help if you want to report a bug.")
-        print("Note: A channel ID was retrieved but is invalid: " + str(channelID))
+        print(f"Note: A channel ID was retrieved but is invalid: {channelID}")
         input("\nPress Enter to Exit...")
         sys.exit()
     except KeyError:
@@ -305,6 +308,7 @@ def encrypt_file(fileName: str | None = None, fileData: bytes | None = None, ref
             encrypted_file.write(salt + encrypted_data)
 
         return encrypted_data
+    return None
 
 
 def decrypt_file(filename: str):
@@ -331,6 +335,7 @@ def decrypt_file(filename: str):
             success = True
         except:
             print(f"\n{F.WHITE}{B.LIGHTRED_EX} INCORRECT PASSWORD {S.R} - Try again. If you can't remember the password, delete '{TOKEN_ENCRYPTED_NAME}' and re-run the program.")
+            sys.exit()
 
     return io.BytesIO(decrypted_data)
 

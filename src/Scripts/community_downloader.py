@@ -53,7 +53,7 @@ def get_post_channel_url(youtube_id: str):
         print(f"Error: Unable to access YouTube post with ID {youtube_id}. HTTP Status Code: {response.status_code}")
         return None
     if 'uxe=' in response.request.url:
-        session.cookies.set('CONSENT', 'YES+cb', domain='.youtube.com')
+        session.cookies.set('CONSENT', 'YES+cb', domain='.youtube.com')  # type: ignore
         response = session.get(YOUTUBE_VIDEO_URL.format(youtube_id=youtube_id))
     html = response.text
     ytcfg = json.loads(regex_search(html, YT_CFG_RE, default=''))
@@ -73,7 +73,7 @@ def get_post_channel_url(youtube_id: str):
 def fetch_recent_community_posts(channel_id: str):
     session = requests.Session()
     session.headers['User-Agent'] = USER_AGENT
-    session.cookies.set('CONSENT', 'YES+cb', domain='.youtube.com')
+    session.cookies.set('CONSENT', 'YES+cb', domain='.youtube.com')  # type: ignore
     response = session.get(YOUTUBE_COMMUNITY_TAB_URL.format(channel_id=channel_id))
 
     html = response.text
@@ -118,7 +118,7 @@ def download_comments(youtube_id: str, sort_by: int = SORT_BY_RECENT, language: 
         return
 
     if 'uxe=' in response.request.url:
-        session.cookies.set('CONSENT', 'YES+cb', domain='.youtube.com')
+        session.cookies.set('CONSENT', 'YES+cb', domain='.youtube.com')  # type: ignore
         response = session.get(YOUTUBE_VIDEO_URL.format(youtube_id=youtube_id))
 
     html = response.text
@@ -138,7 +138,7 @@ def download_comments(youtube_id: str, sort_by: int = SORT_BY_RECENT, language: 
         return
 
     needs_sorting = sort_by != SORT_BY_POPULAR
-    continuations = [renderer['continuationEndpoint']]
+    continuations: list[Any] = [renderer['continuationEndpoint']]
     while continuations:
         continuation = continuations.pop()
         response = ajax_request(session, continuation, ytcfg)

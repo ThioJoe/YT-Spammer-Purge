@@ -46,8 +46,7 @@ from typing import Any, NamedTuple
 
 from Scripts import auth, community_downloader, files, logging, operations, user_tools, utils, validation
 from Scripts.community_downloader import main as get_community_comments  # Args = post's ID, comment limit
-from Scripts.shared_imports import RESOURCES_FOLDER_NAME, B, F, S, init
-from Scripts.types import ScanInstance
+from Scripts.shared_imports import RESOURCES_FOLDER_NAME, B, F, S, ScanInstance, init
 from Scripts.utils import choice
 
 print("Importing Standard Libraries...")

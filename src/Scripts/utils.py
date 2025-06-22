@@ -9,8 +9,7 @@ import regex as re
 from googleapiclient.errors import HttpError
 
 from . import auth, validation
-from .shared_imports import B, F, S
-from .types import ScanInstance
+from .shared_imports import B, F, S, ScanInstance
 
 ##########################################################################################
 ############################## UTILITY FUNCTIONS #########################################
@@ -63,7 +62,7 @@ def make_char_set(stringInput: str, stripLettersNumbers: bool = False, stripKeyb
         numbersLettersChars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
         charsToStrip += numbersLettersChars
     if stripKeyboardSpecialChars:
-        keyboardSpecialChars = "!@#$%^&*()_+-=[]\{\}|;':,./<>?`~"
+        keyboardSpecialChars = r"!@#$%^&*()_+-=[]\{\}|;':,./<>?`~"
         charsToStrip += keyboardSpecialChars
     if stripPunctuation:
         punctuationChars = "!?\".,;:'-/()"
@@ -130,7 +129,7 @@ def process_spammer_ids(rawString: str):
     IDList = list(inputList)  # Need to use list() instead of just setting equal so each list is separately affected, otherwise same pointer
 
     # Validate each ID in list
-    for item, i in enumerate(inputList):  ## !!! THIS IS WRONG. ITEM AND I ARE SWAPPED. ENUMAERATE RETURNS (INDEX, VALUE) !!!
+    for i, item in enumerate(inputList):
         valid, IDList[i], _ = validation.validate_channel_id(item)
         if valid is False:
             print(f"{B.RED}{F.BLACK}Invalid{S.R} Channel ID or Link: {inputList[i]}\n")

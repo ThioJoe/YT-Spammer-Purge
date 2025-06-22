@@ -130,7 +130,7 @@ def take_input_gui(mode: str, stripLettersNumbers: bool = False, stripKeyboardSp
 
     def quit():
         global returnText
-        returnText = []
+        returnText = set()
         window.destroy()
 
     def execute():

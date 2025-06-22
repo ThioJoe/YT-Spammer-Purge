@@ -53,6 +53,7 @@ def confusable_regex(string: str, include_character_padding: bool = False):
 
     return regex
 
+
 def normalize(string: str, prioritize_alpha: bool = False):
     normal_forms = set([""])
     for char in string:

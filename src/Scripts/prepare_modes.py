@@ -6,6 +6,8 @@ import sys
 from pathlib import Path
 from typing import Any, Literal
 
+import regex as re
+
 from .gui import take_input_gui
 from .utils import choice, make_char_set
 
@@ -36,6 +38,8 @@ def prepare_filter_mode_chars(_scanMode: Any, filterMode: FilterMode, config: di
         whatToScanMsg = "Comment Text"
     elif filterMode == "NameAndText":
         whatToScanMsg = "Usernames and Comment Text"
+    else:
+        raise ValueError(f"Invalid filter mode: {filterMode}. Must be 'Username', 'Text', or 'NameAndText'.")
 
     if config['characters_to_filter'] != "ask":
         print("Characters to filter obtained from config file.")
@@ -86,6 +90,8 @@ def prepare_filter_mode_strings(_scanMode: Any, filterMode: FilterMode, config: 
         whatToScanMsg = "Comment Text"
     elif filterMode == "NameAndText":
         whatToScanMsg = "Usernames and Comment Text"
+    else:
+        raise ValueError(f"Invalid filter mode: {filterMode}. Must be 'Username', 'Text', or 'NameAndText'.")
 
     if config['strings_to_filter'] != "ask":
         print("Strings to filter obtained from config file.")
@@ -138,6 +144,8 @@ def prepare_filter_mode_regex(_scanMode: int, filterMode: FilterMode, config: di
         whatToScanMsg = "Comment Text"
     elif filterMode == "NameAndText":
         whatToScanMsg = "Usernames and Comment Text"
+    else:
+        raise ValueError(f"Invalid filter mode: {filterMode}. Must be 'Username', 'Text', or 'NameAndText'.")
 
     if config['regex_to_filter'] != "ask":
         print("Regex expression obtained from config file.")
@@ -274,16 +282,12 @@ def prepare_filter_mode_non_ascii(scanMode: str, config: dict[str, str]):
 
     if confirmation:
         return regexPattern, autoModeName
-    else:
-        input("How did you get here? Something very strange went wrong. Press Enter to Exit...")
-        sys.exit()
-
-
-import regex as re
+    input("How did you get here? Something very strange went wrong. Press Enter to Exit...")
+    sys.exit()
 
 
 # Auto smart mode
-def prepare_filter_mode_smart(scanMode: str, config: dict[str, str], miscData: Any, sensitive: bool = False):
+def prepare_filter_mode_smart(_scanMode: str, config: dict[str, str], miscData: Any, sensitive: bool = False):
     # Get spam lists and version info
     rootDomainList = miscData.resources['rootDomainList']
     spamDomainsList = miscData.spamLists['spamDomainsList']  # List of domains from crowd sourced list
@@ -398,7 +402,7 @@ def prepare_filter_mode_smart(scanMode: str, config: dict[str, str], miscData: A
     print("  Loading Filters  [==============                ]", end="\r")
 
     # Prepare All-domain Regex Expression
-    prepString = "\.("
+    prepString = r"\.("
     first = True
     for extension in rootDomainList:
         if first:
@@ -407,13 +411,13 @@ def prepare_filter_mode_smart(scanMode: str, config: dict[str, str], miscData: A
         else:
             prepString = prepString + "|" + extension
     sensitivePrepString = prepString + ")"
-    prepString = prepString + ")\/"
+    prepString = prepString + r")\/"
     rootDomainRegex = re.compile(prepString)
     sensitiveRootDomainRegex = re.compile(sensitivePrepString)
     print("  Loading Filters  [===================           ]", end="\r")
 
-    spamListExpressionsList = []
-    spamThreadsExpressionsList = []
+    spamListExpressionsList: list[str] = []
+    spamThreadsExpressionsList: list[str] = []
     combinedCompiledFilename = "spamListCombinedRegex"
     threadsCompiledFilename = "spamThreadsRegex"
 

@@ -2,6 +2,7 @@
 import json
 import os
 import shutil
+import traceback
 from datetime import datetime
 from typing import Any
 from unicodedata import category as unicode_category
@@ -9,8 +10,8 @@ from unicodedata import category as unicode_category
 import requests
 
 from . import auth, utils
-from .shared_imports import B, F, S
-from .utils import ScanInstance, choice
+from .shared_imports import B, F, S, ScanInstance
+from .utils import choice
 
 ##########################################################################################
 ############################### PRINT SPECIFIC COMMENTS ##################################
