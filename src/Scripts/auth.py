@@ -112,14 +112,14 @@ def get_authenticated_service() -> YOUTUBE_Class:
         # Save the credentials for the next run
         if encrypt_config:
             # Extract the token data from the credentials object, and convert it to a Dict
-            tokenData = json.loads(creds.to_json())
+            tokenData = json.loads(bytes(creds.to_json()))
             # Convert Dict to bytes
             tokenData = json.dumps(tokenData).encode()
             # Encrypt the token data
             encrypt_file(fileData=tokenData, refreshed=refreshed)
         else:
             with open(TOKEN_FILE_NAME, 'wb') as token:
-                token.write(creds.to_json())
+                token.write(bytes(creds.to_json(), 'utf-8'))
     YOUTUBE = build(API_SERVICE_NAME, API_VERSION, credentials=creds, discoveryServiceUrl=DISCOVERY_SERVICE_URL, cache_discovery=False, cache=None)
     return YOUTUBE
 
@@ -242,30 +242,30 @@ def remove_token():
 
 
 # Convert TOKEN_FILE_NAME to IOBytes virtual file
-def convert_file_to_iobytes(file_name):
+def convert_file_to_iobytes(file_name: str):
     with open(file_name, 'rb') as f:
         return io.BytesIO(f.read())
 
 
-def convert_dict_to_iobytes(data_dict):
+def convert_dict_to_iobytes(data_dict: dict[str, Any]):
     io_bytes = io.BytesIO()
     io_bytes.write(json.dumps(data_dict).encode('utf-8'))
     return io_bytes
 
 
-def convert_dict_to_bytes(data_dict):
+def convert_dict_to_bytes(data_dict: dict[str, Any]):
     return json.dumps(data_dict).encode('utf-8')
 
 
 # Convert IOBytes object to dictionary
-def convert_iobytes_to_dict(io_bytes):
+def convert_iobytes_to_dict(io_bytes: io.BytesIO):
     io_string = io_bytes.read().decode('utf-8')  # Convert to string
     io_dict = json.loads(io_string)  # Convert to dictionary
     return io_dict
 
 
 # ---------------------------- Token File Encryption Functions ----------------------------
-def derive_key_from_password(password, salt):
+def derive_key_from_password(password: str, salt: bytes):
     # Derive a key from the password and salt
     # n = 2**18 is 256MB of memory, r = 8 is 8 parallel threads, p = 1 is 1 iteration
     kdf = Scrypt(salt=salt, length=32, n=SCRYPT_N, r=8, p=1)
@@ -307,7 +307,7 @@ def encrypt_file(fileName: str | None = None, fileData: bytes | None = None, ref
         return encrypted_data
 
 
-def decrypt_file(filename):
+def decrypt_file(filename: str):
     if not filename.endswith('.encrypted'):
         print('Invalid encrypted file.')
         return None

@@ -1,23 +1,15 @@
-FROM python:3-slim AS builder
+# https://docs.astral.sh/uv/guides/integration/docker/#installing-uv
+# There is probably a better way to do this, but I just copied the example Dockerfile
 
-RUN apt-get update && \
-    apt-get install -y gcc \
-    cmake \
-    python3-dev \
-    build-essential
-COPY requirements.txt ./
-RUN pip install --no-cache-dir --user -r requirements.txt
-
-FROM python:3-slim
+# Use a Python image with uv pre-installed
+FROM ghcr.io/astral-sh/uv:latest
 
 WORKDIR /usr/src/app
-RUN apt-get update && \
-    apt-get install -y libtk8.6 && \
-    rm -rf /var/lib/apt/lists/*
-COPY --from=builder /root/.local /root/.local
 
-COPY YTSpammerPurge.py ./
-ADD Scripts ./Scripts
-ADD assets ./assets
+# Copy the project into the image
+ADD . /app
 
-CMD [ "python", "./YTSpammerPurge.py" ]
+# Sync the project into a new environment, asserting the lockfile is up to date
+RUN uv sync --locked --compile-bytecode
+
+CMD [ "uv", "run", "./src/YTSpammerPurge.py" ]

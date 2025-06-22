@@ -2,6 +2,7 @@
 
 # Get the latest tagged version from the upstream repository
 get_latest_version() {
+    echo "Fetching the latest tagged version from upstream..."
     git remote add -f --tags upstream https://github.com/ThioJoe/YT-Spammer-Purge.git
     git checkout $(git describe --tags $(git rev-list --tags --max-count=1 --remotes=upstream))
 

@@ -841,8 +841,8 @@ def choose_config_file(configDict: dict[str, Any], newestConfigVersion: int, con
 
 
 ############################# Ingest Other Files ##############################
-def ingest_asset_file(fileName):
-    def assetFilesPath(relative_path):
+def ingest_asset_file(fileName: str):
+    def assetFilesPath(relative_path: str):
         if hasattr(sys, '_MEIPASS'):  # If running as a pyinstaller bundle
             return os.path.join(sys._MEIPASS, relative_path)
         return os.path.join(os.path.abspath("assets"), relative_path)  # If running as script, specifies resource folder as /assets
@@ -858,7 +858,7 @@ def ingest_asset_file(fileName):
     return dataList
 
 
-def copy_asset_file(fileName, destination):
+def copy_asset_file(fileName: str, destination: str):
     def assetFilesPath(relative_path):
         if hasattr(sys, '_MEIPASS'):  # If running as a pyinstaller bundle
             return os.path.join(sys._MEIPASS, relative_path)
@@ -867,16 +867,19 @@ def copy_asset_file(fileName, destination):
     copyfile(assetFilesPath(fileName), os.path.abspath(destination))
 
 
-def copy_scripts_file(fileName, destination):
-    def assetFilesPath(relative_path):
+# temporary edit here to fix the issues with the src folder
+def copy_scripts_file(fileName: str, destination: str):
+    def assetFilesPath(relative_path: str):
         if hasattr(sys, '_MEIPASS'):  # If running as a pyinstaller bundle
-            return os.path.join(sys._MEIPASS, relative_path)
-        return os.path.join(os.path.abspath("Scripts"), relative_path)  # If running as script, specifies resource folder as /assets
+            return os.path.join(sys._MEIPASS, "src", relative_path) # type: ignore
+        return os.path.join(os.path.abspath("src/Scripts"), relative_path)  # If running as script, specifies resource folder as /assets
 
-    copyfile(assetFilesPath(fileName), os.path.abspath(destination))
+    source = os.path.join(assetFilesPath(""+fileName))
+    destination = os.path.abspath(destination)
+    copyfile(source, destination)
 
 
-def ingest_list_file(relativeFilePath, keepCase=True):
+def ingest_list_file(relativeFilePath: str, keepCase:bool=True):
     if os.path.exists(relativeFilePath):
         with open(relativeFilePath, 'r', encoding="utf-8") as listFile:
             # If file doesn't end with newline, add one
@@ -900,7 +903,7 @@ def ingest_list_file(relativeFilePath, keepCase=True):
         return None
 
 
-def get_list_file_version(relativeFilePath):
+def get_list_file_version(relativeFilePath: str):
     listVersion = None
     if os.path.exists(relativeFilePath):
         matchBetweenBrackets = '(?<=\[)(.*?)(?=\])'  # Matches text between first set of two square brackets
@@ -920,7 +923,7 @@ def get_list_file_version(relativeFilePath):
 
 ############################# CONFIG FILE FUNCTIONS ##############################
 def create_config_file(updating=False, dontWarn=False, configFileName="SpamPurgeConfig.ini", configDict=None):
-    def config_path(relative_path):
+    def config_path(relative_path: str):
         if hasattr(sys, '_MEIPASS'):  # If running as a pyinstaller bundle
             return os.path.join(sys._MEIPASS, relative_path)
         return os.path.join(os.path.abspath("assets"), relative_path)  # If running as script, specifies resource folder as /assets
