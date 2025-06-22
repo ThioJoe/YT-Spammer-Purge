@@ -220,7 +220,7 @@ def search_dict(partial: list[Any] | dict[Any, Any], search_key: str):
                 stack.append(value)
 
 
-def main(communityPostID: str | None = None, limit: int = 1000, sort: int = SORT_BY_RECENT, language: str | None = None, postScanProgressDict: dict[str,int] | None = None, postText: str | None = None):
+def main(communityPostID: str | None = None, limit: int = 1000, sort: int = SORT_BY_RECENT, language: str | None = None, postScanProgressDict: dict[str, int] | None = None, postText: str | None = None):
     if not communityPostID:
         raise ValueError('you need to specify a Youtube ID')
 
