@@ -623,10 +623,7 @@ def check_update_config_file(newVersion: int | None, existingConfig: dict[str, s
     backupDestinationFolder = os.path.join(RESOURCES_FOLDER_NAME, "User_Config_Backups")
     try:
         existingConfigVersion = int(existingConfig['config_version'])
-        if existingConfigVersion < newVersion:
-            configOutOfDate = True
-        else:
-            configOutOfDate = False
+        configOutOfDate = existingConfigVersion < newVersion
     except:
         configOutOfDate = True
 

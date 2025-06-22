@@ -21,7 +21,7 @@ from .utils import ScanInstance, choice
 # Then uses print_prepared_comments() to print / log the comments
 def print_comments(current: 'ScanInstance', config: dict[str, str], scanVideoID: str, loggingEnabled: bool, scanMode: int, logMode: str | None = None, doWritePrint: bool = True):
     j = 0  # Counting index when going through comments all comment segments
-
+    commentsContents = ""
     # Print filter matched comments
     j, commentsContents = print_prepared_comments(current, commentsContents, scanVideoID, list(current.matchedCommentsDict.keys()), j, loggingEnabled, scanMode, logMode, doWritePrint, matchReason="Filter Match")
     # Print comments of other match types
