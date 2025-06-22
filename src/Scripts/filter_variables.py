@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: UTF-8 -*-
 #version=[2025.05.26]
 
 import regex as re
@@ -55,4 +54,3 @@ spamPlus = '┼╂╋十┿✚✙➕±˖ᐩ⁺₊∓∔⊕⊞⟴⧺⧻⨁⨄⨢�
 spamOne = '１𝟏𝟙𝟣𝟭𝟷⒈⓵❶➀➊🄂߁①⑴'
 accompanyingLinkSpamPhrasesList = ['finally its here', 'its finally here', 'lets be honest we all enjoyed this video by having this', 'i think youre looking for this', 'here finally', 'here is what happened', 'last fight', 'here is the full video', 'link to the clip thats going viral', 'link to the clip explains the solution to bots', ' link to the clip part 2']
 notSpecial = " *.:!'’[]"
-

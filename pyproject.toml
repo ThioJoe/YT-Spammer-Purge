@@ -1,0 +1,42 @@
+[project]
+name = "yt-spammer-purge"
+version = "2.18.0"
+description = "YouTube spam comment deleter and filter"
+authors = [{name = "ThioJoe", email = "thiojoe@gmail.com"}]
+requires-python = ">=3.12"
+dependencies = [
+    "google-api-python-client>=2.173.0",
+    "google-auth-oauthlib>=1.2.2",
+    "protobuf>=6.3.0",
+    "colorama>=0.4.6",
+    "rtfunicode==2.0",
+    "certifi>=2025.0.0",
+    "levenshtein>=0.27.1",
+    "rapidfuzz>=3.13.0",
+    "numpy>=2.2.2",
+    "setuptools>=80",
+    "pwinput>=1.0.3",
+    "cryptography>=45.0.4",
+    "packaging>=25.0",
+    "regex>=2024.11.6",
+]
+classifiers = [
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux"
+]
+
+[tool.setuptools]
+platforms = ["Linux", "MacOS"]
+
+# Formatting and Linting Settings (Using Ruff)
+[tool.ruff]
+line-length = 300
+indent-width = 4
+
+[tool.ruff.lint]
+ignore = ["E402", "F403", "E722"]
+
+[tool.ruff.format]
+quote-style = "preserve"
+line-ending = "auto"
+indent-style = "space"
