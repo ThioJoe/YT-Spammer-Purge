@@ -18,6 +18,7 @@ dependencies = [
     "pwinput>=1.0.3",
     "cryptography>=45.0.4",
     "packaging>=25.0",
+    "regex>=2024.11.6",
 ]
 classifiers = [
     "Operating System :: MacOS",

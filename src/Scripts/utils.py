@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 import os
-import re
 import sys
 import traceback
 from html import unescape
 from typing import Any
 
+import regex as re
 from googleapiclient.errors import HttpError
 
 from . import auth, validation
@@ -153,7 +153,8 @@ def choice(message: str = "", bypass: bool = False):
     if bypass:
         return True
     while True:
-        match input(f"\n{message} ({F.LIGHTCYAN_EX}y{S.R}/{F.LIGHTRED_EX}n{S.R}): ").strip().lower():
+        user = input(f"\n{message} ({F.LIGHTCYAN_EX}y{S.R}/{F.LIGHTRED_EX}n{S.R}): ").strip().lower()
+        match user:
             case "y" | "Y":
                 return True
             case "n" | "N":

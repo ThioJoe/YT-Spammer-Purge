@@ -6,7 +6,7 @@ from pathlib import Path
 def assets_path(relative_path: str | Path):
     if hasattr(sys, '_MEIPASS'):  # If running as a pyinstaller bundle
         return os.path.join(sys._MEIPASS, relative_path)  # type: ignore
-    return os.path.join(os.path.abspath("Scripts/confusablesCustom/assets"), relative_path)  # If running as script, specifies resource folder as /assets
+    return os.path.join(os.path.abspath("src/Scripts/confusablesCustom/assets"), relative_path)  # If running as script, specifies resource folder as /assets
 
 
 CUSTOM_CONFUSABLE_PATH = os.path.join(assets_path("custom_confusables.txt"))

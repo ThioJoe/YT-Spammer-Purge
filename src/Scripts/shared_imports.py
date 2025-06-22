@@ -1,5 +1,3 @@
-import re
-
 from colorama import init
 from colorama.ansi import AnsiBack, AnsiFore, AnsiStyle
 
@@ -25,7 +23,6 @@ B = Back()
 RESOURCES_FOLDER_NAME = "SpamPurge_Resources"
 
 __all__ = [
-    "re",
     "F",
     "B",
     "S",

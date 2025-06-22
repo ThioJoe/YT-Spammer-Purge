@@ -5,7 +5,6 @@ import json
 import os
 import pathlib
 import pickle
-import re
 import sys
 import tarfile
 import time
@@ -19,6 +18,7 @@ from random import randrange
 from shutil import copyfile, move, rmtree
 from typing import Any, Literal, Mapping
 
+import regex as re
 import requests
 import urllib3
 from packaging.version import Version as parse_version

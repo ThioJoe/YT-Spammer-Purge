@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # Modified from original at: https://github.com/egbertbouman/youtube-comment-downloader
 import json
-import re
 import sys
 import time
 from typing import Any
 
+import regex as re
 import requests
 
 from .shared_imports import F, S

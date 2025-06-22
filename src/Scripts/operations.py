@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 
 import itertools
-import re
 import time
 import traceback
 import unicodedata
 from datetime import datetime
 from html import unescape
 
+import regex as re
 from googleapiclient.errors import HttpError
 from rapidfuzz import fuzz
 

@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 import codecs
 import os
-import re
 import sys
 import traceback
 from html import unescape
 from typing import Any, Literal, TypedDict
 from urllib.parse import urlparse
+
+import regex as re
 
 from . import auth, utils
 from .community_downloader import get_post_channel_url

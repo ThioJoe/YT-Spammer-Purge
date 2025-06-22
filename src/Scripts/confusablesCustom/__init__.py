@@ -1,7 +1,8 @@
 import json
 import os
-import re
 from itertools import product
+
+import regex as re
 
 from .config import CONFUSABLE_MAPPING_PATH, NON_NORMAL_ASCII_CHARS
 from .utils import is_ascii
@@ -51,7 +52,6 @@ def confusable_regex(string: str, include_character_padding: bool = False):
         regex += "(?:" + "|".join(escaped_chars) + ")" + space_regex
 
     return regex
-
 
 def normalize(string: str, prioritize_alpha: bool = False):
     normal_forms = set([""])

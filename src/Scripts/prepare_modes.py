@@ -3,25 +3,22 @@
 import importlib.util
 import os
 import sys
+from pathlib import Path
 from typing import Any, Literal
 
 from .gui import take_input_gui
+from .utils import choice, make_char_set
 
 # We'll need to dynamically import the filter variables module. We'll use the full path so it works with the exe pyinstaller version too.
-filterPath = os.path.join(os.getcwd(), "SpamPurge_Resources", "Filters", "filter_variables.py")
+filterPath = Path(os.getcwd()) / "SpamPurge_Resources" / "Filters" / "filter_variables.py"
 spec = importlib.util.spec_from_file_location("filter", filterPath)
 if spec is None or spec.loader is None:
     raise ModuleNotFoundError(f"Error: Could not find filter_variables.py at {filterPath}. Make sure the path is correct.")
-spec.loader.exec_module(importlib.util.module_from_spec(spec))
+filter = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(filter)
 
 
-import auth
-import files
-import operations
-import SpamPurge_Resources.Filters.filter_variables as filter
-import utils
-import validation
-
+from . import auth, files, operations, utils, validation
 from .confusablesCustom import confusable_regex
 from .shared_imports import RESOURCES_FOLDER_NAME, B, F, S
 
@@ -282,7 +279,7 @@ def prepare_filter_mode_non_ascii(scanMode: str, config: dict[str, str]):
         sys.exit()
 
 
-import re
+import regex as re
 
 
 # Auto smart mode
