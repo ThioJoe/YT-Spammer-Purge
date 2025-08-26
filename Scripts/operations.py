@@ -14,6 +14,7 @@ import itertools
 from datetime import datetime
 from rapidfuzz import fuzz
 from googleapiclient.errors import HttpError
+import typing as T
 
 ##########################################################################################
 ############################## GET COMMENT THREADS #######################################
@@ -1260,10 +1261,17 @@ def check_recovered_comments(commentsList):
   input("\nRecovery process finished. Press Enter to return to main menu...")
   return True
 
-# Removes comments by user-selected authors from list of comments to delete
+
 def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToExcludeSet, commentIDExcludeSet, displayString, inputtedString, logInfo=None, only=False):
+  """Removes comments by user-selected authors from list of comments to delete.
+
+  Raises:
+    SystemExit: when something went wrong while trying to exclude comments. No comments will be deleted.
+  """
   plaintextFormattedExcludes = ""
   rtfFormattedExcludes = ""
+  if not hasattr(S, 'R'):
+    setattr(S, "R", S.RESET_ALL)
 
   valid = False
   while valid == False:
@@ -1376,6 +1384,7 @@ def exclude_authors(current, config, miscData, excludedCommentsDict, authorsToEx
   print(f"\n{F.CYAN}All {len(excludedCommentsDict)} comments{S.R} from the {F.CYAN}following users{S.R} are now {F.LIGHTGREEN_EX}excluded{S.R} from deletion:")
   print(displayString)
 
+  addWhitelist = True
   if config['whitelist_excluded'] == 'ask':
     print(f"\nAdd these {F.LIGHTGREEN_EX}excluded{S.R} users to the {F.LIGHTGREEN_EX}whitelist{S.R} for future scans?")
     addWhitelist = choice("Whitelist Users?")
