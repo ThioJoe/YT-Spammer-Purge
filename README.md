@@ -154,6 +154,7 @@ Either way, you DO need to acquire your own API credentials file to access the Y
 #### Windows
 
 On Windows, you may download the latest EXE file from the [Releases page][Releases], or you may install YTSpammerPurge manually.
+Alternatively, you may run `winget install ThioJoe.YTSpammerPurge -e`
 If you are not sure how to install YTSpammerPurge manually, it is probably best to install the EXE.
 
 #### Linux / MacOS
