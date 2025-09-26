@@ -1019,6 +1019,7 @@ def main():
     print(f"{a2}{styleOther} 5. Scan {textColor}comment text{F.R} for criteria you choose{S.R}")
     print(f"{a2}{styleOther} 6. Scan both {usernameTextColor}usernames{F.R} and {textColor}comment text{F.R} for criteria you choose{S.R}")
     print(f"{a2}{styleOther} 7. ASCII Mode: Scan usernames for {asciiColor}ANY non-ASCII special characters{F.R} (May cause collateral damage!){S.R}")
+    print(f"{a2}{styleOther} 8. AI Mode: Scan messages using {asciiColor}Artificial Intelligence{F.R} (Experimental -- May falsely identify spam messages){S.R}")
 
 
     if userNotChannelOwner == True and moderator_mode == False:
@@ -1041,7 +1042,7 @@ def main():
       if str(filterChoice).lower() == "x":
         return True # Return to main menu
 
-      validChoices = ['1', '2', '3', '4', '5', '6', '7', 'id', 'username', 'text', 'nameandtext', 'autoascii', 'autosmart', 'sensitivesmart']
+      validChoices = ['1', '2', '3', '4', '5', '6', '7', '8', 'id', 'username', 'text', 'nameandtext', 'autoascii', 'autosmart', 'sensitivesmart', 'aimode']
       if filterChoice in validChoices:
         validFilterMode = True
         # Set string variable names for filtering modes
@@ -1059,6 +1060,8 @@ def main():
           filterMode = "NameAndText"
         elif filterChoice == "7" or filterChoice == "autoascii":
           filterMode = "AutoASCII"
+        elif filterChoice == '8' or filterChoice == 'aimode':
+          filterchoice = 'AIMode'
 
       else:
         print(f"\nInvalid Filter Mode: {filterChoice} - Enter a whole number from 1-7")
@@ -1129,6 +1132,8 @@ def main():
       filterSettings = modes.prepare_filter_mode_smart(scanMode, config, miscData, sensitive=True)
       inputtedUsernameFilter = filterSettings[0]
       inputtedCommentTextFilter = filterSettings[0]
+    elif filterMode == "AIMode":
+      filterSettings = modes.prepare_filter_mode_smart(scanMode, config, miscData, sensitive=True)
 
     elif filterSubMode == "chars":
       filterSettings = modes.prepare_filter_mode_chars(scanMode, filterMode, config)
