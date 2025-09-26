@@ -14,110 +14,21 @@ import itertools
 from datetime import datetime
 from rapidfuzz import fuzz
 from googleapiclient.errors import HttpError
-
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
-import torch
-from torch import nn
-from huggingface_hub import hf_hub_download
-
-# Numele modelului
-model_name = "BossBoss2021/spam-detection-ai"
-
-# Încărcare tokenizer și model
-tokenizer = AutoTokenizer.from_pretrained("gpt2")
-tokenizer.pad_token = tokenizer.eos_token
-
-class MLA(nn.Module):
-	def __init__(self, d_model=32, num_heads=4, num_latents=4, latent_dim=32):
-		super().__init__()
-		self.latents = nn.Parameter(torch.randn(num_latents, latent_dim))
-		self.attn = nn.MultiheadAttention(
-			embed_dim=d_model,
-			num_heads=num_heads,
-			batch_first=True
-		)
-		self.ff = nn.Sequential(
-			nn.Linear(d_model, d_model),
-			nn.GELU(),
-			nn.Linear(d_model, d_model)
-		)
-
-	def forward(self, x):
-		batch_size = x.size(0)
-		latents = self.latents.unsqueeze(0).expand(batch_size, -1, -1)
-		updated_latents, _ = self.attn(query=latents, key=x, value=x)
-		updated_latents = updated_latents + self.ff(updated_latents)
-		return updated_latents  # (batch_size, num_latents, d_model)
-
-
-class Model(nn.Module):
-	def __init__(self, vocab_dim, d_model=64, num_classes=2, num_cls_tokens=4):
-		super().__init__()
-		self.d_model = d_model
-		self.num_cls_tokens = num_cls_tokens
-
-		self.token_embed = nn.Embedding(vocab_dim, d_model)
-		self.pos_embed = nn.Embedding(512, d_model)
-
-		self.compress = nn.Sequential(
-			nn.Linear(512, 150),
-			nn.GELU(), nn.AlphaDropout(0.03), nn.RMSNorm(150),
-			nn.Linear(150, d_model)
-		)
-
-		te = nn.TransformerEncoderLayer(
-			d_model=d_model,
-			nhead=8,
-			dim_feedforward=100,
-			dropout=0.23,
-			activation=nn.functional.gelu,
-			batch_first=True
-		)
-		self.encoder = nn.TransformerEncoder(te, num_layers=6)
-
-		self.mla = MLA(d_model=d_model, num_heads=4, num_latents=8, latent_dim=d_model)
-
-		self.head = nn.Linear((num_cls_tokens + self.mla.latents.size(0)) * d_model, num_classes)
-
-	def forward(self, x):
-		batch_size, seq_len = x.shape	
-
-		pos = torch.arange(512, device=x.device).unsqueeze(0).expand(batch_size, 512)
-
-		# pad to 512
-		x = nn.functional.pad(x, (0, 512 - seq_len))  # (batch, 512)
-	
-		# embeddings
-		x = self.token_embed(x) + self.pos_embed(pos)  # (batch, 512, d_model)
-	
-		x = self.compress(x.transpose(1, 2)).transpose(1, 2)  # adapt if needed
-
-		out = self.encoder(x)
-
-		cls_embeddings = out[:, :self.num_cls_tokens, :].reshape(batch_size, -1)
-		mla_embeddings = self.mla(out).reshape(batch_size, -1)
-
-		features = torch.cat([cls_embeddings, mla_embeddings], dim=-1)
-		logits = self.head(features)
-		return logits
-
-model_path = hf_hub_download(
-    repo_id="BossBoss2021/spam-detection-ai",
-    filename="model.pth"
-)
-
-ai_model = Model(len(tokenizer))
-ai_model.load_state_dict(torch.load(model_path))
-
-os.remove(model_path)
+from Scripts.ai import load_model, torch, attempt_import, get_device
+from Scripts import ai as ai_lib
 
 def ai_predict_spam(text, threshold=0.5):
-    inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=False, max_length=512)
-    with torch.no_grad():
-        outputs = ai_model(**inputs)
-        probs = torch.softmax(outputs.logits, dim=-1)
-        spam_score = probs[0][1].item()  # assuming label 1 = spam
-    return spam_score >= threshold, spam_score
+  global torch
+  if torch is None:
+    torch = attempt_import("torch")
+  ai_model, tokenizer = load_model()
+  text = unescape(text)
+  inputs = tokenizer(text, return_tensors="pt", truncation=True, padding="max_length", max_length=512)["input_ids"].to(get_device())
+  with torch.no_grad():
+      outputs = ai_model(inputs)
+      probs = torch.softmax(outputs, dim=-1)
+      spam_score = probs[0][1].item()  # assuming label 1 = spam
+  return spam_score >= threshold, spam_score
 
 
 ##########################################################################################
@@ -1166,7 +1077,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
           add_spam(current, config, miscData, currentCommentDict, videoID)
   
     elif filtersDict['filterMode'] == 'AIMode':
-      is_spam, score = ai_predict_spam(commentText, 0.51)
+      is_spam, score = ai_predict_spam(commentText, float(ai_lib.load_config()['config']['threshold']))
       if is_spam:
           add_spam(
               current,
@@ -1174,7 +1085,7 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
               miscData,
               currentCommentDict,
               videoID,
-              matchReason=f"AI Classified Spam (score={score:.2f})"
+              matchReason=f"Filter Match"
           )
 
   else:

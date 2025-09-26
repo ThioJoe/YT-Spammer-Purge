@@ -1019,11 +1019,11 @@ def main():
     print(f"{a2}{styleOther} 5. Scan {textColor}comment text{F.R} for criteria you choose{S.R}")
     print(f"{a2}{styleOther} 6. Scan both {usernameTextColor}usernames{F.R} and {textColor}comment text{F.R} for criteria you choose{S.R}")
     print(f"{a2}{styleOther} 7. ASCII Mode: Scan usernames for {asciiColor}ANY non-ASCII special characters{F.R} (May cause collateral damage!){S.R}")
-    print(f"{a2}{styleOther} 8. AI Mode: Scan messages using {asciiColor}Artificial Intelligence{F.R} (Experimental -- May falsely identify spam messages){S.R}")
+    print(f"{F.BLACK}{B.LIGHTGREEN_EX} NEW! {S.R} {S.BRIGHT} 8. {S.BRIGHT}{autoSmartColor}AI Mode{F.R}: Scan messages using {asciiColor}Artificial Intelligence{F.R} (Experimental -- May falsely identify spam messages){S.R}")
 
 
     if userNotChannelOwner == True and moderator_mode == False:
-      print(f" {F.LIGHTRED_EX}*Note: With 'Not Your Channel Mode' enabled, you can only report matched comments while using 'Auto-Smart Mode' \n        or 'Sensitive-Smart Mode'.{S.R}") # Based on filterModesAllowedforNonOwners
+      print(f" {F.LIGHTRED_EX}*Note: With 'Not Your Channel Mode' enabled, you can only report matched comments while using \n        'Auto-Smart Mode' \n        , 'Sensitive-Smart Mode' \n        or 'AI Mode'.{S.R}") # Based on filterModesAllowedforNonOwners
     elif userNotChannelOwner == True and moderator_mode == True:
       print(f" {F.LIGHTRED_EX}*Note: With 'Moderator Mode', you can Hold and/or Report using: 'Auto-Smart', 'Sensitive-Smart', and Channel ID modes.{S.R}")
     # Make sure input is valid, if not ask again
@@ -1037,7 +1037,7 @@ def main():
       if validConfigSetting == True and config and config['filter_mode'] != 'ask':
         filterChoice = config['filter_mode']
       else:
-        filterChoice = input("\nChoice (1-7): ")
+        filterChoice = input("\nChoice (1-8): ")
 
       if str(filterChoice).lower() == "x":
         return True # Return to main menu
@@ -1061,7 +1061,7 @@ def main():
         elif filterChoice == "7" or filterChoice == "autoascii":
           filterMode = "AutoASCII"
         elif filterChoice == '8' or filterChoice == 'aimode':
-          filterchoice = 'AIMode'
+          filterMode = 'AIMode'
 
       else:
         print(f"\nInvalid Filter Mode: {filterChoice} - Enter a whole number from 1-7")
@@ -1133,7 +1133,9 @@ def main():
       inputtedUsernameFilter = filterSettings[0]
       inputtedCommentTextFilter = filterSettings[0]
     elif filterMode == "AIMode":
-      filterSettings = modes.prepare_filter_mode_smart(scanMode, config, miscData, sensitive=True)
+      #filterSettings = modes.
+      filterSettings = ['filter']
+      pass
 
     elif filterSubMode == "chars":
       filterSettings = modes.prepare_filter_mode_chars(scanMode, filterMode, config)
