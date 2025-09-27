@@ -99,9 +99,9 @@ def load_model():
 		repo_id="BossBoss2021/spam-detection-ai",
 		filename="utils.py"
 	)
-	shutil.move(utils_path, os.path.abspath(os.path.curdir + "/utils.py"))
-	_utils = importlib.import_module("utils")
-	os.remove(os.path.abspath(os.path.curdir + "/utils.py"))
+	shutil.move(utils_path, os.path.abspath(os.path.curdir + "/temp_utils.py"))
+	_utils = importlib.import_module("temp_utils")
+	os.remove(os.path.abspath(os.path.curdir + "/temp_utils.py"))
 	# Override class definitions with up-to-date classes to avoid future size missmatches.
 	MLA = _utils.MLA
 	Model = _utils.Model
