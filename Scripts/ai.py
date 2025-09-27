@@ -4,6 +4,8 @@ import configparser
 import subprocess
 import shutil
 
+os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = '1' # Disable HuggingFace's SYMLINK warning.
+
 #from transformers import AutoTokenizer, AutoModelForSequenceClassification
 #import torch
 #from torch import nn
@@ -13,6 +15,7 @@ torch = None
 nn = None
 hf_hub_download = None
 
+# Default config
 if not os.path.exists("ai_config.ini"):
 	with open("ai_config.ini", "w") as configfile:
 		configfile.write("[config]\n")
@@ -27,6 +30,7 @@ def load_config():
 	config.read("ai_config.ini")
 	return config
 
+# What device to use for the model
 def get_device():
 	if torch is None:
 		return "cpu"
@@ -56,7 +60,8 @@ def attempt_import(module_name):
 				logfile.close()
 				return importlib.import_module(module_name)
 			except BaseException as e:
-				print(f"Error: {module_name} could not be installed. Please install it manually with `pip install {module_name}.")
+				print(f"Error: {module_name} could not be installed. Please install it manually with `pip install {module_name}`\
+{'(or follow the instructions at https://pytorch.org)' if module_name == 'torch' else ''}.")
 				return None
 		else:
 			print(f"Error: {module_name} is not installed. Please install it manually with `pip install {module_name}.")
@@ -65,6 +70,7 @@ def attempt_import(module_name):
 MODEL = None
 tokenizer = None
 
+# Load a model by downloading the model file and class definitions from HF (Huggingface)
 def load_model():
 	global MODEL, tokenizer
 	if MODEL is not None and tokenizer is not None:
@@ -75,7 +81,6 @@ def load_model():
 	nn = torch.nn
 	huggingface_hub = attempt_import("huggingface_hub")
 	hf_hub_download = huggingface_hub.hf_hub_download
-	os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = '1'
 	transformers = attempt_import("transformers")
 	AutoTokenizer = transformers.AutoTokenizer
 
@@ -102,10 +107,6 @@ def load_model():
 			updated_latents = updated_latents + self.ff(updated_latents)
 			return updated_latents  # (batch_size, num_latents, d_model)
 
-
-	# --------------------------
-	# Main Model
-	# --------------------------
 	class Model(nn.Module):
 		def __init__(self, vocab_dim, d_model=34, num_classes=2, num_cls_tokens=4):
 			super().__init__()
@@ -157,6 +158,9 @@ def load_model():
 			logits = self.head(features)
 			return logits
 
+	# The MLA and Model class definitions above are only for autocompletion and linting.
+	# Below this comment is the code snippet that downloads the up-to-date class definitions from HF,
+	# as well as the model
 	utils_path = hf_hub_download(
 		repo_id="BossBoss2021/spam-detection-ai",
 		filename="utils.py"

@@ -1019,11 +1019,11 @@ def main():
     print(f"{a2}{styleOther} 5. Scan {textColor}comment text{F.R} for criteria you choose{S.R}")
     print(f"{a2}{styleOther} 6. Scan both {usernameTextColor}usernames{F.R} and {textColor}comment text{F.R} for criteria you choose{S.R}")
     print(f"{a2}{styleOther} 7. ASCII Mode: Scan usernames for {asciiColor}ANY non-ASCII special characters{F.R} (May cause collateral damage!){S.R}")
-    print(f"{F.BLACK}{B.LIGHTGREEN_EX} NEW! {S.R} {S.BRIGHT} 8. {S.BRIGHT}{autoSmartColor}AI Mode{F.R}: Scan messages using {asciiColor}Artificial Intelligence{F.R} (Experimental -- May falsely identify spam messages){S.R}")
+    print(f"{S.BRIGHT} 8. {S.R}{F.BLACK}{B.LIGHTGREEN_EX} NEW! {S.R} {S.BRIGHT}{autoSmartColor}AI Mode{F.R}: Scan messages using {asciiColor}Artificial Intelligence{F.R} (Experimental -- May falsely identify spam messages){S.R}")
 
 
     if userNotChannelOwner == True and moderator_mode == False:
-      print(f" {F.LIGHTRED_EX}*Note: With 'Not Your Channel Mode' enabled, you can only report matched comments while using \n        'Auto-Smart Mode' \n        , 'Sensitive-Smart Mode' \n        or 'AI Mode'.{S.R}") # Based on filterModesAllowedforNonOwners
+      print(f" {F.LIGHTRED_EX}*Note: With 'Not Your Channel Mode' enabled, you can only report matched comments while using \n        'Auto-Smart Mode', \n        'Sensitive-Smart Mode' \n        or 'AI Mode'.{S.R}") # Based on filterModesAllowedforNonOwners
     elif userNotChannelOwner == True and moderator_mode == True:
       print(f" {F.LIGHTRED_EX}*Note: With 'Moderator Mode', you can Hold and/or Report using: 'Auto-Smart', 'Sensitive-Smart', and Channel ID modes.{S.R}")
     # Make sure input is valid, if not ask again
@@ -1380,9 +1380,9 @@ def main():
     deletionMode = None # Should be changed later, but if missed it will default to heldForReview
     confirmDelete = None # If None, will later cause user to be asked to delete
     if moderator_mode == False:
-      filterModesAllowedforNonOwners = ["AutoSmart", "SensitiveSmart"]
+      filterModesAllowedforNonOwners = ["AutoSmart", "SensitiveSmart", "AIMode"]
     elif moderator_mode == True:
-      filterModesAllowedforNonOwners = ["AutoSmart", "SensitiveSmart", 'ID']
+      filterModesAllowedforNonOwners = ["AutoSmart", "SensitiveSmart", 'ID', "AIMode"]
 
     # If user isn't channel owner and not using allowed filter mode, skip deletion
     if userNotChannelOwner == True and filterMode not in filterModesAllowedforNonOwners:
