@@ -14,6 +14,22 @@ import itertools
 from datetime import datetime
 from rapidfuzz import fuzz
 from googleapiclient.errors import HttpError
+from Scripts.ai import load_model, torch, attempt_import, get_device
+from Scripts import ai as ai_lib
+
+def ai_predict_spam(text, threshold=0.5):
+  global torch
+  if torch is None:
+    torch = attempt_import("torch")
+  ai_model, tokenizer = load_model()
+  text = unescape(text)
+  inputs = tokenizer(text, return_tensors="pt", truncation=True, padding="max_length", max_length=512)["input_ids"].to(get_device())
+  with torch.no_grad():
+      outputs = ai_model(inputs)
+      probs = torch.softmax(outputs, dim=-1)
+      spam_score = probs[0][1].item()  # assuming label 1 = spam
+  return spam_score >= threshold, spam_score
+
 
 ##########################################################################################
 ############################## GET COMMENT THREADS #######################################
@@ -1059,6 +1075,19 @@ def check_against_filter(current, filtersDict, miscData, config, currentCommentD
           add_spam(current, config, miscData, currentCommentDict, videoID)
         elif sensitive and redCount >= 1:
           add_spam(current, config, miscData, currentCommentDict, videoID)
+  
+    elif filtersDict['filterMode'] == 'AIMode':
+      is_spam, score = ai_predict_spam(commentText, float(ai_lib.load_config()['config']['threshold']))
+      if is_spam:
+          add_spam(
+              current,
+              config,
+              miscData,
+              currentCommentDict,
+              videoID,
+              matchReason=f"Filter Match"
+          )
+
   else:
     pass
 

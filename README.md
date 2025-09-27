@@ -48,6 +48,7 @@
   * **Scan Comment Text**: (Same 3 options as above)
   * **Scan Usernames and Comment Text** simultaneously: (Same 3 options as above)
   * **ASCII Mode**: Scan Usernames for non-ASCII special characters (three different sensitivities)
+  * **AI Mode**: Detects spam messages using A.I. (Experimental)
 * 4 Different Scanning Modes
   * Scan a **single video**
   * Scan **Recent Videos** (Up to 5)
