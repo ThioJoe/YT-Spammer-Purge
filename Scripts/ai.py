@@ -110,7 +110,7 @@ def load_model():
 		repo_id="BossBoss2021/spam-detection-ai",
 		filename="model.pth"
 	)
-	tokenizer = AutoTokenizer.from_pretrained("gpt2")
+	tokenizer = AutoTokenizer.from_pretrained(_utils.tokenizer)
 	tokenizer.pad_token = tokenizer.eos_token
 
 	ai_model = Model(len(tokenizer))
