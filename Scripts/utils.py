@@ -5,6 +5,7 @@ import Scripts.validation as validation
 import Scripts.auth as auth
 from googleapiclient.errors import HttpError
 from html import unescape
+import shutil
 
 ##########################################################################################
 ############################## UTILITY FUNCTIONS #########################################
