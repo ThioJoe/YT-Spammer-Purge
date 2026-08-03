@@ -6,4 +6,3 @@ services:
       - ./client_secrets.json:/usr/src/app/client_secrets.json
       - ./token.pickle:/usr/src/app/token.pickle
       - ./SpamPurge_Resources:/usr/src/app/SpamPurge_Resources
-

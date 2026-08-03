@@ -4,3 +4,5 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+          AI_FT: ${AI_FT}

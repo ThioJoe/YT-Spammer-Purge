@@ -3,9 +3,11 @@ name: docker-build
 on:
   release:
     types: [published]
+  workflow_dispatch:
+  
 
 jobs:
-  docker:
+  docker_nonai_amd64:
     runs-on: ubuntu-latest
     steps:
       -
@@ -23,7 +25,7 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
           flavor: |
-            latest=true
+            latest=false
       -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -44,5 +46,234 @@ jobs:
           context: .
           push: true
           tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}-amd64
+          platforms: linux/amd64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  docker_nonai_arm:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      - 
+        name: Generate Docker metadata
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: |
+            ghcr.io/${{ github.repository }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+          flavor: |
+            latest=false
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      -
+        name: Login to GitHub Package Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      -
+        name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}-arm64
           labels: ${{ steps.meta.outputs.labels }}
-          platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
+          platforms: linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  docker_ai_amd64: 
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      -
+        name: Login to GitHub Package Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /home/linuxbrew
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          docker system prune -af || true
+      - 
+        name: Generate Docker metadata (AI)
+        id: meta_ai
+        uses: docker/metadata-action@v3
+        with:
+          images: ghcr.io/${{ github.repository }}
+          flavor: |
+            suffix=-ai-ft,onlatest=true
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+      - 
+        name: Build and push (with AI)
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta_ai.outputs.tags }}-amd64
+          labels: ${{ steps.meta_ai.outputs.labels }}
+          build-args: |
+            AI_FT=1
+          platforms: linux/amd64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+  
+  docker_ai_arm:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      -
+        name: Login to GitHub Package Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /home/linuxbrew
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          docker system prune -af || true
+      - 
+        name: Generate Docker metadata (AI)
+        id: meta_ai
+        uses: docker/metadata-action@v3
+        with:
+          images: ghcr.io/${{ github.repository }}
+          flavor: |
+            suffix=-ai-ft,onlatest=true
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+      - 
+        name: Build and push (with AI)
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta_ai.outputs.tags }}
+          labels: ${{ steps.meta_ai.outputs.labels }}-arm64
+          build-args: |
+            AI_FT=1
+          platforms: linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  manifest_nonai:
+    runs-on: ubuntu-latest
+    needs:
+      - docker_nonai_amd64
+      - docker_nonai_arm
+    steps:
+      - name: Login to GitHub Package Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Merge Non-AI tags into multi-arch manifests
+        env:
+          IMAGE: ghcr.io/${{ github.repository }}
+        run: |
+          # Retrieve tags from the AMD64 metadata job
+          TAGS="${{ needs.docker_nonai_amd64.outputs.meta.tags }}"
+
+          for TAG in $TAGS; do
+            BASENAME="${TAG#${IMAGE}:}"
+
+            echo "Creating manifest for $IMAGE:$BASENAME"
+
+            docker manifest create "$IMAGE:$BASENAME" \
+              "$IMAGE:${BASENAME}-amd64" \
+              "$IMAGE:${BASENAME}-arm64"
+
+            docker manifest annotate "$IMAGE:$BASENAME" "$IMAGE:${BASENAME}-amd64" --arch amd64
+            docker manifest annotate "$IMAGE:$BASENAME" "$IMAGE:${BASENAME}-arm64" --arch arm64
+
+            docker manifest push "$IMAGE:$BASENAME"
+          done
+
+  manifest_ai:
+    runs-on: ubuntu-latest
+    needs:
+      - docker_ai_amd64
+      - docker_ai_arm
+    steps:
+      - name: Login to GitHub Package Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Merge AI tags into multi-arch manifests
+        env:
+          IMAGE: ghcr.io/${{ github.repository }}
+        run: |
+          # Retrieve tags from the AI metadata job
+          TAGS="${{ needs.docker_ai_amd64.outputs.meta_ai.tags }}"
+
+          for TAG in $TAGS; do
+            BASENAME="${TAG#${IMAGE}:}"
+
+            echo "Creating AI manifest for $IMAGE:$BASENAME"
+
+            docker manifest create "$IMAGE:$BASENAME" \
+              "$IMAGE:${BASENAME}-amd64" \
+              "$IMAGE:${BASENAME}-arm64"
+
+            docker manifest annotate "$IMAGE:$BASENAME" "$IMAGE:${BASENAME}-amd64" --arch amd64
+            docker manifest annotate "$IMAGE:$BASENAME" "$IMAGE:${BASENAME}-arm64" --arch arm64
+
+            docker manifest push "$IMAGE:$BASENAME"
+          done
+

@@ -4,9 +4,19 @@ RUN apt-get update && \
     apt-get install -y gcc \
     cmake \
     python3-dev \
+    libffi-dev \
+    libssl-dev \
     build-essential
 COPY requirements.txt ./
 RUN pip install --no-cache-dir --user -r requirements.txt
+
+# Build argument to download AI dependencies
+ARG AI_FT=0
+
+RUN if [ $AI_FT -eq "1" ] ; then \
+        echo "Downloading AI dependencies..." && \
+        pip install --no-cache-dir --user torch huggingface-hub transformers; \
+    fi
 
 FROM python:3-slim
 
