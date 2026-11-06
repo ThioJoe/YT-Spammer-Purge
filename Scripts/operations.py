@@ -703,7 +703,7 @@ def check_reposts(current, config, miscData, allVideoCommentsDict, videoID):
     if scrutinizedAuthorID == auth.CURRENTUSER.id or scrutinizedAuthorID == miscData.channelOwnerID or scrutinizedAuthorID in miscData.resources['Whitelist']['WhitelistContents']:
       pass
     else:
-      for j in range(0,i-1): # Only need to check against comments that came before it, so have index less than current
+      for j in range(i): # Only need to check against comments that came before it, so have index less than current
         olderCommentText = flatCommentList[j]['commentText']
         if len(scrutinizedText) >= minLength and flatCommentList[j]['authorChannelID'] != scrutinizedAuthorID and x['commentID'] not in current.matchedCommentsDict and x['commentID'] not in current.duplicateCommentsDict:
           if (not fuzzy and scrutinizedText == olderCommentText) or (fuzzy and fuzz.ratio(scrutinizedText, olderCommentText) / 100 > levenshtein):
