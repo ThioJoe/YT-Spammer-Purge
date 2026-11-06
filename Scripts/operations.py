@@ -700,7 +700,7 @@ def check_reposts(current, config, miscData, allVideoCommentsDict, videoID):
   for i,x in enumerate(flatCommentList[1:], start=1): # x is comment dictionary. Enumerate starting with second comment (1:), because nothing came before it. Use start=1 so i-1 refers to correct index in flatCommentList
     scrutinizedText = x['commentText']
     scrutinizedAuthorID = x['authorChannelID']
-    if scrutinizedAuthorID == auth.CURRENTUSER.id or scrutinizedAuthorID == miscData.channelOwnerID or scrutinizedAuthorID == miscData.resources['Whitelist']['WhitelistContents']:
+    if scrutinizedAuthorID == auth.CURRENTUSER.id or scrutinizedAuthorID == miscData.channelOwnerID or scrutinizedAuthorID in miscData.resources['Whitelist']['WhitelistContents']:
       pass
     else:
       for j in range(0,i-1): # Only need to check against comments that came before it, so have index less than current
